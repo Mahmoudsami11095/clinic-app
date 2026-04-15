@@ -1,0 +1,178 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
+
+  <!-- Section 1: Professional Profile -->
+  <div>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
+      Professional Profile
+    </h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- First Name -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="firstName">
+          First Name <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="firstName"
+          type="text"
+          formControlName="firstName"
+          placeholder="e.g. Sarah"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          [ngClass]="isInvalid('firstName')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        />
+      </div>
+
+      <!-- Last Name -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="lastName">
+          Last Name <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="lastName"
+          type="text"
+          formControlName="lastName"
+          placeholder="e.g. Jenkins"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          [ngClass]="isInvalid('lastName')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        />
+      </div>
+
+      <!-- Specialization -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="specialization">
+          Specialization <span class="text-rose-500">*</span>
+        </label>
+        <select
+          id="specialization"
+          formControlName="specialization"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
+          [ngClass]="isInvalid('specialization')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        >
+          <option value="" disabled>Select role</option>
+          @for (spec of specializations; track spec) {
+            <option [value]="spec">{{ spec }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="contactNumber">
+          Phone Number <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="contactNumber"
+          type="tel"
+          formControlName="contactNumber"
+          placeholder="+1 234 567 890"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          [ngClass]="isInvalid('contactNumber')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        />
+      </div>
+
+      <!-- Email (Full width) -->
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="email">
+          Professional Email <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="doctor.name@clinic.com"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          [ngClass]="isInvalid('email')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="border-t border-slate-100"></div>
+
+  <!-- Section 2: Availability -->
+  <div formGroupName="availability">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
+      Weekly Schedule
+    </h3>
+
+    <div class="space-y-4">
+      <!-- Days Selection -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-3">Office Days <span class="text-rose-500">*</span></label>
+        <div class="flex flex-wrap gap-2">
+          @for (day of weekDays; track day) {
+            <label
+              class="relative flex items-center justify-center px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all border select-none"
+              [ngClass]="isDaySelected(day)
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform scale-105'
+                : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'"
+            >
+              <input
+                type="checkbox"
+                [value]="day"
+                (change)="onDayToggle(day, $event)"
+                class="absolute opacity-0 w-0 h-0"
+              />
+              {{ day.substring(0, 3) }}
+            </label>
+          }
+        </div>
+        @if (daysFormArray.invalid && daysFormArray.touched) {
+          <p class="mt-2 text-xs text-rose-600">Select at least one day</p>
+        }
+      </div>
+
+      <!-- Hours -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="hours">Consultation Hours <span class="text-rose-500">*</span></label>
+        <div class="relative">
+          <i class="pi pi-clock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input
+            id="hours"
+            type="text"
+            formControlName="hours"
+            placeholder="e.g. 09:00 - 17:00"
+            class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-all focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+    <button
+      type="button"
+      (click)="onCancel()"
+      class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      [disabled]="submitting"
+      class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+    >
+      @if (submitting) {
+        <i class="pi pi-spin pi-spinner text-xs"></i>
+        Processing...
+      } @else {
+        <i class="pi pi-user-plus text-xs"></i>
+        Add to Team
+      }
+    </button>
+  </div>
+</form>
