@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "id": "1",
+      "firstName": "John",
+      "lastName": "Doe",
+      "gender": "male",
+      "dateOfBirth": "1980-05-15",
+      "contactNumber": "+1234567890",
+      "email": "john.doe@example.com",
+      "bloodGroup": "O+",
+      "address": "123 Main St, Cityville",
+      "registrationDate": "2023-01-10T10:00:00Z"
+    },
+    {
+      "id": "2",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "gender": "female",
+      "dateOfBirth": "1992-08-22",
+      "contactNumber": "+0987654321",
+      "email": "jane.smith@example.com",
+      "bloodGroup": "A-",
+      "address": "456 Oak Rd, Townsville",
+      "registrationDate": "2023-02-14T11:30:00Z"
+    }
+  ]
+}

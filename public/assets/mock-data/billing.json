@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "id": "1",
+      "patientId": "1",
+      "appointmentId": "1",
+      "amount": 150.00,
+      "status": "paid",
+      "dateIssued": "2026-04-20T10:00:00Z",
+      "paymentMethod": "Credit Card"
+    },
+    {
+      "id": "2",
+      "patientId": "2",
+      "appointmentId": "2",
+      "amount": 200.00,
+      "status": "pending",
+      "dateIssued": "2026-04-21T15:30:00Z",
+      "paymentMethod": null
+    }
+  ]
+}
