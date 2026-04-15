@@ -1,0 +1,12 @@
+/* Appointment list styles */
+
+/* Hide raw date input icon in some browsers to keep it clean */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
