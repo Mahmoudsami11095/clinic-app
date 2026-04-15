@@ -32,4 +32,8 @@ export class AppointmentService {
       })
     );
   }
+
+  create(appointment: Appointment) {
+    return this.http.post<{ message: string }>('/api/appointments', appointment);
+  }
 }
