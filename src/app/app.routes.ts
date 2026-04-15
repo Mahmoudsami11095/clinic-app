@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { MainLayout } from './core/layout/main-layout/main-layout';
+import { MainLayout } from './core/layout/main-layout/main-layout.component';
 import { Component } from '@angular/core';
 
 @Component({ template: '<div class="p-6 text-slate-500">Feature coming soon...</div>' })
@@ -10,7 +10,7 @@ export const routes: Routes = [
     path: '', // Base layout wraps inner routes
     component: MainLayout,
     children: [
-      { path: 'dashboard', component: DummyComponent }, // loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.dashboardRoutes)
+      { path: 'dashboard', loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.dashboardRoutes) },
       { path: 'patients', component: DummyComponent }, // loadChildren: () => import('./features/patients/patient.routes').then(m => m.patientRoutes)
       { path: 'appointments', component: DummyComponent }, // loadChildren: () => import('./features/appointments/appointment.routes').then(m => m.appointmentRoutes)
       { path: 'doctors', component: DummyComponent }, // loadChildren: () => import('./features/doctors/doctor.routes').then(m => m.doctorRoutes)

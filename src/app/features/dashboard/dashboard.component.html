@@ -1,0 +1,125 @@
+<!-- Dashboard Page -->
+<div class="space-y-8">
+
+  <!-- Page Header -->
+  <div class="flex flex-col gap-1">
+    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
+    <p class="text-sm text-slate-500">Welcome back! Here's an overview of your clinic today.</p>
+  </div>
+
+  <!-- Stat Cards Grid -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="h-32 rounded-2xl bg-white/60 animate-pulse border border-slate-200/50"></div>
+      }
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      @for (card of statCards; track card.key) {
+        <div class="stat-card group relative overflow-hidden rounded-2xl bg-white border border-slate-200/60 p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+          <!-- Ambient Glow -->
+          <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-10 transition-opacity group-hover:opacity-20"
+               [class]="'bg-' + card.color + '-500'"></div>
+
+          <div class="flex items-start justify-between relative z-10">
+            <div class="flex flex-col gap-1">
+              <span class="text-sm font-medium text-slate-500">{{ card.label }}</span>
+              <span class="text-3xl font-bold text-slate-800 tracking-tight">{{ getStatValue(card.key) }}</span>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                 [class]="'bg-' + card.color + '-50 text-' + card.color + '-500'">
+              <i [class]="card.icon + ' text-xl'"></i>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Revenue Highlight + Recent Appointments -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Revenue Card -->
+    <div class="lg:col-span-1 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 p-6 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
+      <!-- Decorative Circle -->
+      <div class="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/10"></div>
+      <div class="absolute top-4 right-4 w-16 h-16 rounded-full bg-white/5"></div>
+
+      <div class="relative z-10 flex flex-col gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+            <i class="pi pi-dollar text-lg"></i>
+          </div>
+          <span class="font-medium text-white/80">Total Revenue</span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-4xl font-bold tracking-tight">
+            ${{ stats()?.totalRevenue?.toLocaleString() || '0' }}
+          </span>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-white/60">
+          <i class="pi pi-arrow-up text-emerald-300 text-xs"></i>
+          <span class="text-emerald-300">+12.5%</span>
+          <span>from last month</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Appointments Table -->
+    <div class="lg:col-span-2 rounded-2xl bg-white border border-slate-200/60 shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-800">Recent Appointments</h2>
+        <span class="text-xs font-medium text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">
+          {{ recentAppointments().length }} latest
+        </span>
+      </div>
+
+      @if (loading()) {
+        <div class="p-6 space-y-4">
+          @for (i of [1,2,3]; track i) {
+            <div class="h-12 rounded-lg bg-slate-100 animate-pulse"></div>
+          }
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th class="px-6 py-3">Patient</th>
+                <th class="px-6 py-3">Doctor</th>
+                <th class="px-6 py-3">Type</th>
+                <th class="px-6 py-3">Date</th>
+                <th class="px-6 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              @for (appt of recentAppointments(); track appt.id) {
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white text-xs font-bold">
+                        {{ appt.patientName.charAt(0) }}
+                      </div>
+                      <span class="font-medium text-slate-700">{{ appt.patientName }}</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-slate-600">{{ appt.doctorName }}</td>
+                  <td class="px-6 py-4 text-slate-600">{{ appt.type }}</td>
+                  <td class="px-6 py-4 text-slate-500">{{ formatDate(appt.date) }}</td>
+                  <td class="px-6 py-4">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
+                          [ngClass]="getStatusClass(appt.status)">
+                      {{ appt.status }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

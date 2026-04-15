@@ -6,7 +6,7 @@
       "appointmentId": "1",
       "amount": 150.00,
       "status": "paid",
-      "dateIssued": "2026-04-20T10:00:00Z",
+      "dateIssued": "2026-04-15T10:00:00Z",
       "paymentMethod": "Credit Card"
     },
     {
@@ -14,8 +14,44 @@
       "patientId": "2",
       "appointmentId": "2",
       "amount": 200.00,
+      "status": "paid",
+      "dateIssued": "2026-04-15T11:30:00Z",
+      "paymentMethod": "Cash"
+    },
+    {
+      "id": "3",
+      "patientId": "3",
+      "appointmentId": "3",
+      "amount": 350.00,
       "status": "pending",
-      "dateIssued": "2026-04-21T15:30:00Z",
+      "dateIssued": "2026-04-15T14:00:00Z",
+      "paymentMethod": null
+    },
+    {
+      "id": "4",
+      "patientId": "7",
+      "appointmentId": "7",
+      "amount": 100.00,
+      "status": "paid",
+      "dateIssued": "2026-04-14T10:30:00Z",
+      "paymentMethod": "Insurance"
+    },
+    {
+      "id": "5",
+      "patientId": "5",
+      "appointmentId": "4",
+      "amount": 275.00,
+      "status": "pending",
+      "dateIssued": "2026-04-15T16:00:00Z",
+      "paymentMethod": null
+    },
+    {
+      "id": "6",
+      "patientId": "8",
+      "appointmentId": "8",
+      "amount": 180.00,
+      "status": "overdue",
+      "dateIssued": "2026-04-10T09:00:00Z",
       "paymentMethod": null
     }
   ]
