@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { Doctor } from '../../models/doctor.model';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { DoctorFormComponent } from '../doctor-form/doctor-form.component';
 
 @Component({
   selector: 'app-doctor-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent, DoctorFormComponent],
   templateUrl: './doctor-list.component.html',
   styleUrl: './doctor-list.component.css'
 })
@@ -19,6 +21,7 @@ export class DoctorListComponent implements OnInit {
   // Filters
   searchQuery = signal('');
   selectedSpecialization = signal<string>('all');
+  isModalOpen = signal(false);
 
   // Derived unique specializations from the fetched list
   specializations = computed(() => {
@@ -81,5 +84,18 @@ export class DoctorListComponent implements OnInit {
       return 'Mon - Fri';
     }
     return days.map(d => d.substring(0, 3)).join(', ');
+  }
+
+  openModal() {
+    this.isModalOpen.set(true);
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+  }
+
+  handleDoctorSaved(newDoctor: Doctor) {
+    this.doctors.update(list => [newDoctor, ...list]);
+    this.closeModal();
   }
 }

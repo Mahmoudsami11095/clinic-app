@@ -12,4 +12,8 @@ export class DoctorService {
       .get<{ data: Doctor[] }>('/api/doctors')
       .pipe(map(res => res.data));
   }
+
+  create(doctor: Doctor) {
+    return this.http.post<{ message: string }>('/api/doctors', doctor);
+  }
 }
