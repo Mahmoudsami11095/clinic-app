@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "id": "101",
+      "firstName": "Sarah",
+      "lastName": "Jenkins",
+      "specialization": "Cardiology",
+      "email": "dr.jenkins@clinic.com",
+      "contactNumber": "+1122334455",
+      "availability": {
+        "days": ["Monday", "Wednesday", "Friday"],
+        "hours": "09:00-17:00"
+      }
+    },
+    {
+      "id": "102",
+      "firstName": "Michael",
+      "lastName": "Chen",
+      "specialization": "Pediatrics",
+      "email": "dr.chen@clinic.com",
+      "contactNumber": "+5544332211",
+      "availability": {
+        "days": ["Tuesday", "Thursday"],
+        "hours": "10:00-18:00"
+      }
+    }
+  ]
+}

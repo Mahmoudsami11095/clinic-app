@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "id": "1",
+      "patientId": "1",
+      "doctorId": "101",
+      "date": "2026-04-20T09:00:00Z",
+      "status": "scheduled",
+      "type": "General Checkup",
+      "notes": "Patient complains of mild headache."
+    },
+    {
+      "id": "2",
+      "patientId": "2",
+      "doctorId": "102",
+      "date": "2026-04-21T14:30:00Z",
+      "status": "completed",
+      "type": "Follow-up",
+      "notes": "Reviewing recent blood test results."
+    }
+  ]
+}
