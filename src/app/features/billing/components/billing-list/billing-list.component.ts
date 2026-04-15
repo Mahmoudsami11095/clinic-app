@@ -2,16 +2,20 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BillingService } from '../../services/billing.service';
-import { BillingRecordWithDetails } from '../../models/billing.model';
+import { BillingRecord, BillingRecordWithDetails } from '../../models/billing.model';
+import { PatientService } from '../../../patients/services/patient.service';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { BillingFormComponent } from '../billing-form/billing-form.component';
 
 @Component({
   selector: 'app-billing-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent, BillingFormComponent],
   templateUrl: './billing-list.component.html',
   styleUrl: './billing-list.component.css'
 })
 export class BillingListComponent implements OnInit {
   private billingService = inject(BillingService);
+  private patientService = inject(PatientService);
 
   billingRecords = signal<BillingRecordWithDetails[]>([]);
   loading = signal(true);
@@ -19,6 +23,7 @@ export class BillingListComponent implements OnInit {
   // Filters
   searchQuery = signal('');
   selectedStatus = signal<string>('all');
+  isModalOpen = signal(false);
 
   // Derived Stats
   totalOutstanding = computed(() => {
@@ -92,5 +97,27 @@ export class BillingListComponent implements OnInit {
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
+  }
+
+  openModal() {
+    this.isModalOpen.set(true);
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+  }
+
+  handleBillingSaved(record: BillingRecord) {
+    // Manually add the new record to the local signal since the mock backend is read-only
+    this.patientService.getAll().subscribe(patients => {
+      const patient = patients.find(p => p.id === record.patientId);
+      const newRecordWithDetails: BillingRecordWithDetails = {
+        ...record,
+        patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'
+      };
+      
+      this.billingRecords.update(records => [newRecordWithDetails, ...records]);
+      this.closeModal();
+    });
   }
 }

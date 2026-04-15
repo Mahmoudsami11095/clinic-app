@@ -6,7 +6,10 @@
       <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Billing & Payments</h1>
       <p class="text-sm text-slate-500 mt-1">Manage patient invoices and track revenue</p>
     </div>
-    <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
+    <button
+      (click)="openModal()"
+      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+    >
       <i class="pi pi-file-plus text-xs"></i>
       Create Invoice
     </button>
@@ -165,4 +168,16 @@
     </div>
   </div>
 
+  <!-- Create Invoice Modal -->
+  <app-modal
+    [isOpen]="isModalOpen()"
+    title="Create New Invoice"
+    subtitle="Generate a professional billing record and track payment"
+    (close)="closeModal()"
+  >
+    <app-billing-form
+      (saved)="handleBillingSaved($event)"
+      (cancelled)="closeModal()"
+    ></app-billing-form>
+  </app-modal>
 </div>

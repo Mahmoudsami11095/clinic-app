@@ -29,4 +29,8 @@ export class BillingService {
       })
     );
   }
+
+  create(record: BillingRecord) {
+    return this.http.post<{ message: string }>('/api/billing', record);
+  }
 }
