@@ -4,8 +4,8 @@
       "id": "1",
       "patientId": "1",
       "doctorId": "101",
-      "date": "2026-04-20T09:00:00Z",
-      "status": "scheduled",
+      "date": "2026-04-15T09:00:00Z",
+      "status": "completed",
       "type": "General Checkup",
       "notes": "Patient complains of mild headache."
     },
@@ -13,10 +13,64 @@
       "id": "2",
       "patientId": "2",
       "doctorId": "102",
-      "date": "2026-04-21T14:30:00Z",
+      "date": "2026-04-15T10:30:00Z",
       "status": "completed",
       "type": "Follow-up",
       "notes": "Reviewing recent blood test results."
+    },
+    {
+      "id": "3",
+      "patientId": "3",
+      "doctorId": "101",
+      "date": "2026-04-15T14:00:00Z",
+      "status": "scheduled",
+      "type": "Cardiology Consultation",
+      "notes": "Annual heart screening."
+    },
+    {
+      "id": "4",
+      "patientId": "5",
+      "doctorId": "103",
+      "date": "2026-04-15T15:30:00Z",
+      "status": "scheduled",
+      "type": "Dermatology",
+      "notes": "Skin rash evaluation."
+    },
+    {
+      "id": "5",
+      "patientId": "4",
+      "doctorId": "102",
+      "date": "2026-04-16T09:00:00Z",
+      "status": "scheduled",
+      "type": "Pediatric Checkup",
+      "notes": "Routine child wellness visit."
+    },
+    {
+      "id": "6",
+      "patientId": "6",
+      "doctorId": "104",
+      "date": "2026-04-16T11:00:00Z",
+      "status": "scheduled",
+      "type": "Neurology",
+      "notes": "Persistent migraine follow-up."
+    },
+    {
+      "id": "7",
+      "patientId": "7",
+      "doctorId": "101",
+      "date": "2026-04-14T10:00:00Z",
+      "status": "completed",
+      "type": "General Checkup",
+      "notes": "Blood pressure monitoring."
+    },
+    {
+      "id": "8",
+      "patientId": "8",
+      "doctorId": "103",
+      "date": "2026-04-14T14:30:00Z",
+      "status": "cancelled",
+      "type": "Orthopedic Consultation",
+      "notes": "Patient rescheduled."
     }
   ]
 }

@@ -7,6 +7,7 @@
       "specialization": "Cardiology",
       "email": "dr.jenkins@clinic.com",
       "contactNumber": "+1122334455",
+      "avatar": null,
       "availability": {
         "days": ["Monday", "Wednesday", "Friday"],
         "hours": "09:00-17:00"
@@ -19,9 +20,36 @@
       "specialization": "Pediatrics",
       "email": "dr.chen@clinic.com",
       "contactNumber": "+5544332211",
+      "avatar": null,
       "availability": {
         "days": ["Tuesday", "Thursday"],
         "hours": "10:00-18:00"
+      }
+    },
+    {
+      "id": "103",
+      "firstName": "Emily",
+      "lastName": "Torres",
+      "specialization": "Dermatology",
+      "email": "dr.torres@clinic.com",
+      "contactNumber": "+7788990011",
+      "avatar": null,
+      "availability": {
+        "days": ["Monday", "Tuesday", "Thursday"],
+        "hours": "08:00-16:00"
+      }
+    },
+    {
+      "id": "104",
+      "firstName": "James",
+      "lastName": "Patel",
+      "specialization": "Neurology",
+      "email": "dr.patel@clinic.com",
+      "contactNumber": "+3344556677",
+      "avatar": null,
+      "availability": {
+        "days": ["Wednesday", "Friday"],
+        "hours": "09:00-15:00"
       }
     }
   ]
