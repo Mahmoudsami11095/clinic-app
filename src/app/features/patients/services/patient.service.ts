@@ -16,4 +16,8 @@ export class PatientService {
   getById(id: string) {
     return this.getAll().pipe(map(patients => patients.find(p => p.id === id)));
   }
+
+  create(patient: Patient) {
+    return this.http.post<{ message: string }>('/api/patients', patient);
+  }
 }

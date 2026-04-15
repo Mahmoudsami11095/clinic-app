@@ -1,0 +1,248 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
+
+  <!-- Section: Personal Info -->
+  <div>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
+      Personal Information
+    </h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- First Name -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="firstName">
+          First Name <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="firstName"
+          type="text"
+          formControlName="firstName"
+          placeholder="e.g. John"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          [ngClass]="isInvalid('firstName')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        />
+        @if (isInvalid('firstName')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('firstName') }}
+          </p>
+        }
+      </div>
+
+      <!-- Last Name -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="lastName">
+          Last Name <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="lastName"
+          type="text"
+          formControlName="lastName"
+          placeholder="e.g. Doe"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          [ngClass]="isInvalid('lastName')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        />
+        @if (isInvalid('lastName')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('lastName') }}
+          </p>
+        }
+      </div>
+
+      <!-- Gender -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="gender">
+          Gender <span class="text-rose-500">*</span>
+        </label>
+        <select
+          id="gender"
+          formControlName="gender"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
+          [ngClass]="isInvalid('gender')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        >
+          <option value="" disabled>Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+        @if (isInvalid('gender')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('gender') }}
+          </p>
+        }
+      </div>
+
+      <!-- Date of Birth -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="dateOfBirth">
+          Date of Birth <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="dateOfBirth"
+          type="date"
+          formControlName="dateOfBirth"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          [ngClass]="isInvalid('dateOfBirth')
+            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+        />
+        @if (isInvalid('dateOfBirth')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('dateOfBirth') }}
+          </p>
+        }
+      </div>
+
+      <!-- Blood Group -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">
+          Blood Group <span class="text-rose-500">*</span>
+        </label>
+        <div class="flex flex-wrap gap-2">
+          @for (bg of bloodGroups; track bg) {
+            <button
+              type="button"
+              (click)="form.get('bloodGroup')!.setValue(bg); form.get('bloodGroup')!.markAsTouched()"
+              class="px-3 py-1.5 text-xs font-bold rounded-lg border transition-all"
+              [ngClass]="form.get('bloodGroup')?.value === bg
+                ? 'bg-red-500 text-white border-red-500 shadow-sm'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-red-300 hover:text-red-500'"
+            >
+              {{ bg }}
+            </button>
+          }
+        </div>
+        @if (isInvalid('bloodGroup')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('bloodGroup') }}
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="border-t border-slate-100"></div>
+
+  <!-- Section: Contact Info -->
+  <div>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
+      Contact Details
+    </h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Email -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="email">
+          Email Address <span class="text-rose-500">*</span>
+        </label>
+        <div class="relative">
+          <i class="pi pi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="john@example.com"
+            class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-all outline-none"
+            [ngClass]="isInvalid('email')
+              ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+              : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          />
+        </div>
+        @if (isInvalid('email')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('email') }}
+          </p>
+        }
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="contactNumber">
+          Phone Number <span class="text-rose-500">*</span>
+        </label>
+        <div class="relative">
+          <i class="pi pi-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input
+            id="contactNumber"
+            type="tel"
+            formControlName="contactNumber"
+            placeholder="+1 234 567 890"
+            class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-all outline-none"
+            [ngClass]="isInvalid('contactNumber')
+              ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+              : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          />
+        </div>
+        @if (isInvalid('contactNumber')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('contactNumber') }}
+          </p>
+        }
+      </div>
+
+      <!-- Address (full width) -->
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="address">
+          Address <span class="text-rose-500">*</span>
+        </label>
+        <div class="relative">
+          <i class="pi pi-map-marker absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+          <textarea
+            id="address"
+            formControlName="address"
+            rows="2"
+            placeholder="123 Main St, City, Country"
+            class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-all outline-none resize-none"
+            [ngClass]="isInvalid('address')
+              ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
+              : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          ></textarea>
+        </div>
+        @if (isInvalid('address')) {
+          <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            {{ getError('address') }}
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+    <button
+      type="button"
+      (click)="onCancel()"
+      class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      [disabled]="submitting"
+      class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+    >
+      @if (submitting) {
+        <i class="pi pi-spin pi-spinner text-xs"></i>
+        Saving...
+      } @else {
+        <i class="pi pi-check text-xs"></i>
+        Add Patient
+      }
+    </button>
+  </div>
+</form>

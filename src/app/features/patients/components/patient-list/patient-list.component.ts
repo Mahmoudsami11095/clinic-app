@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PatientService } from '../../services/patient.service';
 import { Patient } from '../../models/patient.model';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { PatientFormComponent } from '../patient-form/patient-form.component';
 
 @Component({
   selector: 'app-patient-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent, PatientFormComponent],
   templateUrl: './patient-list.component.html',
   styleUrl: './patient-list.component.css'
 })
@@ -17,6 +19,7 @@ export class PatientListComponent implements OnInit {
   loading = signal(true);
   searchQuery = signal('');
   selectedGender = signal<string>('all');
+  isModalOpen = signal(false);
 
   filteredPatients = computed(() => {
     let result = this.patients();
@@ -85,5 +88,18 @@ export class PatientListComponent implements OnInit {
       day: 'numeric',
       year: 'numeric',
     });
+  }
+
+  openModal() {
+    this.isModalOpen.set(true);
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+  }
+
+  handlePatientSaved(newPatient: Patient) {
+    this.patients.update(list => [newPatient, ...list]);
+    this.closeModal();
   }
 }
