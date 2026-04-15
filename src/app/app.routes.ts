@@ -14,7 +14,7 @@ export const routes: Routes = [
       { path: 'patients', loadChildren: () => import('./features/patients/patient.routes').then(m => m.patientRoutes) },
       { path: 'appointments', loadChildren: () => import('./features/appointments/appointment.routes').then(m => m.appointmentRoutes) },
       { path: 'doctors', loadChildren: () => import('./features/doctors/doctor.routes').then(m => m.doctorRoutes) },
-      { path: 'billing', component: DummyComponent }, // loadChildren: () => import('./features/billing/billing.routes').then(m => m.billingRoutes)
+      { path: 'billing', loadChildren: () => import('./features/billing/billing.routes').then(m => m.billingRoutes) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
