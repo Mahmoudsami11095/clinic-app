@@ -2,11 +2,13 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../../services/appointment.service';
-import { AppointmentWithDetails } from '../../models/appointment.model';
+import { Appointment, AppointmentWithDetails } from '../../models/appointment.model';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
 
 @Component({
   selector: 'app-appointment-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent],
   templateUrl: './appointment-list.component.html',
   styleUrl: './appointment-list.component.css'
 })
@@ -20,6 +22,7 @@ export class AppointmentListComponent implements OnInit {
   searchQuery = signal('');
   selectedStatus = signal<string>('all');
   selectedDate = signal<string>('');
+  isModalOpen = signal(false);
 
   filteredAppointments = computed(() => {
     let result = this.appointments();
@@ -99,5 +102,21 @@ export class AppointmentListComponent implements OnInit {
 
   isPast(dateStr: string): boolean {
     return new Date(dateStr) < new Date();
+  }
+
+  openModal() {
+    this.isModalOpen.set(true);
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+  }
+
+  handleAppointmentSaved(newAppt: Appointment) {
+    // Re-fetch all with details to ensure the UI shows the mapped patient/doctor names
+    this.appointmentService.getAllWithDetails().subscribe(data => {
+      this.appointments.set(data);
+    });
+    this.closeModal();
   }
 }
