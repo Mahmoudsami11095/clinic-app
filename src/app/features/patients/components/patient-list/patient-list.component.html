@@ -6,7 +6,10 @@
       <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Patients</h1>
       <p class="text-sm text-slate-500 mt-1">Manage your clinic's patient records</p>
     </div>
-    <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
+    <button
+      (click)="openModal()"
+      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+    >
       <i class="pi pi-plus text-xs"></i>
       Add Patient
     </button>
@@ -114,4 +117,17 @@
       }
     </div>
   }
+
+  <!-- Add Patient Modal -->
+  <app-modal
+    [isOpen]="isModalOpen()"
+    title="Add New Patient"
+    subtitle="Enter the patient's details to create a new record"
+    (close)="closeModal()"
+  >
+    <app-patient-form
+      (saved)="handlePatientSaved($event)"
+      (cancelled)="closeModal()"
+    ></app-patient-form>
+  </app-modal>
 </div>
