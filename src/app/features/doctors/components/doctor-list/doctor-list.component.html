@@ -1,0 +1,120 @@
+<div class="space-y-6">
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Medical Team</h1>
+      <p class="text-sm text-slate-500 mt-1">Manage doctors and their availability schedules</p>
+    </div>
+    <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
+      <i class="pi pi-user-plus text-xs"></i>
+      Add Doctor
+    </button>
+  </div>
+
+  <!-- Filters Bar -->
+  <div class="bg-white rounded-2xl border border-slate-200/60 p-4 shadow-sm">
+    <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+      <!-- Search Input -->
+      <div class="relative flex-1 w-full md:max-w-md">
+        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input
+          type="text"
+          placeholder="Search by name, email, or contact..."
+          (input)="onSearch($event)"
+          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+        />
+      </div>
+
+      <!-- Specialization Filter -->
+      <div class="w-full md:w-auto flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+        @for (spec of specializations(); track spec) {
+          <button
+            (click)="onSpecFilter(spec)"
+            [class]="selectedSpecialization() === spec
+              ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-800'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-800'"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap capitalize">
+            {{ spec === 'all' ? 'All Roles' : spec }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Roster Grid -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="h-64 rounded-2xl bg-white/60 animate-pulse border border-slate-200/50"></div>
+      }
+    </div>
+  } @else if (filteredDoctors().length === 0) {
+    <div class="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-2xl border border-slate-200/60 shadow-sm">
+      <i class="pi pi-users text-5xl mb-4 opacity-30 text-indigo-500"></i>
+      <p class="text-lg font-medium text-slate-600">No doctors found</p>
+      <p class="text-sm mt-1">Try adjusting your search criteria</p>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      @for (doctor of filteredDoctors(); track doctor.id) {
+        <div class="group bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
+          
+          <!-- Top Accent & Profile Header -->
+          <div class="h-24 w-full bg-gradient-to-r opacity-90 absolute top-0 left-0 right-0 z-0"
+               [class]="getAvatarColor(doctor.firstName)"></div>
+          
+          <div class="relative z-10 flex flex-col items-center pt-8 pb-4 border-b border-slate-100">
+            <!-- Avatar -->
+            <div class="w-20 h-20 rounded-2xl bg-white p-1 shadow-md mb-3 transform transition-transform group-hover:scale-105">
+              @if (doctor.avatar) {
+                <img [src]="doctor.avatar" class="w-full h-full rounded-xl object-cover" [alt]="doctor.firstName">
+              } @else {
+                <div class="w-full h-full rounded-xl flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-br"
+                     [class]="getAvatarColor(doctor.firstName)">
+                  {{ doctor.firstName.charAt(0) }}{{ doctor.lastName.charAt(0) }}
+                </div>
+              }
+            </div>
+            
+            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</h3>
+            <span class="mt-1 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wider">
+              {{ doctor.specialization }}
+            </span>
+          </div>
+
+          <!-- Contact Details -->
+          <div class="p-5 flex-1 flex flex-col gap-3 text-sm border-b border-slate-100">
+            <div class="flex items-center gap-3 text-slate-600">
+              <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                <i class="pi pi-envelope text-xs"></i>
+              </div>
+              <span class="truncate" [title]="doctor.email">{{ doctor.email }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-slate-600">
+              <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                <i class="pi pi-phone text-xs"></i>
+              </div>
+              <span>{{ doctor.contactNumber }}</span>
+            </div>
+          </div>
+
+          <!-- Availability Footer -->
+          <div class="p-5 bg-slate-50/50 mt-auto">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Availability</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                {{ doctor.availability.hours }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-700 font-medium">
+              <i class="pi pi-calendar-clock text-indigo-400"></i>
+              {{ getFormattedDays(doctor.availability.days) }}
+            </div>
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+</div>
