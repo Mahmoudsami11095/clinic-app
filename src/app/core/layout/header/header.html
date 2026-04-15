@@ -1,0 +1,36 @@
+<header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-10 w-full flex items-center justify-between px-8 shadow-sm">
+  
+  <!-- Search Bar -->
+  <div class="relative w-96 hidden md:block group">
+    <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+    <input type="text" placeholder="Search patients, appointments, or doctors..." 
+           class="w-full bg-slate-50/50 border border-slate-200 rounded-full py-2.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400">
+  </div>
+
+  <!-- Right Actions -->
+  <div class="flex items-center gap-4 ml-auto">
+    <!-- Notifications -->
+    <button class="relative p-2.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+      <i class="pi pi-bell text-xl"></i>
+      <span class="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+    </button>
+
+    <!-- Messages -->
+    <button class="p-2.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+      <i class="pi pi-envelope text-xl"></i>
+    </button>
+
+    <div class="h-8 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+    
+    <!-- Profile Dropdown (Placeholder) -->
+    <button class="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-slate-200 focus:outline-none">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
+        AU
+      </div>
+      <div class="hidden sm:flex flex-col text-left">
+        <span class="text-sm font-semibold text-slate-700 leading-tight">Admin User</span>
+      </div>
+      <i class="pi pi-angle-down text-slate-400 text-sm ml-1 hidden sm:block"></i>
+    </button>
+  </div>
+</header>
