@@ -6,6 +6,8 @@ import { Patient } from '../../models/patient.model';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { Clinic } from '../../../../core/models/clinic.model';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { ToastrService } from 'ngx-toastr';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 // Custom validator: date must be in the past
 function pastDateValidator(control: AbstractControl): ValidationErrors | null {
@@ -27,6 +29,8 @@ export class PatientFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
   private clinicService = inject(ClinicService);
+  private toastr = inject(ToastrService);
+  private langService = inject(LanguageService);
 
   submitting = false;
   clinicsList = signal<Clinic[]>([]);
@@ -112,10 +116,20 @@ export class PatientFormComponent implements OnInit {
     this.patientService.create(newPatient).subscribe({
       next: () => {
         this.submitting = false;
+        this.toastr.success(
+          this.langService.translate('toast.patient_created'),
+          this.langService.translate('toast.success')
+        );
         this.saved.emit(newPatient);
         this.form.reset();
       },
-      error: () => { this.submitting = false; }
+      error: () => {
+        this.submitting = false;
+        this.toastr.error(
+          this.langService.translate('toast.patient_create_error'),
+          this.langService.translate('toast.error')
+        );
+      }
     });
   }
 

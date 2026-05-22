@@ -5,6 +5,7 @@ import { DoctorService } from '../../services/doctor.service';
 import { Doctor } from '../../models/doctor.model';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-doctor-form',
@@ -19,6 +20,7 @@ export class DoctorFormComponent {
   private fb = inject(FormBuilder);
   private doctorService = inject(DoctorService);
   protected langService = inject(LanguageService);
+  private toastr = inject(ToastrService);
 
   submitting = false;
 
@@ -78,10 +80,20 @@ export class DoctorFormComponent {
     this.doctorService.create(newDoctor).subscribe({
       next: () => {
         this.submitting = false;
+        this.toastr.success(
+          this.langService.translate('toast.doctor_added'),
+          this.langService.translate('toast.success')
+        );
         this.saved.emit(newDoctor);
         this.form.reset();
       },
-      error: () => this.submitting = false
+      error: () => {
+        this.submitting = false;
+        this.toastr.error(
+          this.langService.translate('toast.doctor_add_error'),
+          this.langService.translate('toast.error')
+        );
+      }
     });
   }
 

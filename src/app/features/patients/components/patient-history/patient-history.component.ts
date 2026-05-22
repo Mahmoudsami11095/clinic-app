@@ -9,6 +9,8 @@ import { BillingService } from '../../../billing/services/billing.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalService, DentalLog } from '../../../../core/services/dental.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ToastrService } from 'ngx-toastr';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-patient-history',
@@ -621,6 +623,8 @@ export class PatientHistoryComponent implements OnInit {
   private billingService = inject(BillingService);
   private dentalService = inject(DentalService);
   protected authService = inject(AuthService);
+  private toastr = inject(ToastrService);
+  private langService = inject(LanguageService);
 
   activeTab = signal<'overview' | 'appointments' | 'prescriptions' | 'billing' | 'dental'>('overview');
   appointments = signal<any[]>([]);
@@ -833,11 +837,19 @@ export class PatientHistoryComponent implements OnInit {
       next: (newLog) => {
         this.dentalLogs.update(logs => [newLog, ...logs]);
         this.submittingDentalLog.set(false);
+        this.toastr.success(
+          this.langService.translate('toast.dental_log_saved'),
+          this.langService.translate('toast.success')
+        );
         this.selectTooth(toothNum);
       },
       error: (err) => {
         console.error('Error adding dental log:', err);
         this.submittingDentalLog.set(false);
+        this.toastr.error(
+          this.langService.translate('toast.dental_log_save_error'),
+          this.langService.translate('toast.error')
+        );
       }
     });
   }

@@ -6,6 +6,7 @@ import { Prescription, MedicationItem } from '../../models/prescription.model';
 import { PrescriptionService } from '../../services/prescription.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-prescription-form',
@@ -178,6 +179,7 @@ export class PrescriptionFormComponent implements OnInit {
 
   private prescriptionService = inject(PrescriptionService);
   private langService = inject(LanguageService);
+  private toastr = inject(ToastrService);
 
   medications: MedicationItem[] = [];
   notes = '';
@@ -208,7 +210,10 @@ export class PrescriptionFormComponent implements OnInit {
     // Filter out completely blank medications
     const validMeds = this.medications.filter(m => m.name.trim() !== '');
     if (validMeds.length === 0) {
-      alert(this.langService.translate('prescriptions.add_at_least_one_error'));
+      this.toastr.warning(
+        this.langService.translate('toast.prescription_min_med_error'),
+        this.langService.translate('toast.error')
+      );
       return;
     }
 
@@ -224,11 +229,35 @@ export class PrescriptionFormComponent implements OnInit {
 
     if (this.prescription) {
       this.prescriptionService.update(newPrescription).subscribe({
-        next: () => this.saved.emit(newPrescription)
+        next: () => {
+          this.toastr.success(
+            this.langService.translate('toast.prescription_saved'),
+            this.langService.translate('toast.success')
+          );
+          this.saved.emit(newPrescription);
+        },
+        error: () => {
+          this.toastr.error(
+            this.langService.translate('toast.prescription_save_error'),
+            this.langService.translate('toast.error')
+          );
+        }
       });
     } else {
       this.prescriptionService.create(newPrescription).subscribe({
-        next: () => this.saved.emit(newPrescription)
+        next: () => {
+          this.toastr.success(
+            this.langService.translate('toast.prescription_saved'),
+            this.langService.translate('toast.success')
+          );
+          this.saved.emit(newPrescription);
+        },
+        error: () => {
+          this.toastr.error(
+            this.langService.translate('toast.prescription_save_error'),
+            this.langService.translate('toast.error')
+          );
+        }
       });
     }
   }
