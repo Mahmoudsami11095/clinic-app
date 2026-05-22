@@ -69,6 +69,20 @@
         "days": ["Sunday", "Tuesday", "Thursday"],
         "hours": "09:00-17:00"
       }
+    },
+    {
+      "id": "106",
+      "firstName": "Marcus",
+      "lastName": "Vance",
+      "specialization": "Dentistry",
+      "email": "dr.vance@clinic.com",
+      "contactNumber": "+1234567890",
+      "avatar": null,
+      "clinicIds": ["clinic-1", "clinic-2", "clinic-3"],
+      "availability": {
+        "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "hours": "09:00-17:00"
+      }
     }
   ]
 }

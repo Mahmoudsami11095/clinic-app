@@ -109,6 +109,14 @@ export class AppointmentFormComponent implements OnInit {
   private syncClinicFromHeader(activeId: string): void {
     const user = this.authService.currentUser();
 
+    if (user.role === 'doctor') {
+      this.form.get('clinicId')?.clearValidators();
+      this.form.get('clinicId')?.setValue('all', { emitEvent: false });
+      this.showClinicSelector.set(false);
+      this.form.get('clinicId')?.updateValueAndValidity({ emitEvent: false });
+      return;
+    }
+
     if (user.role === 'patient' && user.clinicId) {
       this.form.get('clinicId')?.clearValidators();
       this.form.get('clinicId')?.setValue(user.clinicId, { emitEvent: false });
@@ -222,26 +230,38 @@ export class AppointmentFormComponent implements OnInit {
   }
 
   applyFilters() {
-    const clinicId = this.resolveClinicId();
     const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
-
     let docs = this.allDoctors;
     let pats = this.allPatients;
 
-    if (clinicId && clinicId !== 'all') {
-      docs = docs.filter(d => d.clinicIds?.includes(clinicId));
-      pats = pats.filter(p => p.clinicId === clinicId);
-    } else if (this.showClinicSelector()) {
-      docs = [];
-      pats = [];
+    if (this.authService.isDoctor()) {
+      const clinicIds = new Set(this.authService.currentUser().clinicIds ?? []);
+      docs = docs.filter(d => d.clinicIds?.some(id => clinicIds.has(id)));
+      pats = pats.filter(p => p.clinicId && clinicIds.has(p.clinicId));
+    } else {
+      const clinicId = this.resolveClinicId();
+      if (clinicId && clinicId !== 'all') {
+        docs = docs.filter(d => d.clinicIds?.includes(clinicId));
+        pats = pats.filter(p => p.clinicId === clinicId);
+      } else if (this.showClinicSelector()) {
+        docs = [];
+        pats = [];
+      }
     }
 
     if (doctorId) {
       const linkedIds = getDoctorLinkedPatientIds(doctorId);
       const seen = new Set(pats.map(p => p.id));
+      const scopeClinicId = this.authService.isDoctor() ? null : this.resolveClinicId();
+      const doctorClinicIds = new Set(this.authService.currentUser().clinicIds ?? []);
+
       for (const patient of this.allPatients) {
         if (!linkedIds.has(patient.id) || seen.has(patient.id)) continue;
-        if (clinicId && clinicId !== 'all' && patient.clinicId !== clinicId) continue;
+        if (this.authService.isDoctor()) {
+          if (patient.clinicId && !doctorClinicIds.has(patient.clinicId)) continue;
+        } else if (scopeClinicId && scopeClinicId !== 'all' && patient.clinicId !== scopeClinicId) {
+          continue;
+        }
         pats.push(patient);
         seen.add(patient.id);
       }
@@ -264,7 +284,11 @@ export class AppointmentFormComponent implements OnInit {
 
     this.submitting = true;
     const rawValue = this.form.getRawValue();
-    const clinicId = this.resolveClinicId();
+    const patient = this.allPatients.find(p => p.id === rawValue.patientId);
+    let clinicId = this.resolveClinicId();
+    if (clinicId === 'all' || !clinicId) {
+      clinicId = patient?.clinicId ?? this.authService.currentUser().clinicIds?.[0] ?? clinicId;
+    }
 
     if (this.isEditMode && this.appointment) {
       const updated: Appointment = {

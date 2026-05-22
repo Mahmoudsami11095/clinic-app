@@ -69,6 +69,15 @@ export class AuthService {
       title: 'Senior Dentist'
     },
     {
+      id: 'doc-106',
+      name: 'Dr. Marcus Vance',
+      role: 'doctor',
+      doctorId: '106',
+      clinicIds: ['clinic-1', 'clinic-2', 'clinic-3'],
+      email: 'dr.vance@clinic.com',
+      title: 'Dentist Practitioner'
+    },
+    {
       id: 'asst-101',
       name: 'City Clinic Assistant',
       role: 'assistant',

@@ -42,9 +42,7 @@ export class BillingListComponent implements OnInit {
 
   // Derived Stats
   totalOutstanding = computed(() => {
-    const activeClinicId = this.clinicService.activeClinicId();
-    return this.billingRecords()
-      .filter(b => activeClinicId === 'all' || b.clinicId === activeClinicId)
+    return this.clinicService.filterByActiveClinic(this.billingRecords())
       .reduce((sum, b) => {
         if (b.status === 'paid') return sum;
         const paid = b.paidAmount !== undefined ? b.paidAmount : 0;
@@ -53,9 +51,7 @@ export class BillingListComponent implements OnInit {
   });
 
   totalCollected = computed(() => {
-    const activeClinicId = this.clinicService.activeClinicId();
-    return this.billingRecords()
-      .filter(b => activeClinicId === 'all' || b.clinicId === activeClinicId)
+    return this.clinicService.filterByActiveClinic(this.billingRecords())
       .reduce((sum, b) => {
         if (b.status === 'paid') {
           return sum + (b.paidAmount !== undefined ? b.paidAmount : b.amount);
@@ -68,11 +64,7 @@ export class BillingListComponent implements OnInit {
     let result = this.billingRecords();
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.selectedStatus();
-    const activeClinicId = this.clinicService.activeClinicId();
-
-    if (activeClinicId !== 'all') {
-      result = result.filter(b => b.clinicId === activeClinicId);
-    }
+    result = this.clinicService.filterByActiveClinic(result);
 
     if (query) {
       result = result.filter(b => 

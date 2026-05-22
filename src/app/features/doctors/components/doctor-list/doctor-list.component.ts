@@ -36,10 +36,11 @@ export class DoctorListComponent implements OnInit {
 
   filteredDoctors = computed(() => {
     let result = this.doctors();
-    const activeClinicId = this.clinicService.activeClinicId();
-
-    if (activeClinicId !== 'all') {
-      result = result.filter(d => d.clinicIds?.includes(activeClinicId));
+    if (this.clinicService.shouldFilterByActiveClinic()) {
+      const activeClinicId = this.clinicService.activeClinicId();
+      if (activeClinicId !== 'all') {
+        result = result.filter(d => d.clinicIds?.includes(activeClinicId));
+      }
     }
 
     const query = this.searchQuery().toLowerCase().trim();

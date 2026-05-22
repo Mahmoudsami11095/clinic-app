@@ -25,6 +25,7 @@ export function resolveMockEntity(url: string): string | null {
   if (url.includes('/api/billing')) return 'billing';
   if (url.includes('/api/prescriptions')) return 'prescriptions';
   if (url.includes('/api/clinics')) return 'clinics';
+  if (url.includes('/api/dental')) return 'dental';
   return null;
 }
 
@@ -50,6 +51,26 @@ export function isMockDatabaseInitialized(): boolean {
 /** Load all JSON seed files into localStorage (runs once until storage is cleared). */
 export async function initializeMockDatabase(http: HttpClient): Promise<void> {
   if (isMockDatabaseInitialized()) {
+    // Ensure Dr. Marcus Vance (id: '106') is loaded into the mock database even if it was previously initialized
+    const doctors = readMockList('doctors');
+    const hasVance = doctors.some((d: any) => d.id === '106');
+    if (!hasVance) {
+      const vance = {
+        id: '106',
+        firstName: 'Marcus',
+        lastName: 'Vance',
+        specialization: 'Dentistry',
+        email: 'dr.vance@clinic.com',
+        contactNumber: '+1234567890',
+        avatar: null,
+        clinicIds: ['clinic-1', 'clinic-2', 'clinic-3'],
+        availability: {
+          days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          hours: '09:00-17:00'
+        }
+      };
+      writeMockList('doctors', [...doctors, vance]);
+    }
     return;
   }
 
@@ -74,6 +95,10 @@ export async function initializeMockDatabase(http: HttpClient): Promise<void> {
 
   if (!localStorage.getItem(mockStorageKey('prescriptions'))) {
     writeMockList('prescriptions', []);
+  }
+
+  if (!localStorage.getItem(mockStorageKey('dental'))) {
+    writeMockList('dental', []);
   }
 
   localStorage.setItem(INIT_FLAG_KEY, 'true');

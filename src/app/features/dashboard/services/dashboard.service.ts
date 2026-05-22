@@ -46,8 +46,8 @@ export class DashboardService {
         let apptsList = appointments.data;
         let billsList = billing.data;
 
-        // 1. Filter by Active Clinic
-        if (activeClinicId !== 'all') {
+        // 1. Filter by Active Clinic (skipped for doctors — they see all assigned clinics)
+        if (this.clinicService.shouldFilterByActiveClinic() && activeClinicId !== 'all') {
           patientsList = patientsList.filter(p => p.clinicId === activeClinicId);
           doctorsList = doctorsList.filter(d => d.clinicIds?.includes(activeClinicId));
           apptsList = apptsList.filter(a => a.clinicId === activeClinicId);
