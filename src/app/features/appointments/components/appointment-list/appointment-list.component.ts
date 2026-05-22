@@ -11,6 +11,7 @@ import { Prescription } from '../../../prescriptions/models/prescription.model';
 import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-appointment-list',
@@ -23,6 +24,7 @@ export class AppointmentListComponent implements OnInit {
   private prescriptionService = inject(PrescriptionService);
   protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
+  private languageService = inject(LanguageService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
@@ -33,6 +35,7 @@ export class AppointmentListComponent implements OnInit {
   selectedStatus = signal<string>('all');
   selectedDate = signal<string>('');
   isModalOpen = signal(false);
+  editingAppointment = signal<AppointmentWithDetails | null>(null);
 
   // Prescription Modal State
   isPrescriptionModalOpen = signal(false);
@@ -48,11 +51,16 @@ export class AppointmentListComponent implements OnInit {
       result = result.filter(a => a.clinicId === activeClinicId);
     }
     
-    const doctorId = this.authService.currentDoctorId();
+    const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
     const patientId = this.authService.currentPatientId();
 
     if (doctorId) {
       result = result.filter(a => a.doctorId === doctorId);
+    } else if (this.authService.isAssistant()) {
+      const assistantClinicId = this.authService.currentUser().clinicId;
+      if (assistantClinicId && activeClinicId === 'all') {
+        result = result.filter(a => a.clinicId === assistantClinicId);
+      }
     } else if (patientId) {
       result = result.filter(a => a.patientId === patientId);
     }
@@ -138,15 +146,37 @@ export class AppointmentListComponent implements OnInit {
     return new Date(dateStr) < new Date();
   }
 
+  canManageAppointments(): boolean {
+    return this.authService.isDoctor() || this.authService.isAssistant();
+  }
+
   openModal() {
+    this.editingAppointment.set(null);
+    this.isModalOpen.set(true);
+  }
+
+  openEditModal(appt: AppointmentWithDetails) {
+    this.editingAppointment.set(appt);
     this.isModalOpen.set(true);
   }
 
   closeModal() {
     this.isModalOpen.set(false);
+    this.editingAppointment.set(null);
   }
 
-  handleAppointmentSaved(newAppt: Appointment) {
+  deleteAppointment(appt: AppointmentWithDetails) {
+    if (!confirm(this.languageService.translate('appointments.confirm_delete'))) {
+      return;
+    }
+    this.appointmentService.delete(appt.id).subscribe({
+      next: () => {
+        this.appointments.update(list => list.filter(a => a.id !== appt.id));
+      }
+    });
+  }
+
+  handleAppointmentSaved(_saved: Appointment) {
     this.appointmentService.getAllWithDetails().subscribe(data => {
       this.appointments.set(data);
     });

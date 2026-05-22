@@ -57,8 +57,10 @@
           [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('patientId') }"
         >
           <option value="" disabled>{{ 'appointments.select_patient' | translate }}</option>
-          @if (filteredPatientsList().length === 0) {
+          @if (filteredPatientsList().length === 0 && showClinicSelector() && !form.get('clinicId')?.value) {
             <option value="" disabled>{{ 'appointments.no_patients_avail' | translate }}</option>
+          } @else if (filteredPatientsList().length === 0) {
+            <option value="" disabled>{{ 'appointments.no_patients_in_clinic' | translate }}</option>
           }
           @for (p of filteredPatientsList(); track p.id) {
             <option [value]="p.id">{{ p.firstName }} {{ p.lastName }}</option>
@@ -78,7 +80,7 @@
         <!-- Locked Mode for Doctors/Assistants -->
         <div *ngIf="authService.isDoctor() || authService.isAssistant()" class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-500 font-semibold flex items-center gap-2">
           <i class="pi pi-user-plus text-xs"></i>
-          {{ authService.isDoctor() ? authService.currentUser().name : 'Dr. Sarah Jenkins' }}
+          {{ lockedDoctorLabel() || authService.currentUser().name }}
         </div>
 
         <select
@@ -89,8 +91,10 @@
           [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('doctorId') }"
         >
           <option value="" disabled>{{ 'appointments.select_doctor' | translate }}</option>
-          @if (filteredDoctorsList().length === 0) {
+          @if (filteredDoctorsList().length === 0 && showClinicSelector() && !form.get('clinicId')?.value) {
             <option value="" disabled>{{ 'appointments.no_doctors_avail' | translate }}</option>
+          } @else if (filteredDoctorsList().length === 0) {
+            <option value="" disabled>{{ 'appointments.no_doctors_in_clinic' | translate }}</option>
           }
           @for (d of filteredDoctorsList(); track d.id) {
             <option [value]="d.id">Dr. {{ d.firstName }} {{ d.lastName }} ({{ d.specialization }})</option>
@@ -156,11 +160,29 @@
           }
         </select>
       </div>
+
+      <!-- Status (edit only) -->
+      @if (isEditMode) {
+        <div class="sm:col-span-2 lg:col-span-1">
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="status">
+            {{ 'appointments.status_label' | translate }} <span class="text-rose-500">*</span>
+          </label>
+          <select
+            id="status"
+            formControlName="status"
+            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
+          >
+            @for (st of appointmentStatuses; track st) {
+              <option [value]="st">{{ 'appointments.status_' + st | translate }}</option>
+            }
+          </select>
+        </div>
+      }
     </div>
   </div>
 
-  <!-- Section 3: Optional Billing (Doctor / Assistant only) -->
-  <div *ngIf="authService.isDoctor() || authService.isAssistant()" class="pt-4 border-t border-slate-100">
+  <!-- Section 3: Optional Billing (Doctor / Assistant only, create only) -->
+  <div *ngIf="!isEditMode && (authService.isDoctor() || authService.isAssistant())" class="pt-4 border-t border-slate-100">
     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
       <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">3</span>
       {{ 'appointments.billing_section' | translate }}
@@ -245,10 +267,14 @@
     >
       @if (submitting) {
         <i class="pi pi-spin pi-spinner text-xs"></i>
-        {{ 'appointments.scheduling' | translate }}
+        {{ (isEditMode ? 'appointments.saving' : 'appointments.scheduling') | translate }}
       } @else {
-        <i class="pi pi-calendar-plus text-xs"></i>
-        {{ (authService.isPatient() ? 'appointments.request_slot' : 'appointments.schedule_appointment') | translate }}
+        <i class="pi" [class]="isEditMode ? 'pi-check text-xs' : 'pi-calendar-plus text-xs'"></i>
+        @if (isEditMode) {
+          {{ 'appointments.save_changes' | translate }}
+        } @else {
+          {{ (authService.isPatient() ? 'appointments.request_slot' : 'appointments.schedule_appointment') | translate }}
+        }
       }
     </button>
   </div>

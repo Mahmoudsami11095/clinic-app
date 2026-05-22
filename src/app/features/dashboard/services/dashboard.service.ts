@@ -39,7 +39,7 @@ export class DashboardService {
       billing: this.http.get<{ data: any[] }>('/api/billing'),
     }).pipe(
       map(({ patients, appointments, doctors, billing }) => {
-        const doctorId = this.authService.currentDoctorId();
+        const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
         
         let patientsList = patients.data;
         let doctorsList = doctors.data;

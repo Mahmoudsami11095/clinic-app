@@ -87,7 +87,13 @@ export class PatientFormComponent implements OnInit {
 
     this.submitting = true;
     const rawValue = this.form.getRawValue();
-    const clinicId = rawValue.clinicId || this.clinicService.activeClinicId();
+    const activeId = this.clinicService.activeClinicId();
+    const clinicId =
+      rawValue.clinicId && rawValue.clinicId !== 'all'
+        ? rawValue.clinicId
+        : activeId !== 'all'
+          ? activeId
+          : rawValue.clinicId!;
 
     const newPatient: Patient = {
       id: crypto.randomUUID(),

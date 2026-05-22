@@ -115,7 +115,11 @@ export class AuthService {
   isAssistant = computed(() => this.currentUserSignal().role === 'assistant');
   isPatient = computed(() => this.currentUserSignal().role === 'patient');
 
-  currentDoctorId = computed(() => this.currentUserSignal().doctorId);
+  /** Only set for users with role `doctor` (assistants store supervising doctor on `doctorId` separately). */
+  currentDoctorId = computed(() => {
+    const user = this.currentUserSignal();
+    return user.role === 'doctor' ? user.doctorId : undefined;
+  });
   currentPatientId = computed(() => this.currentUserSignal().patientId);
 
   private getInitialUser(): User {

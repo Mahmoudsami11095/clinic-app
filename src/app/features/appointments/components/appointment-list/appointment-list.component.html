@@ -153,7 +153,25 @@
                 <td class="py-4 px-6 text-end">
                   <div class="flex items-center justify-end gap-2">
                     <!-- For Doctor and Assistant -->
-                    @if (authService.isDoctor() || authService.isAssistant()) {
+                    @if (canManageAppointments()) {
+                      <button
+                        type="button"
+                        (click)="openEditModal(appt)"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
+                        [title]="'appointments.edit_appointment' | translate"
+                      >
+                        <i class="pi pi-pencil text-[10px]"></i>
+                        {{ 'appointments.edit_appointment' | translate }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteAppointment(appt)"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-semibold transition-colors"
+                        [title]="'appointments.delete_appointment' | translate"
+                      >
+                        <i class="pi pi-trash text-[10px]"></i>
+                        {{ 'appointments.delete_appointment' | translate }}
+                      </button>
                       @if (getPrescriptionForAppointment(appt.id); as pres) {
                         <button
                           type="button"
@@ -218,15 +236,16 @@
     </div>
   </div>
 
-  <!-- Book Appointment Modal -->
+  <!-- Book / Edit Appointment Modal -->
   <app-modal
     [isOpen]="isModalOpen()"
-    [title]="(authService.isPatient() ? 'appointments.modal_request_title' : 'appointments.modal_schedule_title') | translate"
-    [subtitle]="(authService.isPatient() ? 'appointments.modal_request_subtitle' : 'appointments.modal_schedule_subtitle') | translate"
+    [title]="(editingAppointment() ? 'appointments.modal_edit_title' : (authService.isPatient() ? 'appointments.modal_request_title' : 'appointments.modal_schedule_title')) | translate"
+    [subtitle]="(editingAppointment() ? 'appointments.modal_edit_subtitle' : (authService.isPatient() ? 'appointments.modal_request_subtitle' : 'appointments.modal_schedule_subtitle')) | translate"
     (close)="closeModal()"
   >
     @if (isModalOpen()) {
       <app-appointment-form
+        [appointment]="editingAppointment()"
         (saved)="handleAppointmentSaved($event)"
         (cancelled)="closeModal()"
       ></app-appointment-form>
