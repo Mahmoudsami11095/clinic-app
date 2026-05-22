@@ -149,6 +149,10 @@ export class AppointmentListComponent implements OnInit {
     return this.authService.isDoctor() || this.authService.isAssistant();
   }
 
+  canManagePrescriptions(): boolean {
+    return this.authService.isDoctor();
+  }
+
   openModal() {
     this.editingAppointment.set(null);
     this.isModalOpen.set(true);

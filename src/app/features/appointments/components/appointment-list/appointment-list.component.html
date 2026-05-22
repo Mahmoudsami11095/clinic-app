@@ -172,26 +172,40 @@
                         <i class="pi pi-trash text-[10px]"></i>
                         {{ 'appointments.delete_appointment' | translate }}
                       </button>
-                      @if (getPrescriptionForAppointment(appt.id); as pres) {
-                        <button
-                          type="button"
-                          (click)="openPrescriptionModal(appt, false)"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
-                          [title]="'appointments.edit_rx' | translate"
-                        >
-                          <i class="pi pi-file-edit text-[10px]"></i>
-                          {{ 'appointments.edit_rx' | translate }}
-                        </button>
-                      } @else {
-                        @if (appt.status !== 'cancelled') {
+                      @if (canManagePrescriptions()) {
+                        @if (getPrescriptionForAppointment(appt.id); as pres) {
                           <button
                             type="button"
                             (click)="openPrescriptionModal(appt, false)"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
-                            [title]="'appointments.prescribe' | translate"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
+                            [title]="'appointments.edit_rx' | translate"
                           >
-                            <i class="pi pi-file-plus text-[10px]"></i>
-                            {{ 'appointments.prescribe' | translate }}
+                            <i class="pi pi-file-edit text-[10px]"></i>
+                            {{ 'appointments.edit_rx' | translate }}
+                          </button>
+                        } @else {
+                          @if (appt.status !== 'cancelled') {
+                            <button
+                              type="button"
+                              (click)="openPrescriptionModal(appt, false)"
+                              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
+                              [title]="'appointments.prescribe' | translate"
+                            >
+                              <i class="pi pi-file-plus text-[10px]"></i>
+                              {{ 'appointments.prescribe' | translate }}
+                            </button>
+                          }
+                        }
+                      } @else if (authService.isAssistant()) {
+                        @if (getPrescriptionForAppointment(appt.id); as pres) {
+                          <button
+                            type="button"
+                            (click)="openPrescriptionModal(appt, true)"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
+                            [title]="'appointments.view_rx' | translate"
+                          >
+                            <i class="pi pi-file text-[10px]"></i>
+                            {{ 'appointments.view_rx' | translate }}
                           </button>
                         }
                       }
