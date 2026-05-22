@@ -40,6 +40,14 @@ export class AuthService {
       title: 'Pediatric Specialist'
     },
     {
+      id: 'doc-105',
+      name: 'Dr. Zidan Kareem',
+      role: 'doctor',
+      doctorId: '105',
+      email: 'dr.zidan@clinic.com',
+      title: 'Senior Dentist'
+    },
+    {
       id: 'asst-101',
       name: 'Sarah\'s Assistant',
       role: 'assistant',

@@ -79,6 +79,7 @@ export class BillingListComponent implements OnInit {
 
   ngOnInit() {
     const doctorId = this.authService.currentDoctorId();
+    const patientId = this.authService.currentPatientId();
 
     if (doctorId) {
       forkJoin({
@@ -107,6 +108,14 @@ export class BillingListComponent implements OnInit {
           this.loading.set(false);
         },
         error: () => this.loading.set(false)
+      });
+    } else if (patientId) {
+      this.billingService.getAllWithDetails().subscribe({
+        next: (data) => {
+          this.billingRecords.set(data.filter(b => b.patientId === patientId));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
       });
     } else {
       this.billingService.getAllWithDetails().subscribe({
