@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, map } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ClinicService } from '../../../core/services/clinic.service';
 
 export interface DashboardStats {
   totalPatients: number;
@@ -26,8 +27,11 @@ export interface RecentAppointment {
 export class DashboardService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private clinicService = inject(ClinicService);
 
   getDashboardData() {
+    const activeClinicId = this.clinicService.activeClinicId();
+
     return forkJoin({
       patients: this.http.get<{ data: any[] }>('/api/patients'),
       appointments: this.http.get<{ data: any[] }>('/api/appointments'),
@@ -37,12 +41,23 @@ export class DashboardService {
       map(({ patients, appointments, doctors, billing }) => {
         const doctorId = this.authService.currentDoctorId();
         
+        let patientsList = patients.data;
+        let doctorsList = doctors.data;
         let apptsList = appointments.data;
         let billsList = billing.data;
-        
+
+        // 1. Filter by Active Clinic
+        if (activeClinicId !== 'all') {
+          patientsList = patientsList.filter(p => p.clinicId === activeClinicId);
+          doctorsList = doctorsList.filter(d => d.clinicIds?.includes(activeClinicId));
+          apptsList = apptsList.filter(a => a.clinicId === activeClinicId);
+          billsList = billsList.filter(b => b.clinicId === activeClinicId);
+        }
+
+        // 2. Filter by Doctor if logged in as doctor
         if (doctorId) {
-          apptsList = appointments.data.filter(a => a.doctorId === doctorId);
-          billsList = billing.data.filter(b => {
+          apptsList = apptsList.filter(a => a.doctorId === doctorId);
+          billsList = billsList.filter(b => {
             if (b.appointmentId) {
               const appt = appointments.data.find(a => a.id === b.appointmentId);
               return appt && appt.doctorId === doctorId;
@@ -55,8 +70,8 @@ export class DashboardService {
         const uniquePatientIds = new Set(apptsList.map(a => a.patientId));
 
         const stats: DashboardStats = {
-          totalPatients: doctorId ? uniquePatientIds.size : patients.data.length,
-          totalDoctors: doctorId ? 1 : doctors.data.length,
+          totalPatients: doctorId ? uniquePatientIds.size : patientsList.length,
+          totalDoctors: doctorId ? 1 : doctorsList.length,
           todayAppointments: apptsList.filter(a => a.status === 'scheduled').length,
           totalRevenue: billsList
             .filter(b => b.status === 'paid')

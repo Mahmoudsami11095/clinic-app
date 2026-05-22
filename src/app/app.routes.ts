@@ -37,6 +37,12 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['admin', 'doctor', 'assistant', 'patient'] }
       },
+      {
+        path: 'clinics',
+        loadChildren: () => import('./features/clinics/clinics.routes').then(m => m.clinicsRoutes),
+        canActivate: [roleGuard],
+        data: { roles: ['admin'] }
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

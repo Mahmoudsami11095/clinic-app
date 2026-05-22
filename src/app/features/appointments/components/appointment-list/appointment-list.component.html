@@ -224,10 +224,12 @@
     subtitle="{{ authService.isPatient() ? 'Select a doctor, date, and visit type to request a slot' : 'Book a new appointment slot for a patient' }}"
     (close)="closeModal()"
   >
-    <app-appointment-form
-      (saved)="handleAppointmentSaved($event)"
-      (cancelled)="closeModal()"
-    ></app-appointment-form>
+    @if (isModalOpen()) {
+      <app-appointment-form
+        (saved)="handleAppointmentSaved($event)"
+        (cancelled)="closeModal()"
+      ></app-appointment-form>
+    }
   </app-modal>
 
   <!-- Medical Prescription Modal -->

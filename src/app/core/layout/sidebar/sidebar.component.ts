@@ -18,12 +18,19 @@ export class Sidebar {
     { label: 'Appointments', route: '/appointments', icon: 'pi pi-calendar', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { label: 'Doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
     { label: 'Billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
+    { label: 'Clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin'] },
   ];
 
   menuItems = computed(() => {
-    const role = this.authService.currentUser().role;
+    const user = this.authService.currentUser();
+    const role = user.role;
     return this.allMenuItems
-      .filter(item => item.roles.includes(role))
+      .filter(item => {
+        if (item.route === '/clinics') {
+          return role === 'admin' && !user.clinicId;
+        }
+        return item.roles.includes(role);
+      })
       .map(item => {
         if (role === 'patient' && item.route === '/appointments') {
           return { ...item, label: 'My Portal' };

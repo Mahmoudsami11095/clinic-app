@@ -12,4 +12,5 @@ export interface Doctor {
   contactNumber: string;
   avatar: string | null;
   availability: DoctorAvailability;
+  clinicIds?: string[];
 }

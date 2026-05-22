@@ -8,6 +8,7 @@
       "email": "dr.jenkins@clinic.com",
       "contactNumber": "+1122334455",
       "avatar": null,
+      "clinicIds": ["clinic-1", "clinic-2"],
       "availability": {
         "days": ["Monday", "Wednesday", "Friday"],
         "hours": "09:00-17:00"
@@ -21,6 +22,7 @@
       "email": "dr.chen@clinic.com",
       "contactNumber": "+5544332211",
       "avatar": null,
+      "clinicIds": ["clinic-2", "clinic-3"],
       "availability": {
         "days": ["Tuesday", "Thursday"],
         "hours": "10:00-18:00"
@@ -34,6 +36,7 @@
       "email": "dr.torres@clinic.com",
       "contactNumber": "+7788990011",
       "avatar": null,
+      "clinicIds": ["clinic-1"],
       "availability": {
         "days": ["Monday", "Tuesday", "Thursday"],
         "hours": "08:00-16:00"
@@ -47,6 +50,7 @@
       "email": "dr.patel@clinic.com",
       "contactNumber": "+3344556677",
       "avatar": null,
+      "clinicIds": ["clinic-1", "clinic-3"],
       "availability": {
         "days": ["Wednesday", "Friday"],
         "hours": "09:00-15:00"
@@ -60,6 +64,7 @@
       "email": "dr.zidan@clinic.com",
       "contactNumber": "+96655443322",
       "avatar": null,
+      "clinicIds": ["clinic-2", "clinic-3"],
       "availability": {
         "days": ["Sunday", "Tuesday", "Thursday"],
         "hours": "09:00-17:00"

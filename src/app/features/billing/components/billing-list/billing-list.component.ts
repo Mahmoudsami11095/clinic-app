@@ -6,6 +6,7 @@ import { BillingRecord, BillingRecordWithDetails } from '../../models/billing.mo
 import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ClinicService } from '../../../../core/services/clinic.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { BillingFormComponent } from '../billing-form/billing-form.component';
 import { forkJoin } from 'rxjs';
@@ -21,6 +22,7 @@ export class BillingListComponent implements OnInit {
   private patientService = inject(PatientService);
   private appointmentService = inject(AppointmentService);
   protected authService = inject(AuthService);
+  private clinicService = inject(ClinicService);
 
   billingRecords = signal<BillingRecordWithDetails[]>([]);
   loading = signal(true);
@@ -39,7 +41,9 @@ export class BillingListComponent implements OnInit {
 
   // Derived Stats
   totalOutstanding = computed(() => {
+    const activeClinicId = this.clinicService.activeClinicId();
     return this.billingRecords()
+      .filter(b => activeClinicId === 'all' || b.clinicId === activeClinicId)
       .reduce((sum, b) => {
         if (b.status === 'paid') return sum;
         const paid = b.paidAmount !== undefined ? b.paidAmount : 0;
@@ -48,7 +52,9 @@ export class BillingListComponent implements OnInit {
   });
 
   totalCollected = computed(() => {
+    const activeClinicId = this.clinicService.activeClinicId();
     return this.billingRecords()
+      .filter(b => activeClinicId === 'all' || b.clinicId === activeClinicId)
       .reduce((sum, b) => {
         if (b.status === 'paid') {
           return sum + (b.paidAmount !== undefined ? b.paidAmount : b.amount);
@@ -61,6 +67,11 @@ export class BillingListComponent implements OnInit {
     let result = this.billingRecords();
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.selectedStatus();
+    const activeClinicId = this.clinicService.activeClinicId();
+
+    if (activeClinicId !== 'all') {
+      result = result.filter(b => b.clinicId === activeClinicId);
+    }
 
     if (query) {
       result = result.filter(b => 

@@ -7,7 +7,8 @@
       "amount": 150.00,
       "status": "paid",
       "dateIssued": "2026-04-15T10:00:00Z",
-      "paymentMethod": "Credit Card"
+      "paymentMethod": "Credit Card",
+      "clinicId": "clinic-1"
     },
     {
       "id": "2",
@@ -16,7 +17,8 @@
       "amount": 200.00,
       "status": "paid",
       "dateIssued": "2026-04-15T11:30:00Z",
-      "paymentMethod": "Cash"
+      "paymentMethod": "Cash",
+      "clinicId": "clinic-2"
     },
     {
       "id": "3",
@@ -25,7 +27,8 @@
       "amount": 350.00,
       "status": "pending",
       "dateIssued": "2026-04-15T14:00:00Z",
-      "paymentMethod": null
+      "paymentMethod": null,
+      "clinicId": "clinic-3"
     },
     {
       "id": "4",
@@ -34,7 +37,8 @@
       "amount": 100.00,
       "status": "paid",
       "dateIssued": "2026-04-14T10:30:00Z",
-      "paymentMethod": "Insurance"
+      "paymentMethod": "Insurance",
+      "clinicId": "clinic-1"
     },
     {
       "id": "5",
@@ -43,7 +47,8 @@
       "amount": 275.00,
       "status": "pending",
       "dateIssued": "2026-04-15T16:00:00Z",
-      "paymentMethod": null
+      "paymentMethod": null,
+      "clinicId": "clinic-2"
     },
     {
       "id": "6",
@@ -52,7 +57,8 @@
       "amount": 180.00,
       "status": "overdue",
       "dateIssued": "2026-04-10T09:00:00Z",
-      "paymentMethod": null
+      "paymentMethod": null,
+      "clinicId": "clinic-2"
     },
     {
       "id": "7",
@@ -62,7 +68,8 @@
       "paidAmount": 200.00,
       "status": "partially_paid",
       "dateIssued": "2026-05-22T10:00:00Z",
-      "paymentMethod": "Cash"
+      "paymentMethod": "Cash",
+      "clinicId": "clinic-2"
     },
     {
       "id": "8",
@@ -72,7 +79,8 @@
       "paidAmount": 0.00,
       "status": "pending",
       "dateIssued": "2026-05-23T11:00:00Z",
-      "paymentMethod": null
+      "paymentMethod": null,
+      "clinicId": "clinic-1"
     }
   ]
 }

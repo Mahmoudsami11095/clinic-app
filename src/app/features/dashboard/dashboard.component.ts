@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService, DashboardStats, RecentAppointment } from './services/dashboard.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ClinicService } from '../../core/services/clinic.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,12 +13,21 @@ import { AuthService } from '../../core/auth/auth.service';
 export class Dashboard implements OnInit {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
+  private clinicService = inject(ClinicService);
 
   stats = signal<DashboardStats | null>(null);
   recentAppointments = signal<RecentAppointment[]>([]);
   loading = signal(true);
 
   statCards: any[] = [];
+
+  constructor() {
+    effect(() => {
+      // Access signal to establish dependency
+      const clinicId = this.clinicService.activeClinicId();
+      this.loadDashboardData();
+    });
+  }
 
   ngOnInit() {
     const isDoc = !!this.authService.currentDoctorId();
@@ -37,7 +47,10 @@ export class Dashboard implements OnInit {
         { key: 'pendingBills', label: 'Pending Bills', icon: 'pi pi-wallet', color: 'rose' }
       ];
     }
+  }
 
+  loadDashboardData() {
+    this.loading.set(true);
     this.dashboardService.getDashboardData().subscribe({
       next: ({ stats, recentAppointments }) => {
         this.stats.set(stats);

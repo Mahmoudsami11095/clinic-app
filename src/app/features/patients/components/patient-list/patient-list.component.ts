@@ -7,6 +7,7 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { PatientFormComponent } from '../patient-form/patient-form.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { ClinicService } from '../../../../core/services/clinic.service';
 import { forkJoin } from 'rxjs';
 
 import { PatientHistoryComponent } from '../patient-history/patient-history.component';
@@ -21,6 +22,7 @@ export class PatientListComponent implements OnInit {
   private patientService = inject(PatientService);
   private authService = inject(AuthService);
   private appointmentService = inject(AppointmentService);
+  private clinicService = inject(ClinicService);
 
   patients = signal<Patient[]>([]);
   loading = signal(true);
@@ -36,6 +38,12 @@ export class PatientListComponent implements OnInit {
 
   filteredPatients = computed(() => {
     let result = this.patients();
+    const activeClinicId = this.clinicService.activeClinicId();
+
+    if (activeClinicId !== 'all') {
+      result = result.filter(p => p.clinicId === activeClinicId);
+    }
+
     const allowed = this.allowedPatientIds();
     
     if (allowed) {

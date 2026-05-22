@@ -6,6 +6,7 @@ export interface Appointment {
   status: string; // 'scheduled' | 'completed' | 'cancelled'
   type: string;
   notes: string;
+  clinicId?: string;
 }
 
 export interface AppointmentWithDetails extends Appointment {

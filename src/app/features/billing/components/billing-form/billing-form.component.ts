@@ -8,6 +8,7 @@ import { Patient } from '../../../patients/models/patient.model';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { Appointment } from '../../../appointments/models/appointment.model';
+import { ClinicService } from '../../../../core/services/clinic.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -25,6 +26,7 @@ export class BillingFormComponent implements OnInit {
   private patientService = inject(PatientService);
   private authService = inject(AuthService);
   private appointmentService = inject(AppointmentService);
+  private clinicService = inject(ClinicService);
 
   patients: Patient[] = [];
   allAppointments: Appointment[] = [];
@@ -46,6 +48,7 @@ export class BillingFormComponent implements OnInit {
 
   ngOnInit() {
     const doctorId = this.authService.currentDoctorId();
+    const activeClinicId = this.clinicService.activeClinicId();
 
     forkJoin({
       patients: this.patientService.getAll(),
@@ -53,6 +56,12 @@ export class BillingFormComponent implements OnInit {
     }).subscribe({
       next: ({ patients, appointments }) => {
         this.allAppointments = appointments;
+
+        let filteredPatients = patients;
+        if (activeClinicId !== 'all') {
+          filteredPatients = filteredPatients.filter(p => p.clinicId === activeClinicId);
+        }
+
         if (doctorId) {
           const matchingPatientIds = new Set(
             appointments
@@ -60,12 +69,12 @@ export class BillingFormComponent implements OnInit {
               .map(a => a.patientId)
           );
           if (matchingPatientIds.size > 0) {
-            this.patients = patients.filter(p => matchingPatientIds.has(p.id));
+            this.patients = filteredPatients.filter(p => matchingPatientIds.has(p.id));
           } else {
-            this.patients = patients;
+            this.patients = filteredPatients;
           }
         } else {
-          this.patients = patients;
+          this.patients = filteredPatients;
         }
       }
     });
@@ -101,6 +110,10 @@ export class BillingFormComponent implements OnInit {
     const formValue = this.form.getRawValue();
     const amount = Number(formValue.amount);
     const status = formValue.status!;
+
+    const patient = this.patients.find(p => p.id === formValue.patientId);
+    const clinicId = patient?.clinicId || this.clinicService.activeClinicId();
+
     const newRecord: BillingRecord = {
       id: (Math.floor(Math.random() * 90000) + 10000).toString(),
       patientId: formValue.patientId!,
@@ -110,7 +123,8 @@ export class BillingFormComponent implements OnInit {
       dateIssued: formValue.dateIssued!,
       status: status,
       paymentMethod: formValue.paymentMethod || null,
-      description: formValue.description || undefined
+      description: formValue.description || undefined,
+      clinicId: clinicId
     };
 
     this.billingService.create(newRecord).subscribe({

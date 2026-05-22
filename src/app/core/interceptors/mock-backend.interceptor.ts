@@ -13,6 +13,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req: HttpRequest<unkno
     if (url.includes('/api/doctors')) return 'doctors';
     if (url.includes('/api/billing')) return 'billing';
     if (url.includes('/api/prescriptions')) return 'prescriptions';
+    if (url.includes('/api/clinics')) return 'clinics';
     return null;
   };
 

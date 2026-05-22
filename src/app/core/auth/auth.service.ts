@@ -8,6 +8,8 @@ export interface User {
   patientId?: string; // Associated patient record ID
   email: string;
   title: string;
+  clinicId?: string; // Associated clinic ID (for admin/asst/patient)
+  clinicIds?: string[]; // Associated clinic IDs (for doctors)
 }
 
 @Injectable({
@@ -17,10 +19,26 @@ export class AuthService {
   // Available mock users for switcher
   readonly mockUsers: User[] = [
     {
-      id: 'admin-1',
-      name: 'Admin User',
+      id: 'super-admin',
+      name: 'Super Admin User',
       role: 'admin',
-      email: 'admin@medclinic.com',
+      email: 'superadmin@medclinic.com',
+      title: 'System Director'
+    },
+    {
+      id: 'admin-1',
+      name: 'City Clinic Admin',
+      role: 'admin',
+      clinicId: 'clinic-1',
+      email: 'admin.city@clinic.com',
+      title: 'Clinic Director'
+    },
+    {
+      id: 'admin-2',
+      name: 'Metro Clinic Admin',
+      role: 'admin',
+      clinicId: 'clinic-2',
+      email: 'admin.metro@clinic.com',
       title: 'Clinic Director'
     },
     {
@@ -28,6 +46,7 @@ export class AuthService {
       name: 'Dr. Sarah Jenkins',
       role: 'doctor',
       doctorId: '101',
+      clinicIds: ['clinic-1', 'clinic-2'],
       email: 'dr.jenkins@clinic.com',
       title: 'Chief Cardiologist'
     },
@@ -36,6 +55,7 @@ export class AuthService {
       name: 'Dr. Michael Chen',
       role: 'doctor',
       doctorId: '102',
+      clinicIds: ['clinic-2', 'clinic-3'],
       email: 'dr.chen@clinic.com',
       title: 'Pediatric Specialist'
     },
@@ -44,21 +64,33 @@ export class AuthService {
       name: 'Dr. Zidan Kareem',
       role: 'doctor',
       doctorId: '105',
+      clinicIds: ['clinic-3', 'clinic-1'],
       email: 'dr.zidan@clinic.com',
       title: 'Senior Dentist'
     },
     {
       id: 'asst-101',
-      name: 'Sarah\'s Assistant',
+      name: 'City Clinic Assistant',
       role: 'assistant',
+      clinicId: 'clinic-1',
       doctorId: '101',
-      email: 'asst.jenkins@clinic.com',
+      email: 'asst.city@clinic.com',
+      title: 'Clinical Assistant'
+    },
+    {
+      id: 'asst-102',
+      name: 'Metro Clinic Assistant',
+      role: 'assistant',
+      clinicId: 'clinic-2',
+      doctorId: '101',
+      email: 'asst.metro@clinic.com',
       title: 'Clinical Assistant'
     },
     {
       id: 'pat-1',
       name: 'John Doe',
       role: 'patient',
+      clinicId: 'clinic-1',
       patientId: '1',
       email: 'john.doe@example.com',
       title: 'Registered Patient'
@@ -67,6 +99,7 @@ export class AuthService {
       id: 'pat-2',
       name: 'Jane Smith',
       role: 'patient',
+      clinicId: 'clinic-2',
       patientId: '2',
       email: 'jane.smith@example.com',
       title: 'Registered Patient'

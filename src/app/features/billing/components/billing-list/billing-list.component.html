@@ -207,10 +207,12 @@
     subtitle="Generate a professional billing record and track payment"
     (close)="closeModal()"
   >
-    <app-billing-form
-      (saved)="handleBillingSaved($event)"
-      (cancelled)="closeModal()"
-    ></app-billing-form>
+    @if (isModalOpen()) {
+      <app-billing-form
+        (saved)="handleBillingSaved($event)"
+        (cancelled)="closeModal()"
+      ></app-billing-form>
+    }
   </app-modal>
 
   <!-- Pay Invoice Modal -->

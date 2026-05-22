@@ -125,10 +125,12 @@
     subtitle="Enter the patient's details to create a new record"
     (close)="closeModal()"
   >
-    <app-patient-form
-      (saved)="handlePatientSaved($event)"
-      (cancelled)="closeModal()"
-    ></app-patient-form>
+    @if (isModalOpen()) {
+      <app-patient-form
+        (saved)="handlePatientSaved($event)"
+        (cancelled)="closeModal()"
+      ></app-patient-form>
+    }
   </app-modal>
 
   <!-- Patient History Modal -->
