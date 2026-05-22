@@ -1,3 +1,9 @@
+export interface PaymentLog {
+  amount: number;
+  date: string;
+  paymentMethod: string;
+}
+
 export interface BillingRecord {
   id: string;
   patientId: string;
@@ -9,6 +15,7 @@ export interface BillingRecord {
   paymentMethod: string | null;
   description?: string;
   clinicId?: string;
+  payments?: PaymentLog[];
 }
 
 export interface BillingRecordWithDetails extends BillingRecord {
