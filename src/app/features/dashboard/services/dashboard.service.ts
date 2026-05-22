@@ -9,6 +9,8 @@ export interface DashboardStats {
   todayAppointments: number;
   totalRevenue: number;
   pendingBills: number;
+  totalCollected: number;
+  totalOutstanding: number;
 }
 
 export interface RecentAppointment {
@@ -60,6 +62,8 @@ export class DashboardService {
             .filter(b => b.status === 'paid')
             .reduce((sum: number, b: any) => sum + b.amount, 0),
           pendingBills: billsList.filter(b => b.status === 'pending' || b.status === 'overdue').length,
+          totalCollected: billsList.reduce((sum: number, b: any) => sum + (b.paidAmount || 0), 0),
+          totalOutstanding: billsList.reduce((sum: number, b: any) => sum + (b.amount - (b.paidAmount || 0)), 0),
         };
 
         const recentAppointments: RecentAppointment[] = apptsList

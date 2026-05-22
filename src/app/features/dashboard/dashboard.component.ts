@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService, DashboardStats, RecentAppointment } from './services/dashboard.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,19 +11,33 @@ import { DashboardService, DashboardStats, RecentAppointment } from './services/
 })
 export class Dashboard implements OnInit {
   private dashboardService = inject(DashboardService);
+  private authService = inject(AuthService);
 
   stats = signal<DashboardStats | null>(null);
   recentAppointments = signal<RecentAppointment[]>([]);
   loading = signal(true);
 
-  statCards = [
-    { key: 'totalPatients' as const, label: 'Total Patients', icon: 'pi pi-users', color: 'indigo' },
-    { key: 'totalDoctors' as const, label: 'Active Doctors', icon: 'pi pi-user-plus', color: 'emerald' },
-    { key: 'todayAppointments' as const, label: 'Upcoming Appts', icon: 'pi pi-calendar', color: 'amber' },
-    { key: 'pendingBills' as const, label: 'Pending Bills', icon: 'pi pi-wallet', color: 'rose' },
-  ];
+  statCards: any[] = [];
 
   ngOnInit() {
+    const isDoc = !!this.authService.currentDoctorId();
+    if (isDoc) {
+      this.statCards = [
+        { key: 'totalPatients', label: 'Total Patients', icon: 'pi pi-users', color: 'indigo' },
+        { key: 'todayAppointments', label: 'Upcoming Appts', icon: 'pi pi-calendar', color: 'amber' },
+        { key: 'pendingBills', label: 'Pending Bills', icon: 'pi pi-wallet', color: 'rose' },
+        { key: 'totalCollected', label: 'Total Collected', icon: 'pi pi-money-bill', color: 'emerald' },
+        { key: 'totalOutstanding', label: 'Total Outstanding', icon: 'pi pi-clock', color: 'rose' }
+      ];
+    } else {
+      this.statCards = [
+        { key: 'totalPatients', label: 'Total Patients', icon: 'pi pi-users', color: 'indigo' },
+        { key: 'totalDoctors', label: 'Active Doctors', icon: 'pi pi-user-plus', color: 'emerald' },
+        { key: 'todayAppointments', label: 'Upcoming Appts', icon: 'pi pi-calendar', color: 'amber' },
+        { key: 'pendingBills', label: 'Pending Bills', icon: 'pi pi-wallet', color: 'rose' }
+      ];
+    }
+
     this.dashboardService.getDashboardData().subscribe({
       next: ({ stats, recentAppointments }) => {
         this.stats.set(stats);
@@ -36,7 +51,11 @@ export class Dashboard implements OnInit {
   getStatValue(key: string): number | string {
     const s = this.stats();
     if (!s) return '—';
-    return (s as any)[key] ?? 0;
+    const val = (s as any)[key] ?? 0;
+    if (key === 'totalCollected' || key === 'totalOutstanding') {
+      return '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return val;
   }
 
   getStatusClass(status: string): string {

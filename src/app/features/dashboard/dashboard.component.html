@@ -9,13 +9,15 @@
 
   <!-- Stat Cards Grid -->
   @if (loading()) {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      @for (i of [1,2,3,4]; track i) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+         [ngClass]="statCards.length === 5 ? 'xl:grid-cols-5' : 'lg:grid-cols-4'">
+      @for (card of statCards; track card.key) {
         <div class="h-32 rounded-2xl bg-white/60 animate-pulse border border-slate-200/50"></div>
       }
     </div>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+         [ngClass]="statCards.length === 5 ? 'xl:grid-cols-5' : 'lg:grid-cols-4'">
       @for (card of statCards; track card.key) {
         <div class="stat-card group relative overflow-hidden rounded-2xl bg-white border border-slate-200/60 p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
           <!-- Ambient Glow -->
