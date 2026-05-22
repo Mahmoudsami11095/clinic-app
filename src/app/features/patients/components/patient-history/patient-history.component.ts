@@ -228,22 +228,27 @@ import { BillingService } from '../../../billing/services/billing.service';
                       <th class="py-3.5 px-5 font-semibold">Method</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-100 text-slate-600">
-                    @for (bill of billingRecords(); track bill.id) {
-                      <tr class="hover:bg-slate-50/50">
-                        <td class="py-3.5 px-5 font-semibold text-slate-750">INV-{{ bill.id.padStart(4, '0') }}</td>
-                        <td class="py-3.5 px-5">{{ bill.dateIssued | date:'mediumDate' }}</td>
-                        <td class="py-3.5 px-5 font-bold text-slate-800">{{ bill.amount | currency }}</td>
-                        <td class="py-3.5 px-5">
-                          <span class="px-2.5 py-0.5 text-xs font-bold rounded-full capitalize ring-1 ring-inset"
-                                [ngClass]="getBillingStatusClass(bill.status)">
-                            {{ bill.status }}
-                          </span>
-                        </td>
-                        <td class="py-3.5 px-5 text-slate-500 font-medium">{{ bill.paymentMethod || '—' }}</td>
-                      </tr>
-                    }
-                  </tbody>
+                    <tbody class="divide-y divide-slate-100 text-slate-600">
+                      @for (bill of billingRecords(); track bill.id) {
+                        <tr class="hover:bg-slate-50/50">
+                          <td class="py-3.5 px-5 font-semibold text-slate-750">INV-{{ bill.id.padStart(4, '0') }}</td>
+                          <td class="py-3.5 px-5">{{ bill.dateIssued | date:'mediumDate' }}</td>
+                          <td class="py-3.5 px-5">
+                            <div class="font-bold text-slate-800">{{ bill.amount | currency }}</div>
+                            @if (bill.paidAmount && bill.status === 'partially_paid') {
+                              <div class="text-[10px] text-slate-400 font-semibold mt-0.5">Paid: {{ bill.paidAmount | currency }}</div>
+                            }
+                          </td>
+                          <td class="py-3.5 px-5">
+                            <span class="px-2.5 py-0.5 text-xs font-bold rounded-full capitalize ring-1 ring-inset"
+                                  [ngClass]="getBillingStatusClass(bill.status)">
+                              {{ bill.status === 'partially_paid' ? 'Partially Paid' : bill.status }}
+                            </span>
+                          </td>
+                          <td class="py-3.5 px-5 text-slate-500 font-medium">{{ bill.paymentMethod || '—' }}</td>
+                        </tr>
+                      }
+                    </tbody>
                 </table>
               </div>
             }
@@ -323,6 +328,7 @@ export class PatientHistoryComponent implements OnInit {
   getBillingStatusClass(status: string): string {
     switch (status) {
       case 'paid': return 'bg-emerald-100 text-emerald-700 ring-emerald-200';
+      case 'partially_paid': return 'bg-cyan-100 text-cyan-700 ring-cyan-200';
       case 'pending': return 'bg-amber-100 text-amber-700 ring-amber-200';
       case 'overdue': return 'bg-red-100 text-red-700 ring-red-200';
       default: return 'bg-slate-100 text-slate-700 ring-slate-200';

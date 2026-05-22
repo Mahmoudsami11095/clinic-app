@@ -40,14 +40,21 @@ export class BillingListComponent implements OnInit {
   // Derived Stats
   totalOutstanding = computed(() => {
     return this.billingRecords()
-      .filter(b => b.status === 'pending' || b.status === 'overdue')
-      .reduce((sum, b) => sum + b.amount, 0);
+      .reduce((sum, b) => {
+        if (b.status === 'paid') return sum;
+        const paid = b.paidAmount !== undefined ? b.paidAmount : 0;
+        return sum + (b.amount - paid);
+      }, 0);
   });
 
   totalCollected = computed(() => {
     return this.billingRecords()
-      .filter(b => b.status === 'paid')
-      .reduce((sum, b) => sum + b.amount, 0);
+      .reduce((sum, b) => {
+        if (b.status === 'paid') {
+          return sum + (b.paidAmount !== undefined ? b.paidAmount : b.amount);
+        }
+        return sum + (b.paidAmount || 0);
+      }, 0);
   });
 
   filteredRecords = computed(() => {
@@ -123,6 +130,7 @@ export class BillingListComponent implements OnInit {
   getStatusClass(status: string): string {
     switch (status) {
       case 'paid': return 'bg-emerald-100 text-emerald-700 ring-emerald-200';
+      case 'partially_paid': return 'bg-cyan-100 text-cyan-700 ring-cyan-200';
       case 'pending': return 'bg-amber-100 text-amber-700 ring-amber-200';
       case 'overdue': return 'bg-red-100 text-red-700 ring-red-200';
       default: return 'bg-slate-100 text-slate-700 ring-slate-200';
@@ -165,7 +173,8 @@ export class BillingListComponent implements OnInit {
 
   openPayModal(bill: BillingRecordWithDetails) {
     this.selectedRecordToPay.set(bill);
-    this.payAmount.set(bill.amount);
+    const remaining = bill.amount - (bill.paidAmount || 0);
+    this.payAmount.set(remaining);
     this.payMethod.set(bill.paymentMethod || 'Cash');
     this.isPayModalOpen.set(true);
   }
@@ -180,13 +189,16 @@ export class BillingListComponent implements OnInit {
     if (!record) return;
 
     const paid = Number(this.payAmount());
-    const isFullyPaid = paid >= record.amount;
+    const currentPaid = record.paidAmount !== undefined ? record.paidAmount : (record.status === 'paid' ? record.amount : 0);
+    const newPaidAmount = currentPaid + paid;
+    const isFullyPaid = newPaidAmount >= record.amount;
 
     const updated: BillingRecord = {
       ...record,
-      status: isFullyPaid ? 'paid' : 'pending',
+      paidAmount: newPaidAmount,
+      status: isFullyPaid ? 'paid' : 'partially_paid',
       paymentMethod: this.payMethod(),
-      description: isFullyPaid ? record.description : `${record.description || 'Visit fee'} (Paid: $${paid})`
+      description: record.description
     };
 
     this.billingService.update(updated).subscribe({

@@ -54,12 +54,15 @@ export class BillingFormComponent implements OnInit {
 
     this.submitting = true;
     const formValue = this.form.value;
+    const amount = Number(formValue.amount);
+    const status = formValue.status!;
     const newRecord: BillingRecord = {
       id: `INV-${Math.floor(Math.random() * 90000) + 10000}`,
       patientId: formValue.patientId!,
-      amount: Number(formValue.amount),
+      amount: amount,
+      paidAmount: status === 'paid' ? amount : 0,
       dateIssued: formValue.dateIssued!,
-      status: formValue.status!,
+      status: status,
       paymentMethod: formValue.paymentMethod || null,
       description: formValue.description || undefined
     };

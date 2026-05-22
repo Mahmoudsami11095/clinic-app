@@ -3,6 +3,7 @@ export interface BillingRecord {
   patientId: string;
   appointmentId?: string;
   amount: number;
+  paidAmount?: number;
   status: string; // 'paid' | 'pending' | 'overdue'
   dateIssued: string;
   paymentMethod: string | null;
