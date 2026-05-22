@@ -177,6 +177,11 @@ export class LanguageService {
     'appointments.general_consultation': { en: 'General Consultation', ar: 'استشارة عامة' },
     'appointments.pediatric_checkup': { en: 'Pediatric Checkup', ar: 'فحص أطفال' },
     'appointments.dermatology_review': { en: 'Dermatology Review', ar: 'مراجعة جلدية' },
+    'appointments.dental_check_up': { en: 'Dental Check-up', ar: 'فحص أسنان' },
+    'appointments.root_canal': { en: 'Root Canal', ar: 'علاج عصب' },
+    'appointments.cavity_filling': { en: 'Cavity Filling', ar: 'حشو الأسنان' },
+    'appointments.tooth_extraction': { en: 'Tooth Extraction', ar: 'خلع سن' },
+    'appointments.teeth_cleaning': { en: 'Teeth Cleaning', ar: 'تنظيف أسنان' },
 
     // Doctors
     'doctors.title': { en: 'Doctors', ar: 'الأطباء' },

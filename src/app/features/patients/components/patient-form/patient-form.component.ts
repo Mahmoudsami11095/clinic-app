@@ -42,8 +42,8 @@ export class PatientFormComponent implements OnInit {
     gender:           ['', Validators.required],
     dateOfBirth:      ['', [Validators.required, pastDateValidator]],
     contactNumber:    ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-()]{7,15}$/)]],
-    email:            ['', [Validators.required, Validators.email]],
-    bloodGroup:       ['', Validators.required],
+    email:            ['', [Validators.email]],
+    bloodGroup:       [''],
     address:          ['', [Validators.required, Validators.minLength(5)]],
     clinicId:         ['']
   });
@@ -107,8 +107,8 @@ export class PatientFormComponent implements OnInit {
       gender: rawValue.gender!,
       dateOfBirth: rawValue.dateOfBirth!,
       contactNumber: rawValue.contactNumber!,
-      email: rawValue.email!,
-      bloodGroup: rawValue.bloodGroup!,
+      email: rawValue.email || '',
+      bloodGroup: rawValue.bloodGroup || '',
       address: rawValue.address!,
       clinicId: clinicId
     };

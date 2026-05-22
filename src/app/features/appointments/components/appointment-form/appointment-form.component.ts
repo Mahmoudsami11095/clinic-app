@@ -65,7 +65,9 @@ export class AppointmentFormComponent implements OnInit {
     status: ['scheduled', Validators.required]
   });
 
-  readonly appointmentTypes = ['General Consultation', 'Follow-up', 'Emergency', 'Surgery', 'Pediatric Checkup', 'Dermatology Review'];
+  readonly generalTypes = ['General Consultation', 'Follow-up', 'Emergency', 'Surgery', 'Pediatric Checkup', 'Dermatology Review'];
+  readonly dentalTypes = ['Dental Check-up', 'Root Canal', 'Cavity Filling', 'Tooth Extraction', 'Teeth Cleaning', 'Emergency', 'Follow-up'];
+  readonly availableTypes = signal<string[]>(this.generalTypes);
   readonly appointmentStatuses = ['scheduled', 'completed', 'cancelled'];
   readonly paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
 
@@ -163,6 +165,10 @@ export class AppointmentFormComponent implements OnInit {
       this.applyFilters();
     });
 
+    this.form.get('doctorId')?.valueChanges.subscribe(() => {
+      this.updateAvailableTypes();
+    });
+
     forkJoin({
       patients: this.patientService.getAll(),
       doctors: this.doctorService.getAll(),
@@ -185,6 +191,7 @@ export class AppointmentFormComponent implements OnInit {
         }
 
         this.applyFilters();
+        this.updateAvailableTypes();
       }
     });
   }
@@ -230,6 +237,21 @@ export class AppointmentFormComponent implements OnInit {
       this.lockedDoctorLabel.set(label);
       this.form.patchValue({ doctorId: doctorRecordId });
       this.form.get('doctorId')?.disable({ emitEvent: false });
+    }
+  }
+
+  private updateAvailableTypes() {
+    const docId = this.form.getRawValue().doctorId;
+    const doc = this.allDoctors.find(d => d.id === docId);
+    const spec = doc?.specialization?.toLowerCase() || '';
+    const isDentist = spec === 'dentistry' || spec === 'dentist';
+    
+    const targetTypes = isDentist ? this.dentalTypes : this.generalTypes;
+    this.availableTypes.set(targetTypes);
+
+    const currentType = this.form.get('type')?.value;
+    if (currentType && !targetTypes.includes(currentType)) {
+      this.form.get('type')?.setValue('');
     }
   }
 

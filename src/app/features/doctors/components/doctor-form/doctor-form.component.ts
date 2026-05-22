@@ -24,7 +24,7 @@ export class DoctorFormComponent {
 
   submitting = false;
 
-  readonly specializations = ['Cardiology', 'Pediatrics', 'Neurology', 'Dermatology', 'Psychiatry', 'Orthopedics', 'General Practice'];
+  readonly specializations = ['Cardiology', 'Pediatrics', 'Neurology', 'Dermatology', 'Psychiatry', 'Orthopedics', 'General Practice', 'Dentistry'];
   readonly weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   form = this.fb.group({
