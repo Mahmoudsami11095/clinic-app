@@ -155,7 +155,7 @@
           [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('type') }"
         >
           <option value="" disabled>{{ 'appointments.select_type' | translate }}</option>
-          @for (type of appointmentTypes; track type) {
+          @for (type of availableTypes(); track type) {
             <option [value]="type">{{ 'appointments.' + type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</option>
           }
         </select>
