@@ -148,7 +148,9 @@
                 <td class="py-4 px-6">
                   <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     @if (bill.status !== 'paid') {
-                      <button class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors">
+                      <button
+                        (click)="openPayModal(bill)"
+                        class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors">
                         Mark Paid
                       </button>
                     }
@@ -179,5 +181,93 @@
       (saved)="handleBillingSaved($event)"
       (cancelled)="closeModal()"
     ></app-billing-form>
+  </app-modal>
+
+  <!-- Pay Invoice Modal -->
+  <app-modal
+    [isOpen]="isPayModalOpen()"
+    title="Record Payment"
+    subtitle="Enter payment details for this invoice"
+    (close)="closePayModal()"
+  >
+    <form (ngSubmit)="submitPayment()" class="space-y-6">
+      @if (selectedRecordToPay(); as record) {
+        <!-- Invoice Info Card -->
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 flex justify-between items-center mb-6">
+          <div>
+            <p class="text-xs text-slate-500 font-medium">Invoice Number</p>
+            <p class="text-sm font-semibold text-slate-800 font-mono">INV-{{ record.id.padStart(4, '0') }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-medium text-right font-semibold">Patient Name</p>
+            <p class="text-sm font-semibold text-slate-800 text-right">{{ record.patientName }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-medium text-right font-semibold">Total Amount</p>
+            <p class="text-sm font-bold text-indigo-600 text-right">{{ record.amount | currency }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <!-- Paid Amount Input -->
+          <div>
+            <label for="payAmount" class="block text-sm font-semibold text-slate-700 mb-1.5">Paid Amount ($)</label>
+            <div class="relative rounded-xl shadow-sm">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-medium">
+                $
+              </div>
+              <input
+                id="payAmount"
+                type="number"
+                [ngModel]="payAmount()"
+                (ngModelChange)="payAmount.set($event)"
+                name="payAmount"
+                class="block w-full rounded-xl border border-slate-200/80 pl-8 pr-4 py-2.5 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all font-medium text-sm"
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                [max]="record.amount"
+                required
+              />
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Maximum payable amount is {{ record.amount | currency }}</p>
+          </div>
+
+          <!-- Payment Method -->
+          <div>
+            <label for="payMethod" class="block text-sm font-semibold text-slate-700 mb-1.5">Payment Method</label>
+            <select
+              id="payMethod"
+              [ngModel]="payMethod()"
+              (ngModelChange)="payMethod.set($event)"
+              name="payMethod"
+              class="block w-full rounded-xl border border-slate-200/80 px-4 py-2.5 bg-slate-50/50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all font-medium text-sm"
+              required
+            >
+              @for (method of paymentMethods; track method) {
+                <option [value]="method">{{ method }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            (click)="closePayModal()"
+            class="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-500/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+          >
+            Confirm Payment
+          </button>
+        </div>
+      @}
+    </form>
   </app-modal>
 </div>
