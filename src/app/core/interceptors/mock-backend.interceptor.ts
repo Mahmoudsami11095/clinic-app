@@ -12,6 +12,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req: HttpRequest<unkno
     if (url.includes('/api/appointments')) return 'appointments';
     if (url.includes('/api/doctors')) return 'doctors';
     if (url.includes('/api/billing')) return 'billing';
+    if (url.includes('/api/prescriptions')) return 'prescriptions';
     return null;
   };
 
@@ -32,6 +33,14 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req: HttpRequest<unkno
         body: { data: parsedData }
       })).pipe(delay(400));
     } else {
+      if (entity === 'prescriptions') {
+        const defaultData: any[] = [];
+        localStorage.setItem(storageKey, JSON.stringify(defaultData));
+        return of(new HttpResponse({
+          status: 200,
+          body: { data: defaultData }
+        })).pipe(delay(400));
+      }
       // Fetch from JSON and cache it
       const mockUrl = `/assets/mock-data/${entity}.json`;
       const modifiedReq = req.clone({ url: mockUrl });
