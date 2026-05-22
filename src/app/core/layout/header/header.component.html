@@ -37,13 +37,6 @@
       {{ 'common.role' | translate }}: {{ authService.currentUser().role }}
     </span>
 
-    <!-- Quick User Switcher Button -->
-    <button (click)="toggleUserSwitcher()" 
-            class="relative inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 transition-all border border-amber-200/50 shadow-sm cursor-pointer">
-      <i class="pi pi-sync text-[10px]"></i>
-      {{ 'common.switch_user' | translate }}
-    </button>
-
     <!-- Language Switcher Button -->
     <button (click)="languageService.setLanguage(languageService.currentLang() === 'en' ? 'ar' : 'en')" 
             class="relative inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-all border border-indigo-200/50 shadow-sm cursor-pointer">
