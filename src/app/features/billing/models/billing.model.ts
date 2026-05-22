@@ -12,4 +12,6 @@ export interface BillingRecord {
 
 export interface BillingRecordWithDetails extends BillingRecord {
   patientName: string;
+  appointmentType?: string;
+  appointmentDate?: string;
 }

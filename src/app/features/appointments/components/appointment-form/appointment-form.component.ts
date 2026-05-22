@@ -120,13 +120,14 @@ export class AppointmentFormComponent implements OnInit {
           const isFullyPaid = pAmount >= bAmount;
           
           const newBilling: BillingRecord = {
-            id: `INV-${Math.floor(Math.random() * 90000) + 10000}`,
+            id: (Math.floor(Math.random() * 90000) + 10000).toString(),
             patientId: rawValue.patientId!,
             appointmentId: appointmentId,
             amount: bAmount,
-            status: isFullyPaid ? 'paid' : 'pending',
+            paidAmount: isFullyPaid ? bAmount : pAmount,
+            status: isFullyPaid ? 'paid' : (pAmount > 0 ? 'partially_paid' : 'pending'),
             dateIssued: new Date().toISOString(),
-            paymentMethod: isFullyPaid ? rawValue.paymentMethod || 'Cash' : null,
+            paymentMethod: (isFullyPaid || pAmount > 0) ? rawValue.paymentMethod || 'Cash' : null,
             description: `${rawValue.type} Visit Fee`
           };
           

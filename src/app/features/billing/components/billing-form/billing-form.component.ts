@@ -5,6 +5,10 @@ import { BillingService } from '../../services/billing.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { BillingRecord } from '../../models/billing.model';
 import { Patient } from '../../../patients/models/patient.model';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { Appointment } from '../../../appointments/models/appointment.model';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-billing-form',
@@ -19,8 +23,12 @@ export class BillingFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private billingService = inject(BillingService);
   private patientService = inject(PatientService);
+  private authService = inject(AuthService);
+  private appointmentService = inject(AppointmentService);
 
   patients: Patient[] = [];
+  allAppointments: Appointment[] = [];
+  filteredAppointments: Appointment[] = [];
   submitting = false;
 
   readonly statusOptions = ['paid', 'pending', 'overdue'];
@@ -28,6 +36,7 @@ export class BillingFormComponent implements OnInit {
 
   form = this.fb.group({
     patientId: ['', Validators.required],
+    appointmentId: [{ value: '', disabled: true }],
     amount: ['', [Validators.required, Validators.min(0.1)]],
     dateIssued: [new Date().toISOString().split('T')[0], Validators.required],
     status: ['pending', Validators.required],
@@ -36,8 +45,44 @@ export class BillingFormComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.patientService.getAll().subscribe(data => {
-      this.patients = data;
+    const doctorId = this.authService.currentDoctorId();
+
+    forkJoin({
+      patients: this.patientService.getAll(),
+      appointments: this.appointmentService.getAll()
+    }).subscribe({
+      next: ({ patients, appointments }) => {
+        this.allAppointments = appointments;
+        if (doctorId) {
+          const matchingPatientIds = new Set(
+            appointments
+              .filter(a => a.doctorId === doctorId)
+              .map(a => a.patientId)
+          );
+          if (matchingPatientIds.size > 0) {
+            this.patients = patients.filter(p => matchingPatientIds.has(p.id));
+          } else {
+            this.patients = patients;
+          }
+        } else {
+          this.patients = patients;
+        }
+      }
+    });
+
+    this.form.get('patientId')?.valueChanges.subscribe(patientId => {
+      if (patientId) {
+        let appts = this.allAppointments.filter(a => a.patientId === patientId);
+        if (doctorId) {
+          appts = appts.filter(a => a.doctorId === doctorId);
+        }
+        this.filteredAppointments = appts;
+        this.form.get('appointmentId')?.enable();
+      } else {
+        this.filteredAppointments = [];
+        this.form.get('appointmentId')?.disable();
+        this.form.get('appointmentId')?.setValue('');
+      }
     });
   }
 
@@ -53,12 +98,13 @@ export class BillingFormComponent implements OnInit {
     }
 
     this.submitting = true;
-    const formValue = this.form.value;
+    const formValue = this.form.getRawValue();
     const amount = Number(formValue.amount);
     const status = formValue.status!;
     const newRecord: BillingRecord = {
-      id: `INV-${Math.floor(Math.random() * 90000) + 10000}`,
+      id: (Math.floor(Math.random() * 90000) + 10000).toString(),
       patientId: formValue.patientId!,
+      appointmentId: formValue.appointmentId || undefined,
       amount: amount,
       paidAmount: status === 'paid' ? amount : 0,
       dateIssued: formValue.dateIssued!,
@@ -71,14 +117,28 @@ export class BillingFormComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.saved.emit(newRecord);
-        this.form.reset();
+        this.resetForm();
       },
       error: () => this.submitting = false
     });
   }
 
   onCancel() {
-    this.form.reset();
+    this.resetForm();
     this.cancelled.emit();
+  }
+
+  private resetForm() {
+    this.form.reset({
+      patientId: '',
+      appointmentId: '',
+      amount: '',
+      dateIssued: new Date().toISOString().split('T')[0],
+      status: 'pending',
+      paymentMethod: 'Cash',
+      description: ''
+    });
+    this.form.get('appointmentId')?.disable();
+    this.filteredAppointments = [];
   }
 }
