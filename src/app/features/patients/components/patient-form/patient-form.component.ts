@@ -5,6 +5,7 @@ import { PatientService } from '../../services/patient.service';
 import { Patient } from '../../models/patient.model';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { Clinic } from '../../../../core/models/clinic.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 // Custom validator: date must be in the past
 function pastDateValidator(control: AbstractControl): ValidationErrors | null {
@@ -15,7 +16,7 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-patient-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css'
 })

@@ -5,10 +5,11 @@ import { Patient } from '../../models/patient.model';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
 import { BillingService } from '../../../billing/services/billing.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-patient-history',
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="space-y-6">
       <!-- Tabs Navigation -->
@@ -19,8 +20,8 @@ import { BillingService } from '../../../billing/services/billing.service';
           [class]="activeTab() === 'overview' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
         >
-          <i class="pi pi-user mr-1.5 text-xs"></i>
-          Overview
+          <i class="pi pi-user me-1.5 text-xs"></i>
+          {{ 'patients.overview' | translate }}
         </button>
         <button
           type="button"
@@ -28,8 +29,8 @@ import { BillingService } from '../../../billing/services/billing.service';
           [class]="activeTab() === 'appointments' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
         >
-          <i class="pi pi-calendar mr-1.5 text-xs"></i>
-          Appointments
+          <i class="pi pi-calendar me-1.5 text-xs"></i>
+          {{ 'sidebar.appointments' | translate }}
         </button>
         <button
           type="button"
@@ -37,8 +38,8 @@ import { BillingService } from '../../../billing/services/billing.service';
           [class]="activeTab() === 'prescriptions' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
         >
-          <i class="pi pi-briefcase mr-1.5 text-xs"></i>
-          Prescriptions
+          <i class="pi pi-briefcase me-1.5 text-xs"></i>
+          {{ 'patients.prescriptions' | translate }}
         </button>
         <button
           type="button"
@@ -46,8 +47,8 @@ import { BillingService } from '../../../billing/services/billing.service';
           [class]="activeTab() === 'billing' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
           class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
         >
-          <i class="pi pi-wallet mr-1.5 text-xs"></i>
-          Billing
+          <i class="pi pi-wallet me-1.5 text-xs"></i>
+          {{ 'sidebar.billing' | translate }}
         </button>
       </div>
 
@@ -61,36 +62,36 @@ import { BillingService } from '../../../billing/services/billing.service';
         
         <!-- 1. Overview Tab -->
         @if (activeTab() === 'overview') {
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 text-start">
             <!-- Demographics -->
             <div class="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-4">
-              <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Personal Information</h4>
+              <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">{{ 'patients.overview' | translate }}</h4>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Full Name</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'doctors.name' | translate }}</p>
                   <p class="text-sm font-semibold text-slate-700">{{ patient.firstName }} {{ patient.lastName }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Gender</p>
-                  <p class="text-sm font-semibold text-slate-700 capitalize">{{ patient.gender }}</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.gender' | translate }}</p>
+                  <p class="text-sm font-semibold text-slate-700 capitalize">{{ 'patients.' + patient.gender | translate }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Date of Birth</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.dob' | translate }}</p>
                   <p class="text-sm font-semibold text-slate-700">{{ patient.dateOfBirth | date:'mediumDate' }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Age</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ getAge(patient.dateOfBirth) }} years</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.age' | translate }}</p>
+                  <p class="text-sm font-semibold text-slate-700">{{ getAge(patient.dateOfBirth) }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Blood Group</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.blood_group' | translate }}</p>
                   <span class="inline-flex px-2 py-0.5 text-xs font-bold rounded-md ring-1 ring-inset mt-1"
                         [class]="getBloodGroupClass(patient.bloodGroup)">
                     {{ patient.bloodGroup }}
                   </span>
                 </div>
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Registration Date</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.registered_on' | translate }}</p>
                   <p class="text-sm font-semibold text-slate-700">{{ patient.registrationDate | date:'mediumDate' }}</p>
                 </div>
               </div>
@@ -98,18 +99,18 @@ import { BillingService } from '../../../billing/services/billing.service';
 
             <!-- Contact Details -->
             <div class="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-4">
-              <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Contact Details</h4>
+              <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">{{ 'patients.phone' | translate }}</h4>
               <div class="space-y-3">
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Email Address</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.email' | translate }}</p>
                   <p class="text-sm font-semibold text-slate-700 break-all">{{ patient.email }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Contact Number</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.phone' | translate }}</p>
                   <p class="text-sm font-semibold text-slate-700">{{ patient.contactNumber }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-slate-400 font-medium">Home Address</p>
+                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.address' | translate }}</p>
                   <p class="text-sm font-semibold text-slate-700">{{ patient.address }}</p>
                 </div>
               </div>
@@ -119,14 +120,14 @@ import { BillingService } from '../../../billing/services/billing.service';
 
         <!-- 2. Appointments Tab -->
         @if (activeTab() === 'appointments') {
-          <div class="space-y-4 pt-2">
+          <div class="space-y-4 pt-2 text-start">
             @if (appointments().length === 0) {
               <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
                 <i class="pi pi-calendar text-3xl mb-2 opacity-50 block"></i>
-                <p>No appointments found for this patient.</p>
+                <p>{{ 'appointments.no_appointments' | translate }}</p>
               </div>
             } @else {
-              <div class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+              <div class="space-y-3 max-h-[50vh] overflow-y-auto pe-1">
                 @for (appt of appointments(); track appt.id) {
                   <div class="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="flex items-start gap-4">
@@ -138,14 +139,14 @@ import { BillingService } from '../../../billing/services/billing.service';
                           <p class="font-semibold text-slate-800">{{ appt.type }}</p>
                           <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full capitalize ring-1 ring-inset"
                                 [ngClass]="getStatusClass(appt.status)">
-                            {{ appt.status }}
+                            {{ 'dashboard.' + appt.status | translate }}
                           </span>
                         </div>
                         <p class="text-xs text-slate-400 font-medium mt-0.5">Consulted by {{ appt.doctorName }}</p>
                         <p class="text-xs text-slate-500 mt-1.5 italic" *ngIf="appt.notes">"{{ appt.notes }}"</p>
                       </div>
                     </div>
-                    <div class="text-left md:text-right border-t md:border-t-0 pt-3 md:pt-0 flex flex-col gap-1">
+                    <div class="text-start md:text-end border-t md:border-t-0 pt-3 md:pt-0 flex flex-col gap-1">
                       <p class="text-sm font-semibold text-slate-700">{{ appt.date | date:'mediumDate' }}</p>
                       <p class="text-xs text-slate-400 font-medium">{{ appt.date | date:'shortTime' }}</p>
                     </div>
@@ -158,11 +159,11 @@ import { BillingService } from '../../../billing/services/billing.service';
 
         <!-- 3. Prescriptions Tab -->
         @if (activeTab() === 'prescriptions') {
-          <div class="space-y-4 pt-2 max-h-[50vh] overflow-y-auto pr-1">
+          <div class="space-y-4 pt-2 max-h-[50vh] overflow-y-auto pe-1 text-start">
             @if (prescriptions().length === 0) {
               <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
                 <i class="pi pi-briefcase text-3xl mb-2 opacity-50 block"></i>
-                <p>No prescriptions found for this patient.</p>
+                <p>{{ 'patients.no_prescriptions' | translate }}</p>
               </div>
             } @else {
               <div class="space-y-4">
@@ -171,7 +172,7 @@ import { BillingService } from '../../../billing/services/billing.service';
                     <!-- Prescription Header -->
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                       <div>
-                        <p class="font-semibold text-slate-800">Prescription from {{ pres.doctorName }}</p>
+                        <p class="font-semibold text-slate-800">{{ 'patients.prescription_from' | translate }} {{ pres.doctorName }}</p>
                         <p class="text-xs text-slate-400 font-medium mt-0.5">Issued on {{ pres.date | date:'mediumDate' }}</p>
                       </div>
                       <span class="text-xs font-mono bg-slate-50 px-2.5 py-1 border border-slate-200/50 rounded-lg text-slate-600">ID: {{ pres.id.substring(0,8) }}</span>
@@ -187,9 +188,9 @@ import { BillingService } from '../../../billing/services/billing.service';
                           <div>
                             <p class="font-semibold text-slate-800 text-sm">{{ med.name }}</p>
                             <p class="text-xs text-slate-500 mt-1">
-                              Dosage: <span class="font-medium text-slate-700">{{ med.dosage }}</span> | 
-                              Freq: <span class="font-medium text-slate-700">{{ med.frequency }}</span> | 
-                              Dur: <span class="font-medium text-slate-700">{{ med.duration }}</span>
+                              {{ 'patients.dosage' | translate }}: <span class="font-medium text-slate-700">{{ med.dosage }}</span> | 
+                              {{ 'patients.frequency' | translate }}: <span class="font-medium text-slate-700">{{ med.frequency }}</span> | 
+                              {{ 'patients.duration' | translate }}: <span class="font-medium text-slate-700">{{ med.duration }}</span>
                             </p>
                           </div>
                         </div>
@@ -198,7 +199,7 @@ import { BillingService } from '../../../billing/services/billing.service';
 
                     <!-- Instructions -->
                     <div class="bg-amber-50/30 border border-amber-100/40 rounded-xl p-3.5" *ngIf="pres.notes">
-                      <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Special Instructions</p>
+                      <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">{{ 'patients.instructions' | translate }}</p>
                       <p class="text-sm text-slate-600">{{ pres.notes }}</p>
                     </div>
                   </div>
@@ -210,28 +211,28 @@ import { BillingService } from '../../../billing/services/billing.service';
 
         <!-- 4. Billing Tab -->
         @if (activeTab() === 'billing') {
-          <div class="space-y-4 pt-2">
+          <div class="space-y-4 pt-2 text-start">
             @if (billingRecords().length === 0) {
               <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
                 <i class="pi pi-wallet text-3xl mb-2 opacity-50 block"></i>
-                <p>No billing invoices found for this patient.</p>
+                <p>{{ 'billing.no_bills' | translate }}</p>
               </div>
             } @else {
               <div class="bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden max-h-[50vh] overflow-y-auto">
-                <table class="w-full text-left text-sm whitespace-nowrap">
+                <table class="w-full text-start text-sm whitespace-nowrap">
                   <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0">
                     <tr>
-                      <th class="py-3.5 px-5 font-semibold">Invoice #</th>
-                      <th class="py-3.5 px-5 font-semibold">Date Issued</th>
-                      <th class="py-3.5 px-5 font-semibold">Amount</th>
-                      <th class="py-3.5 px-5 font-semibold">Status</th>
-                      <th class="py-3.5 px-5 font-semibold">Method</th>
+                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.invoice_no' | translate }}</th>
+                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.issue_date' | translate }}</th>
+                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.amount' | translate }}</th>
+                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
+                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
                     </tr>
                   </thead>
                     <tbody class="divide-y divide-slate-100 text-slate-600">
                       @for (bill of billingRecords(); track bill.id) {
                         <tr class="hover:bg-slate-50/50">
-                          <td class="py-3.5 px-5 font-semibold text-slate-755">
+                          <td class="py-3.5 px-5 font-semibold text-slate-755 text-start">
                             <div>INV-{{ bill.id.padStart(4, '0') }}</div>
                             @if (bill.appointmentType) {
                               <div class="text-[11px] text-slate-400 font-medium mt-0.5">
@@ -239,20 +240,20 @@ import { BillingService } from '../../../billing/services/billing.service';
                               </div>
                             }
                           </td>
-                          <td class="py-3.5 px-5">{{ bill.dateIssued | date:'mediumDate' }}</td>
-                          <td class="py-3.5 px-5">
+                          <td class="py-3.5 px-5 text-start">{{ bill.dateIssued | date:'mediumDate' }}</td>
+                          <td class="py-3.5 px-5 text-start">
                             <div class="font-bold text-slate-800">{{ bill.amount | currency }}</div>
                             @if (bill.paidAmount && bill.status === 'partially_paid') {
                               <div class="text-[10px] text-slate-400 font-semibold mt-0.5">Paid: {{ bill.paidAmount | currency }}</div>
                             }
                           </td>
-                          <td class="py-3.5 px-5">
+                          <td class="py-3.5 px-5 text-start">
                             <span class="px-2.5 py-0.5 text-xs font-bold rounded-full capitalize ring-1 ring-inset"
                                   [ngClass]="getBillingStatusClass(bill.status)">
-                              {{ bill.status === 'partially_paid' ? 'Partially Paid' : bill.status }}
+                              {{ 'billing.' + bill.status | translate }}
                             </span>
                           </td>
-                          <td class="py-3.5 px-5 text-slate-500 font-medium">{{ bill.paymentMethod || '—' }}</td>
+                          <td class="py-3.5 px-5 text-slate-500 font-medium text-start">{{ bill.paymentMethod || '—' }}</td>
                         </tr>
                       }
                     </tbody>

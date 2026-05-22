@@ -3,15 +3,15 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Medical Team</h1>
-      <p class="text-sm text-slate-500 mt-1">Manage doctors and their availability schedules</p>
+      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">{{ 'doctors.medical_team' | translate }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ 'doctors.subtitle' | translate }}</p>
     </div>
     <button
       (click)="openModal()"
       class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
     >
       <i class="pi pi-user-plus text-xs"></i>
-      Add Doctor
+      {{ 'doctors.add_doctor' | translate }}
     </button>
   </div>
 
@@ -20,12 +20,12 @@
     <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
       <!-- Search Input -->
       <div class="relative flex-1 w-full md:max-w-md">
-        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
         <input
           type="text"
-          placeholder="Search by name, email, or contact..."
+          [placeholder]="'doctors.search_placeholder' | translate"
           (input)="onSearch($event)"
-          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 ps-11 pe-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
         />
       </div>
 
@@ -38,7 +38,7 @@
               ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-800'
               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-800'"
             class="px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap capitalize">
-            {{ spec === 'all' ? 'All Roles' : spec }}
+            {{ spec === 'all' ? ('doctors.all_roles' | translate) : spec }}
           </button>
         }
       </div>
@@ -55,8 +55,8 @@
   } @else if (filteredDoctors().length === 0) {
     <div class="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-2xl border border-slate-200/60 shadow-sm">
       <i class="pi pi-users text-5xl mb-4 opacity-30 text-indigo-500"></i>
-      <p class="text-lg font-medium text-slate-600">No doctors found</p>
-      <p class="text-sm mt-1">Try adjusting your search criteria</p>
+      <p class="text-lg font-medium text-slate-600">{{ 'doctors.no_doctors' | translate }}</p>
+      <p class="text-sm mt-1">{{ 'doctors.no_doctors_sub' | translate }}</p>
     </div>
   } @else {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -64,7 +64,7 @@
         <div class="group bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
           
           <!-- Top Accent & Profile Header -->
-          <div class="h-24 w-full bg-gradient-to-r opacity-90 absolute top-0 left-0 right-0 z-0"
+          <div class="h-24 w-full bg-gradient-to-r opacity-90 absolute top-0 start-0 end-0 z-0"
                [class]="getAvatarColor(doctor.firstName)"></div>
           
           <div class="relative z-10 flex flex-col items-center pt-8 pb-4 border-b border-slate-100">
@@ -105,7 +105,7 @@
           <!-- Availability Footer -->
           <div class="p-5 bg-slate-50/50 mt-auto">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Availability</span>
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ 'doctors.availability' | translate }}</span>
               <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
                 {{ doctor.availability.hours }}
               </span>
@@ -124,8 +124,8 @@
   <!-- Add Doctor Modal -->
   <app-modal
     [isOpen]="isModalOpen()"
-    title="Join the Medical Team"
-    subtitle="Register a new healthcare professional to the clinic roster"
+    [title]="'doctors.join_team_title' | translate"
+    [subtitle]="'doctors.join_team_subtitle' | translate"
     (close)="closeModal()"
   >
     <app-doctor-form

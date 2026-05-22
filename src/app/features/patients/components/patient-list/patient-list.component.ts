@@ -11,10 +11,11 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { forkJoin } from 'rxjs';
 
 import { PatientHistoryComponent } from '../patient-history/patient-history.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-patient-list',
-  imports: [CommonModule, FormsModule, ModalComponent, PatientFormComponent, PatientHistoryComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, PatientFormComponent, PatientHistoryComponent, TranslatePipe],
   templateUrl: './patient-list.component.html',
   styleUrl: './patient-list.component.css'
 })

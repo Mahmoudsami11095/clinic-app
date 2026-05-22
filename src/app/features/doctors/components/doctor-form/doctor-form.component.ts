@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormArray, FormControl } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { Doctor } from '../../models/doctor.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-doctor-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './doctor-form.component.html',
   styleUrl: './doctor-form.component.css'
 })
@@ -16,6 +18,7 @@ export class DoctorFormComponent {
 
   private fb = inject(FormBuilder);
   private doctorService = inject(DoctorService);
+  protected langService = inject(LanguageService);
 
   submitting = false;
 

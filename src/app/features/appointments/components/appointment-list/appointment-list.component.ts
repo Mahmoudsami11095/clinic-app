@@ -10,10 +10,11 @@ import { PrescriptionService } from '../../../prescriptions/services/prescriptio
 import { Prescription } from '../../../prescriptions/models/prescription.model';
 import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
 import { ClinicService } from '../../../../core/services/clinic.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-appointment-list',
-  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent, PrescriptionFormComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent, PrescriptionFormComponent, TranslatePipe],
   templateUrl: './appointment-list.component.html',
   styleUrl: './appointment-list.component.css'
 })

@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { DashboardService, DashboardStats, RecentAppointment } from './services/dashboard.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ClinicService } from '../../core/services/clinic.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -33,18 +34,18 @@ export class Dashboard implements OnInit {
     const isDoc = !!this.authService.currentDoctorId();
     if (isDoc) {
       this.statCards = [
-        { key: 'totalPatients', label: 'Total Patients', icon: 'pi pi-users', color: 'indigo' },
-        { key: 'todayAppointments', label: 'Upcoming Appts', icon: 'pi pi-calendar', color: 'amber' },
-        { key: 'pendingBills', label: 'Pending Bills', icon: 'pi pi-wallet', color: 'rose' },
-        { key: 'totalCollected', label: 'Total Collected', icon: 'pi pi-money-bill', color: 'emerald' },
-        { key: 'totalOutstanding', label: 'Total Outstanding', icon: 'pi pi-clock', color: 'rose' }
+        { key: 'totalPatients', labelKey: 'dashboard.total_patients', icon: 'pi pi-users', color: 'indigo' },
+        { key: 'todayAppointments', labelKey: 'dashboard.upcoming_appts', icon: 'pi pi-calendar', color: 'amber' },
+        { key: 'pendingBills', labelKey: 'dashboard.pending_bills', icon: 'pi pi-wallet', color: 'rose' },
+        { key: 'totalCollected', labelKey: 'dashboard.total_collected', icon: 'pi pi-money-bill', color: 'emerald' },
+        { key: 'totalOutstanding', labelKey: 'dashboard.total_outstanding', icon: 'pi pi-clock', color: 'rose' }
       ];
     } else {
       this.statCards = [
-        { key: 'totalPatients', label: 'Total Patients', icon: 'pi pi-users', color: 'indigo' },
-        { key: 'totalDoctors', label: 'Active Doctors', icon: 'pi pi-user-plus', color: 'emerald' },
-        { key: 'todayAppointments', label: 'Upcoming Appts', icon: 'pi pi-calendar', color: 'amber' },
-        { key: 'pendingBills', label: 'Pending Bills', icon: 'pi pi-wallet', color: 'rose' }
+        { key: 'totalPatients', labelKey: 'dashboard.total_patients', icon: 'pi pi-users', color: 'indigo' },
+        { key: 'totalDoctors', labelKey: 'dashboard.active_doctors', icon: 'pi pi-user-plus', color: 'emerald' },
+        { key: 'todayAppointments', labelKey: 'dashboard.upcoming_appts', icon: 'pi pi-calendar', color: 'amber' },
+        { key: 'pendingBills', labelKey: 'dashboard.pending_bills', icon: 'pi pi-wallet', color: 'rose' }
       ];
     }
   }
@@ -58,6 +59,7 @@ export class Dashboard implements OnInit {
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+      complete: () => this.loading.set(false)
     });
   }
 

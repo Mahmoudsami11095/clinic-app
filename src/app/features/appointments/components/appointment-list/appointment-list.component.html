@@ -4,10 +4,10 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-bold text-slate-800 tracking-tight">
-        {{ authService.isPatient() ? 'My Appointments' : 'Appointments' }}
+        {{ (authService.isPatient() ? 'appointments.my_appointments' : 'appointments.title') | translate }}
       </h1>
       <p class="text-sm text-slate-500 mt-1">
-        {{ authService.isPatient() ? 'View your upcoming consultations and visit history' : 'Manage scheduled consultations and visit history' }}
+        {{ (authService.isPatient() ? 'appointments.my_appointments_sub' : 'appointments.manage_appointments_sub') | translate }}
       </p>
     </div>
     <button
@@ -15,7 +15,7 @@
       class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
     >
       <i class="pi pi-calendar-plus text-xs"></i>
-      {{ authService.isPatient() ? 'Request Appointment' : 'Book Appointment' }}
+      {{ (authService.isPatient() ? 'appointments.request_appointment' : 'appointments.book_appointment') | translate }}
     </button>
   </div>
 
@@ -25,12 +25,12 @@
       
       <!-- Search Input -->
       <div class="relative flex-1 w-full max-w-md">
-        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
         <input
           type="text"
-          placeholder="{{ authService.isPatient() ? 'Search by doctor or type...' : 'Search by patient, doctor, or type...' }}"
+          [placeholder]="(authService.isPatient() ? 'appointments.search_doctor_placeholder' : 'appointments.search_patient_placeholder') | translate"
           (input)="onSearch($event)"
-          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 ps-11 pe-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
         />
       </div>
 
@@ -47,8 +47,8 @@
           <button 
             *ngIf="selectedDate()" 
             (click)="clearDateFilter()"
-            class="absolute right-8 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            title="Clear date filter"
+            class="absolute end-8 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            [title]="'appointments.clear_date_filter' | translate"
           >
             <i class="pi pi-times text-xs"></i>
           </button>
@@ -62,8 +62,8 @@
               [class]="selectedStatus() === option
                 ? 'bg-white text-slate-800 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'"
-              class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize flex-1 sm:flex-none text-center">
-              {{ option }}
+              class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex-1 sm:flex-none text-center">
+              {{ 'appointments.status_' + option | translate }}
             </button>
           }
         </div>
@@ -75,16 +75,16 @@
   <!-- Appointments Table -->
   <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm whitespace-nowrap">
+      <table class="w-full text-start text-sm whitespace-nowrap">
         <thead class="bg-slate-50/80 border-b border-slate-200/80 text-slate-500">
           <tr>
-            <th *ngIf="!authService.isPatient()" class="py-4 px-6 font-semibold">Patient</th>
-            <th class="py-4 px-6 font-semibold">Doctor</th>
-            <th class="py-4 px-6 font-semibold">Visit Type</th>
-            <th class="py-4 px-6 font-semibold">Date & Time</th>
-            <th class="py-4 px-6 font-semibold">Status</th>
-            <th class="py-4 px-6 font-semibold">Notes</th>
-            <th class="py-4 px-6 font-semibold text-right">Actions</th>
+            <th *ngIf="!authService.isPatient()" class="py-4 px-6 font-semibold">{{ 'appointments.patient_label' | translate }}</th>
+            <th class="py-4 px-6 font-semibold">{{ 'appointments.doctor_label' | translate }}</th>
+            <th class="py-4 px-6 font-semibold">{{ 'appointments.type_select' | translate }}</th>
+            <th class="py-4 px-6 font-semibold">{{ 'appointments.date_time' | translate }}</th>
+            <th class="py-4 px-6 font-semibold">{{ 'dashboard.status' | translate }}</th>
+            <th class="py-4 px-6 font-semibold">{{ 'common.notes' | translate }}</th>
+            <th class="py-4 px-6 font-semibold text-end">{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -97,14 +97,15 @@
                 <td class="py-4 px-6"><div class="h-4 bg-slate-200 rounded w-24"></div></td>
                 <td class="py-4 px-6"><div class="h-6 bg-slate-200 rounded-full w-20"></div></td>
                 <td class="py-4 px-6"><div class="h-4 bg-slate-200 rounded w-32"></div></td>
-                <td class="py-4 px-6"><div class="h-8 bg-slate-200 rounded-lg w-20 float-right"></div></td>
+                <td class="py-4 px-6"><div class="h-8 bg-slate-200 rounded-lg w-20 ms-auto"></div></td>
               </tr>
             }
           } @else if (filteredAppointments().length === 0) {
             <tr>
               <td [attr.colspan]="authService.isPatient() ? 6 : 7" class="py-16 text-center text-slate-500">
                 <i class="pi pi-calendar text-4xl mb-3 text-slate-300 block"></i>
-                <p>No appointments scheduled matching your criteria</p>
+                <p class="font-medium">{{ 'appointments.no_appointments' | translate }}</p>
+                <p class="text-xs text-slate-400 mt-1">{{ 'appointments.no_appointments_sub' | translate }}</p>
               </td>
             </tr>
           } @else {
@@ -127,7 +128,7 @@
                 </td>
 
                 <!-- Visit Type -->
-                <td class="py-4 px-6 text-slate-600">{{ appt.type }}</td>
+                <td class="py-4 px-6 text-slate-600">{{ 'appointments.' + appt.type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</td>
 
                 <!-- Date & Time -->
                 <td class="py-4 px-6 text-slate-500">
@@ -137,9 +138,9 @@
 
                 <!-- Status -->
                 <td class="py-4 px-6">
-                  <span class="px-3 py-1 text-xs font-bold rounded-full ring-1 ring-inset capitalize inline-flex items-center gap-1"
+                  <span class="px-3 py-1 text-xs font-bold rounded-full ring-1 ring-inset inline-flex items-center gap-1"
                         [ngClass]="getStatusClass(appt.status)">
-                    {{ appt.status }}
+                    {{ 'appointments.status_' + appt.status | translate }}
                   </span>
                 </td>
 
@@ -149,7 +150,7 @@
                 </td>
 
                 <!-- Actions (Prescribe, View Rx) -->
-                <td class="py-4 px-6 text-right">
+                <td class="py-4 px-6 text-end">
                   <div class="flex items-center justify-end gap-2">
                     <!-- For Doctor and Assistant -->
                     @if (authService.isDoctor() || authService.isAssistant()) {
@@ -158,10 +159,10 @@
                           type="button"
                           (click)="openPrescriptionModal(appt, false)"
                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
-                          title="View or edit medical prescription"
+                          [title]="'appointments.edit_rx' | translate"
                         >
                           <i class="pi pi-file-edit text-[10px]"></i>
-                          Edit Rx
+                          {{ 'appointments.edit_rx' | translate }}
                         </button>
                       } @else {
                         @if (appt.status !== 'cancelled') {
@@ -169,10 +170,10 @@
                             type="button"
                             (click)="openPrescriptionModal(appt, false)"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
-                            title="Write medical prescription"
+                            [title]="'appointments.prescribe' | translate"
                           >
                             <i class="pi pi-file-plus text-[10px]"></i>
-                            Prescribe
+                            {{ 'appointments.prescribe' | translate }}
                           </button>
                         }
                       }
@@ -185,10 +186,10 @@
                           type="button"
                           (click)="openPrescriptionModal(appt, true)"
                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
-                          title="View your prescription"
+                          [title]="'appointments.view_rx' | translate"
                         >
                           <i class="pi pi-file text-[10px]"></i>
-                          View Rx
+                          {{ 'appointments.view_rx' | translate }}
                         </button>
                       }
                     }
@@ -200,10 +201,10 @@
                           type="button"
                           (click)="openPrescriptionModal(appt, true)"
                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
-                          title="View prescription details"
+                          [title]="'appointments.view_rx' | translate"
                         >
                           <i class="pi pi-file text-[10px]"></i>
-                          View Rx
+                          {{ 'appointments.view_rx' | translate }}
                         </button>
                       }
                     }
@@ -220,8 +221,8 @@
   <!-- Book Appointment Modal -->
   <app-modal
     [isOpen]="isModalOpen()"
-    title="{{ authService.isPatient() ? 'Request Clinic Appointment' : 'Schedule New Appointment' }}"
-    subtitle="{{ authService.isPatient() ? 'Select a doctor, date, and visit type to request a slot' : 'Book a new appointment slot for a patient' }}"
+    [title]="(authService.isPatient() ? 'appointments.modal_request_title' : 'appointments.modal_schedule_title') | translate"
+    [subtitle]="(authService.isPatient() ? 'appointments.modal_request_subtitle' : 'appointments.modal_schedule_subtitle') | translate"
     (close)="closeModal()"
   >
     @if (isModalOpen()) {
@@ -235,8 +236,8 @@
   <!-- Medical Prescription Modal -->
   <app-modal
     [isOpen]="isPrescriptionModalOpen()"
-    title="{{ isPrescriptionReadOnly() ? 'Medical Prescription Details' : (selectedPrescription() ? 'Edit Medical Prescription' : 'Create Medical Prescription') }}"
-    subtitle="Manage medication orders and instructions linked with this consultation"
+    [title]="(isPrescriptionReadOnly() ? 'appointments.rx_details' : (selectedPrescription() ? 'appointments.rx_edit' : 'appointments.rx_create')) | translate"
+    [subtitle]="'appointments.rx_subtitle' | translate"
     (close)="closePrescriptionModal()"
   >
     @if (selectedAppointmentForPrescription(); as appt) {

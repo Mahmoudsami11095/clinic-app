@@ -9,11 +9,12 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { BillingFormComponent } from '../billing-form/billing-form.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-billing-list',
-  imports: [CommonModule, FormsModule, ModalComponent, BillingFormComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, BillingFormComponent, TranslatePipe],
   templateUrl: './billing-list.component.html',
   styleUrl: './billing-list.component.css'
 })

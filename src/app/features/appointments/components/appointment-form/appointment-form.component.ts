@@ -12,12 +12,13 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { BillingRecord } from '../../../billing/models/billing.model';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { Clinic } from '../../../../core/models/clinic.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-appointment-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './appointment-form.component.html',
   styleUrl: './appointment-form.component.css'
 })

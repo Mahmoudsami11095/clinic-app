@@ -3,15 +3,15 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Patients</h1>
-      <p class="text-sm text-slate-500 mt-1">Manage your clinic's patient records</p>
+      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">{{ 'patients.title' | translate }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ 'patients.subtitle' | translate }}</p>
     </div>
     <button
       (click)="openModal()"
       class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
     >
       <i class="pi pi-plus text-xs"></i>
-      Add Patient
+      {{ 'patients.add_patient' | translate }}
     </button>
   </div>
 
@@ -20,12 +20,12 @@
     <div class="flex flex-col sm:flex-row gap-4 items-center">
       <!-- Search -->
       <div class="relative flex-1 w-full">
-        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
         <input
           type="text"
-          placeholder="Search by name, email, or phone..."
+          [placeholder]="'patients.search_placeholder' | translate"
           (input)="onSearch($event)"
-          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 ps-11 pe-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
         />
       </div>
 
@@ -37,15 +37,15 @@
             [class]="selectedGender() === option
               ? 'bg-white text-slate-800 shadow-sm'
               : 'text-slate-500 hover:text-slate-700'"
-            class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize">
-            {{ option === 'all' ? 'All' : option }}
+            class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all">
+            {{ 'patients.' + option | translate }}
           </button>
         }
       </div>
 
       <!-- Count Badge -->
       <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full whitespace-nowrap">
-        {{ filteredPatients().length }} patient{{ filteredPatients().length !== 1 ? 's' : '' }}
+        {{ filteredPatients().length }} {{ 'sidebar.patients' | translate }}
       </span>
     </div>
   </div>
@@ -60,8 +60,8 @@
   } @else if (filteredPatients().length === 0) {
     <div class="flex flex-col items-center justify-center py-20 text-slate-400">
       <i class="pi pi-users text-5xl mb-4 opacity-30"></i>
-      <p class="text-lg font-medium">No patients found</p>
-      <p class="text-sm mt-1">Try adjusting your search or filters</p>
+      <p class="text-lg font-medium">{{ 'patients.no_patients' | translate }}</p>
+      <p class="text-sm mt-1">{{ 'patients.no_patients_sub' | translate }}</p>
     </div>
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -73,7 +73,7 @@
                  [class]="getAvatarColor(patient.firstName)">
               {{ patient.firstName.charAt(0) }}{{ patient.lastName.charAt(0) }}
             </div>
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-0 text-start">
               <h3 class="text-base font-semibold text-slate-800 truncate">
                 {{ patient.firstName }} {{ patient.lastName }}
               </h3>
@@ -89,18 +89,18 @@
           </div>
 
           <!-- Info Grid -->
-          <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-100">
+          <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-100 text-start">
             <div class="flex items-center gap-2 text-sm">
               <i class="pi pi-phone text-xs text-slate-400"></i>
               <span class="text-slate-600 truncate">{{ patient.contactNumber }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <i class="pi pi-calendar text-xs text-slate-400"></i>
-              <span class="text-slate-600">Age: {{ getAge(patient.dateOfBirth) }}</span>
+              <span class="text-slate-600">{{ 'patients.age' | translate }}: {{ getAge(patient.dateOfBirth) }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <i class="pi pi-user text-xs text-slate-400"></i>
-              <span class="text-slate-600 capitalize">{{ patient.gender }}</span>
+              <span class="text-slate-600 capitalize">{{ 'patients.' + patient.gender | translate }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <i class="pi pi-clock text-xs text-slate-400"></i>
@@ -109,7 +109,7 @@
           </div>
 
           <!-- Address -->
-          <div class="flex items-center gap-2 text-sm mt-3 text-slate-500">
+          <div class="flex items-center gap-2 text-sm mt-3 text-slate-500 text-start">
             <i class="pi pi-map-marker text-xs text-slate-400"></i>
             <span class="truncate">{{ patient.address }}</span>
           </div>
@@ -121,8 +121,8 @@
   <!-- Add Patient Modal -->
   <app-modal
     [isOpen]="isModalOpen()"
-    title="Add New Patient"
-    subtitle="Enter the patient's details to create a new record"
+    [title]="'patients.add_new_patient' | translate"
+    [subtitle]="'patients.enter_details' | translate"
     (close)="closeModal()"
   >
     @if (isModalOpen()) {
@@ -137,7 +137,7 @@
   <app-modal
     [isOpen]="isHistoryModalOpen()"
     [title]="(selectedPatientForHistory()?.firstName ?? '') + ' ' + (selectedPatientForHistory()?.lastName ?? '')"
-    subtitle="Patient medical and appointment history"
+    [subtitle]="'patients.medical_history' | translate"
     (close)="closeHistoryModal()"
   >
     @if (selectedPatientForHistory(); as selectedPatient) {

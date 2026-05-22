@@ -6,3 +6,19 @@
 body {
     font-family: "Inter", sans-serif;
 }
+
+html[dir="rtl"] body {
+    font-family: "Cairo", sans-serif;
+}
+
+/* RTL Icon Flipping */
+html[dir="rtl"] .pi-angle-right,
+html[dir="rtl"] .pi-angle-left,
+html[dir="rtl"] .pi-chevron-right,
+html[dir="rtl"] .pi-chevron-left,
+html[dir="rtl"] .pi-arrow-right,
+html[dir="rtl"] .pi-arrow-left {
+    display: inline-block;
+    transform: scaleX(-1);
+}
+
