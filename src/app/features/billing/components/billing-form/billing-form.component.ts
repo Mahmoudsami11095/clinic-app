@@ -59,17 +59,18 @@ export class BillingFormComponent implements OnInit {
       next: ({ patients, appointments }) => {
         this.allAppointments = appointments;
 
-        let filteredPatients = patients;
-        if (activeClinicId !== 'all') {
-          filteredPatients = filteredPatients.filter(p => p.clinicId === activeClinicId);
-        }
+        let filteredPatients = this.clinicService.filterByActiveClinic(patients);
 
         if (doctorId) {
           const linkedIds = getDoctorLinkedPatientIds(doctorId);
           const seen = new Set(filteredPatients.map(p => p.id));
           for (const patient of patients) {
             if (!linkedIds.has(patient.id) || seen.has(patient.id)) continue;
-            if (activeClinicId !== 'all' && patient.clinicId !== activeClinicId) continue;
+            if (
+              this.clinicService.shouldFilterByActiveClinic() &&
+              activeClinicId !== 'all' &&
+              patient.clinicId !== activeClinicId
+            ) continue;
             filteredPatients.push(patient);
             seen.add(patient.id);
           }

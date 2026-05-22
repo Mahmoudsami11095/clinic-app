@@ -40,11 +40,7 @@ export class PatientListComponent implements OnInit {
 
   filteredPatients = computed(() => {
     let result = this.patients();
-    const activeClinicId = this.clinicService.activeClinicId();
-
-    if (activeClinicId !== 'all') {
-      result = result.filter(p => p.clinicId === activeClinicId);
-    }
+    result = this.clinicService.filterByActiveClinic(result);
 
     const allowed = this.allowedPatientIds();
     

@@ -344,6 +344,34 @@ export class LanguageService {
     'common.day_friday': { en: 'Fri', ar: 'جمعة' },
     'common.day_saturday': { en: 'Sat', ar: 'سبت' },
     'common.day_sunday': { en: 'Sun', ar: 'أحد' },
+
+    // Dental & Teeth Chart
+    'sidebar.dental_history': { en: 'Dental History', ar: 'سجل الأسنان' },
+    'patients.dental': { en: 'Dental Chart', ar: 'مخطط الأسنان' },
+    'dental.teeth_chart': { en: 'Teeth Chart', ar: 'مخطط الأسنان' },
+    'dental.selected_tooth': { en: 'Selected Tooth', ar: 'السن المحدد' },
+    'dental.tooth': { en: 'Tooth', ar: 'السن' },
+    'dental.healthy': { en: 'Healthy', ar: 'سليم' },
+    'dental.caries': { en: 'Caries (Decay)', ar: 'تسوس' },
+    'dental.filled': { en: 'Filled', ar: 'محشو' },
+    'dental.missing': { en: 'Missing', ar: 'مفقود' },
+    'dental.under_treatment': { en: 'Under Treatment', ar: 'تحت العلاج' },
+    'dental.pain_level': { en: 'Pain Level', ar: 'مستوى الألم' },
+    'dental.pain_details': { en: 'Pain Details', ar: 'تفاصيل الألم' },
+    'dental.treatment': { en: 'Treatment / Procedure', ar: 'العلاج / الإجراء' },
+    'dental.medication': { en: 'Medications', ar: 'الأدوية الموصوفة' },
+    'dental.add_log': { en: 'Add Dental Log', ar: 'إضافة سجل أسنان' },
+    'dental.history_for_tooth': { en: 'History for Tooth', ar: 'سجل السن رقم' },
+    'dental.no_history': { en: 'No history logged for this tooth.', ar: 'لا يوجد سجلات مسجلة لهذا السن.' },
+    'dental.select_tooth_prompt': { en: 'Select a tooth from the chart to view details or add logs.', ar: 'اختر سناً من المخطط لعرض التفاصيل أو إضافة سجل.' },
+    'dental.recorded_by': { en: 'Recorded by', ar: 'سُجل بواسطة' },
+    'dental.status': { en: 'Status', ar: 'الحالة' },
+    'dental.all_teeth_summary': { en: 'Teeth with Treatment History', ar: 'الأسنان ذات السجل العلاجي' },
+    'dental.saving': { en: 'Saving...', ar: 'جاري الحفظ...' },
+    'dental.right': { en: 'Right (R)', ar: 'اليمين (R)' },
+    'dental.left': { en: 'Left (L)', ar: 'اليسار (L)' },
+    'dental.upper_jaw': { en: 'Upper Jaw (Maxillary)', ar: 'الفك العلوي' },
+    'dental.lower_jaw': { en: 'Lower Jaw (Mandibular)', ar: 'الفك السفلي' }
   };
 
   constructor() {

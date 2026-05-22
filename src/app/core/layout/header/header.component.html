@@ -18,7 +18,7 @@
         <select [value]="clinicService.activeClinicId()" 
                 (change)="onClinicChange($event)"
                 class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all cursor-pointer">
-          <option *ngIf="authService.currentUser().role === 'admin'" value="all">{{ 'common.all_clinics' | translate }}</option>
+          <option *ngIf="authService.currentUser().role === 'admin' || authService.isDoctor()" value="all">{{ 'common.all_clinics' | translate }}</option>
           <option *ngFor="let clinic of clinicService.allowedClinics()" [value]="clinic.id">
             {{ clinic.name }}
           </option>

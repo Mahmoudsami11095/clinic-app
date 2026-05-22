@@ -45,12 +45,9 @@ export class AppointmentListComponent implements OnInit {
 
   filteredAppointments = computed(() => {
     let result = this.appointments();
-    const activeClinicId = this.clinicService.activeClinicId();
+    result = this.clinicService.filterByActiveClinic(result);
 
-    if (activeClinicId !== 'all') {
-      result = result.filter(a => a.clinicId === activeClinicId);
-    }
-    
+    const activeClinicId = this.clinicService.activeClinicId();
     const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
     const patientId = this.authService.currentPatientId();
 

@@ -30,6 +30,19 @@ export class ClinicService {
     return false;
   });
 
+  /** Active clinic filtering should apply to all roles (including doctors) to allow optional filtering. */
+  shouldFilterByActiveClinic = computed(() => {
+    const user = this.authService.currentUser();
+    return !!user;
+  });
+
+  filterByActiveClinic<T extends { clinicId?: string }>(items: T[]): T[] {
+    if (!this.shouldFilterByActiveClinic()) return items;
+    const activeClinicId = this.activeClinicIdSignal();
+    if (activeClinicId === 'all') return items;
+    return items.filter(item => item.clinicId === activeClinicId);
+  }
+
   allowedClinics = computed(() => {
     const user = this.authService.currentUser();
     const all = this.clinicsSignal();
@@ -56,7 +69,7 @@ export class ClinicService {
       if (user.role === 'admin') {
         this.activeClinicIdSignal.set(user.clinicId || 'all');
       } else if (user.role === 'doctor') {
-        this.activeClinicIdSignal.set(user.clinicIds?.[0] || 'all');
+        this.activeClinicIdSignal.set('all');
       } else if (user.role === 'assistant' || user.role === 'patient') {
         this.activeClinicIdSignal.set(user.clinicId || 'all');
       } else {
