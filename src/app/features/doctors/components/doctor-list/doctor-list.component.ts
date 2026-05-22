@@ -6,16 +6,19 @@ import { Doctor } from '../../models/doctor.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { DoctorFormComponent } from '../doctor-form/doctor-form.component';
 import { ClinicService } from '../../../../core/services/clinic.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-doctor-list',
-  imports: [CommonModule, FormsModule, ModalComponent, DoctorFormComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, DoctorFormComponent, TranslatePipe],
   templateUrl: './doctor-list.component.html',
   styleUrl: './doctor-list.component.css'
 })
 export class DoctorListComponent implements OnInit {
   private doctorService = inject(DoctorService);
   private clinicService = inject(ClinicService);
+  protected langService = inject(LanguageService);
 
   doctors = signal<Doctor[]>([]);
   loading = signal(true);
@@ -87,11 +90,18 @@ export class DoctorListComponent implements OnInit {
     return colors[index];
   }
 
+  private dayKeyMap: { [key: string]: string } = {
+    'Monday': 'common.day_monday',
+    'Tuesday': 'common.day_tuesday',
+    'Wednesday': 'common.day_wednesday',
+    'Thursday': 'common.day_thursday',
+    'Friday': 'common.day_friday',
+    'Saturday': 'common.day_saturday',
+    'Sunday': 'common.day_sunday',
+  };
+
   getFormattedDays(days: string[]): string {
-    if (days.length === 5 && days.includes('Monday') && days.includes('Friday')) {
-      return 'Mon - Fri';
-    }
-    return days.map(d => d.substring(0, 3)).join(', ');
+    return days.map(d => this.langService.translate(this.dayKeyMap[d] || d)).join(', ');
   }
 
   openModal() {

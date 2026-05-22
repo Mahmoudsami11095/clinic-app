@@ -9,11 +9,12 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { Appointment } from '../../../appointments/models/appointment.model';
 import { ClinicService } from '../../../../core/services/clinic.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-billing-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './billing-form.component.html',
   styleUrl: './billing-form.component.css'
 })

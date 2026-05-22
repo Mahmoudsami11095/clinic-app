@@ -4,14 +4,14 @@
   <div>
     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
       <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
-      Professional Profile
+      {{ 'doctors.professional_profile' | translate }}
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- First Name -->
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="firstName">
-          First Name <span class="text-rose-500">*</span>
+          {{ 'patients.first_name' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
           id="firstName"
@@ -28,7 +28,7 @@
       <!-- Last Name -->
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="lastName">
-          Last Name <span class="text-rose-500">*</span>
+          {{ 'patients.last_name' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
           id="lastName"
@@ -45,7 +45,7 @@
       <!-- Specialization -->
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="specialization">
-          Specialization <span class="text-rose-500">*</span>
+          {{ 'doctors.specialty' | translate }} <span class="text-rose-500">*</span>
         </label>
         <select
           id="specialization"
@@ -55,9 +55,9 @@
             ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
             : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
         >
-          <option value="" disabled>Select role</option>
+          <option value="" disabled>{{ 'doctors.select_role' | translate }}</option>
           @for (spec of specializations; track spec) {
-            <option [value]="spec">{{ spec }}</option>
+            <option [value]="spec">{{ 'doctors.spec_' + spec.toLowerCase().replace(' ', '_') | translate }}</option>
           }
         </select>
       </div>
@@ -65,7 +65,7 @@
       <!-- Phone -->
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="contactNumber">
-          Phone Number <span class="text-rose-500">*</span>
+          {{ 'doctors.phone' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
           id="contactNumber"
@@ -82,7 +82,7 @@
       <!-- Email (Full width) -->
       <div class="sm:col-span-2">
         <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="email">
-          Professional Email <span class="text-rose-500">*</span>
+          {{ 'doctors.professional_email' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
           id="email"
@@ -105,13 +105,13 @@
   <div formGroupName="availability">
     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
       <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
-      Weekly Schedule
+      {{ 'doctors.weekly_schedule' | translate }}
     </h3>
 
     <div class="space-y-4">
       <!-- Days Selection -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-3">Office Days <span class="text-rose-500">*</span></label>
+        <label class="block text-sm font-semibold text-slate-700 mb-3">{{ 'doctors.office_days' | translate }} <span class="text-rose-500">*</span></label>
         <div class="flex flex-wrap gap-2">
           @for (day of weekDays; track day) {
             <label
@@ -126,26 +126,26 @@
                 (change)="onDayToggle(day, $event)"
                 class="absolute opacity-0 w-0 h-0"
               />
-              {{ day.substring(0, 3) }}
+              {{ 'common.day_' + day.toLowerCase() | translate }}
             </label>
           }
         </div>
         @if (daysFormArray.invalid && daysFormArray.touched) {
-          <p class="mt-2 text-xs text-rose-600">Select at least one day</p>
+          <p class="mt-2 text-xs text-rose-600">{{ 'doctors.select_one_day' | translate }}</p>
         }
       </div>
 
       <!-- Hours -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="hours">Consultation Hours <span class="text-rose-500">*</span></label>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="hours">{{ 'doctors.consultation_hours' | translate }} <span class="text-rose-500">*</span></label>
         <div class="relative">
-          <i class="pi pi-clock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <i class="pi pi-clock absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
           <input
             id="hours"
             type="text"
             formControlName="hours"
             placeholder="e.g. 09:00 - 17:00"
-            class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-all focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none"
+            class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none"
           />
         </div>
       </div>
@@ -159,7 +159,7 @@
       (click)="onCancel()"
       class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
     >
-      Cancel
+      {{ 'common.cancel' | translate }}
     </button>
     <button
       type="submit"
@@ -168,10 +168,10 @@
     >
       @if (submitting) {
         <i class="pi pi-spin pi-spinner text-xs"></i>
-        Processing...
+        {{ 'doctors.processing' | translate }}
       } @else {
         <i class="pi pi-user-plus text-xs"></i>
-        Add to Team
+        {{ 'doctors.add_to_team' | translate }}
       }
     </button>
   </div>

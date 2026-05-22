@@ -9,10 +9,11 @@ import { ClinicFormComponent } from '../clinic-form/clinic-form.component';
 import { DoctorService } from '../../../doctors/services/doctor.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-clinic-list',
-  imports: [CommonModule, FormsModule, ModalComponent, ClinicFormComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, ClinicFormComponent, TranslatePipe],
   templateUrl: './clinic-list.component.html',
   styleUrl: './clinic-list.component.css'
 })
