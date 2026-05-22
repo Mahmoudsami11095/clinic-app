@@ -290,6 +290,12 @@ export class LanguageService {
     'billing.method_insurance': { en: 'Insurance', ar: 'تأمين طبي' },
     'billing.method_bank_transfer': { en: 'Bank Transfer', ar: 'تحويل بنكي' },
     'billing.method_mobile_payment': { en: 'Mobile Payment', ar: 'دفع عبر الهاتف' },
+    'billing.payment_date': { en: 'Payment Date', ar: 'تاريخ الدفع' },
+    'billing.payment_history': { en: 'Payment History', ar: 'سجل المدفوعات' },
+    'billing.no_payments_logged': { en: 'No payments logged yet.', ar: 'لم يتم تسجيل أي مدفوعات بعد.' },
+    'billing.payment_date_required': { en: 'Payment date is required.', ar: 'تاريخ الدفع مطلوب.' },
+    'billing.method': { en: 'Method', ar: 'طريقة الدفع' },
+    'billing.date': { en: 'Date', ar: 'التاريخ' },
 
     // Clinics
     'clinics.title': { en: 'Clinics', ar: 'العيادات' },

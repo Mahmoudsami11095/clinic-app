@@ -124,7 +124,12 @@ export class BillingFormComponent implements OnInit {
       status: status,
       paymentMethod: formValue.paymentMethod || null,
       description: formValue.description || undefined,
-      clinicId: clinicId
+      clinicId: clinicId,
+      payments: status === 'paid' ? [{
+        amount: amount,
+        date: formValue.dateIssued!,
+        paymentMethod: formValue.paymentMethod || 'Cash'
+      }] : []
     };
 
     this.billingService.create(newRecord).subscribe({

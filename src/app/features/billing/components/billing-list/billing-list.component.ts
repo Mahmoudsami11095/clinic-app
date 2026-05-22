@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BillingService } from '../../services/billing.service';
-import { BillingRecord, BillingRecordWithDetails } from '../../models/billing.model';
+import { BillingRecord, BillingRecordWithDetails, PaymentLog } from '../../models/billing.model';
 import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -38,7 +38,10 @@ export class BillingListComponent implements OnInit {
   selectedRecordToPay = signal<BillingRecordWithDetails | null>(null);
   payAmount = signal<number>(0);
   payMethod = signal<string>('Cash');
+  payDate = signal<string>(new Date().toISOString().split('T')[0]);
   paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
+
+  expandedInvoiceId = signal<string | null>(null);
 
   // Derived Stats
   totalOutstanding = computed(() => {
@@ -189,12 +192,36 @@ export class BillingListComponent implements OnInit {
     const remaining = bill.amount - (bill.paidAmount || 0);
     this.payAmount.set(remaining);
     this.payMethod.set(bill.paymentMethod || 'Cash');
+    this.payDate.set(new Date().toISOString().split('T')[0]);
     this.isPayModalOpen.set(true);
   }
 
   closePayModal() {
     this.isPayModalOpen.set(false);
     this.selectedRecordToPay.set(null);
+  }
+
+  toggleInvoiceExpand(id: string): void {
+    if (this.expandedInvoiceId() === id) {
+      this.expandedInvoiceId.set(null);
+    } else {
+      this.expandedInvoiceId.set(id);
+    }
+  }
+
+  getPaymentLogs(record: BillingRecord): PaymentLog[] {
+    if (record.payments && record.payments.length > 0) {
+      return record.payments;
+    }
+    const paidAmount = record.paidAmount !== undefined ? record.paidAmount : (record.status === 'paid' ? record.amount : 0);
+    if (paidAmount > 0) {
+      return [{
+        amount: paidAmount,
+        date: record.dateIssued.split('T')[0],
+        paymentMethod: record.paymentMethod || 'Cash'
+      }];
+    }
+    return [];
   }
 
   submitPayment() {
@@ -206,12 +233,22 @@ export class BillingListComponent implements OnInit {
     const newPaidAmount = currentPaid + paid;
     const isFullyPaid = newPaidAmount >= record.amount;
 
+    const newPayment: PaymentLog = {
+      amount: paid,
+      date: this.payDate(),
+      paymentMethod: this.payMethod()
+    };
+
+    const existingPayments = this.getPaymentLogs(record);
+    const updatedPayments = [...existingPayments, newPayment];
+
     const updated: BillingRecord = {
       ...record,
       paidAmount: newPaidAmount,
       status: isFullyPaid ? 'paid' : 'partially_paid',
       paymentMethod: this.payMethod(),
-      description: record.description
+      description: record.description,
+      payments: updatedPayments
     };
 
     this.billingService.update(updated).subscribe({
