@@ -71,14 +71,25 @@ export class BillingFormComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.saved.emit(newRecord);
-        this.form.reset();
+        this.resetForm();
       },
       error: () => this.submitting = false
     });
   }
 
   onCancel() {
-    this.form.reset();
+    this.resetForm();
     this.cancelled.emit();
+  }
+
+  private resetForm() {
+    this.form.reset({
+      patientId: '',
+      amount: '',
+      dateIssued: new Date().toISOString().split('T')[0],
+      status: 'pending',
+      paymentMethod: 'Cash',
+      description: ''
+    });
   }
 }
