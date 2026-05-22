@@ -12,6 +12,7 @@ import { PrescriptionFormComponent } from '../../../prescriptions/components/pre
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-appointment-list',
@@ -25,6 +26,7 @@ export class AppointmentListComponent implements OnInit {
   protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
   private languageService = inject(LanguageService);
+  private toastr = inject(ToastrService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
@@ -168,7 +170,17 @@ export class AppointmentListComponent implements OnInit {
     }
     this.appointmentService.delete(appt.id).subscribe({
       next: () => {
+        this.toastr.success(
+          this.languageService.translate('toast.appointment_deleted'),
+          this.languageService.translate('toast.success')
+        );
         this.appointments.update(list => list.filter(a => a.id !== appt.id));
+      },
+      error: () => {
+        this.toastr.error(
+          this.languageService.translate('toast.appointment_delete_error'),
+          this.languageService.translate('toast.error')
+        );
       }
     });
   }

@@ -11,6 +11,8 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { BillingFormComponent } from '../billing-form/billing-form.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-billing-list',
@@ -24,6 +26,8 @@ export class BillingListComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
   protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
+  private toastr = inject(ToastrService);
+  private langService = inject(LanguageService);
 
   billingRecords = signal<BillingRecordWithDetails[]>([]);
   loading = signal(true);
@@ -256,7 +260,17 @@ export class BillingListComponent implements OnInit {
         this.billingRecords.update(records => 
           records.map(r => r.id === record.id ? { ...r, ...updated, patientName: r.patientName } : r)
         );
+        this.toastr.success(
+          this.langService.translate('toast.payment_recorded'),
+          this.langService.translate('toast.success')
+        );
         this.closePayModal();
+      },
+      error: () => {
+        this.toastr.error(
+          this.langService.translate('toast.payment_record_error'),
+          this.langService.translate('toast.error')
+        );
       }
     });
   }

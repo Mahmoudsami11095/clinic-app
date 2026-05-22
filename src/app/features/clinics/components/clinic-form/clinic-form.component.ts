@@ -4,6 +4,8 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { Clinic } from '../../../../core/models/clinic.model';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { ToastrService } from 'ngx-toastr';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-clinic-form',
@@ -18,6 +20,8 @@ export class ClinicFormComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private clinicService = inject(ClinicService);
+  private toastr = inject(ToastrService);
+  private langService = inject(LanguageService);
 
   submitting = false;
 
@@ -62,10 +66,20 @@ export class ClinicFormComponent implements OnInit {
       this.clinicService.update(updatedClinic).subscribe({
         next: (data) => {
           this.submitting = false;
+          this.toastr.success(
+            this.langService.translate('toast.clinic_updated'),
+            this.langService.translate('toast.success')
+          );
           this.saved.emit(data);
           this.form.reset();
         },
-        error: () => this.submitting = false
+        error: () => {
+          this.submitting = false;
+          this.toastr.error(
+            this.langService.translate('toast.clinic_update_error'),
+            this.langService.translate('toast.error')
+          );
+        }
       });
     } else {
       const newClinic: Clinic = {
@@ -78,10 +92,20 @@ export class ClinicFormComponent implements OnInit {
       this.clinicService.create(newClinic).subscribe({
         next: (data) => {
           this.submitting = false;
+          this.toastr.success(
+            this.langService.translate('toast.clinic_created'),
+            this.langService.translate('toast.success')
+          );
           this.saved.emit(data);
           this.form.reset();
         },
-        error: () => this.submitting = false
+        error: () => {
+          this.submitting = false;
+          this.toastr.error(
+            this.langService.translate('toast.clinic_create_error'),
+            this.langService.translate('toast.error')
+          );
+        }
       });
     }
   }

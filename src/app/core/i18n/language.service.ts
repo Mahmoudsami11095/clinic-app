@@ -377,7 +377,34 @@ export class LanguageService {
     'dental.right': { en: 'Right (R)', ar: 'اليمين (R)' },
     'dental.left': { en: 'Left (L)', ar: 'اليسار (L)' },
     'dental.upper_jaw': { en: 'Upper Jaw (Maxillary)', ar: 'الفك العلوي' },
-    'dental.lower_jaw': { en: 'Lower Jaw (Mandibular)', ar: 'الفك السفلي' }
+    'dental.lower_jaw': { en: 'Lower Jaw (Mandibular)', ar: 'الفك السفلي' },
+
+    // Toastr / Notifications
+    'toast.success': { en: 'Success', ar: 'نجاح' },
+    'toast.error': { en: 'Error', ar: 'خطأ' },
+    'toast.patient_created': { en: 'Patient record created successfully.', ar: 'تم إنشاء سجل المريض بنجاح.' },
+    'toast.patient_create_error': { en: 'Failed to create patient record.', ar: 'فشل في إنشاء سجل المريض.' },
+    'toast.appointment_booked': { en: 'Appointment booked successfully.', ar: 'تم حجز الموعد بنجاح.' },
+    'toast.appointment_book_error': { en: 'Failed to book appointment.', ar: 'فشل في حجز الموعد.' },
+    'toast.appointment_updated': { en: 'Appointment updated successfully.', ar: 'تم تحديث الموعد بنجاح.' },
+    'toast.appointment_update_error': { en: 'Failed to update appointment.', ar: 'فشل في تحديث الموعد.' },
+    'toast.appointment_deleted': { en: 'Appointment deleted successfully.', ar: 'تم حذف الموعد بنجاح.' },
+    'toast.appointment_delete_error': { en: 'Failed to delete appointment.', ar: 'فشل في حذف الموعد.' },
+    'toast.doctor_added': { en: 'Doctor added to team successfully.', ar: 'تم إضافة الطبيب للفريق بنجاح.' },
+    'toast.doctor_add_error': { en: 'Failed to add doctor to team.', ar: 'فشل في إضافة الطبيب للفريق.' },
+    'toast.invoice_created': { en: 'Invoice created successfully.', ar: 'تم إنشاء الفاتورة بنجاح.' },
+    'toast.invoice_create_error': { en: 'Failed to create invoice.', ar: 'فشل في إنشاء الفاتورة.' },
+    'toast.payment_recorded': { en: 'Payment recorded successfully.', ar: 'تم تسجيل الدفعة بنجاح.' },
+    'toast.payment_record_error': { en: 'Failed to record payment.', ar: 'فشل في تسجيل الدفعة.' },
+    'toast.clinic_created': { en: 'Clinic branch created successfully.', ar: 'تم إنشاء فرع العيادة بنجاح.' },
+    'toast.clinic_create_error': { en: 'Failed to create clinic branch.', ar: 'فشل في إنشاء فرع العيادة.' },
+    'toast.clinic_updated': { en: 'Clinic branch details updated successfully.', ar: 'تم تحديث تفاصيل فرع العيادة بنجاح.' },
+    'toast.clinic_update_error': { en: 'Failed to update clinic branch details.', ar: 'فشل في تحديث تفاصيل فرع العيادة.' },
+    'toast.dental_log_saved': { en: 'Dental log saved successfully.', ar: 'تم حفظ سجل الأسنان بنجاح.' },
+    'toast.dental_log_save_error': { en: 'Failed to save dental log.', ar: 'فشل في حفظ سجل الأسنان.' },
+    'toast.prescription_saved': { en: 'Prescription saved successfully.', ar: 'تم حفظ الوصفة الطبية بنجاح.' },
+    'toast.prescription_save_error': { en: 'Failed to save prescription.', ar: 'فشل في حفظ الوصفة الطبية.' },
+    'toast.prescription_min_med_error': { en: 'Please add at least one medication name.', ar: 'يرجى إضافة اسم دواء واحد على الأقل.' }
   };
 
   constructor() {

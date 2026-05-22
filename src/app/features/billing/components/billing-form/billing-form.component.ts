@@ -12,6 +12,8 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { getDoctorLinkedPatientIds } from '../../../../core/services/doctor-patient-links';
 import { forkJoin } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-billing-form',
@@ -29,6 +31,8 @@ export class BillingFormComponent implements OnInit {
   private authService = inject(AuthService);
   private appointmentService = inject(AppointmentService);
   private clinicService = inject(ClinicService);
+  private toastr = inject(ToastrService);
+  private langService = inject(LanguageService);
 
   patients: Patient[] = [];
   allAppointments: Appointment[] = [];
@@ -135,10 +139,20 @@ export class BillingFormComponent implements OnInit {
     this.billingService.create(newRecord).subscribe({
       next: () => {
         this.submitting = false;
+        this.toastr.success(
+          this.langService.translate('toast.invoice_created'),
+          this.langService.translate('toast.success')
+        );
         this.saved.emit(newRecord);
         this.resetForm();
       },
-      error: () => this.submitting = false
+      error: () => {
+        this.submitting = false;
+        this.toastr.error(
+          this.langService.translate('toast.invoice_create_error'),
+          this.langService.translate('toast.error')
+        );
+      }
     });
   }
 

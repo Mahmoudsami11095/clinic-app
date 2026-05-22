@@ -16,6 +16,8 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { getDoctorLinkedPatientIds } from '../../../../core/services/doctor-patient-links';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { ToastrService } from 'ngx-toastr';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-appointment-form',
@@ -35,6 +37,8 @@ export class AppointmentFormComponent implements OnInit {
   private billingService = inject(BillingService);
   protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
+  private toastr = inject(ToastrService);
+  private langService = inject(LanguageService);
 
   allPatients: Patient[] = [];
   allDoctors: Doctor[] = [];
@@ -305,9 +309,19 @@ export class AppointmentFormComponent implements OnInit {
       this.appService.update(updated).subscribe({
         next: () => {
           this.submitting = false;
+          this.toastr.success(
+            this.langService.translate('toast.appointment_updated'),
+            this.langService.translate('toast.success')
+          );
           this.saved.emit(updated);
         },
-        error: () => (this.submitting = false)
+        error: () => {
+          this.submitting = false;
+          this.toastr.error(
+            this.langService.translate('toast.appointment_update_error'),
+            this.langService.translate('toast.error')
+          );
+        }
       });
       return;
     }
@@ -355,10 +369,20 @@ export class AppointmentFormComponent implements OnInit {
     ).subscribe({
       next: () => {
         this.submitting = false;
+        this.toastr.success(
+          this.langService.translate('toast.appointment_booked'),
+          this.langService.translate('toast.success')
+        );
         this.saved.emit(newAppointment);
         this.form.reset();
       },
-      error: () => (this.submitting = false)
+      error: () => {
+        this.submitting = false;
+        this.toastr.error(
+          this.langService.translate('toast.appointment_book_error'),
+          this.langService.translate('toast.error')
+        );
+      }
     });
   }
 
