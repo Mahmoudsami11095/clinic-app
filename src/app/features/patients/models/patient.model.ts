@@ -9,4 +9,5 @@ export interface Patient {
   bloodGroup: string;
   address: string;
   registrationDate: string;
+  clinicId?: string;
 }

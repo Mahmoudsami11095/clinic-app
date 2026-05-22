@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService, User } from '../../auth/auth.service';
+import { ClinicService } from '../../services/clinic.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -11,10 +12,16 @@ import { Router } from '@angular/router';
 })
 export class Header {
   protected authService = inject(AuthService);
+  protected clinicService = inject(ClinicService);
   private router = inject(Router);
 
   isDropdownOpen = signal(false);
   isUserSwitcherOpen = signal(false);
+
+  onClinicChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.clinicService.setActiveClinicId(select.value);
+  }
 
   toggleDropdown() {
     this.isDropdownOpen.update(v => !v);

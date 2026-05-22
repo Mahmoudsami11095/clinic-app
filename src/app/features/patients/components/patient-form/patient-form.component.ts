@@ -1,8 +1,10 @@
-import { Component, Output, EventEmitter, inject } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { PatientService } from '../../services/patient.service';
 import { Patient } from '../../models/patient.model';
+import { ClinicService } from '../../../../core/services/clinic.service';
+import { Clinic } from '../../../../core/models/clinic.model';
 
 // Custom validator: date must be in the past
 function pastDateValidator(control: AbstractControl): ValidationErrors | null {
@@ -17,14 +19,17 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css'
 })
-export class PatientFormComponent {
+export class PatientFormComponent implements OnInit {
   @Output() saved = new EventEmitter<Patient>();
   @Output() cancelled = new EventEmitter<void>();
 
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
+  private clinicService = inject(ClinicService);
 
   submitting = false;
+  clinicsList = signal<Clinic[]>([]);
+  showClinicSelector = signal(false);
 
   form = this.fb.group({
     firstName:        ['', [Validators.required, Validators.minLength(2)]],
@@ -35,9 +40,26 @@ export class PatientFormComponent {
     email:            ['', [Validators.required, Validators.email]],
     bloodGroup:       ['', Validators.required],
     address:          ['', [Validators.required, Validators.minLength(5)]],
+    clinicId:         ['']
   });
 
   readonly bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  ngOnInit() {
+    this.clinicsList.set(this.clinicService.clinics());
+    const activeId = this.clinicService.activeClinicId();
+
+    if (activeId === 'all') {
+      this.form.get('clinicId')?.setValidators(Validators.required);
+      this.form.get('clinicId')?.setValue('');
+      this.showClinicSelector.set(true);
+    } else {
+      this.form.get('clinicId')?.clearValidators();
+      this.form.get('clinicId')?.setValue(activeId);
+      this.showClinicSelector.set(false);
+    }
+    this.form.get('clinicId')?.updateValueAndValidity();
+  }
 
   // Helper for template
   isInvalid(field: string): boolean {
@@ -63,10 +85,21 @@ export class PatientFormComponent {
     }
 
     this.submitting = true;
+    const rawValue = this.form.getRawValue();
+    const clinicId = rawValue.clinicId || this.clinicService.activeClinicId();
+
     const newPatient: Patient = {
       id: crypto.randomUUID(),
       registrationDate: new Date().toISOString(),
-      ...(this.form.value as Omit<Patient, 'id' | 'registrationDate'>)
+      firstName: rawValue.firstName!,
+      lastName: rawValue.lastName!,
+      gender: rawValue.gender!,
+      dateOfBirth: rawValue.dateOfBirth!,
+      contactNumber: rawValue.contactNumber!,
+      email: rawValue.email!,
+      bloodGroup: rawValue.bloodGroup!,
+      address: rawValue.address!,
+      clinicId: clinicId
     };
 
     this.patientService.create(newPatient).subscribe({

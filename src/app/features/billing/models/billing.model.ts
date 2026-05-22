@@ -8,6 +8,7 @@ export interface BillingRecord {
   dateIssued: string;
   paymentMethod: string | null;
   description?: string;
+  clinicId?: string;
 }
 
 export interface BillingRecordWithDetails extends BillingRecord {

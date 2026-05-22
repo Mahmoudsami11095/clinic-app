@@ -5,6 +5,7 @@ import { DoctorService } from '../../services/doctor.service';
 import { Doctor } from '../../models/doctor.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { DoctorFormComponent } from '../doctor-form/doctor-form.component';
+import { ClinicService } from '../../../../core/services/clinic.service';
 
 @Component({
   selector: 'app-doctor-list',
@@ -14,6 +15,7 @@ import { DoctorFormComponent } from '../doctor-form/doctor-form.component';
 })
 export class DoctorListComponent implements OnInit {
   private doctorService = inject(DoctorService);
+  private clinicService = inject(ClinicService);
 
   doctors = signal<Doctor[]>([]);
   loading = signal(true);
@@ -31,6 +33,12 @@ export class DoctorListComponent implements OnInit {
 
   filteredDoctors = computed(() => {
     let result = this.doctors();
+    const activeClinicId = this.clinicService.activeClinicId();
+
+    if (activeClinicId !== 'all') {
+      result = result.filter(d => d.clinicIds?.includes(activeClinicId));
+    }
+
     const query = this.searchQuery().toLowerCase().trim();
     const spec = this.selectedSpecialization();
 

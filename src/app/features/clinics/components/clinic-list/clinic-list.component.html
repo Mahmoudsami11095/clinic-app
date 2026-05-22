@@ -1,0 +1,131 @@
+<div class="space-y-6">
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Clinics Management</h1>
+      <p class="text-sm text-slate-500 mt-1">Manage clinic branches, addresses, and view operational statistics</p>
+    </div>
+    <button
+      (click)="openCreateModal()"
+      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+    >
+      <i class="pi pi-plus text-xs"></i>
+      Add Clinic
+    </button>
+  </div>
+
+  <!-- Filters Bar -->
+  <div class="bg-white rounded-2xl border border-slate-200/60 p-4 shadow-sm">
+    <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+      <!-- Search Input -->
+      <div class="relative flex-1 w-full md:max-w-md">
+        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input
+          type="text"
+          placeholder="Search by name, address, or phone..."
+          (input)="onSearch($event)"
+          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinic Grid -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (i of [1,2,3]; track i) {
+        <div class="h-64 rounded-2xl bg-white/60 animate-pulse border border-slate-200/50"></div>
+      }
+    </div>
+  } @else if (filteredClinics().length === 0) {
+    <div class="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-2xl border border-slate-200/60 shadow-sm">
+      <i class="pi pi-building text-5xl mb-4 opacity-30 text-indigo-500"></i>
+      <p class="text-lg font-medium text-slate-600">No clinics found</p>
+      <p class="text-sm mt-1">Try adjusting your search criteria</p>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (clinic of filteredClinics(); track clinic.id) {
+        <div class="group bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
+          
+          <!-- Top Accent & Profile Header -->
+          <div class="h-20 w-full bg-gradient-to-r opacity-90 absolute top-0 left-0 right-0 z-0"
+               [class]="getAvatarColor(clinic.name)"></div>
+          
+          <div class="relative z-10 flex flex-col items-start px-6 pt-12 pb-4 border-b border-slate-100">
+            <!-- Icon -->
+            <div class="w-14 h-14 rounded-2xl bg-white p-1 shadow-md mb-3 flex items-center justify-center text-xl text-white bg-gradient-to-br"
+                 [class]="getAvatarColor(clinic.name)">
+              <i class="pi pi-building text-lg"></i>
+            </div>
+            
+            <h3 class="text-lg font-bold text-slate-800 tracking-tight">{{ clinic.name }}</h3>
+            <span class="mt-1 text-xs font-mono text-slate-400">ID: {{ clinic.id }}</span>
+          </div>
+
+          <!-- Contact Details -->
+          <div class="px-6 py-4 flex-1 flex flex-col gap-3 text-sm border-b border-slate-100">
+            <div class="flex items-start gap-3 text-slate-600">
+              <div class="w-8 h-8 rounded-full bg-slate-55 flex items-center justify-center text-slate-400 flex-shrink-0">
+                <i class="pi pi-map-marker text-xs"></i>
+              </div>
+              <span class="leading-relaxed">{{ clinic.address }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-slate-600">
+              <div class="w-8 h-8 rounded-full bg-slate-55 flex items-center justify-center text-slate-400 flex-shrink-0">
+                <i class="pi pi-phone text-xs"></i>
+              </div>
+              <span>{{ clinic.phone }}</span>
+            </div>
+          </div>
+
+          <!-- Stats Roster -->
+          <div class="px-6 py-4 bg-slate-50/50 grid grid-cols-3 gap-2 border-b border-slate-100/80">
+            <div class="flex flex-col items-center p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+              <i class="pi pi-user-plus text-indigo-500 mb-1 text-xs"></i>
+              <span class="text-sm font-bold text-slate-800">{{ clinic.doctorCount }}</span>
+              <span class="text-[10px] font-semibold text-slate-450 uppercase tracking-wider">Doctors</span>
+            </div>
+            <div class="flex flex-col items-center p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+              <i class="pi pi-users text-emerald-500 mb-1 text-xs"></i>
+              <span class="text-sm font-bold text-slate-800">{{ clinic.patientCount }}</span>
+              <span class="text-[10px] font-semibold text-slate-450 uppercase tracking-wider">Patients</span>
+            </div>
+            <div class="flex flex-col items-center p-2 rounded-xl bg-white border border-slate-100 shadow-sm">
+              <i class="pi pi-calendar text-violet-500 mb-1 text-xs"></i>
+              <span class="text-sm font-bold text-slate-800">{{ clinic.appointmentCount }}</span>
+              <span class="text-[10px] font-semibold text-slate-450 uppercase tracking-wider">Appts</span>
+            </div>
+          </div>
+
+          <!-- Actions Footer -->
+          <div class="p-4 bg-slate-50/20 flex justify-end gap-2">
+            <button
+              (click)="openEditModal(clinic)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors focus:outline-none"
+            >
+              <i class="pi pi-pencil text-[10px]"></i>
+              Edit Details
+            </button>
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Add/Edit Clinic Modal -->
+  <app-modal
+    [isOpen]="isModalOpen()"
+    [title]="selectedClinic() ? 'Edit Clinic Profile' : 'Establish New Clinic'"
+    [subtitle]="selectedClinic() ? 'Modify address, phone number or configuration' : 'Register a new physical clinic branch in the system'"
+    (close)="closeModal()"
+  >
+    <app-clinic-form
+      [clinic]="selectedClinic()"
+      (saved)="handleClinicSaved()"
+      (cancelled)="closeModal()"
+    ></app-clinic-form>
+  </app-modal>
+</div>

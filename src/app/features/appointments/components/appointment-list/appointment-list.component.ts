@@ -9,6 +9,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
 import { Prescription } from '../../../prescriptions/models/prescription.model';
 import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
+import { ClinicService } from '../../../../core/services/clinic.service';
 
 @Component({
   selector: 'app-appointment-list',
@@ -20,6 +21,7 @@ export class AppointmentListComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
   private prescriptionService = inject(PrescriptionService);
   protected authService = inject(AuthService);
+  private clinicService = inject(ClinicService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
@@ -39,6 +41,11 @@ export class AppointmentListComponent implements OnInit {
 
   filteredAppointments = computed(() => {
     let result = this.appointments();
+    const activeClinicId = this.clinicService.activeClinicId();
+
+    if (activeClinicId !== 'all') {
+      result = result.filter(a => a.clinicId === activeClinicId);
+    }
     
     const doctorId = this.authService.currentDoctorId();
     const patientId = this.authService.currentPatientId();
