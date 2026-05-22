@@ -35,7 +35,7 @@ export const routes: Routes = [
         path: 'billing',
         loadChildren: () => import('./features/billing/billing.routes').then(m => m.billingRoutes),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'doctor', 'assistant'] }
+        data: { roles: ['admin', 'doctor', 'assistant', 'patient'] }
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

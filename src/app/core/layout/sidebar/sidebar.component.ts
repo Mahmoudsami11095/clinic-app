@@ -17,7 +17,7 @@ export class Sidebar {
     { label: 'Patients', route: '/patients', icon: 'pi pi-users', roles: ['admin', 'doctor', 'assistant'] },
     { label: 'Appointments', route: '/appointments', icon: 'pi pi-calendar', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { label: 'Doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
-    { label: 'Billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant'] },
+    { label: 'Billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
   ];
 
   menuItems = computed(() => {
@@ -27,6 +27,9 @@ export class Sidebar {
       .map(item => {
         if (role === 'patient' && item.route === '/appointments') {
           return { ...item, label: 'My Portal' };
+        }
+        if (role === 'patient' && item.route === '/billing') {
+          return { ...item, label: 'My Bills' };
         }
         return item;
       });
