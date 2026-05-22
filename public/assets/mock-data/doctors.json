@@ -51,6 +51,19 @@
         "days": ["Wednesday", "Friday"],
         "hours": "09:00-15:00"
       }
+    },
+    {
+      "id": "105",
+      "firstName": "Zidan",
+      "lastName": "Kareem",
+      "specialization": "Dentistry",
+      "email": "dr.zidan@clinic.com",
+      "contactNumber": "+96655443322",
+      "avatar": null,
+      "availability": {
+        "days": ["Sunday", "Tuesday", "Thursday"],
+        "hours": "09:00-17:00"
+      }
     }
   ]
 }

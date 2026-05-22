@@ -53,6 +53,26 @@
       "status": "overdue",
       "dateIssued": "2026-04-10T09:00:00Z",
       "paymentMethod": null
+    },
+    {
+      "id": "7",
+      "patientId": "2",
+      "appointmentId": "10",
+      "amount": 450.00,
+      "paidAmount": 200.00,
+      "status": "partially_paid",
+      "dateIssued": "2026-05-22T10:00:00Z",
+      "paymentMethod": "Cash"
+    },
+    {
+      "id": "8",
+      "patientId": "1",
+      "appointmentId": "9",
+      "amount": 120.00,
+      "paidAmount": 0.00,
+      "status": "pending",
+      "dateIssued": "2026-05-23T11:00:00Z",
+      "paymentMethod": null
     }
   ]
 }

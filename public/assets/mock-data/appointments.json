@@ -71,6 +71,24 @@
       "status": "cancelled",
       "type": "Orthopedic Consultation",
       "notes": "Patient rescheduled."
+    },
+    {
+      "id": "9",
+      "patientId": "1",
+      "doctorId": "105",
+      "date": "2026-05-23T10:00:00Z",
+      "status": "scheduled",
+      "type": "Dental Scaling",
+      "notes": "Routine scaling and cleaning."
+    },
+    {
+      "id": "10",
+      "patientId": "2",
+      "doctorId": "105",
+      "date": "2026-05-22T09:00:00Z",
+      "status": "completed",
+      "type": "Root Canal",
+      "notes": "Initial root canal session. Needs follow-up."
     }
   ]
 }
