@@ -5,6 +5,9 @@ import { BillingService } from '../../services/billing.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { BillingRecord } from '../../models/billing.model';
 import { Patient } from '../../../patients/models/patient.model';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-billing-form',
@@ -19,6 +22,8 @@ export class BillingFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private billingService = inject(BillingService);
   private patientService = inject(PatientService);
+  private authService = inject(AuthService);
+  private appointmentService = inject(AppointmentService);
 
   patients: Patient[] = [];
   submitting = false;
@@ -36,9 +41,31 @@ export class BillingFormComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.patientService.getAll().subscribe(data => {
-      this.patients = data;
-    });
+    const doctorId = this.authService.currentDoctorId();
+
+    if (doctorId) {
+      forkJoin({
+        patients: this.patientService.getAll(),
+        appointments: this.appointmentService.getAll()
+      }).subscribe({
+        next: ({ patients, appointments }) => {
+          const matchingPatientIds = new Set(
+            appointments
+              .filter(a => a.doctorId === doctorId)
+              .map(a => a.patientId)
+          );
+          if (matchingPatientIds.size > 0) {
+            this.patients = patients.filter(p => matchingPatientIds.has(p.id));
+          } else {
+            this.patients = patients;
+          }
+        }
+      });
+    } else {
+      this.patientService.getAll().subscribe(data => {
+        this.patients = data;
+      });
+    }
   }
 
   isInvalid(field: string): boolean {
@@ -57,7 +84,7 @@ export class BillingFormComponent implements OnInit {
     const amount = Number(formValue.amount);
     const status = formValue.status!;
     const newRecord: BillingRecord = {
-      id: `INV-${Math.floor(Math.random() * 90000) + 10000}`,
+      id: (Math.floor(Math.random() * 90000) + 10000).toString(),
       patientId: formValue.patientId!,
       amount: amount,
       paidAmount: status === 'paid' ? amount : 0,
