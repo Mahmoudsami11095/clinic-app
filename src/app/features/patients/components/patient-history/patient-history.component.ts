@@ -231,7 +231,14 @@ import { BillingService } from '../../../billing/services/billing.service';
                     <tbody class="divide-y divide-slate-100 text-slate-600">
                       @for (bill of billingRecords(); track bill.id) {
                         <tr class="hover:bg-slate-50/50">
-                          <td class="py-3.5 px-5 font-semibold text-slate-750">INV-{{ bill.id.padStart(4, '0') }}</td>
+                          <td class="py-3.5 px-5 font-semibold text-slate-755">
+                            <div>INV-{{ bill.id.padStart(4, '0') }}</div>
+                            @if (bill.appointmentType) {
+                              <div class="text-[11px] text-slate-400 font-medium mt-0.5">
+                                {{ bill.appointmentType }} ({{ bill.appointmentDate | date:'mediumDate' }})
+                              </div>
+                            }
+                          </td>
                           <td class="py-3.5 px-5">{{ bill.dateIssued | date:'mediumDate' }}</td>
                           <td class="py-3.5 px-5">
                             <div class="font-bold text-slate-800">{{ bill.amount | currency }}</div>
@@ -280,7 +287,7 @@ export class PatientHistoryComponent implements OnInit {
     forkJoin({
       appointments: this.appointmentService.getAllWithDetails(),
       prescriptions: this.prescriptionService.getAllWithDetails(),
-      billing: this.billingService.getAll()
+      billing: this.billingService.getAllWithDetails()
     }).subscribe({
       next: ({ appointments, prescriptions, billing }) => {
         // Filter appointments for this patient

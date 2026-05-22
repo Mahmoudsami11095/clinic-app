@@ -16,14 +16,18 @@ export class BillingService {
   getAllWithDetails(): Observable<BillingRecordWithDetails[]> {
     return forkJoin({
       billing: this.getAll(),
-      patients: this.http.get<{ data: any[] }>('/api/patients').pipe(map(r => r.data))
+      patients: this.http.get<{ data: any[] }>('/api/patients').pipe(map(r => r.data)),
+      appointments: this.http.get<{ data: any[] }>('/api/appointments').pipe(map(r => r.data))
     }).pipe(
-      map(({ billing, patients }) => {
+      map(({ billing, patients, appointments }) => {
         return billing.map(bill => {
           const patient = patients.find(p => p.id === bill.patientId);
+          const appointment = bill.appointmentId ? appointments.find(a => a.id === bill.appointmentId) : null;
           return {
             ...bill,
-            patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'
+            patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient',
+            appointmentType: appointment ? appointment.type : undefined,
+            appointmentDate: appointment ? appointment.date : undefined
           };
         });
       })

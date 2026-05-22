@@ -115,7 +115,14 @@
                          [class]="getAvatarColor(bill.patientName)">
                       {{ bill.patientName.charAt(0) }}
                     </div>
-                    <span class="font-semibold text-slate-800">{{ bill.patientName }}</span>
+                    <div>
+                      <span class="font-semibold text-slate-800 block">{{ bill.patientName }}</span>
+                      @if (bill.appointmentType) {
+                        <span class="text-[11px] text-slate-400 block mt-0.5 font-medium">
+                          {{ bill.appointmentType }} ({{ bill.appointmentDate | date:'mediumDate' }})
+                        </span>
+                      }
+                    </div>
                   </div>
                 </td>
 

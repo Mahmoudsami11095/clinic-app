@@ -7,6 +7,7 @@ import { BillingRecord } from '../../models/billing.model';
 import { Patient } from '../../../patients/models/patient.model';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { Appointment } from '../../../appointments/models/appointment.model';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -26,6 +27,8 @@ export class BillingFormComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
 
   patients: Patient[] = [];
+  allAppointments: Appointment[] = [];
+  filteredAppointments: Appointment[] = [];
   submitting = false;
 
   readonly statusOptions = ['paid', 'pending', 'overdue'];
@@ -33,6 +36,7 @@ export class BillingFormComponent implements OnInit {
 
   form = this.fb.group({
     patientId: ['', Validators.required],
+    appointmentId: [{ value: '', disabled: true }],
     amount: ['', [Validators.required, Validators.min(0.1)]],
     dateIssued: [new Date().toISOString().split('T')[0], Validators.required],
     status: ['pending', Validators.required],
@@ -43,12 +47,13 @@ export class BillingFormComponent implements OnInit {
   ngOnInit() {
     const doctorId = this.authService.currentDoctorId();
 
-    if (doctorId) {
-      forkJoin({
-        patients: this.patientService.getAll(),
-        appointments: this.appointmentService.getAll()
-      }).subscribe({
-        next: ({ patients, appointments }) => {
+    forkJoin({
+      patients: this.patientService.getAll(),
+      appointments: this.appointmentService.getAll()
+    }).subscribe({
+      next: ({ patients, appointments }) => {
+        this.allAppointments = appointments;
+        if (doctorId) {
           const matchingPatientIds = new Set(
             appointments
               .filter(a => a.doctorId === doctorId)
@@ -59,13 +64,26 @@ export class BillingFormComponent implements OnInit {
           } else {
             this.patients = patients;
           }
+        } else {
+          this.patients = patients;
         }
-      });
-    } else {
-      this.patientService.getAll().subscribe(data => {
-        this.patients = data;
-      });
-    }
+      }
+    });
+
+    this.form.get('patientId')?.valueChanges.subscribe(patientId => {
+      if (patientId) {
+        let appts = this.allAppointments.filter(a => a.patientId === patientId);
+        if (doctorId) {
+          appts = appts.filter(a => a.doctorId === doctorId);
+        }
+        this.filteredAppointments = appts;
+        this.form.get('appointmentId')?.enable();
+      } else {
+        this.filteredAppointments = [];
+        this.form.get('appointmentId')?.disable();
+        this.form.get('appointmentId')?.setValue('');
+      }
+    });
   }
 
   isInvalid(field: string): boolean {
@@ -80,12 +98,13 @@ export class BillingFormComponent implements OnInit {
     }
 
     this.submitting = true;
-    const formValue = this.form.value;
+    const formValue = this.form.getRawValue();
     const amount = Number(formValue.amount);
     const status = formValue.status!;
     const newRecord: BillingRecord = {
       id: (Math.floor(Math.random() * 90000) + 10000).toString(),
       patientId: formValue.patientId!,
+      appointmentId: formValue.appointmentId || undefined,
       amount: amount,
       paidAmount: status === 'paid' ? amount : 0,
       dateIssued: formValue.dateIssued!,
@@ -112,11 +131,14 @@ export class BillingFormComponent implements OnInit {
   private resetForm() {
     this.form.reset({
       patientId: '',
+      appointmentId: '',
       amount: '',
       dateIssued: new Date().toISOString().split('T')[0],
       status: 'pending',
       paymentMethod: 'Cash',
       description: ''
     });
+    this.form.get('appointmentId')?.disable();
+    this.filteredAppointments = [];
   }
 }
