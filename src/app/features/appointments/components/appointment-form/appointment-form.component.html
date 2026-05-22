@@ -13,13 +13,19 @@
         <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="patientId">
           Patient <span class="text-rose-500">*</span>
         </label>
+        
+        <!-- Locked Mode for Patients -->
+        <div *ngIf="authService.isPatient()" class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-500 font-semibold flex items-center gap-2">
+          <i class="pi pi-user text-xs"></i>
+          {{ authService.currentUser().name }}
+        </div>
+
         <select
+          *ngIf="!authService.isPatient()"
           id="patientId"
           formControlName="patientId"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
-          [ngClass]="isInvalid('patientId')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
+          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('patientId') }"
         >
           <option value="" disabled>Select patient</option>
           @for (p of patients; track p.id) {
@@ -36,13 +42,19 @@
         <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="doctorId">
           Doctor <span class="text-rose-500">*</span>
         </label>
+        
+        <!-- Locked Mode for Doctors/Assistants -->
+        <div *ngIf="authService.isDoctor() || authService.isAssistant()" class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-500 font-semibold flex items-center gap-2">
+          <i class="pi pi-user-plus text-xs"></i>
+          {{ authService.isDoctor() ? authService.currentUser().name : 'Dr. Sarah Jenkins' }}
+        </div>
+
         <select
+          *ngIf="!authService.isDoctor() && !authService.isAssistant()"
           id="doctorId"
           formControlName="doctorId"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
-          [ngClass]="isInvalid('doctorId')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
+          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('doctorId') }"
         >
           <option value="" disabled>Select doctor</option>
           @for (d of doctors; track d.id) {
@@ -73,10 +85,8 @@
           id="date"
           type="date"
           formControlName="date"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
-          [ngClass]="isInvalid('date')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none bg-slate-50 border-slate-200"
+          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('date') }"
         />
       </div>
 
@@ -89,10 +99,8 @@
           id="time"
           type="time"
           formControlName="time"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
-          [ngClass]="isInvalid('time')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none bg-slate-50 border-slate-200"
+          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('time') }"
         />
       </div>
 
@@ -104,14 +112,68 @@
         <select
           id="type"
           formControlName="type"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
-          [ngClass]="isInvalid('type')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
+          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('type') }"
         >
           <option value="" disabled>Select type</option>
           @for (type of appointmentTypes; track type) {
             <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Optional Billing (Doctor / Assistant only) -->
+  <div *ngIf="authService.isDoctor() || authService.isAssistant()" class="pt-4 border-t border-slate-100">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">3</span>
+      Invoice & Payment Collection (Optional)
+    </h3>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Billing Amount -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="billingAmount">
+          Total Fee ($)
+        </label>
+        <input
+          id="billingAmount"
+          type="number"
+          min="0"
+          formControlName="billingAmount"
+          placeholder="e.g. 150.00"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-4 text-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+        />
+      </div>
+
+      <!-- Paid Amount -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="paidAmount">
+          Paid Amount ($)
+        </label>
+        <input
+          id="paidAmount"
+          type="number"
+          min="0"
+          formControlName="paidAmount"
+          placeholder="e.g. 150.00"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-4 text-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+        />
+      </div>
+
+      <!-- Payment Method -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="paymentMethod">
+          Payment Method
+        </label>
+        <select
+          id="paymentMethod"
+          formControlName="paymentMethod"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
+        >
+          @for (m of paymentMethods; track m) {
+            <option [value]="m">{{ m }}</option>
           }
         </select>
       </div>
@@ -151,7 +213,7 @@
         Scheduling...
       } @else {
         <i class="pi pi-calendar-plus text-xs"></i>
-        Schedule Appointment
+        {{ authService.isPatient() ? 'Request Slot' : 'Schedule Appointment' }}
       }
     </button>
   </div>

@@ -13,7 +13,7 @@
 
   <!-- Navigation Links -->
   <nav class="flex-1 overflow-y-auto py-6 px-4 flex flex-col gap-2 sidebar-scroll">
-    @for (item of menuItems; track item.route) {
+    @for (item of menuItems(); track item.route) {
       <a [routerLink]="item.route" 
          routerLinkActive="bg-indigo-600/10 text-indigo-400 border-indigo-500/50" 
          [routerLinkActiveOptions]="{exact: false}"
@@ -22,23 +22,20 @@
         <i [class]="'text-lg transition-transform duration-300 group-hover:scale-110 ' + item.icon"></i>
         
         <span class="font-medium font-sans text-sm tracking-wide">{{ item.label }}</span>
-        
-        <div class="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 opacity-0 transition-opacity duration-300" 
-             [class.opacity-100]="false"></div> 
       </a>
     }
   </nav>
 
-  <!-- Bottom Profile / Settings Area -->
+  <!-- Bottom Profile Area -->
   <div class="p-4 border-t border-slate-800/60 mt-auto">
-    <button class="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-slate-800/80 transition-colors">
-      <div class="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border-2 border-slate-600 flex items-center justify-center">
-        <i class="pi pi-user text-slate-400"></i>
+    <div class="flex items-center gap-3 w-full p-3 rounded-xl bg-slate-800/40 border border-slate-800/40">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
+        {{ getAvatarInitials(authService.currentUser().name) }}
       </div>
-      <div class="flex flex-col text-left">
-        <span class="text-sm font-semibold text-slate-200">Admin User</span>
-        <span class="text-xs text-slate-500">Clinic Manager</span>
+      <div class="flex flex-col text-left min-w-0">
+        <span class="text-sm font-semibold text-slate-200 truncate">{{ authService.currentUser().name }}</span>
+        <span class="text-xs text-slate-500 truncate capitalize">{{ authService.currentUser().title }}</span>
       </div>
-    </button>
+    </div>
   </div>
 </aside>

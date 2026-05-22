@@ -31,6 +31,10 @@ export class BillingService {
   }
 
   create(record: BillingRecord) {
-    return this.http.post<{ message: string }>('/api/billing', record);
+    return this.http.post<{ message: string; data: BillingRecord }>('/api/billing', record);
+  }
+
+  update(record: BillingRecord) {
+    return this.http.put<{ message: string; data: BillingRecord }>(`/api/billing/${record.id}`, record);
   }
 }

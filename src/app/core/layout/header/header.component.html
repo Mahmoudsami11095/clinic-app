@@ -8,29 +8,94 @@
   </div>
 
   <!-- Right Actions -->
-  <div class="flex items-center gap-4 ml-auto">
+  <div class="flex items-center gap-4 ml-auto relative">
+    
+    <!-- Active User Role Badge -->
+    <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-600 ring-1 ring-indigo-500/10 capitalize">
+      <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+      Role: {{ authService.currentUser().role }}
+    </span>
+
+    <!-- Quick User Switcher Button -->
+    <button (click)="toggleUserSwitcher()" 
+            class="relative inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 transition-all border border-amber-200/50 shadow-sm cursor-pointer">
+      <i class="pi pi-sync text-[10px]"></i>
+      Switch User
+    </button>
+
+    <!-- User Switcher Dropdown Menu -->
+    <div *ngIf="isUserSwitcherOpen()" 
+         class="absolute right-32 top-14 w-72 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+      <div class="px-3 py-2 border-b border-slate-100 mb-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Select Mock Profile</span>
+      </div>
+      <div class="space-y-1">
+        <button *ngFor="let u of authService.mockUsers" 
+                (click)="switchUser(u)"
+                [class.bg-slate-50]="authService.currentUser().id === u.id"
+                class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+            {{ getAvatarInitials(u.name) }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-slate-700 truncate group-hover:text-indigo-600">{{ u.name }}</div>
+            <div class="text-[11px] text-slate-400 font-medium capitalize">{{ u.title }} ({{ u.role }})</div>
+          </div>
+          <i *ngIf="authService.currentUser().id === u.id" class="pi pi-check text-indigo-500 text-xs"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- Notifications -->
-    <button class="relative p-2.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+    <button class="relative p-2.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors focus:outline-none">
       <i class="pi pi-bell text-xl"></i>
       <span class="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
     </button>
 
     <!-- Messages -->
-    <button class="p-2.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+    <button class="p-2.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors focus:outline-none">
       <i class="pi pi-envelope text-xl"></i>
     </button>
 
     <div class="h-8 w-px bg-slate-200 mx-2 hidden sm:block"></div>
     
-    <!-- Profile Dropdown (Placeholder) -->
-    <button class="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-slate-200 focus:outline-none">
-      <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
-        AU
+    <!-- Profile Dropdown (Active User) -->
+    <div class="relative">
+      <button (click)="toggleDropdown()" 
+              class="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-slate-200 focus:outline-none cursor-pointer">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
+          {{ getAvatarInitials(authService.currentUser().name) }}
+        </div>
+        <div class="hidden sm:flex flex-col text-left">
+          <span class="text-sm font-semibold text-slate-700 leading-tight">{{ authService.currentUser().name }}</span>
+          <span class="text-[10px] text-slate-400 font-medium capitalize">{{ authService.currentUser().title }}</span>
+        </div>
+        <i class="pi pi-angle-down text-slate-400 text-sm ml-1 hidden sm:block"></i>
+      </button>
+
+      <!-- Profile Dropdown Menu -->
+      <div *ngIf="isDropdownOpen()" 
+           class="absolute right-0 top-12 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div class="px-3 py-2.5 border-b border-slate-100">
+          <p class="text-xs text-slate-400 font-semibold">Logged in as</p>
+          <p class="text-sm font-bold text-slate-700 truncate mt-0.5">{{ authService.currentUser().email }}</p>
+        </div>
+        <div class="py-1">
+          <button (click)="toggleUserSwitcher()" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors text-left rounded-xl">
+            <i class="pi pi-sync text-slate-400 text-xs"></i>
+            Switch Profile
+          </button>
+        </div>
+        <div class="border-t border-slate-100 pt-1 mt-1">
+          <button (click)="authService.logout()" 
+                  class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors text-left rounded-xl font-semibold">
+            <i class="pi pi-power-off text-xs"></i>
+            Reset to Admin
+          </button>
+        </div>
       </div>
-      <div class="hidden sm:flex flex-col text-left">
-        <span class="text-sm font-semibold text-slate-700 leading-tight">Admin User</span>
-      </div>
-      <i class="pi pi-angle-down text-slate-400 text-sm ml-1 hidden sm:block"></i>
-    </button>
+    </div>
+
   </div>
 </header>

@@ -4,8 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { BillingService } from '../../services/billing.service';
 import { BillingRecord, BillingRecordWithDetails } from '../../models/billing.model';
 import { PatientService } from '../../../patients/services/patient.service';
+import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { BillingFormComponent } from '../billing-form/billing-form.component';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-billing-list',
@@ -16,6 +19,8 @@ import { BillingFormComponent } from '../billing-form/billing-form.component';
 export class BillingListComponent implements OnInit {
   private billingService = inject(BillingService);
   private patientService = inject(PatientService);
+  private appointmentService = inject(AppointmentService);
+  protected authService = inject(AuthService);
 
   billingRecords = signal<BillingRecordWithDetails[]>([]);
   loading = signal(true);
@@ -24,6 +29,13 @@ export class BillingListComponent implements OnInit {
   searchQuery = signal('');
   selectedStatus = signal<string>('all');
   isModalOpen = signal(false);
+
+  // Pay Modal State
+  isPayModalOpen = signal(false);
+  selectedRecordToPay = signal<BillingRecordWithDetails | null>(null);
+  payAmount = signal<number>(0);
+  payMethod = signal<string>('Cash');
+  paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
 
   // Derived Stats
   totalOutstanding = computed(() => {
@@ -55,18 +67,49 @@ export class BillingListComponent implements OnInit {
       result = result.filter(b => b.status === status);
     }
 
-    // Sort by date descending (newest first)
     return result.sort((a, b) => new Date(b.dateIssued).getTime() - new Date(a.dateIssued).getTime());
   });
 
   ngOnInit() {
-    this.billingService.getAllWithDetails().subscribe({
-      next: (data) => {
-        this.billingRecords.set(data);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    const doctorId = this.authService.currentDoctorId();
+
+    if (doctorId) {
+      forkJoin({
+        billing: this.billingService.getAllWithDetails(),
+        appointments: this.appointmentService.getAll()
+      }).subscribe({
+        next: ({ billing, appointments }) => {
+          const doctorApptIds = new Set(
+            appointments
+              .filter(a => a.doctorId === doctorId)
+              .map(a => a.id)
+          );
+          const doctorPatientIds = new Set(
+            appointments
+              .filter(a => a.doctorId === doctorId)
+              .map(a => a.patientId)
+          );
+          const filteredBilling = billing.filter(b => {
+            if (b.appointmentId) {
+              return doctorApptIds.has(b.appointmentId);
+            }
+            return doctorPatientIds.has(b.patientId);
+          });
+          
+          this.billingRecords.set(filteredBilling);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false)
+      });
+    } else {
+      this.billingService.getAllWithDetails().subscribe({
+        next: (data) => {
+          this.billingRecords.set(data);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+    }
   }
 
   onSearch(event: Event) {
@@ -108,7 +151,6 @@ export class BillingListComponent implements OnInit {
   }
 
   handleBillingSaved(record: BillingRecord) {
-    // Manually add the new record to the local signal since the mock backend is read-only
     this.patientService.getAll().subscribe(patients => {
       const patient = patients.find(p => p.id === record.patientId);
       const newRecordWithDetails: BillingRecordWithDetails = {
@@ -118,6 +160,42 @@ export class BillingListComponent implements OnInit {
       
       this.billingRecords.update(records => [newRecordWithDetails, ...records]);
       this.closeModal();
+    });
+  }
+
+  openPayModal(bill: BillingRecordWithDetails) {
+    this.selectedRecordToPay.set(bill);
+    this.payAmount.set(bill.amount);
+    this.payMethod.set(bill.paymentMethod || 'Cash');
+    this.isPayModalOpen.set(true);
+  }
+
+  closePayModal() {
+    this.isPayModalOpen.set(false);
+    this.selectedRecordToPay.set(null);
+  }
+
+  submitPayment() {
+    const record = this.selectedRecordToPay();
+    if (!record) return;
+
+    const paid = Number(this.payAmount());
+    const isFullyPaid = paid >= record.amount;
+
+    const updated: BillingRecord = {
+      ...record,
+      status: isFullyPaid ? 'paid' : 'pending',
+      paymentMethod: this.payMethod(),
+      description: isFullyPaid ? record.description : `${record.description || 'Visit fee'} (Paid: $${paid})`
+    };
+
+    this.billingService.update(updated).subscribe({
+      next: () => {
+        this.billingRecords.update(records => 
+          records.map(r => r.id === record.id ? { ...r, ...updated, patientName: r.patientName } : r)
+        );
+        this.closePayModal();
+      }
     });
   }
 }

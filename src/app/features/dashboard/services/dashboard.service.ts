@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, map } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
 
 export interface DashboardStats {
   totalPatients: number;
@@ -22,6 +23,7 @@ export interface RecentAppointment {
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
 
   getDashboardData() {
     return forkJoin({
@@ -31,17 +33,36 @@ export class DashboardService {
       billing: this.http.get<{ data: any[] }>('/api/billing'),
     }).pipe(
       map(({ patients, appointments, doctors, billing }) => {
+        const doctorId = this.authService.currentDoctorId();
+        
+        let apptsList = appointments.data;
+        let billsList = billing.data;
+        
+        if (doctorId) {
+          apptsList = appointments.data.filter(a => a.doctorId === doctorId);
+          billsList = billing.data.filter(b => {
+            if (b.appointmentId) {
+              const appt = appointments.data.find(a => a.id === b.appointmentId);
+              return appt && appt.doctorId === doctorId;
+            }
+            // Fallback: if patient has any appointment with this doctor
+            return appointments.data.some(a => a.patientId === b.patientId && a.doctorId === doctorId);
+          });
+        }
+
+        const uniquePatientIds = new Set(apptsList.map(a => a.patientId));
+
         const stats: DashboardStats = {
-          totalPatients: patients.data.length,
-          totalDoctors: doctors.data.length,
-          todayAppointments: appointments.data.filter(a => a.status === 'scheduled').length,
-          totalRevenue: billing.data
+          totalPatients: doctorId ? uniquePatientIds.size : patients.data.length,
+          totalDoctors: doctorId ? 1 : doctors.data.length,
+          todayAppointments: apptsList.filter(a => a.status === 'scheduled').length,
+          totalRevenue: billsList
             .filter(b => b.status === 'paid')
             .reduce((sum: number, b: any) => sum + b.amount, 0),
-          pendingBills: billing.data.filter(b => b.status === 'pending' || b.status === 'overdue').length,
+          pendingBills: billsList.filter(b => b.status === 'pending' || b.status === 'overdue').length,
         };
 
-        const recentAppointments: RecentAppointment[] = appointments.data
+        const recentAppointments: RecentAppointment[] = apptsList
           .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
           .slice(0, 5)
           .map((appt: any) => {

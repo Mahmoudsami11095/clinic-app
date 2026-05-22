@@ -5,6 +5,7 @@ import { AppointmentService } from '../../services/appointment.service';
 import { Appointment, AppointmentWithDetails } from '../../models/appointment.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-appointment-list',
@@ -14,6 +15,7 @@ import { AppointmentFormComponent } from '../appointment-form/appointment-form.c
 })
 export class AppointmentListComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
+  protected authService = inject(AuthService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   loading = signal(true);
@@ -26,6 +28,16 @@ export class AppointmentListComponent implements OnInit {
 
   filteredAppointments = computed(() => {
     let result = this.appointments();
+    
+    const doctorId = this.authService.currentDoctorId();
+    const patientId = this.authService.currentPatientId();
+
+    if (doctorId) {
+      result = result.filter(a => a.doctorId === doctorId);
+    } else if (patientId) {
+      result = result.filter(a => a.patientId === patientId);
+    }
+
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.selectedStatus();
     const date = this.selectedDate();
@@ -43,12 +55,10 @@ export class AppointmentListComponent implements OnInit {
     }
 
     if (date) {
-      // Compare just the YYYY-MM-DD part
       const searchDate = new Date(date).toDateString();
       result = result.filter(a => new Date(a.date).toDateString() === searchDate);
     }
 
-    // Sort by date ascending (upcoming first)
     return result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   });
 
@@ -113,7 +123,6 @@ export class AppointmentListComponent implements OnInit {
   }
 
   handleAppointmentSaved(newAppt: Appointment) {
-    // Re-fetch all with details to ensure the UI shows the mapped patient/doctor names
     this.appointmentService.getAllWithDetails().subscribe(data => {
       this.appointments.set(data);
     });
