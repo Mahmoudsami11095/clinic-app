@@ -84,6 +84,7 @@
             <th class="py-4 px-6 font-semibold">Date & Time</th>
             <th class="py-4 px-6 font-semibold">Status</th>
             <th class="py-4 px-6 font-semibold">Notes</th>
+            <th class="py-4 px-6 font-semibold text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -96,11 +97,12 @@
                 <td class="py-4 px-6"><div class="h-4 bg-slate-200 rounded w-24"></div></td>
                 <td class="py-4 px-6"><div class="h-6 bg-slate-200 rounded-full w-20"></div></td>
                 <td class="py-4 px-6"><div class="h-4 bg-slate-200 rounded w-32"></div></td>
+                <td class="py-4 px-6"><div class="h-8 bg-slate-200 rounded-lg w-20 float-right"></div></td>
               </tr>
             }
           } @else if (filteredAppointments().length === 0) {
             <tr>
-              <td [attr.colspan]="authService.isPatient() ? 5 : 6" class="py-16 text-center text-slate-500">
+              <td [attr.colspan]="authService.isPatient() ? 6 : 7" class="py-16 text-center text-slate-500">
                 <i class="pi pi-calendar text-4xl mb-3 text-slate-300 block"></i>
                 <p>No appointments scheduled matching your criteria</p>
               </td>
@@ -145,6 +147,68 @@
                 <td class="py-4 px-6 text-slate-500 max-w-xs truncate" [title]="appt.notes || ''">
                   {{ appt.notes || '—' }}
                 </td>
+
+                <!-- Actions (Prescribe, View Rx) -->
+                <td class="py-4 px-6 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <!-- For Doctor and Assistant -->
+                    @if (authService.isDoctor() || authService.isAssistant()) {
+                      @if (getPrescriptionForAppointment(appt.id); as pres) {
+                        <button
+                          type="button"
+                          (click)="openPrescriptionModal(appt, false)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
+                          title="View or edit medical prescription"
+                        >
+                          <i class="pi pi-file-edit text-[10px]"></i>
+                          Edit Rx
+                        </button>
+                      } @else {
+                        @if (appt.status !== 'cancelled') {
+                          <button
+                            type="button"
+                            (click)="openPrescriptionModal(appt, false)"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
+                            title="Write medical prescription"
+                          >
+                            <i class="pi pi-file-plus text-[10px]"></i>
+                            Prescribe
+                          </button>
+                        }
+                      }
+                    }
+                    
+                    <!-- For Patient (view only if exists) -->
+                    @if (authService.isPatient()) {
+                      @if (getPrescriptionForAppointment(appt.id); as pres) {
+                        <button
+                          type="button"
+                          (click)="openPrescriptionModal(appt, true)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
+                          title="View your prescription"
+                        >
+                          <i class="pi pi-file text-[10px]"></i>
+                          View Rx
+                        </button>
+                      }
+                    }
+
+                    <!-- For Admin (read-only view) -->
+                    @if (authService.isAdmin()) {
+                      @if (getPrescriptionForAppointment(appt.id); as pres) {
+                        <button
+                          type="button"
+                          (click)="openPrescriptionModal(appt, true)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
+                          title="View prescription details"
+                        >
+                          <i class="pi pi-file text-[10px]"></i>
+                          View Rx
+                        </button>
+                      }
+                    }
+                  </div>
+                </td>
               </tr>
             }
           }
@@ -164,5 +228,23 @@
       (saved)="handleAppointmentSaved($event)"
       (cancelled)="closeModal()"
     ></app-appointment-form>
+  </app-modal>
+
+  <!-- Medical Prescription Modal -->
+  <app-modal
+    [isOpen]="isPrescriptionModalOpen()"
+    title="{{ isPrescriptionReadOnly() ? 'Medical Prescription Details' : (selectedPrescription() ? 'Edit Medical Prescription' : 'Create Medical Prescription') }}"
+    subtitle="Manage medication orders and instructions linked with this consultation"
+    (close)="closePrescriptionModal()"
+  >
+    @if (selectedAppointmentForPrescription(); as appt) {
+      <app-prescription-form
+        [appointment]="appt"
+        [prescription]="selectedPrescription()"
+        [readOnly]="isPrescriptionReadOnly()"
+        (saved)="handlePrescriptionSaved($event)"
+        (cancelled)="closePrescriptionModal()"
+      ></app-prescription-form>
+    }
   </app-modal>
 </div>

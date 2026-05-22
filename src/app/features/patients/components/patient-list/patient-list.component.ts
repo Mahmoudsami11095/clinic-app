@@ -9,9 +9,11 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { forkJoin } from 'rxjs';
 
+import { PatientHistoryComponent } from '../patient-history/patient-history.component';
+
 @Component({
   selector: 'app-patient-list',
-  imports: [CommonModule, FormsModule, ModalComponent, PatientFormComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, PatientFormComponent, PatientHistoryComponent],
   templateUrl: './patient-list.component.html',
   styleUrl: './patient-list.component.css'
 })
@@ -25,6 +27,10 @@ export class PatientListComponent implements OnInit {
   searchQuery = signal('');
   selectedGender = signal<string>('all');
   isModalOpen = signal(false);
+
+  // Patient History State
+  isHistoryModalOpen = signal(false);
+  selectedPatientForHistory = signal<Patient | null>(null);
 
   allowedPatientIds = signal<Set<string> | null>(null);
 
@@ -142,5 +148,15 @@ export class PatientListComponent implements OnInit {
       this.allowedPatientIds.set(updated);
     }
     this.closeModal();
+  }
+
+  openHistoryModal(patient: Patient) {
+    this.selectedPatientForHistory.set(patient);
+    this.isHistoryModalOpen.set(true);
+  }
+
+  closeHistoryModal() {
+    this.isHistoryModalOpen.set(false);
+    this.selectedPatientForHistory.set(null);
   }
 }

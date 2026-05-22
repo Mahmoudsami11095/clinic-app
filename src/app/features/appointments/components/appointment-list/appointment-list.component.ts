@@ -6,18 +6,23 @@ import { Appointment, AppointmentWithDetails } from '../../models/appointment.mo
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
+import { Prescription } from '../../../prescriptions/models/prescription.model';
+import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
 
 @Component({
   selector: 'app-appointment-list',
-  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent, PrescriptionFormComponent],
   templateUrl: './appointment-list.component.html',
   styleUrl: './appointment-list.component.css'
 })
 export class AppointmentListComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
+  private prescriptionService = inject(PrescriptionService);
   protected authService = inject(AuthService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
+  prescriptions = signal<Prescription[]>([]);
   loading = signal(true);
   
   // Filters
@@ -25,6 +30,12 @@ export class AppointmentListComponent implements OnInit {
   selectedStatus = signal<string>('all');
   selectedDate = signal<string>('');
   isModalOpen = signal(false);
+
+  // Prescription Modal State
+  isPrescriptionModalOpen = signal(false);
+  selectedAppointmentForPrescription = signal<AppointmentWithDetails | null>(null);
+  selectedPrescription = signal<Prescription | null>(null);
+  isPrescriptionReadOnly = signal(false);
 
   filteredAppointments = computed(() => {
     let result = this.appointments();
@@ -69,6 +80,11 @@ export class AppointmentListComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+    });
+    this.prescriptionService.getAll().subscribe({
+      next: (data) => {
+        this.prescriptions.set(data);
+      }
     });
   }
 
@@ -127,5 +143,30 @@ export class AppointmentListComponent implements OnInit {
       this.appointments.set(data);
     });
     this.closeModal();
+  }
+
+  getPrescriptionForAppointment(appointmentId: string): Prescription | undefined {
+    return this.prescriptions().find(p => p.appointmentId === appointmentId);
+  }
+
+  openPrescriptionModal(appt: AppointmentWithDetails, readOnly: boolean) {
+    this.selectedAppointmentForPrescription.set(appt);
+    const pres = this.getPrescriptionForAppointment(appt.id);
+    this.selectedPrescription.set(pres || null);
+    this.isPrescriptionReadOnly.set(readOnly);
+    this.isPrescriptionModalOpen.set(true);
+  }
+
+  closePrescriptionModal() {
+    this.isPrescriptionModalOpen.set(false);
+    this.selectedAppointmentForPrescription.set(null);
+    this.selectedPrescription.set(null);
+  }
+
+  handlePrescriptionSaved(pres: Prescription) {
+    this.prescriptionService.getAll().subscribe(data => {
+      this.prescriptions.set(data);
+    });
+    this.closePrescriptionModal();
   }
 }
