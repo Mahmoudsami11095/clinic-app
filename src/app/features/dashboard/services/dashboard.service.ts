@@ -62,8 +62,17 @@ export class DashboardService {
             .filter(b => b.status === 'paid')
             .reduce((sum: number, b: any) => sum + b.amount, 0),
           pendingBills: billsList.filter(b => b.status === 'pending' || b.status === 'overdue').length,
-          totalCollected: billsList.reduce((sum: number, b: any) => sum + (b.paidAmount || 0), 0),
-          totalOutstanding: billsList.reduce((sum: number, b: any) => sum + (b.amount - (b.paidAmount || 0)), 0),
+          totalCollected: billsList.reduce((sum: number, b: any) => {
+            if (b.status === 'paid') {
+              return sum + (b.paidAmount !== undefined ? b.paidAmount : b.amount);
+            }
+            return sum + (b.paidAmount || 0);
+          }, 0),
+          totalOutstanding: billsList.reduce((sum: number, b: any) => {
+            if (b.status === 'paid') return sum;
+            const paid = b.paidAmount !== undefined ? b.paidAmount : 0;
+            return sum + (b.amount - paid);
+          }, 0),
         };
 
         const recentAppointments: RecentAppointment[] = apptsList
