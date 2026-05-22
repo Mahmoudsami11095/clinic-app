@@ -12,6 +12,7 @@ import { forkJoin } from 'rxjs';
 
 import { PatientHistoryComponent } from '../patient-history/patient-history.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { addDoctorLinkedPatientId, getDoctorLinkedPatientIds } from '../../../../core/services/doctor-patient-links';
 
 @Component({
   selector: 'app-patient-list',
@@ -70,7 +71,7 @@ export class PatientListComponent implements OnInit {
   });
 
   ngOnInit() {
-    const doctorId = this.authService.currentDoctorId();
+    const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
 
     if (doctorId) {
       forkJoin({
@@ -83,6 +84,8 @@ export class PatientListComponent implements OnInit {
               .filter(a => a.doctorId === doctorId)
               .map(a => a.patientId)
           );
+          const linkedPatientIds = getDoctorLinkedPatientIds(doctorId);
+          linkedPatientIds.forEach(id => matchingPatientIds.add(id));
           this.allowedPatientIds.set(matchingPatientIds);
           this.patients.set(patients);
           this.loading.set(false);
@@ -150,6 +153,12 @@ export class PatientListComponent implements OnInit {
 
   handlePatientSaved(newPatient: Patient) {
     this.patients.update(list => [newPatient, ...list]);
+    if (this.authService.isDoctor()) {
+      const doctorId = this.authService.currentDoctorId();
+      if (doctorId) {
+        addDoctorLinkedPatientId(doctorId, newPatient.id);
+      }
+    }
     const allowed = this.allowedPatientIds();
     if (allowed) {
       const updated = new Set(allowed);

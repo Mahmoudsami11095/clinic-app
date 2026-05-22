@@ -10,6 +10,7 @@ import { AppointmentService } from '../../../appointments/services/appointment.s
 import { Appointment } from '../../../appointments/models/appointment.model';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { getDoctorLinkedPatientIds } from '../../../../core/services/doctor-patient-links';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -48,7 +49,7 @@ export class BillingFormComponent implements OnInit {
   });
 
   ngOnInit() {
-    const doctorId = this.authService.currentDoctorId();
+    const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
     const activeClinicId = this.clinicService.activeClinicId();
 
     forkJoin({
@@ -64,19 +65,16 @@ export class BillingFormComponent implements OnInit {
         }
 
         if (doctorId) {
-          const matchingPatientIds = new Set(
-            appointments
-              .filter(a => a.doctorId === doctorId)
-              .map(a => a.patientId)
-          );
-          if (matchingPatientIds.size > 0) {
-            this.patients = filteredPatients.filter(p => matchingPatientIds.has(p.id));
-          } else {
-            this.patients = filteredPatients;
+          const linkedIds = getDoctorLinkedPatientIds(doctorId);
+          const seen = new Set(filteredPatients.map(p => p.id));
+          for (const patient of patients) {
+            if (!linkedIds.has(patient.id) || seen.has(patient.id)) continue;
+            if (activeClinicId !== 'all' && patient.clinicId !== activeClinicId) continue;
+            filteredPatients.push(patient);
+            seen.add(patient.id);
           }
-        } else {
-          this.patients = filteredPatients;
         }
+        this.patients = filteredPatients;
       }
     });
 

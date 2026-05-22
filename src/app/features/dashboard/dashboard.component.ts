@@ -31,7 +31,7 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit() {
-    const isDoc = !!this.authService.currentDoctorId();
+    const isDoc = this.authService.isDoctor();
     if (isDoc) {
       this.statCards = [
         { key: 'totalPatients', labelKey: 'dashboard.total_patients', icon: 'pi pi-users', color: 'indigo' },

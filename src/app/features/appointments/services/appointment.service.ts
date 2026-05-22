@@ -36,4 +36,15 @@ export class AppointmentService {
   create(appointment: Appointment) {
     return this.http.post<{ message: string }>('/api/appointments', appointment);
   }
+
+  update(appointment: Appointment) {
+    return this.http.put<{ message: string; data: Appointment }>(
+      `/api/appointments/${appointment.id}`,
+      appointment
+    );
+  }
+
+  delete(id: string) {
+    return this.http.delete<{ message: string }>(`/api/appointments/${id}`);
+  }
 }
