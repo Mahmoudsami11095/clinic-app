@@ -7,7 +7,7 @@ import { AuthService } from '../auth/auth.service';
 export interface DentalLog {
   id: string;
   patientId: string;
-  toothNumber: number; // 1 to 32
+  toothNumber: number | string; // 1 to 32 or A to T for child
   doctorId: string; // ID of the recording doctor/dentist
   doctorName: string; // Name of the recording doctor/dentist
   date: string; // ISO Date String

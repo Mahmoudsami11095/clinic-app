@@ -322,8 +322,8 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                           <span class="text-end">{{ 'dental.left' | translate }}</span>
                         </div>
                       </div>
-                      <div class="grid gap-2" style="grid-template-columns: repeat(16, minmax(0, 1fr));">
-                        @for (toothNum of upperTeeth; track toothNum) {
+                      <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
+                        @for (toothNum of upperTeethList(); track toothNum) {
                           <button
                             type="button"
                             (click)="selectTooth(toothNum)"
@@ -347,8 +347,8 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 
                     <!-- Mandibular (Lower Jaw) -->
                     <div class="space-y-2">
-                      <div class="grid gap-2" style="grid-template-columns: repeat(16, minmax(0, 1fr));">
-                        @for (toothNum of lowerTeeth; track toothNum) {
+                      <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
+                        @for (toothNum of lowerTeethList(); track toothNum) {
                           <button
                             type="button"
                             (click)="selectTooth(toothNum)"
@@ -635,7 +635,7 @@ export class PatientHistoryComponent implements OnInit {
   loadingData = signal(true);
 
   // Dental interactive chart signals and state
-  selectedTooth = signal<number | null>(null);
+  selectedTooth = signal<number | string | null>(null);
   dentalStatus = signal<'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment'>('healthy');
   painLevel = signal<number>(0);
   painDetails = signal<string>('');
@@ -643,17 +643,29 @@ export class PatientHistoryComponent implements OnInit {
   medication = signal<string>('');
   submittingDentalLog = signal<boolean>(false);
 
-  // Universal Numbering System lists for upper and lower arches
-  upperTeeth = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-  lowerTeeth = [32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17];
+  isChild = computed(() => {
+    return this.getAge(this.patient.dateOfBirth) < 12;
+  });
+
+  upperTeethList = computed(() => {
+    return this.isChild()
+      ? ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+      : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+  });
+
+  lowerTeethList = computed(() => {
+    return this.isChild()
+      ? ['T', 'S', 'R', 'Q', 'P', 'O', 'N', 'M', 'L', 'K']
+      : [32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17];
+  });
 
   // Map to speed up looking up the latest dental log per tooth
   toothLatestLogs = computed(() => {
     const logs = this.dentalLogs();
-    const dict: { [toothNum: number]: DentalLog } = {};
+    const dict: { [toothNum: string]: DentalLog } = {};
     const sorted = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     for (const log of sorted) {
-      dict[log.toothNumber] = log;
+      dict[log.toothNumber.toString()] = log;
     }
     return dict;
   });
@@ -661,7 +673,7 @@ export class PatientHistoryComponent implements OnInit {
   // Filtered teeth summary that have a non-healthy active status (full history logs)
   teethSummary = computed(() => {
     const logs = this.dentalLogs();
-    const summary: { toothNumber: number; status: string; log: DentalLog }[] = [];
+    const summary: { toothNumber: number | string; status: string; log: DentalLog }[] = [];
     for (const log of logs) {
       if (log.status !== 'healthy') {
         summary.push({
@@ -746,14 +758,14 @@ export class PatientHistoryComponent implements OnInit {
   }
 
   // Dental status visual classes for individual teeth
-  getToothLatestStatus(num: number): 'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment' {
-    const latest = this.toothLatestLogs()[num];
+  getToothLatestStatus(num: number | string): 'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment' {
+    const latest = this.toothLatestLogs()[num.toString()];
     return latest ? latest.status : 'healthy';
   }
 
-  getToothClasses(num: number): string {
+  getToothClasses(num: number | string): string {
     const status = this.getToothLatestStatus(num);
-    const isSelected = this.selectedTooth() === num;
+    const isSelected = this.selectedTooth()?.toString() === num.toString();
     
     let baseClass = 'w-10 h-12 flex flex-col items-center justify-between py-1.5 border rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer ';
     
@@ -794,9 +806,9 @@ export class PatientHistoryComponent implements OnInit {
     }
   }
 
-  selectTooth(num: number) {
+  selectTooth(num: number | string) {
     this.selectedTooth.set(num);
-    const latest = this.toothLatestLogs()[num];
+    const latest = this.toothLatestLogs()[num.toString()];
     if (latest) {
       this.dentalStatus.set(latest.status);
       this.painLevel.set(latest.painLevel || 0);
@@ -815,8 +827,9 @@ export class PatientHistoryComponent implements OnInit {
   getSelectedToothHistory(): DentalLog[] {
     const num = this.selectedTooth();
     if (num === null) return [];
+    const numStr = num.toString();
     return this.dentalLogs()
-      .filter(log => log.toothNumber === num)
+      .filter(log => log.toothNumber.toString() === numStr)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
