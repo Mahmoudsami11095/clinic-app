@@ -396,7 +396,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                   </p>
                 } @else {
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[250px] overflow-y-auto pe-1">
-                    @for (item of teethSummary(); track item.toothNumber) {
+                    @for (item of teethSummary(); track item.log.id) {
                       <div
                         (click)="selectTooth(item.toothNumber)"
                         class="p-3 border border-slate-100 rounded-xl hover:border-indigo-500 hover:shadow-sm cursor-pointer transition-all flex items-start gap-3 bg-slate-50/50"
@@ -617,6 +617,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 })
 export class PatientHistoryComponent implements OnInit {
   @Input({ required: true }) patient!: Patient;
+  @Input() initialTab?: 'overview' | 'appointments' | 'prescriptions' | 'billing' | 'dental';
 
   private appointmentService = inject(AppointmentService);
   private prescriptionService = inject(PrescriptionService);
@@ -657,24 +658,26 @@ export class PatientHistoryComponent implements OnInit {
     return dict;
   });
 
-  // Filtered teeth summary that have a non-healthy active status
+  // Filtered teeth summary that have a non-healthy active status (full history logs)
   teethSummary = computed(() => {
-    const dict = this.toothLatestLogs();
+    const logs = this.dentalLogs();
     const summary: { toothNumber: number; status: string; log: DentalLog }[] = [];
-    for (let num = 1; num <= 32; num++) {
-      const log = dict[num];
-      if (log && log.status !== 'healthy') {
+    for (const log of logs) {
+      if (log.status !== 'healthy') {
         summary.push({
-          toothNumber: num,
+          toothNumber: log.toothNumber,
           status: log.status,
           log
         });
       }
     }
-    return summary;
+    return summary.sort((a, b) => new Date(b.log.date).getTime() - new Date(a.log.date).getTime());
   });
 
   ngOnInit() {
+    if (this.initialTab) {
+      this.activeTab.set(this.initialTab);
+    }
     this.loadPatientHistory();
   }
 

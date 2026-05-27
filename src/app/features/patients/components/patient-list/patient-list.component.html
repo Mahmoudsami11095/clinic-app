@@ -66,7 +66,7 @@
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
       @for (patient of filteredPatients(); track patient.id) {
-        <div (click)="openHistoryModal(patient)" class="group bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer">
+        <div (click)="viewPatientDetails(patient)" class="group bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer">
           <!-- Top row: Avatar + Name + Actions -->
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0"
@@ -133,15 +133,4 @@
     }
   </app-modal>
 
-  <!-- Patient History Modal -->
-  <app-modal
-    [isOpen]="isHistoryModalOpen()"
-    [title]="(selectedPatientForHistory()?.firstName ?? '') + ' ' + (selectedPatientForHistory()?.lastName ?? '')"
-    [subtitle]="'patients.medical_history' | translate"
-    (close)="closeHistoryModal()"
-  >
-    @if (selectedPatientForHistory(); as selectedPatient) {
-      <app-patient-history [patient]="selectedPatient"></app-patient-history>
-    }
-  </app-modal>
 </div>

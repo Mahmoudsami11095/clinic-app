@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PatientService } from '../../services/patient.service';
 import { Patient } from '../../models/patient.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
@@ -10,13 +11,12 @@ import { AppointmentService } from '../../../appointments/services/appointment.s
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { forkJoin } from 'rxjs';
 
-import { PatientHistoryComponent } from '../patient-history/patient-history.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { addDoctorLinkedPatientId, getDoctorLinkedPatientIds } from '../../../../core/services/doctor-patient-links';
 
 @Component({
   selector: 'app-patient-list',
-  imports: [CommonModule, FormsModule, ModalComponent, PatientFormComponent, PatientHistoryComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, ModalComponent, PatientFormComponent, TranslatePipe],
   templateUrl: './patient-list.component.html',
   styleUrl: './patient-list.component.css'
 })
@@ -25,16 +25,13 @@ export class PatientListComponent implements OnInit {
   private authService = inject(AuthService);
   private appointmentService = inject(AppointmentService);
   private clinicService = inject(ClinicService);
+  private router = inject(Router);
 
   patients = signal<Patient[]>([]);
   loading = signal(true);
   searchQuery = signal('');
   selectedGender = signal<string>('all');
   isModalOpen = signal(false);
-
-  // Patient History State
-  isHistoryModalOpen = signal(false);
-  selectedPatientForHistory = signal<Patient | null>(null);
 
   allowedPatientIds = signal<Set<string> | null>(null);
 
@@ -164,13 +161,7 @@ export class PatientListComponent implements OnInit {
     this.closeModal();
   }
 
-  openHistoryModal(patient: Patient) {
-    this.selectedPatientForHistory.set(patient);
-    this.isHistoryModalOpen.set(true);
-  }
-
-  closeHistoryModal() {
-    this.isHistoryModalOpen.set(false);
-    this.selectedPatientForHistory.set(null);
+  viewPatientDetails(patient: Patient) {
+    this.router.navigate(['/patients', patient.id]);
   }
 }

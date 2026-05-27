@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AppointmentService } from '../../services/appointment.service';
 import { Appointment, AppointmentWithDetails } from '../../models/appointment.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
@@ -27,6 +28,7 @@ export class AppointmentListComponent implements OnInit {
   private clinicService = inject(ClinicService);
   private languageService = inject(LanguageService);
   private toastr = inject(ToastrService);
+  private router = inject(Router);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
@@ -219,5 +221,9 @@ export class AppointmentListComponent implements OnInit {
       this.prescriptions.set(data);
     });
     this.closePrescriptionModal();
+  }
+
+  viewPrescribePage(appt: AppointmentWithDetails) {
+    this.router.navigate(['/appointments', appt.id, 'prescribe']);
   }
 }
