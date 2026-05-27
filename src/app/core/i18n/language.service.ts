@@ -383,6 +383,11 @@ export class LanguageService {
     'dental.left': { en: 'Left (L)', ar: 'اليسار (L)' },
     'dental.upper_jaw': { en: 'Upper Jaw (Maxillary)', ar: 'الفك العلوي' },
     'dental.lower_jaw': { en: 'Lower Jaw (Mandibular)', ar: 'الفك السفلي' },
+    'sidebar.dental_chart': { en: '3D Teeth Chart', ar: 'مخطط الأسنان ثلاثي الأبعاد' },
+    'dental.working_length': { en: 'Working Length', ar: 'طول العمل' },
+    'dental.apical_size': { en: 'Apical Size', ar: 'حجم القمة' },
+    'dental.canal_anatomy': { en: 'Canal Anatomy', ar: 'تشريح القناة' },
+    'dental.close_inspector': { en: 'Reset View', ar: 'إعادة تعيين المنظور' },
 
     // Toastr / Notifications
     'toast.success': { en: 'Success', ar: 'نجاح' },
