@@ -1,16 +1,21 @@
-import { Component, Input, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject, signal, computed, ElementRef, ViewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { Patient } from '../../models/patient.model';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
 import { BillingService } from '../../../billing/services/billing.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { DentalService, DentalLog } from '../../../../core/services/dental.service';
+import { DentalService, DentalLog, ToothStatus } from '../../../../core/services/dental.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { gsap } from 'gsap';
 
 @Component({
   selector: 'app-patient-history',
@@ -279,11 +284,39 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 
         <!-- 5. Dental Tab -->
         @if (activeTab() === 'dental') {
+          <!-- View switcher segmented toggle -->
+          <div class="flex justify-between items-center mb-4 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider ps-1">
+              {{ 'dental.select_view_mode' | translate }}
+            </div>
+            <div class="flex bg-slate-200/50 p-1 rounded-xl gap-1 border border-slate-200/60">
+              <button
+                type="button"
+                (click)="setDentalView('grid')"
+                [class]="activeDentalView() === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none"
+              >
+                <i class="pi pi-table"></i>
+                <span>{{ 'dental.view_skeuomorphic_grid' | translate }}</span>
+              </button>
+              <button
+                type="button"
+                (click)="setDentalView('3d')"
+                [class]="activeDentalView() === '3d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none"
+              >
+                <i class="pi pi-box"></i>
+                <span>{{ 'dental.view_3d_volumetric' | translate }}</span>
+              </button>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2 text-start animate-fade-in">
             <!-- Left 2 Cols: Teeth Chart & Summary -->
             <div class="lg:col-span-2 space-y-6">
-              <!-- Teeth Chart Card -->
-              <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6 text-white">
+              @if (activeDentalView() === 'grid') {
+                <!-- Teeth Chart Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6 text-white">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-3">
                   <div>
                     <h4 class="text-base font-bold text-slate-100">{{ 'dental.teeth_chart' | translate }}</h4>
@@ -352,6 +385,27 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                       <stop offset="0%" stop-color="#fde047" stop-opacity="0.8" />
                       <stop offset="65%" stop-color="#d97706" stop-opacity="0.4" />
                       <stop offset="100%" stop-color="#451a03" stop-opacity="0.2" />
+                    </radialGradient>
+
+                    <!-- Translucent Gold Radial Gradient for Crowns -->
+                    <radialGradient id="toothGradCrown" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9" />
+                      <stop offset="65%" stop-color="#ca8a04" stop-opacity="0.6" />
+                      <stop offset="100%" stop-color="#422006" stop-opacity="0.3" />
+                    </radialGradient>
+
+                    <!-- Translucent Titanium Silver Radial Gradient for Implants -->
+                    <radialGradient id="toothGradImplant" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                      <stop offset="0%" stop-color="#cbd5e1" stop-opacity="0.9" />
+                      <stop offset="65%" stop-color="#475569" stop-opacity="0.6" />
+                      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.3" />
+                    </radialGradient>
+
+                    <!-- Translucent Orange/Red Radial Gradient for Fractures -->
+                    <radialGradient id="toothGradFractured" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                      <stop offset="0%" stop-color="#ffedd5" stop-opacity="0.8" />
+                      <stop offset="65%" stop-color="#ea580c" stop-opacity="0.5" />
+                      <stop offset="100%" stop-color="#431407" stop-opacity="0.25" />
                     </radialGradient>
                   </defs>
                 </svg>
@@ -458,6 +512,28 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                   </div>
                 </div>
               </div>
+              } @else {
+                <!-- 3D Volumetric Viewport Card -->
+                <div class="bg-slate-950 border border-slate-900 rounded-2xl shadow-xl overflow-hidden relative flex flex-col min-h-[480px]">
+                  <div #canvasContainer class="w-full h-[480px] cursor-grab active:cursor-grabbing" (click)="onCanvasClick($event)"></div>
+                  
+                  <div class="absolute top-4 left-4 p-3 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-xl flex flex-col gap-2 z-10">
+                    <button type="button" (click)="toggleEnamel()" [class.text-indigo-400]="showEnamel()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none">
+                      <i class="pi" [class.pi-eye]="showEnamel()" [class.pi-eye-slash]="!showEnamel()"></i>
+                      <span>{{ showEnamel() ? 'Hide Glass Enamel' : 'Show Glass Enamel' }}</span>
+                    </button>
+                    <button type="button" (click)="toggleRotation()" [class.text-indigo-400]="isRotating()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none">
+                      <i class="pi pi-sync" [class.animate-spin]="isRotating()"></i>
+                      <span>{{ isRotating() ? 'Stop Auto Orbit' : 'Auto Orbit Model' }}</span>
+                    </button>
+                  </div>
+
+                  <div class="absolute bottom-4 right-4 py-1.5 px-3 bg-slate-900/60 backdrop-blur rounded-lg text-[10px] text-slate-400 flex items-center gap-1.5">
+                    <i class="pi pi-info-circle text-indigo-400"></i>
+                    <span>Left Click to Select | Right Click + Drag to Orbit | Scroll to Zoom</span>
+                  </div>
+                </div>
+              }
 
               <!-- Treatment/Decay Summary Card -->
               <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
@@ -522,13 +598,15 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                       <h4 class="text-sm font-bold text-slate-800">
                         {{ 'dental.history_for_tooth' | translate }} #{{ selectedTooth() }}
                       </h4>
-                      <p class="text-xs text-slate-400 font-medium mt-0.5 capitalize">
-                        {{ 'dental.status' | translate }}: {{ 'dental.' + getToothLatestStatus(selectedTooth()!) | translate }}
+                      <p class="text-xs text-slate-400 font-medium mt-0.5 capitalize flex flex-wrap gap-1 items-center">
+                        {{ 'dental.status' | translate }}:
+                        @for (st of getToothLatestStatuses(selectedTooth()!); track st) {
+                          <span [class]="getBadgeClasses(st)" class="px-1.5 py-0.5 text-[9px] font-bold rounded capitalize">
+                            {{ 'dental.' + st | translate }}
+                          </span>
+                        }
                       </p>
                     </div>
-                    <span [class]="getBadgeClasses(getToothLatestStatus(selectedTooth()!))" class="px-2.5 py-1 text-xs font-bold rounded-lg capitalize">
-                      {{ 'dental.' + getToothLatestStatus(selectedTooth()!) | translate }}
-                    </span>
                   </div>
 
                   <!-- Tooth History List -->
@@ -544,9 +622,14 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                           <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
                           
                           <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded capitalize" [class]="getBadgeClasses(log.status)">
-                              {{ 'dental.' + log.status | translate }}
-                            </span>
+                            <div class="flex flex-wrap gap-1">
+                              @let logStatuses = log.status || [];
+                              @for (st of logStatuses; track st) {
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
+                                  {{ 'dental.' + st | translate }}
+                                </span>
+                              }
+                            </div>
                             <span class="text-[10px] text-slate-400 font-medium">
                               {{ log.date | date:'mediumDate' }}
                             </span>
@@ -596,18 +679,19 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                       <!-- Status Selection -->
                       <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{{ 'dental.status' | translate }}</label>
-                        <select
-                          [ngModel]="dentalStatus()"
-                          (ngModelChange)="dentalStatus.set($event)"
-                          name="status"
-                          class="w-full text-sm font-medium border border-slate-200 rounded-xl px-3.5 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
-                        >
-                          <option value="healthy">{{ 'dental.healthy' | translate }}</option>
-                          <option value="caries">{{ 'dental.caries' | translate }}</option>
-                          <option value="filled">{{ 'dental.filled' | translate }}</option>
-                          <option value="under_treatment">{{ 'dental.under_treatment' | translate }}</option>
-                          <option value="missing">{{ 'dental.missing' | translate }}</option>
-                        </select>
+                        <div class="flex flex-wrap gap-2 mt-1">
+                          @for (opt of statusOptions; track opt.value) {
+                            <button
+                              type="button"
+                              (click)="toggleStatus(opt.value)"
+                              [class]="isStatusSelected(opt.value) ? opt.activeClass : opt.inactiveClass"
+                              class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border focus:outline-none"
+                            >
+                              <i [class]="opt.icon"></i>
+                              <span>{{ 'dental.' + opt.value | translate }}</span>
+                            </button>
+                          }
+                        </div>
                       </div>
 
                       <!-- Pain Level Slider -->
@@ -711,15 +795,218 @@ export class PatientHistoryComponent implements OnInit {
   billingRecords = signal<any[]>([]);
   dentalLogs = signal<DentalLog[]>([]);
   loadingData = signal(true);
-
   // Dental interactive chart signals and state
   selectedTooth = signal<number | string | null>(null);
-  dentalStatus = signal<'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment'>('healthy');
+  dentalStatus = signal<ToothStatus[]>(['healthy']);
   painLevel = signal<number>(0);
   painDetails = signal<string>('');
   treatment = signal<string>('');
   medication = signal<string>('');
   submittingDentalLog = signal<boolean>(false);
+
+  readonly statusOptions = [
+    { value: 'healthy' as ToothStatus, icon: 'pi pi-check-circle', activeClass: 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'caries' as ToothStatus, icon: 'pi pi-exclamation-triangle', activeClass: 'bg-rose-600 border-rose-500 text-white shadow-[0_0_10px_rgba(244,63,94,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'filled' as ToothStatus, icon: 'pi pi-shield', activeClass: 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'under_treatment' as ToothStatus, icon: 'pi pi-spin pi-sync', activeClass: 'bg-amber-600 border-amber-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'missing' as ToothStatus, icon: 'pi pi-times-circle', activeClass: 'bg-slate-600 border-slate-500 text-white shadow-[0_0_10px_rgba(100,116,139,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'crown' as ToothStatus, icon: 'pi pi-bookmark', activeClass: 'bg-yellow-600 border-yellow-500 text-white shadow-[0_0_10px_rgba(234,179,8,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'root_canal' as ToothStatus, icon: 'pi pi-sliders-h', activeClass: 'bg-purple-600 border-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'impacted' as ToothStatus, icon: 'pi pi-arrow-down-right', activeClass: 'bg-cyan-600 border-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'fractured' as ToothStatus, icon: 'pi pi-bolt', activeClass: 'bg-orange-600 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'implant' as ToothStatus, icon: 'pi pi-database', activeClass: 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' }
+  ];
+
+  toggleStatus(status: ToothStatus) {
+    let current = [...this.dentalStatus()];
+    if (status === 'healthy') {
+      current = ['healthy'];
+    } else if (status === 'missing') {
+      current = ['missing'];
+    } else {
+      current = current.filter(s => s !== 'healthy' && s !== 'missing');
+      if (current.includes(status)) {
+        current = current.filter(s => s !== status);
+      } else {
+        current.push(status);
+      }
+      if (current.length === 0) {
+        current = ['healthy'];
+      }
+    }
+    this.dentalStatus.set(current);
+  }
+
+  isStatusSelected(status: ToothStatus): boolean {
+    return this.dentalStatus().includes(status);
+  }
+
+  getToothLatestStatuses(num: number | string): ToothStatus[] {
+    const log = this.toothLatestLogs()[num.toString()];
+    if (!log) return ['healthy'];
+    if (Array.isArray(log.status)) return log.status;
+    return [log.status as ToothStatus];
+  }
+
+  getDominantStatus(statuses: ToothStatus[]): ToothStatus {
+    if (!statuses || statuses.length === 0) return 'healthy';
+    const priority: ToothStatus[] = ['missing', 'implant', 'fractured', 'caries', 'under_treatment', 'root_canal', 'crown', 'filled', 'healthy'];
+    for (const p of priority) {
+      if (statuses.includes(p)) return p;
+    }
+    return 'healthy';
+  }
+
+  getToothLatestStatus(num: number | string): ToothStatus {
+    return this.getDominantStatus(this.getToothLatestStatuses(num));
+  }
+
+  getToothFillUrl(num: number | string): string {
+    const statuses = this.getToothLatestStatuses(num);
+    if (statuses.includes('missing')) return 'transparent';
+    if (statuses.includes('implant')) return 'url(#toothGradImplant)';
+    if (statuses.includes('crown')) return 'url(#toothGradCrown)';
+    if (statuses.includes('fractured')) return 'url(#toothGradFractured)';
+    if (statuses.includes('caries')) return 'url(#toothGradCaries)';
+    if (statuses.includes('filled')) return 'url(#toothGradFilled)';
+    if (statuses.includes('under_treatment')) return 'url(#toothGradTreatment)';
+    return 'url(#toothGradHealthy)';
+  }
+
+  getToothStrokeColor(num: number | string): string {
+    const statuses = this.getToothLatestStatuses(num);
+    if (statuses.includes('missing')) return '#475569';
+    if (statuses.includes('implant')) return '#818cf8';
+    if (statuses.includes('crown')) return '#fbbf24';
+    if (statuses.includes('fractured')) return '#ea580c';
+    if (statuses.includes('caries')) return '#ef4444';
+    if (statuses.includes('filled')) return '#3b82f6';
+    if (statuses.includes('under_treatment')) return '#f59e0b';
+    return '#06b6d4';
+  }
+
+  getPulpFillColor(num: number | string): string {
+    const statuses = this.getToothLatestStatuses(num);
+    if (statuses.includes('missing')) return 'transparent';
+    if (statuses.includes('root_canal')) return 'rgba(168, 85, 247, 0.35)';
+    if (statuses.includes('caries')) return 'rgba(244, 63, 94, 0.4)';
+    if (statuses.includes('under_treatment')) return 'rgba(245, 158, 11, 0.4)';
+    if (statuses.includes('filled')) return 'rgba(96, 165, 250, 0.35)';
+    return 'rgba(34, 211, 238, 0.3)';
+  }
+
+  getCanalStroke(num: number | string): string {
+    const statuses = this.getToothLatestStatuses(num);
+    if (statuses.includes('missing')) return 'transparent';
+    if (statuses.includes('root_canal')) return '#c084fc';
+    if (statuses.includes('caries')) return '#f43f5e';
+    if (statuses.includes('under_treatment')) return '#f59e0b';
+    if (statuses.includes('filled')) return '#60a5fa';
+    return '#22d3ee';
+  }
+
+  getToothClasses(num: number | string): string {
+    const isSelected = this.selectedTooth()?.toString() === num.toString();
+    const base = 'flex flex-col items-center justify-between p-2 rounded-xl border transition-all duration-300 focus:outline-none cursor-pointer ';
+    if (isSelected) {
+      return base + 'bg-slate-800 border-indigo-500 ring-2 ring-indigo-500/30 text-white scale-105 shadow-[0_0_15px_rgba(99,102,241,0.25)]';
+    }
+    const statuses = this.getToothLatestStatuses(num);
+    if (statuses.includes('missing')) {
+      return base + 'bg-slate-950/20 border-slate-800/80 text-slate-500 opacity-60 hover:opacity-90 hover:border-slate-700';
+    }
+    return base + 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700';
+  }
+
+  getBadgeClasses(status: string): string {
+    switch (status) {
+      case 'healthy':
+        return 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
+      case 'caries':
+        return 'bg-rose-500/10 border border-rose-500/30 text-rose-400';
+      case 'filled':
+        return 'bg-blue-500/10 border border-blue-500/30 text-blue-400';
+      case 'under_treatment':
+        return 'bg-amber-500/10 border border-amber-500/30 text-amber-400';
+      case 'missing':
+        return 'bg-slate-800/50 border border-slate-700 text-slate-400';
+      case 'crown':
+        return 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-400';
+      case 'root_canal':
+        return 'bg-purple-500/10 border border-purple-500/30 text-purple-400';
+      case 'impacted':
+        return 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400';
+      case 'fractured':
+        return 'bg-orange-500/10 border border-orange-500/30 text-orange-400';
+      case 'implant':
+        return 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-400';
+      default:
+        return 'bg-slate-500/10 border border-slate-500/30 text-slate-400';
+    }
+  }
+
+  selectTooth(num: number | string | null) {
+    this.selectedTooth.set(num);
+    if (num !== null) {
+      const latestStatuses = this.getToothLatestStatuses(num);
+      this.dentalStatus.set(latestStatuses);
+
+      // Load form details from latest log if present
+      const latestLog = this.toothLatestLogs()[num.toString()];
+      if (latestLog) {
+        this.painLevel.set(latestLog.painLevel || 0);
+        this.painDetails.set(latestLog.painDetails || '');
+        this.treatment.set(latestLog.treatment || '');
+        this.medication.set(latestLog.medication || '');
+      } else {
+        this.painLevel.set(0);
+        this.painDetails.set('');
+        this.treatment.set('');
+        this.medication.set('');
+      }
+    } else {
+      this.dentalStatus.set(['healthy']);
+      this.painLevel.set(0);
+      this.painDetails.set('');
+      this.treatment.set('');
+      this.medication.set('');
+    }
+  }
+  @ViewChild('canvasContainer') canvasContainer?: ElementRef<HTMLDivElement>;
+
+  activeDentalView = signal<'3d' | 'grid'>(
+    (localStorage.getItem('preferred_dental_chart_view') as '3d' | 'grid') || 'grid'
+  );
+  showEnamel = signal<boolean>(true);
+  isRotating = signal<boolean>(false);
+
+  // Three.js State
+  private scene!: THREE.Scene;
+  private camera!: THREE.PerspectiveCamera;
+  private renderer!: THREE.WebGLRenderer;
+  private controls!: OrbitControls;
+  private jawGroup!: THREE.Group;
+  private animationFrameId?: number;
+  private raycaster = new THREE.Raycaster();
+  private mouse = new THREE.Vector2();
+  private isAnimating = false;
+
+  private materials: { [status: string]: { enamel: THREE.Material; pulp: THREE.Material } } = {};
+
+  constructor() {
+    effect(() => {
+      this.showEnamel();
+      this.dentalLogs();
+      this.activeDentalView();
+      if (this.activeDentalView() === '3d' && this.jawGroup) {
+        this.updateAllTeethAppearances();
+      }
+    });
+    // Sync preferred view mode to local storage
+    effect(() => {
+      localStorage.setItem('preferred_dental_chart_view', this.activeDentalView());
+    });
+  }
 
   isChild = computed(() => {
     return this.getAge(this.patient.dateOfBirth) < 12;
@@ -727,14 +1014,14 @@ export class PatientHistoryComponent implements OnInit {
 
   upperTeethList = computed(() => {
     return this.isChild()
-      ? ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-      : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+      ? ['55', '54', '53', '52', '51', '61', '62', '63', '64', '65']
+      : ['18', '17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27', '28'];
   });
 
   lowerTeethList = computed(() => {
     return this.isChild()
-      ? ['T', 'S', 'R', 'Q', 'P', 'O', 'N', 'M', 'L', 'K']
-      : [32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17];
+      ? ['85', '84', '83', '82', '81', '71', '72', '73', '74', '75']
+      : ['48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38'];
   });
 
   // Map to speed up looking up the latest dental log per tooth
@@ -751,12 +1038,14 @@ export class PatientHistoryComponent implements OnInit {
   // Filtered teeth summary that have a non-healthy active status (full history logs)
   teethSummary = computed(() => {
     const logs = this.dentalLogs();
-    const summary: { toothNumber: number | string; status: string; log: DentalLog }[] = [];
+    const summary: { toothNumber: number | string; status: ToothStatus; log: DentalLog }[] = [];
     for (const log of logs) {
-      if (log.status !== 'healthy') {
+      const statusArr = Array.isArray(log.status) ? log.status : [log.status as ToothStatus];
+      const dominant = this.getDominantStatus(statusArr);
+      if (dominant !== 'healthy') {
         summary.push({
           toothNumber: log.toothNumber,
-          status: log.status,
+          status: dominant,
           log
         });
       }
@@ -765,10 +1054,22 @@ export class PatientHistoryComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.initMaterials();
     if (this.initialTab) {
       this.activeTab.set(this.initialTab);
     }
     this.loadPatientHistory();
+    if (this.activeTab() === 'dental' && this.activeDentalView() === '3d') {
+      setTimeout(() => {
+        this.initThree();
+        this.loadDentalModel();
+        this.animate();
+      }, 100);
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroyThree();
   }
 
   loadPatientHistory() {
@@ -803,6 +1104,15 @@ export class PatientHistoryComponent implements OnInit {
 
   setActiveTab(tab: 'overview' | 'appointments' | 'prescriptions' | 'billing' | 'dental') {
     this.activeTab.set(tab);
+    if (tab !== 'dental' || this.activeDentalView() !== '3d') {
+      this.destroyThree();
+    } else if (tab === 'dental' && this.activeDentalView() === '3d') {
+      setTimeout(() => {
+        this.initThree();
+        this.loadDentalModel();
+        this.animate();
+      }, 100);
+    }
   }
 
   getAge(dob: string): number {
@@ -835,120 +1145,7 @@ export class PatientHistoryComponent implements OnInit {
     }
   }
 
-  // Dental status visual classes for individual teeth
-  getToothLatestStatus(num: number | string): 'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment' {
-    const latest = this.toothLatestLogs()[num.toString()];
-    return latest ? latest.status : 'healthy';
-  }
 
-  getToothClasses(num: number | string): string {
-    const status = this.getToothLatestStatus(num);
-    const isSelected = this.selectedTooth()?.toString() === num.toString();
-    
-    let baseClass = 'w-10 h-16 flex flex-col items-center justify-between py-1.5 border rounded-xl text-xs font-bold transition-all cursor-pointer ';
-    
-    if (isSelected) {
-      baseClass += 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-105 translate-y-[-2px] ';
-    } else {
-      baseClass += 'hover:-translate-y-1 active:translate-y-0 ';
-    }
-
-    switch (status) {
-      case 'healthy':
-        baseClass += 'bg-slate-950/40 border-slate-800 text-emerald-400 hover:border-emerald-500/40';
-        if (isSelected) baseClass += ' border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
-        break;
-      case 'caries':
-        baseClass += 'bg-slate-950/40 border-slate-800 text-rose-400 hover:border-rose-500/40';
-        if (isSelected) baseClass += ' border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]';
-        break;
-      case 'filled':
-        baseClass += 'bg-slate-950/40 border-slate-800 text-sky-400 hover:border-sky-500/40';
-        if (isSelected) baseClass += ' border-sky-500 shadow-[0_0_15px_rgba(14,165,233,0.3)]';
-        break;
-      case 'under_treatment':
-        baseClass += 'bg-slate-950/40 border-slate-800 text-amber-400 hover:border-amber-500/40';
-        if (isSelected) baseClass += ' border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
-        break;
-      case 'missing':
-        baseClass += 'bg-slate-950/10 border-slate-800/50 border-dashed text-slate-600 shadow-none pointer-events-auto';
-        break;
-    }
-    return baseClass;
-  }
-
-  getToothFillUrl(num: number | string): string {
-    const status = this.getToothLatestStatus(num);
-    switch (status) {
-      case 'healthy': return 'url(#toothGradHealthy)';
-      case 'caries': return 'url(#toothGradCaries)';
-      case 'filled': return 'url(#toothGradFilled)';
-      case 'under_treatment': return 'url(#toothGradTreatment)';
-      default: return '#1e293b';
-    }
-  }
-
-  getToothStrokeColor(num: number | string): string {
-    const status = this.getToothLatestStatus(num);
-    switch (status) {
-      case 'healthy': return '#06b6d4'; // cyan-500
-      case 'caries': return '#ef4444'; // red-500
-      case 'filled': return '#3b82f6'; // blue-500
-      case 'under_treatment': return '#f59e0b'; // amber-500
-      default: return '#475569';
-    }
-  }
-
-  getPulpFillColor(num: number | string): string {
-    const status = this.getToothLatestStatus(num);
-    switch (status) {
-      case 'healthy': return 'rgba(34, 211, 238, 0.3)';
-      case 'caries': return 'rgba(244, 63, 94, 0.4)';
-      case 'filled': return 'rgba(96, 165, 250, 0.3)';
-      case 'under_treatment': return 'rgba(245, 158, 11, 0.4)';
-      default: return 'transparent';
-    }
-  }
-
-  getCanalStroke(num: number | string): string {
-    const status = this.getToothLatestStatus(num);
-    switch (status) {
-      case 'healthy': return '#22d3ee'; // cyan-400
-      case 'caries': return '#f43f5e'; // rose-500
-      case 'filled': return '#60a5fa'; // blue-400
-      case 'under_treatment': return '#f59e0b'; // amber-500
-      default: return 'transparent';
-    }
-  }
-
-  getBadgeClasses(status: string): string {
-    switch (status) {
-      case 'healthy': return 'bg-emerald-100/70 text-emerald-800 border border-emerald-200/50';
-      case 'caries': return 'bg-rose-100/70 text-rose-800 border border-rose-200/50';
-      case 'filled': return 'bg-blue-100/70 text-blue-800 border border-blue-200/50';
-      case 'under_treatment': return 'bg-purple-100/70 text-purple-800 border border-purple-200/50';
-      case 'missing': return 'bg-slate-100/70 text-slate-800 border border-slate-200/50 border-dashed';
-      default: return 'bg-slate-100/70 text-slate-700 border border-slate-200/50';
-    }
-  }
-
-  selectTooth(num: number | string) {
-    this.selectedTooth.set(num);
-    const latest = this.toothLatestLogs()[num.toString()];
-    if (latest) {
-      this.dentalStatus.set(latest.status);
-      this.painLevel.set(latest.painLevel || 0);
-      this.painDetails.set(latest.painDetails || '');
-      this.treatment.set(latest.treatment || '');
-      this.medication.set(latest.medication || '');
-    } else {
-      this.dentalStatus.set('healthy');
-      this.painLevel.set(0);
-      this.painDetails.set('');
-      this.treatment.set('');
-      this.medication.set('');
-    }
-  }
 
   getSelectedToothHistory(): DentalLog[] {
     const num = this.selectedTooth();
@@ -984,6 +1181,9 @@ export class PatientHistoryComponent implements OnInit {
           this.langService.translate('toast.success')
         );
         this.selectTooth(toothNum);
+        if (this.activeDentalView() === '3d') {
+          this.updateAllTeethAppearances();
+        }
       },
       error: (err) => {
         console.error('Error adding dental log:', err);
@@ -994,5 +1194,554 @@ export class PatientHistoryComponent implements OnInit {
         );
       }
     });
+  }
+
+  // View switch handler
+  setDentalView(view: '3d' | 'grid') {
+    this.activeDentalView.set(view);
+    if (view === '3d') {
+      setTimeout(() => {
+        this.initThree();
+        this.loadDentalModel();
+        this.animate();
+      }, 50);
+    } else {
+      this.destroyThree();
+    }
+  }
+
+  // Three.js setups and helpers
+  private initMaterials() {
+    const statuses = ['healthy', 'caries', 'filled', 'under_treatment', 'missing', 'crown', 'root_canal', 'impacted', 'fractured', 'implant'];
+    const colors = {
+      healthy: { enamel: 0xe0f2fe, pulp: 0x22d3ee, emissive: 0x06b6d4 },
+      caries: { enamel: 0xffe4e6, pulp: 0xef4444, emissive: 0xe11d48 },
+      filled: { enamel: 0xdbeafe, pulp: 0x3b82f6, emissive: 0x2563eb },
+      under_treatment: { enamel: 0xfef9c3, pulp: 0xf59e0b, emissive: 0xd97706 },
+      missing: { enamel: 0x334155, pulp: 0x334155, emissive: 0x000000 },
+      crown: { enamel: 0xd4af37, pulp: 0x22d3ee, emissive: 0x06b6d4, metalness: 0.9, roughness: 0.1 },
+      root_canal: { enamel: 0xe0f2fe, pulp: 0xa855f7, emissive: 0xc084fc },
+      impacted: { enamel: 0x34d399, pulp: 0x059669, emissive: 0x10b981 },
+      fractured: { enamel: 0xf97316, pulp: 0xef4444, emissive: 0xe11d48 },
+      implant: { enamel: 0x94a3b8, pulp: 0x475569, emissive: 0x334155, metalness: 0.9, roughness: 0.2 }
+    };
+
+    statuses.forEach(status => {
+      const c = colors[status as keyof typeof colors];
+      const enamelMaterial = new THREE.MeshPhysicalMaterial({
+        color: c.enamel,
+        transmission: status === 'missing' ? 0.0 : (status === 'implant' || status === 'crown' ? 0.0 : 0.95),
+        roughness: c.hasOwnProperty('roughness') ? (c as any).roughness : 0.1,
+        metalness: c.hasOwnProperty('metalness') ? (c as any).metalness : 0.1,
+        ior: 1.62,
+        thickness: 1.0,
+        transparent: true,
+        opacity: status === 'missing' ? 0.03 : (status === 'implant' || status === 'crown' ? 1.0 : 0.35),
+        clearcoat: status === 'missing' ? 0.0 : 1.0,
+        clearcoatRoughness: 0.1
+      });
+
+      const pulpMaterial = new THREE.MeshStandardMaterial({
+        color: c.pulp,
+        emissive: c.emissive,
+        emissiveIntensity: status === 'missing' ? 0.0 : 2.5,
+        roughness: 0.2,
+        metalness: 0.1,
+        transparent: status === 'missing',
+        opacity: status === 'missing' ? 0.03 : 1.0
+      });
+
+      this.materials[status] = {
+        enamel: enamelMaterial,
+        pulp: pulpMaterial
+      };
+    });
+  }
+
+  getToothMaterials(statusesInput: ToothStatus | ToothStatus[] | undefined): { enamel: THREE.Material; pulp: THREE.Material; enamelVisible: boolean; isMissing: boolean } {
+    const statuses = Array.isArray(statusesInput) 
+      ? statusesInput 
+      : (statusesInput ? [statusesInput as ToothStatus] : ['healthy' as ToothStatus]);
+
+    let enamelKey = 'healthy';
+    let pulpKey = 'healthy';
+    let isMissing = statuses.includes('missing');
+
+    // Enamel resolution (priority)
+    if (statuses.includes('missing')) enamelKey = 'missing';
+    else if (statuses.includes('implant')) enamelKey = 'implant';
+    else if (statuses.includes('crown')) enamelKey = 'crown';
+    else if (statuses.includes('fractured')) enamelKey = 'fractured';
+    else if (statuses.includes('caries')) enamelKey = 'caries';
+    else if (statuses.includes('filled')) enamelKey = 'filled';
+    else if (statuses.includes('under_treatment')) enamelKey = 'under_treatment';
+
+    // Pulp resolution (priority)
+    if (statuses.includes('missing')) pulpKey = 'missing';
+    else if (statuses.includes('root_canal')) pulpKey = 'root_canal';
+    else if (statuses.includes('caries')) pulpKey = 'caries';
+    else if (statuses.includes('under_treatment')) pulpKey = 'under_treatment';
+    else if (statuses.includes('filled')) pulpKey = 'filled';
+
+    const enamel = this.materials[enamelKey]?.enamel || this.materials['healthy'].enamel;
+    const pulp = this.materials[pulpKey]?.pulp || this.materials['healthy'].pulp;
+
+    return {
+      enamel,
+      pulp,
+      enamelVisible: isMissing ? true : this.showEnamel(),
+      isMissing
+    };
+  }
+
+  private initThree() {
+    if (!this.canvasContainer) return;
+    const container = this.canvasContainer.nativeElement;
+    const width = container.clientWidth || 700;
+    const height = container.clientHeight || 480;
+
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    this.camera.position.set(0, 4, 16);
+
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.innerHTML = '';
+    container.appendChild(this.renderer.domElement);
+
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.minDistance = 5;
+    this.controls.maxDistance = 25;
+    this.controls.maxPolarAngle = Math.PI / 2 + 0.1;
+    this.controls.target.set(0, 0, 0);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    this.scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight1.position.set(-10, 10, 10);
+    this.scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight2.position.set(10, 8, 10);
+    this.scene.add(dirLight2);
+
+    const pointLight = new THREE.PointLight(0x818cf8, 1.5, 30);
+    pointLight.position.set(0, 0, 0);
+    this.scene.add(pointLight);
+
+    this.jawGroup = new THREE.Group();
+    this.scene.add(this.jawGroup);
+  }
+
+  private loadDentalModel() {
+    const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    loader.setDRACOLoader(dracoLoader);
+
+    loader.load(
+      'assets/models/dental-model.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        this.applyMaterials(model);
+        this.jawGroup.add(model);
+        this.updateAllTeethAppearances();
+      },
+      undefined,
+      (error) => {
+        this.buildProceduralTeeth();
+        this.updateAllTeethAppearances();
+      }
+    );
+  }
+
+  private applyMaterials(model: THREE.Group) {
+    const enamelMaterial = this.materials['healthy'].enamel;
+    const pulpMaterial = this.materials['healthy'].pulp;
+
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const name = child.name.toLowerCase();
+        if (name.includes('enamel') || name.includes('tooth') || name.includes('crown')) {
+          child.material = enamelMaterial;
+          child.name = 'enamel';
+        } else if (name.includes('pulp') || name.includes('canal')) {
+          child.material = pulpMaterial;
+        }
+      }
+    });
+  }
+
+  private buildProceduralTeeth() {
+    const isChild = this.isChild();
+    const rx = 4.8;
+    const rz = 5.6;
+    const gumPointsUpper: THREE.Vector3[] = [];
+    const gumPointsLower: THREE.Vector3[] = [];
+
+    const enamelMaterial = this.materials['healthy'].enamel;
+    const pulpMaterial = this.materials['healthy'].pulp;
+
+    const buildSingleTooth = (label: string, isUpper: boolean): THREE.Group => {
+      const tooth = new THREE.Group();
+      tooth.name = `tooth_${label}`;
+      tooth.userData = { toothNumber: label };
+
+      // Molars and premolars checking
+      const molars = [
+        '18', '17', '16', '26', '27', '28', '38', '37', '36', '46', '47', '48',
+        '55', '54', '64', '65', '74', '75', '84', '85'
+      ];
+      const premolars = [
+        '15', '14', '25', '24', '35', '34', '45', '44'
+      ];
+      const isMolar = molars.includes(label);
+      const isPremolar = premolars.includes(label);
+
+      let crownRadius = 0.5;
+      let crownHeight = 0.9;
+      let rootCount = 1;
+      let rootHeight = 1.1;
+
+      if (isMolar) {
+        crownRadius = 0.72;
+        crownHeight = 1.0;
+        rootCount = isUpper ? 3 : 2;
+        rootHeight = 1.3;
+      } else if (isPremolar) {
+        crownRadius = 0.54;
+        crownHeight = 0.85;
+        rootCount = 2;
+        rootHeight = 1.1;
+      } else {
+        crownRadius = 0.42;
+        crownHeight = 0.95;
+        rootCount = 1;
+        rootHeight = 1.25;
+      }
+
+      const crownGeo = new THREE.CylinderGeometry(crownRadius, crownRadius * 0.85, crownHeight, 8);
+      const crownMesh = new THREE.Mesh(crownGeo, enamelMaterial);
+      crownMesh.name = 'enamel';
+      crownMesh.castShadow = true;
+      crownMesh.receiveShadow = true;
+      if (!isMolar && !isPremolar) {
+        crownMesh.scale.set(1.2, 1.0, 0.6);
+      }
+      tooth.add(crownMesh);
+
+      const pulpRadius = crownRadius * 0.42;
+      const pulpGeo = new THREE.SphereGeometry(pulpRadius, 8, 8);
+      const pulpMesh = new THREE.Mesh(pulpGeo, pulpMaterial);
+      pulpMesh.position.y = -0.05;
+      tooth.add(pulpMesh);
+
+      const rootOffset = crownRadius * 0.35;
+      for (let r = 0; r < rootCount; r++) {
+        const rootGroup = new THREE.Group();
+        if (rootCount > 1) {
+          const angle = (r / rootCount) * Math.PI * 2;
+          rootGroup.position.set(Math.cos(angle) * rootOffset, -crownHeight / 2 - rootHeight / 2, Math.sin(angle) * rootOffset);
+        } else {
+          rootGroup.position.set(0, -crownHeight / 2 - rootHeight / 2, 0);
+        }
+        const rootGeo = new THREE.ConeGeometry(crownRadius * 0.5, rootHeight, 8);
+        const rootMesh = new THREE.Mesh(rootGeo, enamelMaterial);
+        rootMesh.name = 'enamel';
+        rootMesh.rotation.x = Math.PI;
+        rootGroup.add(rootMesh);
+
+        const canalGeo = new THREE.CylinderGeometry(0.06, 0.02, rootHeight * 0.9, 4);
+        const canalMesh = new THREE.Mesh(canalGeo, pulpMaterial);
+        canalMesh.position.y = 0;
+        rootGroup.add(canalMesh);
+
+        tooth.add(rootGroup);
+      }
+
+      return tooth;
+    };
+
+    const upperTeeth = isChild 
+      ? [
+          { label: '55', posIndex: 3 },
+          { label: '54', posIndex: 4 },
+          { label: '53', posIndex: 5 },
+          { label: '52', posIndex: 6 },
+          { label: '51', posIndex: 7 },
+          { label: '61', posIndex: 8 },
+          { label: '62', posIndex: 9 },
+          { label: '63', posIndex: 10 },
+          { label: '64', posIndex: 11 },
+          { label: '65', posIndex: 12 }
+        ]
+      : Array.from({ length: 16 }, (_, i) => ({
+          label: i < 8 ? String(18 - i) : String(21 + (i - 8)),
+          posIndex: i
+        }));
+
+    const lowerTeeth = isChild
+      ? [
+          { label: '85', posIndex: 3 },
+          { label: '84', posIndex: 4 },
+          { label: '83', posIndex: 5 },
+          { label: '82', posIndex: 6 },
+          { label: '81', posIndex: 7 },
+          { label: '71', posIndex: 8 },
+          { label: '72', posIndex: 9 },
+          { label: '73', posIndex: 10 },
+          { label: '74', posIndex: 11 },
+          { label: '75', posIndex: 12 }
+        ]
+      : Array.from({ length: 16 }, (_, i) => ({
+          label: i < 8 ? String(48 - i) : String(31 + (i - 8)),
+          posIndex: i
+        }));
+
+    upperTeeth.forEach(t => {
+      const pct = t.posIndex / 15;
+      const theta = -1.25 + pct * 2.5;
+      const x = rx * Math.sin(theta);
+      const z = rz * Math.cos(theta) - rz * 0.35;
+      const y = 1.05;
+
+      const tooth = buildSingleTooth(t.label, true);
+      tooth.position.set(x, y, z);
+      const angle = Math.atan2(x, z);
+      tooth.rotation.y = angle;
+      tooth.rotation.x = Math.PI;
+
+      this.jawGroup.add(tooth);
+      gumPointsUpper.push(new THREE.Vector3(x, y + 0.5, z));
+    });
+
+    lowerTeeth.forEach(t => {
+      const pct = t.posIndex / 15;
+      const theta = -1.25 + pct * 2.5;
+      const x = (rx * 0.96) * Math.sin(theta);
+      const z = (rz * 0.96) * Math.cos(theta) - (rz * 0.96) * 0.35;
+      const y = -1.05;
+
+      const tooth = buildSingleTooth(t.label, false);
+      tooth.position.set(x, y, z);
+      const angle = Math.atan2(x, z);
+      tooth.rotation.y = angle;
+
+      this.jawGroup.add(tooth);
+      gumPointsLower.push(new THREE.Vector3(x, y - 0.5, z));
+    });
+
+    const gumMat = new THREE.MeshPhysicalMaterial({
+      color: 0x1e293b,
+      roughness: 0.6,
+      transparent: true,
+      opacity: 0.5
+    });
+
+    const upperGumCurve = new THREE.CatmullRomCurve3(gumPointsUpper);
+    const upperGumGeo = new THREE.TubeGeometry(upperGumCurve, 64, 0.45, 8, false);
+    const upperGumMesh = new THREE.Mesh(upperGumGeo, gumMat);
+    this.jawGroup.add(upperGumMesh);
+
+    const lowerGumCurve = new THREE.CatmullRomCurve3(gumPointsLower);
+    const lowerGumGeo = new THREE.TubeGeometry(lowerGumCurve, 64, 0.45, 8, false);
+    const lowerGumMesh = new THREE.Mesh(lowerGumGeo, gumMat);
+    this.jawGroup.add(lowerGumMesh);
+  }
+
+  onCanvasClick(event: MouseEvent) {
+    if (this.isAnimating || !this.renderer) return;
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    this.mouse.set(x, y);
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.jawGroup.children, true);
+
+    if (intersects.length > 0) {
+      let obj: THREE.Object3D | null = intersects[0].object;
+      while (obj && !obj.name.startsWith('tooth_')) {
+        obj = obj.parent;
+      }
+      if (obj && obj.name.startsWith('tooth_')) {
+        const toothId = obj.name;
+        const numMatch = toothId.match(/tooth_(.+)/);
+        if (numMatch) {
+          const toothNum = numMatch[1];
+          this.selectTooth(toothNum);
+          this.focusToothIn3D(toothId);
+        }
+      }
+    }
+  }
+
+  private focusToothIn3D(toothId: string) {
+    if (this.isAnimating || !this.jawGroup) return;
+    const toothGroup = this.jawGroup.getObjectByName(toothId);
+    if (!toothGroup) return;
+
+    this.isAnimating = true;
+    const box = new THREE.Box3().setFromObject(toothGroup);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+
+    const dir = new THREE.Vector3(toothGroup.position.x, 0, toothGroup.position.z).normalize();
+    const targetCamPos = new THREE.Vector3().copy(center).addScaledVector(dir, 3.6);
+
+    const numMatch = toothId.match(/tooth_(.+)/);
+    const toothNumStr = numMatch ? numMatch[1] : '';
+    const numVal = parseInt(toothNumStr);
+    const isUpper = !isNaN(numVal) && numVal <= 16;
+    targetCamPos.y = center.y + (isUpper ? -0.4 : 0.4);
+
+    this.isRotating.set(false);
+    this.controls.enabled = false;
+    gsap.killTweensOf(this.camera.position);
+    gsap.killTweensOf(this.controls.target);
+
+    gsap.timeline({
+      onComplete: () => {
+        if (this.controls) this.controls.enabled = true;
+        this.isAnimating = false;
+      }
+    })
+    .to(this.camera.position, {
+      x: targetCamPos.x,
+      y: targetCamPos.y,
+      z: targetCamPos.z,
+      duration: 1.1,
+      ease: 'power3.inOut',
+      onUpdate: () => this.controls.update()
+    }, 0)
+    .to(this.controls.target, {
+      x: center.x,
+      y: center.y,
+      z: center.z,
+      duration: 1.1,
+      ease: 'power3.inOut',
+      onUpdate: () => this.controls.update()
+    }, 0);
+  }
+
+  reset3DView() {
+    this.selectedTooth.set(null);
+    if (this.isAnimating || !this.camera) return;
+    this.isAnimating = true;
+
+    this.controls.enabled = false;
+    gsap.killTweensOf(this.camera.position);
+    gsap.killTweensOf(this.controls.target);
+
+    const defaultCamPos = new THREE.Vector3(0, 4, 16);
+    const defaultTarget = new THREE.Vector3(0, 0, 0);
+
+    gsap.timeline({
+      onComplete: () => {
+        if (this.controls) this.controls.enabled = true;
+        this.isAnimating = false;
+      }
+    })
+    .to(this.camera.position, {
+      x: defaultCamPos.x,
+      y: defaultCamPos.y,
+      z: defaultCamPos.z,
+      duration: 1.1,
+      ease: 'power3.inOut',
+      onUpdate: () => this.controls.update()
+    }, 0)
+    .to(this.controls.target, {
+      x: defaultTarget.x,
+      y: defaultTarget.y,
+      z: defaultTarget.z,
+      duration: 1.1,
+      ease: 'power3.inOut',
+      onUpdate: () => this.controls.update()
+    }, 0);
+  }
+
+  private animate() {
+    if (!this.renderer) return;
+    this.animationFrameId = requestAnimationFrame(() => this.animate());
+
+    if (this.isRotating() && this.jawGroup) {
+      this.jawGroup.rotation.y += 0.002;
+    }
+
+    if (this.controls) {
+      this.controls.update();
+    }
+
+    if (this.renderer && this.scene && this.camera) {
+      this.renderer.render(this.scene, this.camera);
+    }
+  }
+
+  toggleEnamel() {
+    this.showEnamel.update(val => !val);
+  }
+
+  toggleRotation() {
+    this.isRotating.update(val => !val);
+  }
+
+  updateAllTeethAppearances() {
+    if (!this.jawGroup) return;
+
+    const teeth = this.isChild()
+      ? ['55', '54', '53', '52', '51', '61', '62', '63', '64', '65', '85', '84', '83', '82', '81', '71', '72', '73', '74', '75']
+      : ['18', '17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27', '28', '48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38'];
+
+    for (const toothNum of teeth) {
+      const statuses = this.getToothLatestStatuses(toothNum);
+      const mats = this.getToothMaterials(statuses);
+      const toothGroup = this.jawGroup.getObjectByName(`tooth_${toothNum}`);
+      if (toothGroup) {
+        toothGroup.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.name === 'enamel') {
+              child.material = mats.enamel;
+              child.visible = mats.enamelVisible;
+            } else if (child.name.toLowerCase().includes('pulp') || child.name.toLowerCase().includes('canal')) {
+              child.material = mats.pulp;
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private destroyThree() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = undefined;
+    }
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer = null as any;
+    }
+    if (this.scene) {
+      this.scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          if (Array.isArray(object.material)) {
+            object.material.forEach((mat) => mat.dispose());
+          } else {
+            object.material.dispose();
+          }
+        }
+      });
+      this.scene = null as any;
+    }
+    this.controls = null as any;
+    this.jawGroup = null as any;
+    this.camera = null as any;
   }
 }

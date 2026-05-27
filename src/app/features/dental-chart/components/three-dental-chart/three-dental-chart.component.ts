@@ -12,6 +12,7 @@ import {
   effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { switchMap, finalize } from 'rxjs/operators';
@@ -23,11 +24,20 @@ import { gsap } from 'gsap';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalDataService, EndodonticRecord } from '../../services/dental-data.service';
+import { ToothStatus } from '../../../../core/services/dental.service';
+
+interface HistoricalLog {
+  id: number;
+  date: string;
+  status: ToothStatus[];
+  painLevel: number;
+  treatment: string;
+}
 
 @Component({
   selector: 'app-three-dental-chart',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './three-dental-chart.component.html',
   styleUrl: './three-dental-chart.component.css'
 })
@@ -42,6 +52,59 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
   isRotating = signal<boolean>(false);
   loadingModel = signal<boolean>(true);
   loadingRecord = signal<boolean>(false);
+  allRecords = signal<{ [toothId: string]: EndodonticRecord }>({});
+  historyLogs = signal<HistoricalLog[]>([]);
+
+  // Form Fields
+  editStatuses: ToothStatus[] = ['healthy'];
+  editPain = 0;
+  editNotes = '';
+
+  readonly statusOptions = [
+    { value: 'healthy' as ToothStatus, icon: 'pi pi-check-circle', activeClass: 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'caries' as ToothStatus, icon: 'pi pi-exclamation-triangle', activeClass: 'bg-rose-600 border-rose-500 text-white shadow-[0_0_10px_rgba(244,63,94,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'filled' as ToothStatus, icon: 'pi pi-shield', activeClass: 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'under_treatment' as ToothStatus, icon: 'pi pi-spin pi-sync', activeClass: 'bg-amber-600 border-amber-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'missing' as ToothStatus, icon: 'pi pi-times-circle', activeClass: 'bg-slate-600 border-slate-500 text-white shadow-[0_0_10px_rgba(100,116,139,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'crown' as ToothStatus, icon: 'pi pi-bookmark', activeClass: 'bg-yellow-600 border-yellow-500 text-white shadow-[0_0_10px_rgba(234,179,8,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'root_canal' as ToothStatus, icon: 'pi pi-sliders-h', activeClass: 'bg-purple-600 border-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'impacted' as ToothStatus, icon: 'pi pi-arrow-down-right', activeClass: 'bg-cyan-600 border-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'fractured' as ToothStatus, icon: 'pi pi-bolt', activeClass: 'bg-orange-600 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
+    { value: 'implant' as ToothStatus, icon: 'pi pi-database', activeClass: 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' }
+  ];
+
+  toggleStatus(status: ToothStatus) {
+    let current = [...this.editStatuses];
+    if (status === 'healthy') {
+      current = ['healthy'];
+    } else if (status === 'missing') {
+      current = ['missing'];
+    } else {
+      current = current.filter(s => s !== 'healthy' && s !== 'missing');
+      if (current.includes(status)) {
+        current = current.filter(s => s !== status);
+      } else {
+        current.push(status);
+      }
+      if (current.length === 0) {
+        current = ['healthy'];
+      }
+    }
+    this.editStatuses = current;
+  }
+
+  isStatusSelected(status: ToothStatus): boolean {
+    return this.editStatuses.includes(status);
+  }
+
+  getDominantStatus(statuses: ToothStatus[] | undefined): ToothStatus {
+    if (!statuses || statuses.length === 0) return 'healthy';
+    const priority: ToothStatus[] = ['missing', 'implant', 'fractured', 'caries', 'under_treatment', 'root_canal', 'crown', 'filled', 'healthy'];
+    for (const p of priority) {
+      if (statuses.includes(p)) return p;
+    }
+    return 'healthy';
+  }
 
   // Reactive endodontic record fetching
   selectedRecord = toSignal<EndodonticRecord | null>(
@@ -67,22 +130,21 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
   private mouse = new THREE.Vector2();
   private isAnimating = false;
 
+  // Custom status-colored materials
+  private materials: { [status: string]: { enamel: THREE.Material; pulp: THREE.Material } } = {};
+
   constructor() {
-    // React to enamel visibility toggle
+    // React to enamel visibility toggle & record updates to re-paint materials
     effect(() => {
-      const visible = this.showEnamel();
-      if (this.jawGroup) {
-        this.jawGroup.traverse((child) => {
-          if (child.name === 'enamel') {
-            child.visible = visible;
-          }
-        });
-      }
+      this.showEnamel();
+      this.allRecords();
+      this.updateAllTeethAppearances();
     });
   }
 
   ngOnInit() {
-    // Component initialization
+    this.initMaterials();
+    this.refreshRecords();
   }
 
   ngAfterViewInit() {
@@ -108,6 +170,127 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
           object.material.forEach((mat) => mat.dispose());
         } else {
           object.material.dispose();
+        }
+      }
+    });
+  }
+
+  private refreshRecords() {
+    this.dentalDataService.getAllRecords().subscribe(recs => {
+      this.allRecords.set(recs);
+      this.updateAllTeethAppearances();
+    });
+  }
+
+  /**
+   * Initializes status-specific materials for the 3D teeth
+   */
+  private initMaterials() {
+    const statuses = ['healthy', 'caries', 'filled', 'under_treatment', 'missing', 'crown', 'root_canal', 'impacted', 'fractured', 'implant'];
+    const colors = {
+      healthy: { enamel: 0xe0f2fe, pulp: 0x22d3ee, emissive: 0x06b6d4 },
+      caries: { enamel: 0xffe4e6, pulp: 0xef4444, emissive: 0xe11d48 },
+      filled: { enamel: 0xdbeafe, pulp: 0x3b82f6, emissive: 0x2563eb },
+      under_treatment: { enamel: 0xfef9c3, pulp: 0xf59e0b, emissive: 0xd97706 },
+      missing: { enamel: 0x334155, pulp: 0x334155, emissive: 0x000000 },
+      crown: { enamel: 0xd4af37, pulp: 0x22d3ee, emissive: 0x06b6d4, metalness: 0.9, roughness: 0.1 },
+      root_canal: { enamel: 0xe0f2fe, pulp: 0xa855f7, emissive: 0xc084fc },
+      impacted: { enamel: 0x34d399, pulp: 0x059669, emissive: 0x10b981 },
+      fractured: { enamel: 0xf97316, pulp: 0xef4444, emissive: 0xe11d48 },
+      implant: { enamel: 0x94a3b8, pulp: 0x475569, emissive: 0x334155, metalness: 0.9, roughness: 0.2 }
+    };
+
+    statuses.forEach(status => {
+      const c = colors[status as keyof typeof colors];
+      
+      const enamelMaterial = new THREE.MeshPhysicalMaterial({
+        color: c.enamel,
+        transmission: status === 'missing' ? 0.0 : (status === 'implant' || status === 'crown' ? 0.0 : 0.95),
+        roughness: c.hasOwnProperty('roughness') ? (c as any).roughness : 0.1,
+        metalness: c.hasOwnProperty('metalness') ? (c as any).metalness : 0.1,
+        ior: 1.62,
+        thickness: 1.0,
+        transparent: true,
+        opacity: status === 'missing' ? 0.03 : (status === 'implant' || status === 'crown' ? 1.0 : 0.35),
+        clearcoat: status === 'missing' ? 0.0 : 1.0,
+        clearcoatRoughness: 0.1
+      });
+
+      const pulpMaterial = new THREE.MeshStandardMaterial({
+        color: c.pulp,
+        emissive: c.emissive,
+        emissiveIntensity: status === 'missing' ? 0.0 : 2.5,
+        roughness: 0.2,
+        metalness: 0.1,
+        transparent: status === 'missing',
+        opacity: status === 'missing' ? 0.03 : 1.0
+      });
+
+      this.materials[status] = {
+        enamel: enamelMaterial,
+        pulp: pulpMaterial
+      };
+    });
+  }
+
+  getToothMaterials(statusesInput: ToothStatus | ToothStatus[] | undefined): { enamel: THREE.Material; pulp: THREE.Material; enamelVisible: boolean; isMissing: boolean } {
+    const statuses = Array.isArray(statusesInput) 
+      ? statusesInput 
+      : (statusesInput ? [statusesInput as ToothStatus] : ['healthy' as ToothStatus]);
+
+    let enamelKey = 'healthy';
+    let pulpKey = 'healthy';
+    let isMissing = statuses.includes('missing');
+
+    // Enamel resolution (priority)
+    if (statuses.includes('missing')) enamelKey = 'missing';
+    else if (statuses.includes('implant')) enamelKey = 'implant';
+    else if (statuses.includes('crown')) enamelKey = 'crown';
+    else if (statuses.includes('fractured')) enamelKey = 'fractured';
+    else if (statuses.includes('caries')) enamelKey = 'caries';
+    else if (statuses.includes('filled')) enamelKey = 'filled';
+    else if (statuses.includes('under_treatment')) enamelKey = 'under_treatment';
+
+    // Pulp resolution (priority)
+    if (statuses.includes('missing')) pulpKey = 'missing';
+    else if (statuses.includes('root_canal')) pulpKey = 'root_canal';
+    else if (statuses.includes('caries')) pulpKey = 'caries';
+    else if (statuses.includes('under_treatment')) pulpKey = 'under_treatment';
+    else if (statuses.includes('filled')) pulpKey = 'filled';
+
+    const enamel = this.materials[enamelKey]?.enamel || this.materials['healthy'].enamel;
+    const pulp = this.materials[pulpKey]?.pulp || this.materials['healthy'].pulp;
+
+    return {
+      enamel,
+      pulp,
+      enamelVisible: isMissing ? true : this.showEnamel(),
+      isMissing
+    };
+  }
+
+  private updateAllTeethAppearances() {
+    if (!this.jawGroup || Object.keys(this.allRecords()).length === 0) return;
+
+    Object.keys(this.allRecords()).forEach(toothId => {
+      const record = this.allRecords()[toothId];
+      const numMatch = toothId.match(/tooth_(.+)/);
+      if (numMatch) {
+        const toothNumStr = numMatch[1];
+        const toothGroup = this.jawGroup.getObjectByName(`tooth_${toothNumStr}`);
+        if (toothGroup) {
+          const mats = this.getToothMaterials(record.status);
+          
+          toothGroup.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              if (child.name === 'enamel') {
+                child.material = mats.enamel;
+                child.visible = mats.enamelVisible;
+              } else if (child.name.toLowerCase().includes('pulp') || child.name.toLowerCase().includes('canal')) {
+                child.material = mats.pulp;
+              }
+            }
+          });
         }
       }
     });
@@ -184,12 +367,14 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
         this.applyMaterials(model);
         this.jawGroup.add(model);
         this.loadingModel.set(false);
+        this.updateAllTeethAppearances();
       },
       undefined,
       (error) => {
         console.warn('GLB dental model not found. Generating skeuomorphic fallback model...');
         this.buildProceduralTeeth();
         this.loadingModel.set(false);
+        this.updateAllTeethAppearances();
       }
     );
   }
@@ -198,25 +383,8 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
    * Traverses meshes and sets Enamel glass & Pulp emissive materials
    */
   private applyMaterials(model: THREE.Group) {
-    const enamelMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xe0f2fe,
-      transmission: 0.95,
-      roughness: 0.1,
-      ior: 1.62,
-      thickness: 1.0,
-      transparent: true,
-      opacity: 0.35,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1
-    });
-
-    const pulpMaterial = new THREE.MeshStandardMaterial({
-      color: 0xef4444,
-      emissive: 0xea580c,
-      emissiveIntensity: 2.5,
-      roughness: 0.2,
-      metalness: 0.1
-    });
+    const enamelMaterial = this.materials['healthy'].enamel;
+    const pulpMaterial = this.materials['healthy'].pulp;
 
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -242,26 +410,8 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
     const gumPointsUpper: THREE.Vector3[] = [];
     const gumPointsLower: THREE.Vector3[] = [];
 
-    // Materials
-    const enamelMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xe0f2fe,
-      transmission: 0.95,
-      roughness: 0.08,
-      ior: 1.62,
-      thickness: 1.2,
-      transparent: true,
-      opacity: 0.4,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05
-    });
-
-    const pulpMaterial = new THREE.MeshStandardMaterial({
-      color: 0xef4444,
-      emissive: 0xea580c,
-      emissiveIntensity: 3.0,
-      roughness: 0.2,
-      metalness: 0.1
-    });
+    const enamelMaterial = this.materials['healthy'].enamel;
+    const pulpMaterial = this.materials['healthy'].pulp;
 
     const buildSingleTooth = (universalNum: number, isUpper: boolean): THREE.Group => {
       const tooth = new THREE.Group();
@@ -269,8 +419,8 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
       tooth.userData = { toothNumber: universalNum };
 
       // Determine size factors based on tooth type
-      const isMolar = [1, 2, 3, 14, 15, 16, 17, 18, 19, 30, 31, 32].includes(universalNum);
-      const isPremolar = [4, 5, 12, 13, 20, 21, 28, 29].includes(universalNum);
+      const isMolar = [18, 17, 16, 26, 27, 28, 38, 37, 36, 46, 47, 48].includes(universalNum);
+      const isPremolar = [15, 14, 24, 25, 34, 35, 44, 45].includes(universalNum);
       
       let crownRadius = 0.5;
       let crownHeight = 0.9;
@@ -356,7 +506,7 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
       const z = rz * Math.cos(theta) - rz * 0.35;
       const y = 1.05;
 
-      const universalNum = i + 1; // 1 to 16
+      const universalNum = i < 8 ? (18 - i) : (21 + (i - 8));
       const tooth = buildSingleTooth(universalNum, true);
       
       tooth.position.set(x, y, z);
@@ -375,12 +525,11 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
       const pct = i / (numTeeth - 1);
       const theta = -1.25 + pct * 2.5;
 
-      // Slightly smaller arch size for lower jaw to fit inside upper teeth comfortably
       const x = (rx * 0.96) * Math.sin(theta);
       const z = (rz * 0.96) * Math.cos(theta) - (rz * 0.96) * 0.35;
       const y = -1.05;
 
-      const universalNum = 32 - i; // 17 to 32
+      const universalNum = i < 8 ? (48 - i) : (31 + (i - 8));
       const tooth = buildSingleTooth(universalNum, false);
       
       tooth.position.set(x, y, z);
@@ -430,7 +579,6 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
     const intersects = this.raycaster.intersectObjects(this.jawGroup.children, true);
 
     if (intersects.length > 0) {
-      // Trace up parent nodes to locate the main tooth group
       let obj: THREE.Object3D | null = intersects[0].object;
       while (obj && !obj.name.startsWith('tooth_')) {
         obj = obj.parent;
@@ -448,6 +596,39 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
   private selectTooth(toothId: string) {
     if (this.isAnimating) return;
     this.selectedToothId.set(toothId);
+
+    // Sync Form fields and history logs
+    this.dentalDataService.getEndodonticRecord(toothId).subscribe(record => {
+      if (record) {
+        this.editStatuses = Array.isArray(record.status) ? [...record.status] : [record.status as any];
+        this.editPain = record.painLevel;
+        this.editNotes = record.clinicalNotes;
+
+        // Load logs
+        const historyKey = `dental_history_logs_${toothId}`;
+        const cachedLogs = localStorage.getItem(historyKey);
+        if (cachedLogs) {
+          const logs = JSON.parse(cachedLogs);
+          logs.forEach((l: any) => {
+            if (l.status && !Array.isArray(l.status)) {
+              l.status = [l.status];
+            }
+          });
+          this.historyLogs.set(logs);
+        } else {
+          const defaultLogs = [{
+            id: Date.now() - 5 * 24 * 60 * 60 * 1000,
+            date: record.lastUpdated,
+            status: Array.isArray(record.status) ? record.status : [record.status],
+            painLevel: record.painLevel,
+            treatment: record.clinicalNotes
+          }];
+          this.historyLogs.set(defaultLogs);
+          localStorage.setItem(historyKey, JSON.stringify(defaultLogs));
+        }
+      }
+    });
+
 
     const toothGroup = this.jawGroup.getObjectByName(toothId);
     if (!toothGroup) return;
@@ -590,5 +771,41 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize(width, height);
+  }
+
+  updatePainVal(val: number) {
+    this.editPain = val;
+  }
+  saveToothLog() {
+    const id = this.selectedToothId();
+    if (!id) return;
+
+    this.dentalDataService.getEndodonticRecord(id).subscribe(record => {
+      if (!record) return;
+
+      record.status = [...this.editStatuses];
+      record.painLevel = this.editPain;
+      record.clinicalNotes = this.editNotes;
+
+      this.dentalDataService.updateEndodonticRecord(record).subscribe(updated => {
+        // Save to history log
+        const historyKey = `dental_history_logs_${id}`;
+        const logs = [...this.historyLogs()];
+        logs.unshift({
+          id: Date.now(),
+          date: new Date().toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          }),
+          status: [...this.editStatuses],
+          painLevel: this.editPain,
+          treatment: this.editNotes
+        });
+        this.historyLogs.set(logs);
+        localStorage.setItem(historyKey, JSON.stringify(logs));
+
+        // Refresh state
+        this.refreshRecords();
+      });
+    });
   }
 }

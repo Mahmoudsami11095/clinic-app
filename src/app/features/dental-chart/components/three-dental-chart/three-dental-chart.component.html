@@ -17,7 +17,7 @@
         <i class="pi pi-compass"></i>
       </div>
       <div class="header-text">
-        <h1>{{ 'patients.dental' | translate }}</h1>
+        <h1>3D Dental model</h1>
         <p>3D Volumetric Endodontics</p>
       </div>
     </div>
@@ -97,92 +97,139 @@
 
         <!-- Panel Body (Scrollable) -->
         <div class="panel-body">
-          <!-- Diagnostics / Status Row -->
-          <div class="status-badge-container card-block">
-            <span class="label">{{ 'dental.status' | translate }}</span>
-            <span class="badge" [ngClass]="'badge-' + record.status">
-              {{ 'dental.' + record.status | translate }}
-            </span>
-          </div>
-
-          <!-- FDI Mapping Block -->
-          <div class="metadata-grid card-block">
-            <div class="meta-field">
-              <span>Universal System</span>
-              <span>#{{ record.toothNumber }}</span>
+          
+          <!-- Interactive Diagnosis Form -->
+          <form (submit)="saveToothLog(); $event.preventDefault()">
+            
+            <!-- FDI Mapping Block -->
+            <div class="metadata-grid card-block" style="margin-bottom: 1rem;">
+              <div class="meta-field">
+                <span>FDI System (4 Quarters)</span>
+                <span>#{{ record.toothNumber }}</span>
+              </div>
+              <div class="meta-field">
+                <span>Universal System</span>
+                <span>#{{ record.universalNumber }}</span>
+              </div>
             </div>
-            <div class="meta-field">
-              <span>FDI System</span>
-              <span>#{{ record.fdiNumber }}</span>
-            </div>
-          </div>
 
-          <!-- Pain Level Meter (Custom skeletal bar graph) -->
-          <div class="pain-metric-row card-block">
-            <span class="label">{{ 'dental.pain_level' | translate }}</span>
-            <div class="pain-indicator" [attr.data-pain]="record.painLevel" [ngClass]="'active-' + record.painLevel">
-              <span class="pain-cell" title="Pain 1"></span>
-              <span class="pain-cell" title="Pain 2"></span>
-              <span class="pain-cell" title="Pain 3"></span>
-              <span class="pain-cell" title="Pain 4"></span>
-              <span class="pain-cell" title="Pain 5"></span>
-              <span class="pain-cell" title="Pain 6"></span>
-              <span class="pain-cell" title="Pain 7"></span>
-              <span class="pain-cell" title="Pain 8"></span>
-              <span class="pain-cell" title="Pain 9"></span>
-              <span class="pain-cell" title="Pain 10"></span>
-            </div>
-          </div>
-
-          <!-- Root Canals Measurements -->
-          @if (record.canalWorkingLengths.length > 0) {
-            <div class="card-block">
-              <span class="label" style="display: block; margin-bottom: 0.75rem;">
-                {{ 'dental.canal_anatomy' | translate }}
-              </span>
-              <div class="canals-list">
-                @for (canal of record.canalWorkingLengths; track canal.name) {
-                  <div class="canal-item">
-                    <div class="canal-meta">
-                      <span class="canal-name">{{ canal.name }}</span>
-                      <span class="canal-details">
-                        WL: {{ canal.workingLength }}mm | Size: #{{ canal.apicalSize }}
-                      </span>
-                    </div>
-                    <!-- Visual Gauge representation of Working Length (Relative to max 25mm length) -->
-                    <div class="progress-track">
-                      <div 
-                        class="progress-bar" 
-                        [style.width.%]="(canal.workingLength / 25) * 100">
-                      </div>
-                    </div>
-                  </div>
+            <!-- Diagnostics / Status Dropdown -->
+            <div class="form-group">
+              <label>{{ 'dental.diagnostic_status' | translate }}</label>
+              <div class="flex flex-wrap gap-2 mt-1">
+                @for (opt of statusOptions; track opt.value) {
+                  <button
+                    type="button"
+                    (click)="toggleStatus(opt.value)"
+                    [class]="isStatusSelected(opt.value) ? opt.activeClass : opt.inactiveClass"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border focus:outline-none"
+                  >
+                    <i [class]="opt.icon"></i>
+                    <span>{{ 'dental.' + opt.value | translate }}</span>
+                  </button>
                 }
               </div>
             </div>
-          }
 
-          <!-- Clinical Notes / Treatment Log -->
-          @if (record.clinicalNotes) {
-            <div class="card-block">
-              <span class="label" style="display: block; margin-bottom: 0.5rem;">
-                Clinical Notes
-              </span>
-              <div class="clinical-notes">
-                "{{ record.clinicalNotes }}"
+            <!-- Pain Level Meter Slider -->
+            <div class="form-group">
+              <label>{{ 'dental.pain_sensitivity' | translate }}</label>
+              <div class="pain-slider-wrap">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="10" 
+                  [(ngModel)]="editPain" 
+                  name="pain"
+                  class="pain-range-slider"
+                  (input)="updatePainVal(+$any($event.target).value)">
+                <span class="pain-indicator-val" [style.color]="editPain > 6 ? '#ef4444' : editPain > 3 ? '#f59e0b' : '#10b981'">
+                  {{ editPain }}
+                </span>
               </div>
             </div>
-          }
 
-          <!-- Metadata info -->
-          <div class="metadata-grid card-block">
-            <div class="meta-field">
-              <span>Recorded By</span>
-              <span>{{ record.dentistName }}</span>
+            <!-- Root Canals Measurements (Read-only reference) -->
+            @if (record.canalWorkingLengths.length > 0) {
+              <div class="card-block" style="margin-bottom: 1rem;">
+                <span class="label" style="display: block; margin-bottom: 0.75rem;">
+                  {{ 'dental.canal_anatomy' | translate }}
+                </span>
+                <div class="canals-list">
+                  @for (canal of record.canalWorkingLengths; track canal.name) {
+                    <div class="canal-item">
+                      <div class="canal-meta">
+                        <span class="canal-name">{{ canal.name }}</span>
+                        <span class="canal-details">
+                          WL: {{ canal.workingLength }}mm | Size: #{{ canal.apicalSize }}
+                        </span>
+                      </div>
+                      <div class="progress-track">
+                        <div 
+                          class="progress-bar" 
+                          [style.width.%]="(canal.workingLength / 25) * 100">
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Clinical Notes Textarea -->
+            <div class="form-group">
+              <label>{{ 'dental.treatment_notes' | translate }}</label>
+              <textarea 
+                [(ngModel)]="editNotes" 
+                name="notes"
+                rows="2" 
+                class="form-textarea" 
+                placeholder="Describe clinical treatment...">
+              </textarea>
             </div>
-            <div class="meta-field">
-              <span>Last Modified</span>
-              <span>{{ record.lastUpdated }}</span>
+
+            <button type="submit" class="btn-save-diagnose">
+              <svg style="width: 1rem; height: 1rem; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              {{ 'dental.save_diagnosis_log' | translate }}
+            </button>
+          </form>
+
+          <!-- Diagnostic History -->
+          <div style="margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem;">
+            <span class="label" style="display: block; margin-bottom: 0.75rem;">
+              {{ 'dental.diagnostic_history' | translate }}
+            </span>
+            <div class="history-list-3d">
+              @if (historyLogs().length === 0) {
+                <div style="font-size:0.7rem; color: #475569; text-align:center; padding: 1rem 0;">
+                  {{ 'dental.no_history' | translate }}
+                </div>
+              } @else {
+                @for (log of historyLogs(); track log.id) {
+                  <div class="history-item-3d">
+                    <div class="history-item-header flex flex-wrap gap-1.5 items-center">
+                      <div class="flex flex-wrap gap-1">
+                        @let logStatuses = log.status || [];
+                        @for (st of logStatuses; track st) {
+                          <span 
+                            class="px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase"
+                            [style.background]="st === 'caries' ? '#f43f5e' : st === 'filled' ? '#3b82f6' : st === 'under_treatment' ? '#fbbf24' : st === 'healthy' ? '#10b981' : st === 'missing' ? '#64748b' : st === 'crown' ? '#d97706' : st === 'root_canal' ? '#a855f7' : st === 'impacted' ? '#06b6d4' : st === 'fractured' ? '#f97316' : '#6366f1'">
+                            {{ 'dental.' + st | translate }}
+                          </span>
+                        }
+                      </div>
+                      <span style="color: #64748b; font-size: 0.65rem; margin-left: auto;">{{ log.date }}</span>
+                    </div>
+                    <div style="font-size: 0.75rem; margin-top: 0.25rem;">
+                      {{ 'dental.pain_level' | translate }}: 
+                      <span style="color:#ef4444; font-weight:700;">{{ log.painLevel }}/10</span>
+                    </div>
+                    @if (log.treatment) {
+                      <div class="history-item-notes">"{{ log.treatment }}"</div>
+                    }
+                  </div>
+                }
+              }
             </div>
           </div>
 
