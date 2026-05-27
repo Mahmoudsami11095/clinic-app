@@ -1,0 +1,325 @@
+<div class="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans select-none selection:bg-indigo-500/30">
+  
+  <!-- Floating Ambient background blobs -->
+  <div class="absolute -top-40 -start-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="absolute -bottom-40 -end-40 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <!-- Floating Language Toggle Button -->
+  <div class="absolute top-6 end-6 z-50">
+    <button (click)="languageService.setLanguage(languageService.currentLang() === 'en' ? 'ar' : 'en')" 
+            class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-200 shadow-md transition-all cursor-pointer text-xs">
+      <i class="pi pi-globe text-indigo-500 text-sm"></i>
+      <span>{{ languageService.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
+    </button>
+  </div>
+
+  <!-- Main Container Card -->
+  <div class="w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 grid grid-cols-1 lg:grid-cols-12 min-h-[720px] animate-fade-in-up">
+    
+    <!-- Left Pane: Branding & Info Card (visible on large screen) -->
+    <div class="hidden lg:flex lg:col-span-5 bg-gradient-to-tr from-slate-950 via-indigo-950 to-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(99,102,241,0.15),transparent)] pointer-events-none"></div>
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 relative z-10">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 2v20"/><path d="M2 12h20"/></svg>
+        </div>
+        <span class="font-bold text-2xl tracking-tight bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">MedClinic</span>
+      </div>
+
+      <!-- Center Feature Slides -->
+      <div class="space-y-8 my-auto relative z-10">
+        <div class="space-y-4">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+            Version 2.0
+          </span>
+          <h1 class="text-3xl font-extrabold leading-tight text-white">
+            {{ 'auth.login_title' | translate }}
+          </h1>
+          <p class="text-slate-400 text-sm font-medium leading-relaxed">
+            Manage your clinic operations, teeth charts, patients details, and billing statements through our secure role-based portals.
+          </p>
+        </div>
+
+        <!-- Features list -->
+        <div class="space-y-4 pt-2">
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 text-indigo-400">
+              <i class="pi pi-compass text-sm"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-slate-200">Interactive 3D Teeth Charting</h4>
+              <p class="text-xs text-slate-400 mt-1">Reactive Three.js based charting for root canal and clinical logs.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 text-indigo-400">
+              <i class="pi pi-users text-sm"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-slate-200">Multi-Role Medical Portals</h4>
+              <p class="text-xs text-slate-400 mt-1">Dedicated access modules for Administrators, Doctors, Assistants, and Patients.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 text-indigo-400">
+              <i class="pi pi-wallet text-sm"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-slate-200">Integrated Invoicing & Payments</h4>
+              <p class="text-xs text-slate-400 mt-1">Track clinic revenue, patient invoices, and collect logs dynamically.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Left pane footer -->
+      <div class="text-slate-500 text-[11px] font-semibold relative z-10 flex justify-between">
+        <span>© 2026 MedClinic Group</span>
+        <span class="hover:text-indigo-400 cursor-pointer transition-colors">Privacy Policy</span>
+      </div>
+    </div>
+
+    <!-- Right Pane: Credentials Form & Demo Switcher -->
+    <div class="lg:col-span-7 p-6 sm:p-10 lg:p-14 flex flex-col justify-between bg-white relative overflow-y-auto">
+      
+      <!-- Top form titles -->
+      <div class="mb-6 mt-4 lg:mt-0 text-center lg:text-start">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          {{ 'auth.login_title' | translate }}
+        </h2>
+        <p class="text-xs sm:text-sm font-medium text-slate-500 mt-2">
+          {{ 'auth.login_subtitle' | translate }}
+        </p>
+      </div>
+
+      <!-- Toggle Login Tabs -->
+      <div class="flex border-b border-slate-100 mb-6 bg-slate-50/50 p-1 rounded-xl">
+        <button type="button" (click)="setLoginMode('password')" 
+                [class.bg-white]="loginMode() === 'password'"
+                [class.text-indigo-600]="loginMode() === 'password'"
+                [class.shadow-sm]="loginMode() === 'password'"
+                [class.text-slate-500]="loginMode() !== 'password'"
+                class="flex-1 text-center py-2.5 rounded-lg font-bold text-xs transition-all focus:outline-none cursor-pointer flex items-center justify-center gap-1.5">
+          <i class="pi pi-lock text-[10px]"></i>
+          <span>{{ 'auth.login_with_password' | translate }}</span>
+        </button>
+        <button type="button" (click)="setLoginMode('otp')" 
+                [class.bg-white]="loginMode() === 'otp'"
+                [class.text-indigo-600]="loginMode() === 'otp'"
+                [class.shadow-sm]="loginMode() === 'otp'"
+                [class.text-slate-500]="loginMode() !== 'otp'"
+                class="flex-1 text-center py-2.5 rounded-lg font-bold text-xs transition-all focus:outline-none cursor-pointer flex items-center justify-center gap-1.5">
+          <i class="pi pi-send text-[10px]"></i>
+          <span>{{ 'auth.login_with_otp' | translate }}</span>
+        </button>
+      </div>
+
+      <!-- Error Alert Banner -->
+      <div *ngIf="errorMessage()" 
+           class="bg-rose-50 border border-rose-100 rounded-2xl p-4 text-xs font-bold text-rose-600 flex items-center gap-2.5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300 mb-4">
+        <i class="pi pi-exclamation-triangle text-sm"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+
+      <!-- Password Login Form -->
+      <form *ngIf="loginMode() === 'password'" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Email Input -->
+        <div class="relative group">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+            {{ 'auth.email' | translate }}
+          </label>
+          <div class="relative">
+            <i class="pi pi-envelope absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+            <input type="email" formControlName="email" 
+                   class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3.5 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 placeholder-slate-400 font-semibold"
+                   placeholder="doctor@medclinic.com">
+          </div>
+          <div *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid" 
+               class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            <span *ngIf="loginForm.get('email')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
+            <span *ngIf="loginForm.get('email')?.errors?.['email']">{{ 'auth.invalid_email' | translate }}</span>
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div class="relative group">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+            {{ 'auth.password' | translate }}
+          </label>
+          <div class="relative">
+            <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+            <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" 
+                   class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3.5 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 placeholder-slate-400 font-semibold"
+                   placeholder="••••••••">
+            <button type="button" (click)="togglePassword()" 
+                    class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer focus:outline-none">
+              <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
+            </button>
+          </div>
+          <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" 
+               class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle text-[10px]"></i>
+            <span *ngIf="loginForm.get('password')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
+            <span *ngIf="loginForm.get('password')?.errors?.['minlength']">{{ 'auth.password_min_length' | translate }}</span>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" [disabled]="isLoading()"
+                class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-2 focus:outline-none">
+          <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
+          <span *ngIf="!isLoading()">{{ 'auth.sign_in' | translate }}</span>
+          <i *ngIf="!isLoading()" class="pi pi-arrow-right text-[10px] rtl-flip group-hover:translate-x-1 transition-transform"></i>
+        </button>
+      </form>
+
+      <!-- OTP Login Form -->
+      <form *ngIf="loginMode() === 'otp'" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        
+        <!-- STEP 1: Enter Email -->
+        <div *ngIf="!otpSent()" class="relative group">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+            {{ 'auth.email' | translate }}
+          </label>
+          <div class="relative">
+            <i class="pi pi-envelope absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+            <input type="email" formControlName="email" 
+                   class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3.5 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 placeholder-slate-400 font-semibold"
+                   placeholder="doctor@medclinic.com">
+          </div>
+          <button type="button" (click)="sendVerificationCode()" [disabled]="isLoading()"
+                  class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none">
+            <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
+            <span *ngIf="!isLoading()">{{ 'auth.send_otp' | translate }}</span>
+          </button>
+        </div>
+
+        <!-- STEP 2: Enter Verification Code -->
+        <div *ngIf="otpSent()" class="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div class="text-center">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              {{ 'auth.enter_otp_title' | translate }}
+            </h4>
+            <p class="text-xs font-medium text-slate-400 leading-normal">
+              {{ 'auth.enter_otp_subtitle' | translate }} <span class="text-indigo-600 font-semibold">{{ loginForm.get('email')?.value }}</span>
+            </p>
+          </div>
+
+          <!-- Passcode digits input grid -->
+          <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
+            @for (val of otpInputs(); track $index) {
+              <input type="text"
+                     [id]="'otp-input-' + $index"
+                     [value]="val"
+                     (input)="onOtpInput($event, $index)"
+                     (keydown)="onOtpKeyDown($event, $index)"
+                     class="w-11 h-11 text-center bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 transition-all"
+                     maxLength="1"
+                     pattern="[0-9]*"
+                     inputmode="numeric">
+            }
+          </div>
+
+          <!-- Resend Code section -->
+          <div class="text-center text-xs font-semibold text-slate-500">
+            <span *ngIf="countdown() > 0" class="text-slate-400">
+              {{ getCountdownText() }}
+            </span>
+            <button type="button" *ngIf="countdown() === 0" (click)="sendVerificationCode()"
+                    class="text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer focus:outline-none font-bold">
+              {{ 'auth.resend_code' | translate }}
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" [disabled]="isLoading()"
+                  class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group focus:outline-none">
+            <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
+            <span *ngIf="!isLoading()">{{ 'auth.verify_and_login' | translate }}</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Social Authentication Section -->
+      <div class="mt-6 border-t border-slate-100 pt-5">
+        <div class="relative flex justify-center text-center mb-5">
+          <span class="absolute inset-0 flex items-center" aria-hidden="true">
+            <span class="w-full border-t border-slate-100"></span>
+          </span>
+          <span class="relative bg-white px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            {{ 'auth.or_continue_with' | translate }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Google -->
+          <button type="button" (click)="socialLogin('google')" [disabled]="isLoading()"
+                  class="flex items-center justify-center py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600 rounded-xl transition-all cursor-pointer shadow-sm focus:outline-none">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+            </svg>
+          </button>
+          
+          <!-- Microsoft -->
+          <button type="button" (click)="socialLogin('microsoft')" [disabled]="isLoading()"
+                  class="flex items-center justify-center py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600 rounded-xl transition-all cursor-pointer shadow-sm focus:outline-none">
+            <svg class="w-4 h-4" viewBox="0 0 23 23" fill="currentColor">
+              <rect x="0" y="0" width="11" height="11" fill="#F25022"/>
+              <rect x="12" y="0" width="11" height="11" fill="#7FBA00"/>
+              <rect x="0" y="12" width="11" height="11" fill="#00A4EF"/>
+              <rect x="12" y="12" width="11" height="11" fill="#FFB900"/>
+            </svg>
+          </button>
+
+          <!-- Apple -->
+          <button type="button" (click)="socialLogin('apple')" [disabled]="isLoading()"
+                  class="flex items-center justify-center py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600 rounded-xl transition-all cursor-pointer shadow-sm focus:outline-none">
+            <svg class="w-4 h-4 text-black" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.58 2.95-1.39z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Login Section -->
+      <div class="mt-6 border-t border-slate-100 pt-5">
+        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3.5 flex items-center gap-1.5 justify-center lg:justify-start">
+          <i class="pi pi-id-card text-[11px] text-indigo-500"></i>
+          {{ 'auth.demo_accounts' | translate }}
+        </h4>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 max-h-40 overflow-y-auto pr-1">
+          <button type="button" *ngFor="let u of authService.mockUsers" 
+                  (click)="quickLogin(u)"
+                  class="flex items-center gap-2.5 p-2 bg-slate-50 hover:bg-indigo-50/50 hover:ring-1 hover:ring-indigo-500/20 rounded-xl transition-all border border-slate-100 text-start group cursor-pointer">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
+              {{ getAvatarInitials(u.name) }}
+            </div>
+            <div class="min-w-0">
+              <div class="text-[10px] font-bold text-slate-700 truncate group-hover:text-indigo-600 leading-tight">{{ u.name }}</div>
+              <div class="text-[9px] text-slate-400 font-medium capitalize mt-0.5">{{ 'auth.role_' + u.role | translate }}</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Registration Redirect -->
+      <div class="mt-6 text-center text-xs text-slate-500 font-medium">
+        {{ 'auth.dont_have_account' | translate }} 
+        <a routerLink="/register" class="text-indigo-600 hover:text-indigo-800 font-bold transition-colors ms-1 cursor-pointer">
+          {{ 'auth.register_now' | translate }}
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>

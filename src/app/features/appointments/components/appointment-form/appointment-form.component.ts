@@ -87,6 +87,7 @@ export class AppointmentFormComponent implements OnInit {
 
   private defaultClinicForUser(): string {
     const user = this.authService.currentUser();
+    if (!user) return '';
     if (user.role === 'patient') return user.clinicId ?? '';
     if (user.role === 'doctor') return user.clinicIds?.[0] ?? '';
     if (user.role === 'assistant' || user.role === 'admin') return user.clinicId ?? '';
@@ -95,6 +96,7 @@ export class AppointmentFormComponent implements OnInit {
 
   private resolveClinicId(): string {
     const user = this.authService.currentUser();
+    if (!user) return '';
     if (user.role === 'patient' && user.clinicId) {
       return user.clinicId;
     }
@@ -114,6 +116,7 @@ export class AppointmentFormComponent implements OnInit {
 
   private syncClinicFromHeader(activeId: string): void {
     const user = this.authService.currentUser();
+    if (!user) return;
 
     if (user.role === 'doctor') {
       this.form.get('clinicId')?.clearValidators();
@@ -151,10 +154,12 @@ export class AppointmentFormComponent implements OnInit {
 
     const user = this.authService.currentUser();
     let clinics = this.clinicService.clinics();
-    if (user.role === 'doctor' && user.clinicIds?.length) {
-      clinics = clinics.filter(c => user.clinicIds!.includes(c.id));
-    } else if ((user.role === 'assistant' || user.role === 'admin') && user.clinicId) {
-      clinics = clinics.filter(c => c.id === user.clinicId);
+    if (user) {
+      if (user.role === 'doctor' && user.clinicIds?.length) {
+        clinics = clinics.filter(c => user.clinicIds!.includes(c.id));
+      } else if ((user.role === 'assistant' || user.role === 'admin') && user.clinicId) {
+        clinics = clinics.filter(c => c.id === user.clinicId);
+      }
     }
     this.clinicsList.set(clinics);
     this.syncClinicFromHeader(this.clinicService.activeClinicId());
@@ -223,6 +228,7 @@ export class AppointmentFormComponent implements OnInit {
 
   private setupLockedDoctor(loggedInDoctorId: string | undefined, doctors: Doctor[]): void {
     const user = this.authService.currentUser();
+    if (!user) return;
     const doctorRecordId =
       loggedInDoctorId ?? (user.role === 'assistant' ? user.doctorId : undefined);
 
@@ -261,7 +267,7 @@ export class AppointmentFormComponent implements OnInit {
     let pats = this.allPatients;
 
     if (this.authService.isDoctor()) {
-      const clinicIds = new Set(this.authService.currentUser().clinicIds ?? []);
+      const clinicIds = new Set(this.authService.currentUser()?.clinicIds ?? []);
       docs = docs.filter(d => d.clinicIds?.some(id => clinicIds.has(id)));
       pats = pats.filter(p => p.clinicId && clinicIds.has(p.clinicId));
     } else {
@@ -279,7 +285,7 @@ export class AppointmentFormComponent implements OnInit {
       const linkedIds = getDoctorLinkedPatientIds(doctorId);
       const seen = new Set(pats.map(p => p.id));
       const scopeClinicId = this.authService.isDoctor() ? null : this.resolveClinicId();
-      const doctorClinicIds = new Set(this.authService.currentUser().clinicIds ?? []);
+      const doctorClinicIds = new Set(this.authService.currentUser()?.clinicIds ?? []);
 
       for (const patient of this.allPatients) {
         if (!linkedIds.has(patient.id) || seen.has(patient.id)) continue;
@@ -313,7 +319,7 @@ export class AppointmentFormComponent implements OnInit {
     const patient = this.allPatients.find(p => p.id === rawValue.patientId);
     let clinicId = this.resolveClinicId();
     if (clinicId === 'all' || !clinicId) {
-      clinicId = patient?.clinicId ?? this.authService.currentUser().clinicIds?.[0] ?? clinicId;
+      clinicId = patient?.clinicId ?? this.authService.currentUser()?.clinicIds?.[0] ?? clinicId;
     }
 
     if (this.isEditMode && this.appointment) {

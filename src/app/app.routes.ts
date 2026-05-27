@@ -1,11 +1,23 @@
 import { Routes } from '@angular/router';
 import { MainLayout } from './core/layout/main-layout/main-layout.component';
 import { roleGuard } from './core/auth/role.guard';
+import { authGuard, unauthGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
-    path: '', // Base layout wraps inner routes
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
+    canActivate: [unauthGuard]
+  },
+  {
+    path: 'register',
+    loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+    canActivate: [unauthGuard]
+  },
+  {
+    path: '',
     component: MainLayout,
+    canActivate: [authGuard],
     children: [
       {
         path: 'dashboard',
@@ -51,5 +63,6 @@ export const routes: Routes = [
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
-  }
+  },
+  { path: '**', redirectTo: '' }
 ];

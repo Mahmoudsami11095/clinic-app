@@ -35,6 +35,9 @@ export class DentalService {
   /** Add a new dental log for a tooth */
   addLog(log: Omit<DentalLog, 'id' | 'date' | 'doctorId' | 'doctorName'>): Observable<DentalLog> {
     const user = this.authService.currentUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
     const newLog: DentalLog = {
       ...log,
       id: crypto.randomUUID(),

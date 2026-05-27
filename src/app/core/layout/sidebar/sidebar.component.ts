@@ -25,6 +25,7 @@ export class Sidebar {
 
   menuItems = computed(() => {
     const user = this.authService.currentUser();
+    if (!user) return [];
     const role = user.role;
     return this.allMenuItems
       .filter(item => {

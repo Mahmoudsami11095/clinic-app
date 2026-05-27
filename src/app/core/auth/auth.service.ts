@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { map, Observable, tap } from 'rxjs';
 
 export interface User {
   id: string;
@@ -115,42 +118,91 @@ export class AuthService {
     }
   ];
 
-  private currentUserSignal = signal<User>(this.getInitialUser());
+  private http = inject(HttpClient);
+  private router = inject(Router);
+
+  private currentUserSignal = signal<User | null>(this.getInitialUser());
 
   currentUser = this.currentUserSignal.asReadonly();
 
-  isAdmin = computed(() => this.currentUserSignal().role === 'admin');
-  isDoctor = computed(() => this.currentUserSignal().role === 'doctor');
-  isAssistant = computed(() => this.currentUserSignal().role === 'assistant');
-  isPatient = computed(() => this.currentUserSignal().role === 'patient');
+  isAuthenticated = computed(() => this.currentUserSignal() !== null);
+
+  isAdmin = computed(() => this.currentUserSignal()?.role === 'admin');
+  isDoctor = computed(() => this.currentUserSignal()?.role === 'doctor');
+  isAssistant = computed(() => this.currentUserSignal()?.role === 'assistant');
+  isPatient = computed(() => this.currentUserSignal()?.role === 'patient');
 
   /** Only set for users with role `doctor` (assistants store supervising doctor on `doctorId` separately). */
   currentDoctorId = computed(() => {
     const user = this.currentUserSignal();
-    return user.role === 'doctor' ? user.doctorId : undefined;
+    return user?.role === 'doctor' ? user.doctorId : undefined;
   });
-  currentPatientId = computed(() => this.currentUserSignal().patientId);
+  currentPatientId = computed(() => this.currentUserSignal()?.patientId);
 
-  private getInitialUser(): User {
+  private getInitialUser(): User | null {
     const saved = localStorage.getItem('clinic_current_user');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        // Find in mockUsers first, or return the parsed object (could be a newly registered user)
         const match = this.mockUsers.find(u => u.id === parsed.id);
         if (match) return match;
+        return parsed as User;
       } catch (e) {
         // Fallback
       }
     }
-    return this.mockUsers[0]; // Admin by default
+    return null; // No user by default (requires login)
   }
 
-  setCurrentUser(user: User) {
+  setCurrentUser(user: User | null) {
     this.currentUserSignal.set(user);
-    localStorage.setItem('clinic_current_user', JSON.stringify(user));
+    if (user) {
+      localStorage.setItem('clinic_current_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('clinic_current_user');
+    }
+  }
+
+  login(credentials: { email: string; password?: string }): Observable<User> {
+    return this.http.post<{ message: string; data: User }>('/api/auth/login', credentials).pipe(
+      map(res => res.data),
+      tap(user => {
+        this.setCurrentUser(user);
+      })
+    );
+  }
+
+  sendOtp(email: string): Observable<{ message: string; otp: string }> {
+    return this.http.post<{ message: string; otp: string }>('/api/auth/send-otp', { email });
+  }
+
+  verifyOtp(email: string, code: string): Observable<User> {
+    return this.http.post<{ message: string; data: User }>('/api/auth/verify-otp', { email, code }).pipe(
+      map(res => res.data),
+      tap(user => {
+        this.setCurrentUser(user);
+      })
+    );
+  }
+
+  loginWithSocial(provider: string): Observable<User> {
+    return this.http.post<{ message: string; data: User }>('/api/auth/social', { provider }).pipe(
+      map(res => res.data),
+      tap(user => {
+        this.setCurrentUser(user);
+      })
+    );
+  }
+
+  register(userData: any): Observable<User> {
+    return this.http.post<{ message: string; data: User }>('/api/auth/register', userData).pipe(
+      map(res => res.data)
+    );
   }
 
   logout() {
-    this.setCurrentUser(this.mockUsers[0]);
+    this.setCurrentUser(null);
+    this.router.navigate(['/login']);
   }
 }

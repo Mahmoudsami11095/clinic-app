@@ -1,0 +1,225 @@
+<div class="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans select-none selection:bg-indigo-500/30">
+  
+  <!-- Floating Ambient background blobs -->
+  <div class="absolute -top-40 -start-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="absolute -bottom-40 -end-40 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <!-- Floating Language Toggle Button -->
+  <div class="absolute top-6 end-6 z-50">
+    <button (click)="languageService.setLanguage(languageService.currentLang() === 'en' ? 'ar' : 'en')" 
+            class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-200 shadow-md transition-all cursor-pointer text-xs">
+      <i class="pi pi-globe text-indigo-500 text-sm"></i>
+      <span>{{ languageService.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
+    </button>
+  </div>
+
+  <!-- Main Container Card -->
+  <div class="w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 grid grid-cols-1 lg:grid-cols-12 min-h-[680px] animate-fade-in-up">
+    
+    <!-- Left Pane: Branding & Info Card (visible on large screen) -->
+    <div class="hidden lg:flex lg:col-span-5 bg-gradient-to-tr from-slate-950 via-indigo-950 to-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden">
+      <!-- Decorative vector lines -->
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(99,102,241,0.15),transparent)] pointer-events-none"></div>
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 relative z-10">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 2v20"/><path d="M2 12h20"/></svg>
+        </div>
+        <span class="font-bold text-2xl tracking-tight bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">MedClinic</span>
+      </div>
+
+      <!-- Center Branding Text -->
+      <div class="my-auto space-y-6 relative z-10">
+        <h2 class="text-3xl font-extrabold leading-tight">
+          {{ 'auth.register_title' | translate }}
+        </h2>
+        <p class="text-slate-400 text-sm font-medium leading-relaxed">
+          Create your account today and gain immediate access to secure health record charting, clinical appointments management, and payments services.
+        </p>
+
+        <!-- Feature checkboxes -->
+        <div class="space-y-3.5 pt-2">
+          <div class="flex items-center gap-3">
+            <i class="pi pi-check-circle text-indigo-400 text-base"></i>
+            <span class="text-xs font-semibold text-slate-300">Instant patient profiles matching</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <i class="pi pi-check-circle text-indigo-400 text-base"></i>
+            <span class="text-xs font-semibold text-slate-300">Branch clinic assignments selection</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <i class="pi pi-check-circle text-indigo-400 text-base"></i>
+            <span class="text-xs font-semibold text-slate-300">Encrypted credentials & secure sign in</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer details -->
+      <div class="text-slate-500 text-[11px] font-semibold relative z-10 flex justify-between">
+        <span>© 2026 MedClinic Group</span>
+        <span class="hover:text-indigo-400 cursor-pointer transition-colors">Privacy Policy</span>
+      </div>
+    </div>
+
+    <!-- Right Pane: Register Form -->
+    <div class="lg:col-span-7 p-6 sm:p-10 lg:p-14 flex flex-col justify-between bg-white relative">
+      
+      <!-- Titles -->
+      <div class="mb-6 mt-4 lg:mt-0 text-center lg:text-start">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          {{ 'auth.register_title' | translate }}
+        </h2>
+        <p class="text-sm font-medium text-slate-500 mt-2">
+          {{ 'auth.register_subtitle' | translate }}
+        </p>
+      </div>
+
+      <!-- Registration Form -->
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        
+        <!-- Two Column grid for fields (Name & Email) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Full Name -->
+          <div class="relative group">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              {{ 'auth.full_name' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-user absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+              <input type="text" formControlName="name" 
+                     class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 placeholder-slate-400 font-semibold"
+                     placeholder="e.g. John Doe">
+            </div>
+            <div *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.invalid" 
+                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>{{ 'auth.required_fields' | translate }}</span>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="relative group">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              {{ 'auth.email' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-envelope absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+              <input type="email" formControlName="email" 
+                     class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 placeholder-slate-400 font-semibold"
+                     placeholder="john@example.com">
+            </div>
+            <div *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" 
+                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+              <i class="pi pi-exclamation-circle"></i>
+              <span *ngIf="registerForm.get('email')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
+              <span *ngIf="registerForm.get('email')?.errors?.['email']">{{ 'auth.invalid_email' | translate }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="relative group">
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            {{ 'auth.password' | translate }}
+          </label>
+          <div class="relative">
+            <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+            <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" 
+                   class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 placeholder-slate-400 font-semibold"
+                   placeholder="••••••••">
+            <button type="button" (click)="togglePassword()" 
+                    class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer focus:outline-none">
+              <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
+            </button>
+          </div>
+          <div *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid" 
+               class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+            <i class="pi pi-exclamation-circle"></i>
+            <span *ngIf="registerForm.get('password')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
+            <span *ngIf="registerForm.get('password')?.errors?.['minlength']">{{ 'auth.password_min_length' | translate }}</span>
+          </div>
+        </div>
+
+        <!-- Two Column grid for fields (Role & Clinic) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Role Selector -->
+          <div class="relative">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              {{ 'auth.role_selection' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-briefcase absolute start-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <select formControlName="role" 
+                      class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3 ps-12 pe-4 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all cursor-pointer appearance-none">
+                <option *ngFor="let role of availableRoles" [value]="role.value">
+                  {{ role.labelKey | translate }}
+                </option>
+              </select>
+              <i class="pi pi-chevron-down absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[10px]"></i>
+            </div>
+          </div>
+
+          <!-- Clinic branch Selection -->
+          <div class="relative group">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              {{ 'auth.clinic_selection' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-building absolute start-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <select formControlName="clinicId" 
+                      class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3 ps-12 pe-4 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all cursor-pointer appearance-none">
+                <option value="">Choose Branch Clinic</option>
+                <option *ngFor="let clinic of clinicService.clinics()" [value]="clinic.id">
+                  {{ clinic.name }}
+                </option>
+              </select>
+              <i class="pi pi-chevron-down absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[10px]"></i>
+            </div>
+            <div *ngIf="registerForm.get('clinicId')?.touched && registerForm.get('clinicId')?.invalid" 
+                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>{{ 'auth.required_fields' | translate }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optional Patient details (displayed if role is Patient) -->
+        <div *ngIf="registerForm.get('role')?.value === 'patient'" class="p-4 bg-slate-50 rounded-2xl border border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-200">
+          <!-- Phone Number -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+            <input type="text" formControlName="phone" 
+                   class="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/30 transition-all"
+                   placeholder="+1 (555) 123-4567">
+          </div>
+          
+          <!-- Age -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Age</label>
+            <input type="number" formControlName="age" 
+                   class="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/30 transition-all"
+                   min="1" max="120">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" [disabled]="isLoading()"
+                class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none">
+          <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white"></i>
+          <span *ngIf="!isLoading()">{{ 'auth.sign_up' | translate }}</span>
+          <i *ngIf="!isLoading()" class="pi pi-arrow-right text-[10px] rtl-flip group-hover:translate-x-1 transition-transform"></i>
+        </button>
+      </form>
+
+      <!-- Back to Login Footer -->
+      <div class="mt-6 text-center text-xs text-slate-500 font-medium">
+        {{ 'auth.already_have_account' | translate }} 
+        <a routerLink="/login" class="text-indigo-600 hover:text-indigo-800 font-bold transition-colors ms-1 cursor-pointer">
+          {{ 'auth.sign_in_now' | translate }}
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
