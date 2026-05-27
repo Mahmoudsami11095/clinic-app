@@ -310,6 +310,30 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                 </div>
 
                 <!-- Interactive Teeth Grid (Horizontal Scrolling on Mobile) -->
+                <svg style="display: none; width: 0; height: 0;">
+                  <defs>
+                    <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="1.5" stdDeviation="0.8" flood-opacity="0.35" />
+                    </filter>
+                    <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="50%" fx="40%" fy="20%">
+                      <stop offset="0%" stop-color="#a7f3d0" />
+                      <stop offset="100%" stop-color="#059669" />
+                    </radialGradient>
+                    <radialGradient id="toothGradCaries" cx="50%" cy="30%" r="50%" fx="40%" fy="20%">
+                      <stop offset="0%" stop-color="#fecdd3" />
+                      <stop offset="100%" stop-color="#be123c" />
+                    </radialGradient>
+                    <radialGradient id="toothGradFilled" cx="50%" cy="30%" r="50%" fx="40%" fy="20%">
+                      <stop offset="0%" stop-color="#bfdbfe" />
+                      <stop offset="100%" stop-color="#1d4ed8" />
+                    </radialGradient>
+                    <radialGradient id="toothGradTreatment" cx="50%" cy="30%" r="50%" fx="40%" fy="20%">
+                      <stop offset="0%" stop-color="#e9d5ff" />
+                      <stop offset="100%" stop-color="#6b21a8" />
+                    </radialGradient>
+                  </defs>
+                </svg>
+
                 <div class="overflow-x-auto pb-2">
                   <div class="min-w-[760px] space-y-6 py-2 px-1" style="min-width: 760px;">
                     <!-- Maxillary (Upper Jaw) -->
@@ -330,14 +354,15 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                             [class]="getToothClasses(toothNum)"
                             [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
                           >
-                            <span class="text-[10px] leading-none opacity-60">{{ toothNum }}</span>
-                            <span class="w-4 h-4 mt-0.5">
-                              <svg
-                                [class]="getToothLatestStatus(toothNum) === 'missing' ? 'fill-none stroke-current stroke-2' : 'fill-current'"
-                                class="w-4 h-4 mx-auto"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"/>
+                            <span class="w-5 h-5 mt-0.5">
+                              <svg class="w-5 h-5 mx-auto" viewBox="0 0 24 24">
+                                @if (getToothLatestStatus(toothNum) === 'missing') {
+                                  <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"
+                                        fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                } @else {
+                                  <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"
+                                        [attr.fill]="getToothFillUrl(toothNum)" filter="url(#shadow3d)"/>
+                                }
                               </svg>
                             </span>
                           </button>
@@ -355,13 +380,15 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                             [class]="getToothClasses(toothNum)"
                             [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
                           >
-                            <span class="w-4 h-4 mb-0.5">
-                              <svg
-                                [class]="getToothLatestStatus(toothNum) === 'missing' ? 'fill-none stroke-current stroke-2' : 'fill-current'"
-                                class="w-4 h-4 mx-auto rotate-180"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"/>
+                            <span class="w-5 h-5 mb-0.5">
+                              <svg class="w-5 h-5 mx-auto rotate-180" viewBox="0 0 24 24">
+                                @if (getToothLatestStatus(toothNum) === 'missing') {
+                                  <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"
+                                        fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                } @else {
+                                  <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"
+                                        [attr.fill]="getToothFillUrl(toothNum)" filter="url(#shadow3d)"/>
+                                }
                               </svg>
                             </span>
                             <span class="text-[10px] leading-none opacity-60">{{ toothNum }}</span>
@@ -767,32 +794,43 @@ export class PatientHistoryComponent implements OnInit {
     const status = this.getToothLatestStatus(num);
     const isSelected = this.selectedTooth()?.toString() === num.toString();
     
-    let baseClass = 'w-10 h-12 flex flex-col items-center justify-between py-1.5 border rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer ';
+    let baseClass = 'w-10 h-14 flex flex-col items-center justify-between py-1.5 border-2 rounded-xl text-xs font-bold transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),_inset_0_2px_4px_rgba(255,255,255,0.7)] cursor-pointer ';
     
     if (isSelected) {
-      baseClass += 'ring-2 ring-indigo-600 ring-offset-2 scale-105 ';
+      baseClass += 'ring-2 ring-indigo-600 ring-offset-1 scale-105 border-b-[5px] translate-y-[-2px] shadow-[0_6px_10px_rgba(0,0,0,0.15)] ';
     } else {
-      baseClass += 'hover:-translate-y-0.5 hover:shadow-md ';
+      baseClass += 'hover:-translate-y-1 hover:shadow-[0_8px_12px_rgba(0,0,0,0.12)] active:translate-y-0.5 active:shadow-[0_2px_4px_rgba(0,0,0,0.06)] ';
     }
 
     switch (status) {
       case 'healthy':
-        baseClass += 'bg-emerald-50/40 border-emerald-300 text-emerald-600';
+        baseClass += 'bg-gradient-to-b from-emerald-50 to-emerald-100/70 border-emerald-200 border-b-emerald-400 text-emerald-700';
         break;
       case 'caries':
-        baseClass += 'bg-rose-50/40 border-rose-300 text-rose-600';
+        baseClass += 'bg-gradient-to-b from-rose-50 to-rose-100/70 border-rose-200 border-b-rose-400 text-rose-700';
         break;
       case 'filled':
-        baseClass += 'bg-blue-50/40 border-blue-300 text-blue-600';
+        baseClass += 'bg-gradient-to-b from-blue-50 to-blue-100/70 border-blue-200 border-b-blue-400 text-blue-700';
         break;
       case 'under_treatment':
-        baseClass += 'bg-purple-50/40 border-purple-300 text-purple-600';
+        baseClass += 'bg-gradient-to-b from-purple-50 to-purple-100/70 border-purple-200 border-b-purple-400 text-purple-700';
         break;
       case 'missing':
-        baseClass += 'bg-slate-50/40 border-slate-300 border-dashed text-slate-400';
+        baseClass += 'bg-slate-50 border-slate-200 border-dashed text-slate-400 shadow-none';
         break;
     }
     return baseClass;
+  }
+
+  getToothFillUrl(num: number | string): string {
+    const status = this.getToothLatestStatus(num);
+    switch (status) {
+      case 'healthy': return 'url(#toothGradHealthy)';
+      case 'caries': return 'url(#toothGradCaries)';
+      case 'filled': return 'url(#toothGradFilled)';
+      case 'under_treatment': return 'url(#toothGradTreatment)';
+      default: return '#e2e8f0';
+    }
   }
 
   getBadgeClasses(status: string): string {
