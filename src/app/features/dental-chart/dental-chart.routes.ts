@@ -4,8 +4,8 @@ export const dentalChartRoutes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./components/three-dental-chart/three-dental-chart.component').then(
-        m => m.ThreeDentalChartComponent
+      import('./dental-chart.component').then(
+        m => m.DentalChartComponent
       )
   }
 ];

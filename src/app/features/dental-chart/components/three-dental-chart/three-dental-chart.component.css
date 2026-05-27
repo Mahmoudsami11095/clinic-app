@@ -539,3 +539,149 @@
     }
   }
 }
+
+/* Edit Form & Diagnosis Styles in 3D Sidebar */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-select, .form-textarea {
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.9rem;
+  color: #f1f5f9;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.form-select:focus, .form-textarea:focus {
+  border-color: #6366f1;
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+}
+
+.form-select option {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+.pain-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pain-range-slider {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: ew-resize;
+}
+
+.pain-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #818cf8;
+  cursor: ew-resize;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.6);
+  transition: transform 0.1s ease;
+}
+
+.pain-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.pain-indicator-val {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.btn-save-diagnose {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: none;
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.btn-save-diagnose:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.btn-save-diagnose:active {
+  transform: translateY(1px);
+}
+
+.history-list-3d {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-right: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.history-list-3d::-webkit-scrollbar {
+  width: 4px;
+}
+.history-list-3d::-webkit-scrollbar-track {
+  background: transparent;
+}
+.history-list-3d::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.history-item-3d {
+  background: rgba(2, 6, 23, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  font-size: 0.75rem;
+}
+
+.history-item-3d .history-item-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+}
+

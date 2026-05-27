@@ -1,0 +1,41 @@
+<div class="page-container">
+  <!-- Header Switcher Section -->
+  <header class="chart-header glass-panel">
+    <div class="header-left">
+      <div class="icon-wrap">
+        <i class="pi pi-compass"></i>
+      </div>
+      <div>
+        <h1>{{ 'patients.dental' | translate }}</h1>
+        <p>{{ 'dental.select_view_mode' | translate }}</p>
+      </div>
+    </div>
+    
+    <!-- Design Selector (Segmented Toggle) -->
+    <div class="view-toggle-segmented">
+      <button 
+        class="toggle-btn" 
+        [class.active]="activeView() === '3d'" 
+        (click)="setView('3d')">
+        <i class="pi pi-box"></i>
+        <span>{{ 'dental.view_3d_volumetric' | translate }}</span>
+      </button>
+      <button 
+        class="toggle-btn" 
+        [class.active]="activeView() === 'grid'" 
+        (click)="setView('grid')">
+        <i class="pi pi-table"></i>
+        <span>{{ 'dental.view_skeuomorphic_grid' | translate }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Workspace -->
+  <main class="chart-workspace">
+    @if (activeView() === '3d') {
+      <app-three-dental-chart class="view-component"></app-three-dental-chart>
+    } @else {
+      <app-skeuomorphic-dental-chart class="view-component"></app-skeuomorphic-dental-chart>
+    }
+  </main>
+</div>

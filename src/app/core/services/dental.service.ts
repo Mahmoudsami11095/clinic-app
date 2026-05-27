@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 
+export type ToothStatus = 'healthy' | 'caries' | 'filled' | 'under_treatment' | 'missing' | 'crown' | 'root_canal' | 'impacted' | 'fractured' | 'implant';
+
 export interface DentalLog {
   id: string;
   patientId: string;
@@ -11,7 +13,7 @@ export interface DentalLog {
   doctorId: string; // ID of the recording doctor/dentist
   doctorName: string; // Name of the recording doctor/dentist
   date: string; // ISO Date String
-  status: 'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment';
+  status: ToothStatus[];
   painLevel: number; // 0 to 10
   painDetails?: string;
   treatment?: string;
@@ -27,8 +29,14 @@ export class DentalService {
 
   /** Get all dental logs for a specific patient */
   getLogs(patientId: string): Observable<DentalLog[]> {
-    return this.http.get<{ data: DentalLog[] }>('/api/dental').pipe(
-      map(res => (res.data || []).filter(log => log.patientId === patientId))
+    return this.http.get<{ data: any[] }>('/api/dental').pipe(
+      map(res => (res.data || [])
+        .filter(log => log.patientId === patientId)
+        .map(log => ({
+          ...log,
+          status: Array.isArray(log.status) ? (log.status as ToothStatus[]) : [log.status as ToothStatus]
+        }))
+      )
     );
   }
 

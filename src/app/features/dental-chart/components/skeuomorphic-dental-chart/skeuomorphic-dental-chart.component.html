@@ -1,0 +1,439 @@
+<!-- Hidden Defs for radial gradients and blur filters -->
+<svg class="hidden-defs">
+  <defs>
+    <!-- Drop shadow for 3D tooth shell effect -->
+    <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+    
+    <!-- Neon glow filter for root canals -->
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    
+    <!-- Translucent Cyan/Blue Radial Gradient for Healthy Teeth -->
+    <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8" />
+      <stop offset="70%" stop-color="#0891b2" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#083344" stop-opacity="0.2" />
+    </radialGradient>
+    
+    <!-- Translucent Rose/Red Radial Gradient for Caries -->
+    <radialGradient id="toothGradCaries" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#fda4af" stop-opacity="0.8" />
+      <stop offset="65%" stop-color="#e11d48" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#4c0519" stop-opacity="0.2" />
+    </radialGradient>
+    
+    <!-- Translucent Sky/Blue Radial Gradient for Filled Teeth -->
+    <radialGradient id="toothGradFilled" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8" />
+      <stop offset="70%" stop-color="#2563eb" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#172554" stop-opacity="0.2" />
+    </radialGradient>
+    
+    <!-- Translucent Amber/Orange Radial Gradient for Under Treatment -->
+    <radialGradient id="toothGradTreatment" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#fde047" stop-opacity="0.85" />
+      <stop offset="65%" stop-color="#d97706" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#451a03" stop-opacity="0.2" />
+    </radialGradient>
+
+    <!-- Translucent Gold Radial Gradient for Crowns -->
+    <radialGradient id="toothGradCrown" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="65%" stop-color="#ca8a04" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#422006" stop-opacity="0.3" />
+    </radialGradient>
+
+    <!-- Translucent Titanium Silver Radial Gradient for Implants -->
+    <radialGradient id="toothGradImplant" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#cbd5e1" stop-opacity="0.9" />
+      <stop offset="65%" stop-color="#475569" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.3" />
+    </radialGradient>
+
+    <!-- Translucent Orange/Red Radial Gradient for Fractures -->
+    <radialGradient id="toothGradFractured" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#ffedd5" stop-opacity="0.8" />
+      <stop offset="65%" stop-color="#ea580c" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#431407" stop-opacity="0.25" />
+    </radialGradient>
+  </defs>
+</svg>
+
+<div class="inner-viewport">
+  <!-- Left Column: Dental Grid -->
+  <div class="dashboard-panel">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg>
+          {{ 'dental.teeth_chart' | translate }}
+        </div>
+        
+        <div class="header-actions">
+          <button 
+            type="button" 
+            class="btn-toggle" 
+            [class.active]="activeDentition() === 'adult'" 
+            (click)="setDentition('adult')">
+            ADULT (1 - 32)
+          </button>
+          <button 
+            type="button" 
+            class="btn-toggle" 
+            [class.active]="activeDentition() === 'child'" 
+            (click)="setDentition('child')">
+            CHILD (A - T)
+          </button>
+        </div>
+        
+        <div class="legend">
+          <span class="legend-badge badge-healthy">{{ 'dental.healthy' | translate }}</span>
+          <span class="legend-badge badge-caries">{{ 'dental.caries' | translate }}</span>
+          <span class="legend-badge badge-filled">{{ 'dental.filled' | translate }}</span>
+          <span class="legend-badge badge-treatment">Under Tx</span>
+          <span class="legend-badge badge-missing">{{ 'dental.missing' | translate }}</span>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="jaw-row">
+          <!-- Maxillary Row (Upper Jaw) -->
+          <div class="jaw-label-container">
+            <span>{{ 'dental.upper_jaw' | translate }}</span>
+            <div>
+              <span>{{ 'dental.right' | translate }}</span>
+              <span style="display: inline-block; width: 4.5rem;"></span>
+              <span>{{ 'dental.left' | translate }}</span>
+            </div>
+          </div>
+          
+          <div 
+            [class.teeth-grid-adult]="activeDentition() === 'adult'"
+            [class.teeth-grid-child]="activeDentition() === 'child'"
+            class="teeth-grid">
+            @for (num of (activeDentition() === 'adult' ? upperAdult : upperChild); track num) {
+              @let record = records()['tooth_' + num];
+              @let status = record?.status || ['healthy'];
+              @let type = getToothType(num);
+              @let colors = getStatusColors(status);
+              <button 
+                type="button" 
+                class="tooth-btn" 
+                [id]="'btn-tooth-' + num"
+                [attr.data-status]="getDominantStatus(status)"
+                [class.selected]="selectedToothNum() === num"
+                (click)="selectTooth(num)">
+                <span class="tooth-number">{{ num }}</span>
+                <span class="tooth-svg-wrap">
+                  <svg viewBox="0 0 40 40">
+                    @if (status.includes('missing')) {
+                      <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="var(--color-missing)" stroke-width="1.5" stroke-dasharray="3 3"/>
+                    } @else {
+                      <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
+                      <!-- Mini Pulp -->
+                      <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
+                      <!-- Mini Canals -->
+                      <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                    }
+                  </svg>
+                </span>
+              </button>
+            }
+          </div>
+          
+          <div class="jaw-divider"></div>
+          
+          <!-- Mandibular Row (Lower Jaw) -->
+          <div 
+            [class.teeth-grid-adult]="activeDentition() === 'adult'"
+            [class.teeth-grid-child]="activeDentition() === 'child'"
+            class="teeth-grid">
+            @for (num of (activeDentition() === 'adult' ? lowerAdult : lowerChild); track num) {
+              @let record = records()['tooth_' + num];
+              @let status = record?.status || ['healthy'];
+              @let type = getToothType(num);
+              @let colors = getStatusColors(status);
+              <button 
+                type="button" 
+                class="tooth-btn" 
+                [id]="'btn-tooth-' + num"
+                [attr.data-status]="getDominantStatus(status)"
+                [class.selected]="selectedToothNum() === num"
+                (click)="selectTooth(num)">
+                <span class="tooth-svg-wrap">
+                  <svg viewBox="0 0 40 40" class="rotate-180">
+                    @if (status.includes('missing')) {
+                      <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="var(--color-missing)" stroke-width="1.5" stroke-dasharray="3 3"/>
+                    } @else {
+                      <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
+                      <!-- Mini Pulp -->
+                      <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
+                      <!-- Mini Canals -->
+                      <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                    }
+                  </svg>
+                </span>
+                <span class="tooth-number">{{ num }}</span>
+              </button>
+            }
+          </div>
+          
+          <div class="jaw-label-container" style="margin-top: 0.5rem;">
+            <span>{{ 'dental.lower_jaw' | translate }}</span>
+            <div>
+              <span>{{ 'dental.right' | translate }}</span>
+              <span style="display: inline-block; width: 4.5rem;"></span>
+              <span>{{ 'dental.left' | translate }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: 3D Inspector & Diagnosis Logger -->
+  <div class="sidebar-panel">
+    <!-- 3D Inspector Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          3D TOOTH INSPECTOR
+        </div>
+      </div>
+
+      <div id="inspector-content">
+        <div class="inspector-viewport">
+          <div class="inspector-bg-grid"></div>
+          <div class="inspector-glow-halo" id="inspector-halo"
+               [style.background]="'radial-gradient(circle, ' + (editStatuses.includes('caries') ? 'rgba(239, 68, 68, 0.15)' : editStatuses.includes('filled') ? 'rgba(59, 130, 246, 0.15)' : editStatuses.includes('under_treatment') ? 'rgba(245, 158, 11, 0.15)' : 'rgba(6, 182, 212, 0.1)') + ' 0%, transparent 70%)'">
+          </div>
+          
+          <!-- Volumetric 3D Parallax Tooth Container -->
+          <div 
+            class="holo-tooth-card" 
+            id="holo-tooth" 
+            [style.transform]="'rotateY(' + rotationAngle() + 'deg) rotateX(10deg)'">
+            @if (selectedToothNum(); as num) {
+              @let type = getToothType(num);
+              @let colors = getStatusColors(editStatuses);
+              
+              @if (editStatuses.includes('missing')) {
+                <div class="tooth-3d-layer" style="color: var(--color-missing)">
+                  <svg viewBox="0 0 40 40" style="width:120px; height:120px;">
+                    <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="currentColor" stroke-dasharray="3 3" stroke-width="1.5"/>
+                  </svg>
+                </div>
+              } @else {
+                <!-- Back Shell Layer -->
+                <div class="tooth-3d-layer layer-back-shell" [style.display]="showShell() ? 'block' : 'none'">
+                  <svg viewBox="0 0 40 40" style="width:120px; height:120px;">
+                    <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" />
+                  </svg>
+                </div>
+
+                <!-- Mid Enamel Shell -->
+                <div class="tooth-3d-layer layer-mid-shell" [style.display]="showShell() ? 'block' : 'none'">
+                  <svg viewBox="0 0 40 40" style="width:125px; height:125px;">
+                    <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" opacity="0.65"/>
+                  </svg>
+                </div>
+
+                <!-- Internal Root Canals & Pulp Chamber (Always Glowing) -->
+                <div class="tooth-3d-layer layer-canals">
+                  <svg 
+                    viewBox="0 0 40 40" 
+                    style="width:120px; height:120px;" 
+                    [class.pulse-caries-canal]="animateCanals() && editStatuses.includes('caries')">
+                    <!-- Pulp chamber -->
+                    <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="1.25" filter="url(#neonGlow)"/>
+                    <!-- Canals -->
+                    <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="2.25" stroke-linecap="round" filter="url(#neonGlow)"/>
+                  </svg>
+                </div>
+
+                <!-- Front Shell Layer (Glossy Specular Highlights) -->
+                <div class="tooth-3d-layer layer-front-shell" [style.display]="showShell() ? 'block' : 'none'">
+                  <svg viewBox="0 0 40 40" style="width:128px; height:128px;">
+                    <path [attr.d]="SVG_OUTLINES[type]" fill="none" [attr.stroke]="colors.stroke" stroke-width="1.5" opacity="0.8"/>
+                  </svg>
+                </div>
+              }
+            } @else {
+              <div class="empty-state" style="padding:0;">
+                <svg viewBox="0 0 24 24" style="width:2.5rem; height:2.5rem; margin-bottom:0.5rem;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <p style="font-size:0.75rem; font-weight:700;">No Selection</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (selectedToothNum()) {
+          <div class="inspector-controls">
+            <div class="slider-container">
+              <div class="slider-header">
+                <span>Orbit Rotation (Y-Axis)</span>
+                <span>{{ rotationAngle() }}°</span>
+              </div>
+              <input 
+                type="range" 
+                min="-180" 
+                max="180" 
+                [value]="rotationAngle()" 
+                (input)="rotationAngle.set(+$any($event.target).value)" 
+                class="rotation-slider">
+            </div>
+            
+            <div class="btn-group-row">
+              <button 
+                type="button"
+                class="btn-toggle" 
+                [class.active]="showShell()" 
+                (click)="toggleShell()">
+                {{ showShell() ? 'Hide Outer Enamel' : 'Show Outer Enamel' }}
+              </button>
+              <button 
+                type="button"
+                class="btn-toggle" 
+                [class.active]="animateCanals()" 
+                (click)="togglePulse()">
+                {{ animateCanals() ? 'Static Canals' : 'Animate Canals' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Diagnosis & Form Card -->
+    <div class="card" id="details-card">
+      <!-- Empty State -->
+      @if (!selectedToothNum()) {
+        <div class="empty-state" id="details-empty">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"/>
+          </svg>
+          <p style="font-weight: 600; font-size: 0.9rem;">{{ 'dental.no_tooth_selected' | translate }}</p>
+          <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem;">
+            {{ 'dental.select_tooth_inspector' | translate }}
+          </p>
+        </div>
+      }
+
+      <!-- Active Form -->
+      @if (selectedToothNum(); as num) {
+        <div id="details-form-container">
+          <div class="card-header" style="margin-bottom: 1.25rem;">
+            <div class="card-title">
+              <span style="color: #818cf8; font-weight: 800; font-family: 'Fira Code', monospace;">
+                {{ 'dental.tooth' | translate }} #{{ num }}
+              </span>
+              <span style="font-size: 0.75rem; color: #64748b; font-weight: 500; margin-left: 0.5rem; text-transform: uppercase;">
+                {{ getToothType(num) }}
+              </span>
+            </div>
+          </div>
+
+          <form (submit)="saveToothLog(); $event.preventDefault()">
+            <div class="form-group">
+              <label>{{ 'dental.diagnostic_status' | translate }}</label>
+              <div class="flex flex-wrap gap-2 mt-1">
+                @for (opt of statusOptions; track opt.value) {
+                  <button
+                    type="button"
+                    (click)="toggleStatus(opt.value)"
+                    [class]="isStatusSelected(opt.value) ? opt.activeClass : opt.inactiveClass"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border focus:outline-none"
+                  >
+                    <i [class]="opt.icon"></i>
+                    <span>{{ 'dental.' + opt.value | translate }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'dental.pain_sensitivity' | translate }}</label>
+              <div class="pain-slider-wrap">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="10" 
+                  [(ngModel)]="editPain" 
+                  name="pain"
+                  class="rotation-slider" 
+                  (input)="updatePainVal(+$any($event.target).value)">
+                <span class="pain-indicator-val" [style.color]="editPain > 6 ? '#ef4444' : editPain > 3 ? '#f59e0b' : '#10b981'">
+                  {{ editPain }}
+                </span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'dental.treatment_notes' | translate }}</label>
+              <textarea 
+                [(ngModel)]="editNotes" 
+                name="notes"
+                rows="2" 
+                class="form-textarea" 
+                placeholder="Describe clinical treatment...">
+              </textarea>
+            </div>
+
+            <button type="submit" class="btn-save">
+              <svg style="width: 1rem; height: 1rem; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              {{ 'dental.save_diagnosis_log' | translate }}
+            </button>
+          </form>
+
+          <!-- Diagnostic History Logs -->
+          <div style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 1rem;">
+            <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">
+              {{ 'dental.diagnostic_history' | translate }}
+            </label>
+            
+            <div class="history-list">
+              @if (historyLogs().length === 0) {
+                <div style="font-size:0.7rem; color: #475569; text-align:center; padding: 1rem 0;">
+                  {{ 'dental.no_history' | translate }}
+                </div>
+              } @else {
+                @for (log of historyLogs(); track log.id) {
+                  <div class="history-item">
+                    <div class="history-item-header flex flex-wrap gap-1.5 items-center">
+                      <div class="flex flex-wrap gap-1">
+                        @let logStatuses = (log.status ? log.status : []);
+                        @for (st of logStatuses; track st) {
+                          <span 
+                            class="px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase"
+                            [style.background]="st === 'caries' ? '#f43f5e' : st === 'filled' ? '#3b82f6' : st === 'under_treatment' ? '#fbbf24' : st === 'healthy' ? '#10b981' : st === 'missing' ? '#64748b' : st === 'crown' ? '#d97706' : st === 'root_canal' ? '#a855f7' : st === 'impacted' ? '#06b6d4' : st === 'fractured' ? '#f97316' : '#6366f1'">
+                            {{ 'dental.' + st | translate }}
+                          </span>
+                        }
+                      </div>
+                      <span class="text-slate-500 text-[10px] ms-auto" style="color: #64748b; font-size: 0.65rem;">{{ log.date }}</span>
+                    </div>
+                    <div style="font-size: 0.75rem; margin-top: 0.25rem;">
+                      {{ 'dental.pain_level' | translate }}: 
+                      <span style="color:#ef4444; font-weight:700;">{{ log.painLevel }}/10</span>
+                    </div>
+                    @if (log.treatment) {
+                      <div class="history-item-notes">"{{ log.treatment }}"</div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
