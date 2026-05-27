@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar.component';
 import { Header } from '../header/header.component';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -10,5 +11,5 @@ import { Header } from '../header/header.component';
   styleUrl: './main-layout.component.css'
 })
 export class MainLayout {
-
+  protected authService = inject(AuthService);
 }

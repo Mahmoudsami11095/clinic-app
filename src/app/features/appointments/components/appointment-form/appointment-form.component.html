@@ -46,7 +46,7 @@
         <!-- Locked Mode for Patients -->
         <div *ngIf="authService.isPatient()" class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-500 font-semibold flex items-center gap-2">
           <i class="pi pi-user text-xs"></i>
-          {{ authService.currentUser().name }}
+          {{ authService.currentUser()?.name }}
         </div>
 
         <select
@@ -80,7 +80,7 @@
         <!-- Locked Mode for Doctors/Assistants -->
         <div *ngIf="authService.isDoctor() || authService.isAssistant()" class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-500 font-semibold flex items-center gap-2">
           <i class="pi pi-user-plus text-xs"></i>
-          {{ lockedDoctorLabel() || authService.currentUser().name }}
+          {{ lockedDoctorLabel() || authService.currentUser()?.name }}
         </div>
 
         <select

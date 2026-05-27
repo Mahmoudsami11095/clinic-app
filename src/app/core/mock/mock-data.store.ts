@@ -26,6 +26,7 @@ export function resolveMockEntity(url: string): string | null {
   if (url.includes('/api/prescriptions')) return 'prescriptions';
   if (url.includes('/api/clinics')) return 'clinics';
   if (url.includes('/api/dental')) return 'dental';
+  if (url.includes('/api/users')) return 'users';
   return null;
 }
 
@@ -99,6 +100,118 @@ export async function initializeMockDatabase(http: HttpClient): Promise<void> {
 
   if (!localStorage.getItem(mockStorageKey('dental'))) {
     writeMockList('dental', []);
+  }
+
+  if (!localStorage.getItem(mockStorageKey('users'))) {
+    const defaultUsers = [
+      {
+        id: 'super-admin',
+        name: 'Super Admin User',
+        role: 'admin',
+        email: 'superadmin@medclinic.com',
+        title: 'System Director',
+        password: 'password123'
+      },
+      {
+        id: 'admin-1',
+        name: 'City Clinic Admin',
+        role: 'admin',
+        clinicId: 'clinic-1',
+        email: 'admin.city@clinic.com',
+        title: 'Clinic Director',
+        password: 'password123'
+      },
+      {
+        id: 'admin-2',
+        name: 'Metro Clinic Admin',
+        role: 'admin',
+        clinicId: 'clinic-2',
+        email: 'admin.metro@clinic.com',
+        title: 'Clinic Director',
+        password: 'password123'
+      },
+      {
+        id: 'doc-101',
+        name: 'Dr. Sarah Jenkins',
+        role: 'doctor',
+        doctorId: '101',
+        clinicIds: ['clinic-1', 'clinic-2'],
+        email: 'dr.jenkins@clinic.com',
+        title: 'Chief Cardiologist',
+        password: 'password123'
+      },
+      {
+        id: 'doc-102',
+        name: 'Dr. Michael Chen',
+        role: 'doctor',
+        doctorId: '102',
+        clinicIds: ['clinic-2', 'clinic-3'],
+        email: 'dr.chen@clinic.com',
+        title: 'Pediatric Specialist',
+        password: 'password123'
+      },
+      {
+        id: 'doc-105',
+        name: 'Dr. Zidan Kareem',
+        role: 'doctor',
+        doctorId: '105',
+        clinicIds: ['clinic-3', 'clinic-1'],
+        email: 'dr.zidan@clinic.com',
+        title: 'Senior Dentist',
+        password: 'password123'
+      },
+      {
+        id: 'doc-106',
+        name: 'Dr. Marcus Vance',
+        role: 'doctor',
+        doctorId: '106',
+        clinicIds: ['clinic-1', 'clinic-2', 'clinic-3'],
+        email: 'dr.vance@clinic.com',
+        title: 'Dentist Practitioner',
+        password: 'password123'
+      },
+      {
+        id: 'asst-101',
+        name: 'City Clinic Assistant',
+        role: 'assistant',
+        clinicId: 'clinic-1',
+        doctorId: '101',
+        email: 'asst.city@clinic.com',
+        title: 'Clinical Assistant',
+        password: 'password123'
+      },
+      {
+        id: 'asst-102',
+        name: 'Metro Clinic Assistant',
+        role: 'assistant',
+        clinicId: 'clinic-2',
+        doctorId: '101',
+        email: 'asst.metro@clinic.com',
+        title: 'Clinical Assistant',
+        password: 'password123'
+      },
+      {
+        id: 'pat-1',
+        name: 'John Doe',
+        role: 'patient',
+        clinicId: 'clinic-1',
+        patientId: '1',
+        email: 'john.doe@example.com',
+        title: 'Registered Patient',
+        password: 'password123'
+      },
+      {
+        id: 'pat-2',
+        name: 'Jane Smith',
+        role: 'patient',
+        clinicId: 'clinic-2',
+        patientId: '2',
+        email: 'jane.smith@example.com',
+        title: 'Registered Patient',
+        password: 'password123'
+      }
+    ];
+    writeMockList('users', defaultUsers);
   }
 
   localStorage.setItem(INIT_FLAG_KEY, 'true');
