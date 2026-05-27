@@ -1,0 +1,198 @@
+<div class="viewport-container">
+  <!-- WebGL Canvas Container -->
+  <div #canvasContainer class="canvas-container" (click)="onCanvasClick($event)"></div>
+
+  <!-- Fullscreen Loading Spinner during Scene Prep -->
+  @if (loadingModel()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <div class="loading-text">{{ 'common.loading' | translate }}</div>
+    </div>
+  }
+
+  <!-- Floating Navigation & Scene Controls (Top Left) -->
+  <div class="floating-controls glass-panel">
+    <div class="header-title-wrap">
+      <div class="logo-glow">
+        <i class="pi pi-compass"></i>
+      </div>
+      <div class="header-text">
+        <h1>{{ 'patients.dental' | translate }}</h1>
+        <p>3D Volumetric Endodontics</p>
+      </div>
+    </div>
+
+    <div class="control-divider"></div>
+
+    <div class="switch-row">
+      <!-- Toggle Glass Enamel Shell -->
+      <button 
+        class="switch-btn" 
+        [class.active]="showEnamel()" 
+        (click)="toggleEnamel()">
+        <i class="pi" [class.pi-eye]="showEnamel()" [class.pi-eye-slash]="!showEnamel()"></i>
+        <span>{{ showEnamel() ? 'Hide Glass Enamel' : 'Show Glass Enamel' }}</span>
+      </button>
+
+      <!-- Toggle Auto-Orbit rotation -->
+      <button 
+        class="switch-btn" 
+        [class.active]="isRotating()" 
+        (click)="toggleRotation()">
+        <i class="pi pi-sync" [class.animate-spin]="isRotating()"></i>
+        <span>{{ isRotating() ? 'Stop Auto Orbit' : 'Auto Orbit Model' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Legend (Bottom Left) -->
+  <div class="floating-legend glass-panel">
+    <div class="legend-item">
+      <span class="dot dot-healthy"></span>
+      <span>{{ 'dental.healthy' | translate }}</span>
+    </div>
+    <div class="legend-item">
+      <span class="dot dot-caries"></span>
+      <span>{{ 'dental.caries' | translate }}</span>
+    </div>
+    <div class="legend-item">
+      <span class="dot dot-filled"></span>
+      <span>{{ 'dental.filled' | translate }}</span>
+    </div>
+    <div class="legend-item">
+      <span class="dot dot-treatment"></span>
+      <span>{{ 'dental.under_treatment' | translate }}</span>
+    </div>
+    <div class="legend-item">
+      <span class="dot dot-missing"></span>
+      <span>{{ 'dental.missing' | translate }}</span>
+    </div>
+  </div>
+
+  <!-- Interaction Guidelines (Bottom Right) -->
+  <div class="interact-hint glass-panel">
+    <i class="pi pi-info-circle"></i>
+    <span>Left Click to Select | Right Click + Drag to Orbit | Scroll to Zoom</span>
+  </div>
+
+  <!-- Active Tooth Details Panel overlay (Right Sidebar) -->
+  @if (selectedToothId()) {
+    <div class="details-panel glass-panel">
+      <!-- Loading State for Record Fetch -->
+      @if (loadingRecord()) {
+        <div class="inner-spinner-container">
+          <div class="spinner"></div>
+        </div>
+      } @else if (selectedRecord(); as record) {
+        <!-- Panel Header -->
+        <div class="panel-header">
+          <div class="title-area">
+            <h2>{{ 'dental.tooth' | translate }} #{{ record.toothNumber }}</h2>
+            <p>{{ record.toothName }}</p>
+          </div>
+          <button class="close-btn" (click)="resetView()" title="Close Inspector">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <!-- Panel Body (Scrollable) -->
+        <div class="panel-body">
+          <!-- Diagnostics / Status Row -->
+          <div class="status-badge-container card-block">
+            <span class="label">{{ 'dental.status' | translate }}</span>
+            <span class="badge" [ngClass]="'badge-' + record.status">
+              {{ 'dental.' + record.status | translate }}
+            </span>
+          </div>
+
+          <!-- FDI Mapping Block -->
+          <div class="metadata-grid card-block">
+            <div class="meta-field">
+              <span>Universal System</span>
+              <span>#{{ record.toothNumber }}</span>
+            </div>
+            <div class="meta-field">
+              <span>FDI System</span>
+              <span>#{{ record.fdiNumber }}</span>
+            </div>
+          </div>
+
+          <!-- Pain Level Meter (Custom skeletal bar graph) -->
+          <div class="pain-metric-row card-block">
+            <span class="label">{{ 'dental.pain_level' | translate }}</span>
+            <div class="pain-indicator" [attr.data-pain]="record.painLevel" [ngClass]="'active-' + record.painLevel">
+              <span class="pain-cell" title="Pain 1"></span>
+              <span class="pain-cell" title="Pain 2"></span>
+              <span class="pain-cell" title="Pain 3"></span>
+              <span class="pain-cell" title="Pain 4"></span>
+              <span class="pain-cell" title="Pain 5"></span>
+              <span class="pain-cell" title="Pain 6"></span>
+              <span class="pain-cell" title="Pain 7"></span>
+              <span class="pain-cell" title="Pain 8"></span>
+              <span class="pain-cell" title="Pain 9"></span>
+              <span class="pain-cell" title="Pain 10"></span>
+            </div>
+          </div>
+
+          <!-- Root Canals Measurements -->
+          @if (record.canalWorkingLengths.length > 0) {
+            <div class="card-block">
+              <span class="label" style="display: block; margin-bottom: 0.75rem;">
+                {{ 'dental.canal_anatomy' | translate }}
+              </span>
+              <div class="canals-list">
+                @for (canal of record.canalWorkingLengths; track canal.name) {
+                  <div class="canal-item">
+                    <div class="canal-meta">
+                      <span class="canal-name">{{ canal.name }}</span>
+                      <span class="canal-details">
+                        WL: {{ canal.workingLength }}mm | Size: #{{ canal.apicalSize }}
+                      </span>
+                    </div>
+                    <!-- Visual Gauge representation of Working Length (Relative to max 25mm length) -->
+                    <div class="progress-track">
+                      <div 
+                        class="progress-bar" 
+                        [style.width.%]="(canal.workingLength / 25) * 100">
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Clinical Notes / Treatment Log -->
+          @if (record.clinicalNotes) {
+            <div class="card-block">
+              <span class="label" style="display: block; margin-bottom: 0.5rem;">
+                Clinical Notes
+              </span>
+              <div class="clinical-notes">
+                "{{ record.clinicalNotes }}"
+              </div>
+            </div>
+          }
+
+          <!-- Metadata info -->
+          <div class="metadata-grid card-block">
+            <div class="meta-field">
+              <span>Recorded By</span>
+              <span>{{ record.dentistName }}</span>
+            </div>
+            <div class="meta-field">
+              <span>Last Modified</span>
+              <span>{{ record.lastUpdated }}</span>
+            </div>
+          </div>
+
+          <!-- Reset Camera View Button -->
+          <button class="reset-btn" (click)="resetView()">
+            <i class="pi pi-refresh"></i>
+            <span>{{ 'dental.close_inspector' | translate }}</span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

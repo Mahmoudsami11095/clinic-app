@@ -283,33 +283,79 @@ import { LanguageService } from '../../../../core/i18n/language.service';
             <!-- Left 2 Cols: Teeth Chart & Summary -->
             <div class="lg:col-span-2 space-y-6">
               <!-- Teeth Chart Card -->
-              <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-3">
+              <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6 text-white">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-3">
                   <div>
-                    <h4 class="text-base font-bold text-slate-800">{{ 'dental.teeth_chart' | translate }}</h4>
+                    <h4 class="text-base font-bold text-slate-100">{{ 'dental.teeth_chart' | translate }}</h4>
                     <p class="text-xs text-slate-400 font-medium mt-0.5">{{ 'dental.select_tooth_prompt' | translate }}</p>
                   </div>
                   <!-- Status Legend -->
                   <div class="flex flex-wrap gap-2 text-[10px] font-bold">
-                    <span class="px-2 py-1 rounded bg-emerald-50/70 border border-emerald-300 text-emerald-700">
+                    <span class="px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                       {{ 'dental.healthy' | translate }}
                     </span>
-                    <span class="px-2 py-1 rounded bg-rose-50/70 border border-rose-300 text-rose-700">
+                    <span class="px-2 py-1 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400">
                       {{ 'dental.caries' | translate }}
                     </span>
-                    <span class="px-2 py-1 rounded bg-blue-50/70 border border-blue-300 text-blue-700">
+                    <span class="px-2 py-1 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400">
                       {{ 'dental.filled' | translate }}
                     </span>
-                    <span class="px-2 py-1 rounded bg-purple-50/70 border border-purple-300 text-purple-700">
+                    <span class="px-2 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
                       {{ 'dental.under_treatment' | translate }}
                     </span>
-                    <span class="px-2 py-1 rounded bg-slate-50/70 border border-slate-300 border-dashed text-slate-500">
+                    <span class="px-2 py-1 rounded bg-slate-800/50 border border-slate-700 border-dashed text-slate-400">
                       {{ 'dental.missing' | translate }}
                     </span>
                   </div>
                 </div>
 
                 <!-- Interactive Teeth Grid (Horizontal Scrolling on Mobile) -->
+                <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+                  <defs>
+                    <!-- Drop shadow for 3D tooth shell effect -->
+                    <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6" />
+                    </filter>
+                    
+                    <!-- Neon glow filter for root canals -->
+                    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    
+                    <!-- Translucent Cyan/Blue Radial Gradient for Healthy Teeth -->
+                    <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8" />
+                      <stop offset="70%" stop-color="#0891b2" stop-opacity="0.4" />
+                      <stop offset="100%" stop-color="#083344" stop-opacity="0.2" />
+                    </radialGradient>
+                    
+                    <!-- Translucent Rose/Red Radial Gradient for Caries -->
+                    <radialGradient id="toothGradCaries" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                      <stop offset="0%" stop-color="#fda4af" stop-opacity="0.8" />
+                      <stop offset="65%" stop-color="#e11d48" stop-opacity="0.4" />
+                      <stop offset="100%" stop-color="#4c0519" stop-opacity="0.2" />
+                    </radialGradient>
+                    
+                    <!-- Translucent Sky/Blue Radial Gradient for Filled Teeth -->
+                    <radialGradient id="toothGradFilled" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8" />
+                      <stop offset="70%" stop-color="#2563eb" stop-opacity="0.4" />
+                      <stop offset="100%" stop-color="#172554" stop-opacity="0.2" />
+                    </radialGradient>
+                    
+                    <!-- Translucent Amber/Orange Radial Gradient for Under Treatment -->
+                    <radialGradient id="toothGradTreatment" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                      <stop offset="0%" stop-color="#fde047" stop-opacity="0.8" />
+                      <stop offset="65%" stop-color="#d97706" stop-opacity="0.4" />
+                      <stop offset="100%" stop-color="#451a03" stop-opacity="0.2" />
+                    </radialGradient>
+                  </defs>
+                </svg>
+
                 <div class="overflow-x-auto pb-2">
                   <div class="min-w-[760px] space-y-6 py-2 px-1" style="min-width: 760px;">
                     <!-- Maxillary (Upper Jaw) -->
@@ -322,22 +368,38 @@ import { LanguageService } from '../../../../core/i18n/language.service';
                           <span class="text-end">{{ 'dental.left' | translate }}</span>
                         </div>
                       </div>
-                      <div class="grid gap-2" style="grid-template-columns: repeat(16, minmax(0, 1fr));">
-                        @for (toothNum of upperTeeth; track toothNum) {
+                      <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
+                        @for (toothNum of upperTeethList(); track toothNum) {
                           <button
                             type="button"
                             (click)="selectTooth(toothNum)"
                             [class]="getToothClasses(toothNum)"
                             [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
                           >
-                            <span class="text-[10px] leading-none opacity-60">{{ toothNum }}</span>
-                            <span class="w-4 h-4 mt-0.5">
-                              <svg
-                                [class]="getToothLatestStatus(toothNum) === 'missing' ? 'fill-none stroke-current stroke-2' : 'fill-current'"
-                                class="w-4 h-4 mx-auto"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"/>
+                            <span class="text-[10px] leading-none opacity-60 mt-0.5">{{ toothNum }}</span>
+                            <span class="w-8 h-8 flex items-center justify-center">
+                              <svg class="w-8 h-8 mx-auto" viewBox="0 0 40 40">
+                                @if (getToothLatestStatus(toothNum) === 'missing') {
+                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                        fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                } @else {
+                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                        [attr.fill]="getToothFillUrl(toothNum)"
+                                        [attr.stroke]="getToothStrokeColor(toothNum)"
+                                        stroke-width="1.5"
+                                        filter="url(#shadow3d)"/>
+                                  <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                        [attr.fill]="getPulpFillColor(toothNum)"
+                                        [attr.stroke]="getCanalStroke(toothNum)"
+                                        stroke-width="1"
+                                        filter="url(#neonGlow)"/>
+                                  <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                        fill="none"
+                                        [attr.stroke]="getCanalStroke(toothNum)"
+                                        stroke-width="1.75"
+                                        stroke-linecap="round"
+                                        filter="url(#neonGlow)"/>
+                                }
                               </svg>
                             </span>
                           </button>
@@ -347,24 +409,40 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 
                     <!-- Mandibular (Lower Jaw) -->
                     <div class="space-y-2">
-                      <div class="grid gap-2" style="grid-template-columns: repeat(16, minmax(0, 1fr));">
-                        @for (toothNum of lowerTeeth; track toothNum) {
+                      <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
+                        @for (toothNum of lowerTeethList(); track toothNum) {
                           <button
                             type="button"
                             (click)="selectTooth(toothNum)"
                             [class]="getToothClasses(toothNum)"
                             [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
                           >
-                            <span class="w-4 h-4 mb-0.5">
-                              <svg
-                                [class]="getToothLatestStatus(toothNum) === 'missing' ? 'fill-none stroke-current stroke-2' : 'fill-current'"
-                                class="w-4 h-4 mx-auto rotate-180"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"/>
+                            <span class="w-8 h-8 flex items-center justify-center">
+                              <svg class="w-8 h-8 mx-auto rotate-180" viewBox="0 0 40 40">
+                                @if (getToothLatestStatus(toothNum) === 'missing') {
+                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                        fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                } @else {
+                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                        [attr.fill]="getToothFillUrl(toothNum)"
+                                        [attr.stroke]="getToothStrokeColor(toothNum)"
+                                        stroke-width="1.5"
+                                        filter="url(#shadow3d)"/>
+                                  <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                        [attr.fill]="getPulpFillColor(toothNum)"
+                                        [attr.stroke]="getCanalStroke(toothNum)"
+                                        stroke-width="1"
+                                        filter="url(#neonGlow)"/>
+                                  <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                        fill="none"
+                                        [attr.stroke]="getCanalStroke(toothNum)"
+                                        stroke-width="1.75"
+                                        stroke-linecap="round"
+                                        filter="url(#neonGlow)"/>
+                                }
                               </svg>
                             </span>
-                            <span class="text-[10px] leading-none opacity-60">{{ toothNum }}</span>
+                            <span class="text-[10px] leading-none opacity-60 mb-0.5">{{ toothNum }}</span>
                           </button>
                         }
                       </div>
@@ -635,7 +713,7 @@ export class PatientHistoryComponent implements OnInit {
   loadingData = signal(true);
 
   // Dental interactive chart signals and state
-  selectedTooth = signal<number | null>(null);
+  selectedTooth = signal<number | string | null>(null);
   dentalStatus = signal<'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment'>('healthy');
   painLevel = signal<number>(0);
   painDetails = signal<string>('');
@@ -643,17 +721,29 @@ export class PatientHistoryComponent implements OnInit {
   medication = signal<string>('');
   submittingDentalLog = signal<boolean>(false);
 
-  // Universal Numbering System lists for upper and lower arches
-  upperTeeth = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-  lowerTeeth = [32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17];
+  isChild = computed(() => {
+    return this.getAge(this.patient.dateOfBirth) < 12;
+  });
+
+  upperTeethList = computed(() => {
+    return this.isChild()
+      ? ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+      : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+  });
+
+  lowerTeethList = computed(() => {
+    return this.isChild()
+      ? ['T', 'S', 'R', 'Q', 'P', 'O', 'N', 'M', 'L', 'K']
+      : [32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17];
+  });
 
   // Map to speed up looking up the latest dental log per tooth
   toothLatestLogs = computed(() => {
     const logs = this.dentalLogs();
-    const dict: { [toothNum: number]: DentalLog } = {};
+    const dict: { [toothNum: string]: DentalLog } = {};
     const sorted = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     for (const log of sorted) {
-      dict[log.toothNumber] = log;
+      dict[log.toothNumber.toString()] = log;
     }
     return dict;
   });
@@ -661,7 +751,7 @@ export class PatientHistoryComponent implements OnInit {
   // Filtered teeth summary that have a non-healthy active status (full history logs)
   teethSummary = computed(() => {
     const logs = this.dentalLogs();
-    const summary: { toothNumber: number; status: string; log: DentalLog }[] = [];
+    const summary: { toothNumber: number | string; status: string; log: DentalLog }[] = [];
     for (const log of logs) {
       if (log.status !== 'healthy') {
         summary.push({
@@ -746,41 +836,89 @@ export class PatientHistoryComponent implements OnInit {
   }
 
   // Dental status visual classes for individual teeth
-  getToothLatestStatus(num: number): 'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment' {
-    const latest = this.toothLatestLogs()[num];
+  getToothLatestStatus(num: number | string): 'healthy' | 'caries' | 'filled' | 'missing' | 'under_treatment' {
+    const latest = this.toothLatestLogs()[num.toString()];
     return latest ? latest.status : 'healthy';
   }
 
-  getToothClasses(num: number): string {
+  getToothClasses(num: number | string): string {
     const status = this.getToothLatestStatus(num);
-    const isSelected = this.selectedTooth() === num;
+    const isSelected = this.selectedTooth()?.toString() === num.toString();
     
-    let baseClass = 'w-10 h-12 flex flex-col items-center justify-between py-1.5 border rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer ';
+    let baseClass = 'w-10 h-16 flex flex-col items-center justify-between py-1.5 border rounded-xl text-xs font-bold transition-all cursor-pointer ';
     
     if (isSelected) {
-      baseClass += 'ring-2 ring-indigo-600 ring-offset-2 scale-105 ';
+      baseClass += 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-105 translate-y-[-2px] ';
     } else {
-      baseClass += 'hover:-translate-y-0.5 hover:shadow-md ';
+      baseClass += 'hover:-translate-y-1 active:translate-y-0 ';
     }
 
     switch (status) {
       case 'healthy':
-        baseClass += 'bg-emerald-50/40 border-emerald-300 text-emerald-600';
+        baseClass += 'bg-slate-950/40 border-slate-800 text-emerald-400 hover:border-emerald-500/40';
+        if (isSelected) baseClass += ' border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
         break;
       case 'caries':
-        baseClass += 'bg-rose-50/40 border-rose-300 text-rose-600';
+        baseClass += 'bg-slate-950/40 border-slate-800 text-rose-400 hover:border-rose-500/40';
+        if (isSelected) baseClass += ' border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]';
         break;
       case 'filled':
-        baseClass += 'bg-blue-50/40 border-blue-300 text-blue-600';
+        baseClass += 'bg-slate-950/40 border-slate-800 text-sky-400 hover:border-sky-500/40';
+        if (isSelected) baseClass += ' border-sky-500 shadow-[0_0_15px_rgba(14,165,233,0.3)]';
         break;
       case 'under_treatment':
-        baseClass += 'bg-purple-50/40 border-purple-300 text-purple-600';
+        baseClass += 'bg-slate-950/40 border-slate-800 text-amber-400 hover:border-amber-500/40';
+        if (isSelected) baseClass += ' border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
         break;
       case 'missing':
-        baseClass += 'bg-slate-50/40 border-slate-300 border-dashed text-slate-400';
+        baseClass += 'bg-slate-950/10 border-slate-800/50 border-dashed text-slate-600 shadow-none pointer-events-auto';
         break;
     }
     return baseClass;
+  }
+
+  getToothFillUrl(num: number | string): string {
+    const status = this.getToothLatestStatus(num);
+    switch (status) {
+      case 'healthy': return 'url(#toothGradHealthy)';
+      case 'caries': return 'url(#toothGradCaries)';
+      case 'filled': return 'url(#toothGradFilled)';
+      case 'under_treatment': return 'url(#toothGradTreatment)';
+      default: return '#1e293b';
+    }
+  }
+
+  getToothStrokeColor(num: number | string): string {
+    const status = this.getToothLatestStatus(num);
+    switch (status) {
+      case 'healthy': return '#06b6d4'; // cyan-500
+      case 'caries': return '#ef4444'; // red-500
+      case 'filled': return '#3b82f6'; // blue-500
+      case 'under_treatment': return '#f59e0b'; // amber-500
+      default: return '#475569';
+    }
+  }
+
+  getPulpFillColor(num: number | string): string {
+    const status = this.getToothLatestStatus(num);
+    switch (status) {
+      case 'healthy': return 'rgba(34, 211, 238, 0.3)';
+      case 'caries': return 'rgba(244, 63, 94, 0.4)';
+      case 'filled': return 'rgba(96, 165, 250, 0.3)';
+      case 'under_treatment': return 'rgba(245, 158, 11, 0.4)';
+      default: return 'transparent';
+    }
+  }
+
+  getCanalStroke(num: number | string): string {
+    const status = this.getToothLatestStatus(num);
+    switch (status) {
+      case 'healthy': return '#22d3ee'; // cyan-400
+      case 'caries': return '#f43f5e'; // rose-500
+      case 'filled': return '#60a5fa'; // blue-400
+      case 'under_treatment': return '#f59e0b'; // amber-500
+      default: return 'transparent';
+    }
   }
 
   getBadgeClasses(status: string): string {
@@ -794,9 +932,9 @@ export class PatientHistoryComponent implements OnInit {
     }
   }
 
-  selectTooth(num: number) {
+  selectTooth(num: number | string) {
     this.selectedTooth.set(num);
-    const latest = this.toothLatestLogs()[num];
+    const latest = this.toothLatestLogs()[num.toString()];
     if (latest) {
       this.dentalStatus.set(latest.status);
       this.painLevel.set(latest.painLevel || 0);
@@ -815,8 +953,9 @@ export class PatientHistoryComponent implements OnInit {
   getSelectedToothHistory(): DentalLog[] {
     const num = this.selectedTooth();
     if (num === null) return [];
+    const numStr = num.toString();
     return this.dentalLogs()
-      .filter(log => log.toothNumber === num)
+      .filter(log => log.toothNumber.toString() === numStr)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 

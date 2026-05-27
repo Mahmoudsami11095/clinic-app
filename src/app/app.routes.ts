@@ -14,6 +14,12 @@ export const routes: Routes = [
         data: { roles: ['admin', 'doctor'] }
       },
       {
+        path: '3d-dental-chart',
+        loadChildren: () => import('./features/dental-chart/dental-chart.routes').then(m => m.dentalChartRoutes),
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
+      },
+      {
         path: 'patients',
         loadChildren: () => import('./features/patients/patient.routes').then(m => m.patientRoutes),
         canActivate: [roleGuard],

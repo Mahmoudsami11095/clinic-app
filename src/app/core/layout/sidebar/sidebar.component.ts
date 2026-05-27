@@ -16,6 +16,7 @@ export class Sidebar {
   private allMenuItems = [
     { labelKey: 'sidebar.dashboard', route: '/dashboard', icon: 'pi pi-home', roles: ['admin', 'doctor'] },
     { labelKey: 'sidebar.patients', route: '/patients', icon: 'pi pi-users', roles: ['admin', 'doctor', 'assistant'] },
+    { labelKey: 'sidebar.dental_chart', route: '/3d-dental-chart', icon: 'pi pi-compass', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.appointments', route: '/appointments', icon: 'pi pi-calendar', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { labelKey: 'sidebar.doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
     { labelKey: 'sidebar.billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
