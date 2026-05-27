@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive 3D Endodontic Dental Chart</title>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #090d16 0%, #020617 100%);
+      --glass-bg: rgba(15, 23, 42, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.06);
+      --glass-border-hover: rgba(255, 255, 255, 0.12);
+      --color-healthy: #06b6d4;
+      --color-caries: #ef4444;
+      --color-filled: #3b82f6;
+      --color-treatment: #f59e0b;
+      --color-missing: #475569;
+      --font-sans: 'Inter', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: #f8fafc;
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    header {
+      border-b: 1px solid var(--glass-border);
+      background: rgba(2, 6, 23, 0.4);
+      backdrop-filter: blur(8px);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-glow {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.8) 0%, rgba(6, 182, 212, 0.1) 70%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+
+    .logo-glow svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      fill: #22d3ee;
+    }
+
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.15rem;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn-toggle {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--glass-border);
+      color: #94a3b8;
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-toggle:hover {
+      border-color: var(--glass-border-hover);
+      color: #f1f5f9;
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    .btn-toggle.active {
+      background: rgba(6, 182, 212, 0.1);
+      border-color: rgba(6, 182, 212, 0.4);
+      color: #22d3ee;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
+    }
+
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1100px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .dashboard-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.08) 100%);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-b: 1px solid rgba(255, 255, 255, 0.04);
+      padding-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title svg {
+      width: 1rem;
+      height: 1rem;
+      fill: #94a3b8;
+    }
+
+    /* Dental Chart Panel styles */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .legend-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .badge-healthy { background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.25); color: #22d3ee; }
+    .badge-caries { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; }
+    .badge-filled { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: #60a5fa; }
+    .badge-treatment { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); color: #fbbf24; }
+    .badge-missing { background: rgba(71, 85, 105, 0.2); border: 1px solid rgba(71, 85, 105, 0.4); color: #94a3b8; }
+
+    .chart-container {
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+
+    .jaw-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 780px;
+    }
+
+    .jaw-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 5%, rgba(255, 255, 255, 0.05) 50%, transparent 95%);
+      margin: 1.5rem 0;
+      position: relative;
+    }
+
+    .jaw-divider::after {
+      content: 'OCCLUSAL PLANE';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.55rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.15);
+      background: #090e1a;
+      padding: 0 1rem;
+      letter-spacing: 0.15em;
+    }
+
+    .jaw-label-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .teeth-grid {
+      display: grid;
+      gap: 0.35rem;
+      width: 100%;
+    }
+
+    .teeth-grid-adult {
+      grid-template-columns: repeat(16, minmax(0, 1fr));
+    }
+
+    .teeth-grid-child {
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      padding: 0 12%;
+    }
+
+    /* Tooth Button styling */
+    .tooth-btn {
+      background: rgba(2, 6, 23, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 0.75rem;
+      height: 4.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.4rem 0.2rem;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .tooth-btn:hover {
+      background: rgba(15, 23, 42, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .tooth-btn.selected {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.08);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+    }
+
+    .tooth-number {
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.3);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .tooth-btn.selected .tooth-number {
+      color: #818cf8;
+    }
+
+    .tooth-svg-wrap {
+      width: 2.2rem;
+      height: 2.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tooth-svg-wrap svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Dynamic status classes for buttons */
+    .tooth-btn[data-status="healthy"] {
+      border-color: rgba(6, 182, 212, 0.06);
+    }
+    .tooth-btn[data-status="healthy"]:hover {
+      border-color: rgba(6, 182, 212, 0.2);
+    }
+    .tooth-btn[data-status="healthy"].selected {
+      border-color: rgba(6, 182, 212, 0.7);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+    }
+
+    .tooth-btn[data-status="caries"] {
+      border-color: rgba(239, 68, 68, 0.1);
+      background: rgba(239, 68, 68, 0.02);
+    }
+    .tooth-btn[data-status="caries"]:hover {
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .tooth-btn[data-status="caries"].selected {
+      border-color: rgba(239, 68, 68, 0.8);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+    }
+
+    .tooth-btn[data-status="filled"] {
+      border-color: rgba(59, 130, 246, 0.1);
+      background: rgba(59, 130, 246, 0.02);
+    }
+    .tooth-btn[data-status="filled"]:hover {
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+    .tooth-btn[data-status="filled"].selected {
+      border-color: rgba(59, 130, 246, 0.8);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.35);
+    }
+
+    .tooth-btn[data-status="under_treatment"] {
+      border-color: rgba(245, 158, 11, 0.15);
+      background: rgba(245, 158, 11, 0.02);
+    }
+    .tooth-btn[data-status="under_treatment"]:hover {
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .tooth-btn[data-status="under_treatment"].selected {
+      border-color: rgba(245, 158, 11, 0.8);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+    }
+
+    .tooth-btn[data-status="missing"] {
+      border-style: dashed;
+      border-color: rgba(71, 85, 105, 0.4);
+      background: rgba(2, 6, 23, 0.1);
+      opacity: 0.4;
+    }
+
+    /* Right column styles */
+    .sidebar-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* 3D Inspector Viewport */
+    .inspector-viewport {
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(15, 23, 42, 0.5) 0%, rgba(2, 6, 23, 0.8) 100%);
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      position: relative;
+      perspective: 800px;
+      overflow: hidden;
+    }
+
+    .inspector-bg-grid {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: 20px 20px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+      pointer-events: none;
+    }
+
+    .inspector-glow-halo {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      transition: background 0.4s ease;
+    }
+
+    /* 3D Holo-Tooth Container */
+    .holo-tooth-card {
+      width: 160px;
+      height: 180px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.1s linear;
+    }
+
+    /* Parallax SVG Layers */
+    .tooth-3d-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backface-visibility: visible;
+    }
+
+    .layer-back-shell {
+      transform: translateZ(-8px) scale(0.97);
+      opacity: 0.15;
+      color: rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      filter: blur(0.5px);
+    }
+
+    .layer-mid-shell {
+      transform: translateZ(-3px);
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .layer-canals {
+      transform: translateZ(2px);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .layer-front-shell {
+      transform: translateZ(8px) scale(1.02);
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .inspector-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .rotation-slider {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: ew-resize;
+    }
+
+    .rotation-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #818cf8;
+      cursor: ew-resize;
+      box-shadow: 0 0 10px rgba(129, 140, 248, 0.6);
+      transition: transform 0.1s ease;
+    }
+
+    .rotation-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .btn-group-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    /* Diagnosis Panel Form */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-select, .form-input, .form-textarea {
+      background: rgba(2, 6, 23, 0.4);
+      border: 1px solid var(--glass-border);
+      border-radius: 0.75rem;
+      padding: 0.65rem 0.9rem;
+      color: #f1f5f9;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-select:focus, .form-input:focus, .form-textarea:focus {
+      border-color: #6366f1;
+      background: rgba(15, 23, 42, 0.7);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+    }
+
+    .form-select option {
+      background: #0f172a;
+      color: #f1f5f9;
+    }
+
+    .pain-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .pain-slider-wrap input {
+      flex: 1;
+    }
+
+    .pain-indicator-val {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ef4444;
+      min-width: 1.5rem;
+      text-align: right;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border: none;
+      color: #ffffff;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      width: 100%;
+    }
+
+    .btn-save:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-save:active {
+      transform: translateY(1px);
+    }
+
+    .empty-state {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      text-align: center;
+      padding: 3rem 1.5rem;
+    }
+
+    .empty-state svg {
+      width: 3rem;
+      height: 3rem;
+      fill: #334155;
+      margin-bottom: 1rem;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* Custom Tooth SVGs definitions for dynamic inline insertion */
+    /* Molars, Premolars, Canines, Incisors paths are embedded in JavaScript */
+    
+    /* Pulses for damaged teeth */
+    @keyframes pulseCaries {
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4)); }
+      50% { filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.85)); }
+    }
+
+    .pulse-caries-canal {
+      animation: pulseCaries 2s infinite ease-in-out;
+    }
+
+    .hidden-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .history-list {
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      padding-right: 0.25rem;
+    }
+
+    .history-item {
+      background: rgba(2, 6, 23, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 0.5rem;
+      padding: 0.6rem;
+      font-size: 0.75rem;
+    }
+
+    .history-item-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+    }
+
+    .history-item-notes {
+      color: #94a3b8;
+      font-style: italic;
+      margin-top: 0.25rem;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hidden Defs for radial gradients and blur filters -->
+  <svg class="hidden-defs">
+    <defs>
+      <!-- Drop shadow for 3D tooth shell effect -->
+      <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6" />
+      </filter>
+      
+      <!-- Neon glow filter for root canals -->
+      <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+      
+      <!-- Translucent Cyan/Blue Radial Gradient for Healthy Teeth -->
+      <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8" />
+        <stop offset="70%" stop-color="#0891b2" stop-opacity="0.45" />
+        <stop offset="100%" stop-color="#083344" stop-opacity="0.2" />
+      </radialGradient>
+      
+      <!-- Translucent Rose/Red Radial Gradient for Caries -->
+      <radialGradient id="toothGradCaries" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+        <stop offset="0%" stop-color="#fda4af" stop-opacity="0.8" />
+        <stop offset="65%" stop-color="#e11d48" stop-opacity="0.45" />
+        <stop offset="100%" stop-color="#4c0519" stop-opacity="0.2" />
+      </radialGradient>
+      
+      <!-- Translucent Sky/Blue Radial Gradient for Filled Teeth -->
+      <radialGradient id="toothGradFilled" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+        <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8" />
+        <stop offset="70%" stop-color="#2563eb" stop-opacity="0.45" />
+        <stop offset="100%" stop-color="#172554" stop-opacity="0.2" />
+      </radialGradient>
+      
+      <!-- Translucent Amber/Orange Radial Gradient for Under Treatment -->
+      <radialGradient id="toothGradTreatment" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+        <stop offset="0%" stop-color="#fde047" stop-opacity="0.85" />
+        <stop offset="65%" stop-color="#d97706" stop-opacity="0.45" />
+        <stop offset="100%" stop-color="#451a03" stop-opacity="0.2" />
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <header>
+    <div class="logo-container">
+      <div class="logo-glow">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>3D ENDODONTIC DIAGNOSTIC CHART</h1>
+        <p>Interactive Skeuomorphic Root Canal Mapping</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-adult" class="btn-toggle active" onclick="setDentition('adult')">
+        ADULT (1 - 32)
+      </button>
+      <button id="btn-child" class="btn-toggle" onclick="setDentition('child')">
+        CHILD (A - T)
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Column: Dental Grid -->
+    <div class="dashboard-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg>
+            INTERACTIVE TEETH CHART
+          </div>
+          <div class="legend">
+            <span class="legend-badge badge-healthy">Healthy</span>
+            <span class="legend-badge badge-caries">Caries</span>
+            <span class="legend-badge badge-filled">Filled</span>
+            <span class="legend-badge badge-treatment">Under Tx</span>
+            <span class="legend-badge badge-missing">Missing</span>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="jaw-row">
+            <!-- Maxillary Row -->
+            <div class="jaw-label-container">
+              <span>Maxillary (Upper Jaw)</span>
+              <div>
+                <span>Right</span>
+                <span style="display: inline-block; width: 4.5rem;"></span>
+                <span>Left</span>
+              </div>
+            </div>
+            
+            <div id="grid-upper" class="teeth-grid teeth-grid-adult">
+              <!-- Dynamically Populated -->
+            </div>
+            
+            <div class="jaw-divider"></div>
+            
+            <!-- Mandibular Row -->
+            <div id="grid-lower" class="teeth-grid teeth-grid-adult">
+              <!-- Dynamically Populated -->
+            </div>
+            
+            <div class="jaw-label-container" style="margin-top: 0.5rem;">
+              <span>Mandibular (Lower Jaw)</span>
+              <div>
+                <span>Right</span>
+                <span style="display: inline-block; width: 4.5rem;"></span>
+                <span>Left</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: 3D Inspector & Diagnosis Logger -->
+    <div class="sidebar-panel">
+      <!-- 3D Inspector Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            3D TOOTH INSPECTOR
+          </div>
+        </div>
+
+        <div id="inspector-content">
+          <div class="inspector-viewport">
+            <div class="inspector-bg-grid"></div>
+            <div class="inspector-glow-halo" id="inspector-halo"></div>
+            
+            <!-- Volumetric 3D Parallax Tooth Container -->
+            <div class="holo-tooth-card" id="holo-tooth">
+              <!-- Dynamically rendered layers -->
+            </div>
+          </div>
+
+          <div class="inspector-controls">
+            <div class="slider-container">
+              <div class="slider-header">
+                <span>Orbit Rotation (Y-Axis)</span>
+                <span id="rotation-val">0°</span>
+              </div>
+              <input type="range" min="-180" max="180" value="0" class="rotation-slider" id="rotation-slider" oninput="rotateTooth(this.value)">
+            </div>
+            
+            <div class="btn-group-row">
+              <button class="btn-toggle active" id="btn-shell-toggle" onclick="toggleShell()">
+                Show Outer Enamel
+              </button>
+              <button class="btn-toggle" id="btn-pulse-toggle" onclick="togglePulse()">
+                Animate Canals
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnosis & Form Card -->
+      <div class="card" id="details-card">
+        <!-- Will show empty state or active tooth form -->
+        <div class="empty-state" id="details-empty">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2c-2.5 0-4 1.5-4 4.5 0 1.5.5 3 1.5 4v5c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-5c1-1 1.5-2.5 1.5-4C16 3.5 14.5 2 12 2z"/>
+          </svg>
+          <p style="font-weight: 600; font-size: 0.9rem;">No Tooth Selected</p>
+          <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem;">Select any tooth from the chart grid to inspect its 3D root canal structure and log treatments.</p>
+        </div>
+
+        <div id="details-form-container" style="display: none;">
+          <div class="card-header" style="margin-bottom: 1.25rem;">
+            <div class="card-title">
+              <span id="form-tooth-title" style="color: #818cf8; font-weight: 800; font-family: 'Fira Code', monospace;">TOOTH #12</span>
+              <span style="font-size: 0.75rem; color: #64748b; font-weight: 500; margin-left: 0.5rem;" id="form-tooth-type">Molar</span>
+            </div>
+          </div>
+
+          <form onsubmit="saveToothLog(event)">
+            <div class="form-group">
+              <label>Diagnostic Status</label>
+              <select id="form-status" class="form-select" onchange="previewStatusChange(this.value)">
+                <option value="healthy">Healthy</option>
+                <option value="caries">Caries (Decay)</option>
+                <option value="filled">Filled (Restoration)</option>
+                <option value="under_treatment">Under Treatment (Root Canal)</option>
+                <option value="missing">Missing</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Pain / Sensitivity Level</label>
+              <div class="pain-slider-wrap">
+                <input type="range" min="0" max="10" value="0" class="rotation-slider" id="form-pain" oninput="updatePainVal(this.value)">
+                <span class="pain-indicator-val" id="pain-val">0</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Treatment / Procedure Notes</label>
+              <textarea id="form-treatment" rows="2" class="form-textarea" placeholder="Describe clinical treatment..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-save">
+              <svg style="width: 1rem; height: 1rem; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              Save Diagnosis Log
+            </button>
+          </form>
+
+          <div style="margin-top: 1.5rem; border-t: 1px solid rgba(255,255,255,0.04); padding-top: 1rem;">
+            <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">Diagnostic History</label>
+            <div id="history-list" class="history-list">
+              <!-- History items populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // State management
+    let activeDentition = 'adult';
+    let selectedToothNum = null;
+    let rotationAngle = 0;
+    let showShell = true;
+    let animateCanals = true;
+
+    // In-memory logs database, loaded from localStorage if exists
+    let dentalLogs = {};
+
+    // Standard Tooth SVGs paths per tooth type (Molar, Premolar, Canine, Incisor)
+    // Enamel Shell Outlines (crown at bottom, root pointing up)
+    const SVG_OUTLINES = {
+      molar: "M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z",
+      premolar: "M 11 21 C 8 26, 10 33, 14 35 C 17 34, 18.5 31, 20 31 C 21.5 31, 23 34, 26 35 C 30 33, 32 26, 29 21 C 27.5 17, 28 11, 25.5 5 C 24.5 3, 21.5 4, 20 7 C 18.5 4, 15.5 3, 14.5 5 C 12 11, 12.5 17, 11 21 Z",
+      canine: "M 13.5 20 C 10.5 25, 11.5 36, 16.5 38 C 17.5 38, 21.5 38, 22.5 38 C 27.5 36, 28.5 25, 25.5 20 C 24 17, 25.5 12, 19.5 4 C 13.5 12, 15 17, 13.5 20 Z",
+      incisor: "M 14 20 C 11 25, 13 35, 17 37 C 19 37, 23 37, 23 37 C 27 35, 29 25, 26 20 C 24.5 17, 25 11, 23 5 C 22.5 3, 17.5 3, 17 5 C 15 11, 15.5 17, 14 20 Z"
+    };
+
+    // Inner Pulp Chamber paths
+    const SVG_PULPS = {
+      molar: "M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z",
+      premolar: "M 17 25 C 17 28, 23 28, 23 25 C 23 23, 22 22, 20 22 C 18 22, 17 23, 17 25 Z",
+      canine: "M 18 25 C 18 27, 22 27, 22 25 C 22 24, 21 23, 20 23 C 19 23, 18 24, 18 25 Z",
+      incisor: "M 18 25 C 18 27, 22 27, 22 25 C 22 24, 21 23, 20 23 C 19 23, 18 24, 18 25 Z"
+    };
+
+    // Inner Root Canals paths (individual neon stroke paths)
+    const SVG_CANALS = {
+      molar: "M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8",
+      premolar: "M 18 24 C 18.5 20, 17 15, 15 9 M 22 24 C 21.5 20, 23 15, 25 9",
+      canine: "M 20 24 C 20 18, 20 12, 20 7",
+      incisor: "M 20 24 C 20 18, 20 12, 20 8"
+    };
+
+    // Setup initial state
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load logs from localStorage
+      const cached = localStorage.getItem('endodontic_dental_logs');
+      if (cached) {
+        dentalLogs = JSON.parse(cached);
+      }
+      
+      setDentition('adult');
+      document.getElementById('rotation-slider').value = 0;
+    });
+
+    // Determine tooth type by number/letter
+    function getToothType(num) {
+      const incisors = ['7','8','9','10','23','24','25','26','D','E','F','G','N','O','P','Q'];
+      const canines = ['6','11','22','27','C','H','M','R'];
+      const molars = ['1','2','3','14','15','16','17','18','19','30','31','32','A','B','I','J','K','L','S','T'];
+      
+      const numStr = String(num);
+      if (incisors.includes(numStr)) return 'incisor';
+      if (canines.includes(numStr)) return 'canine';
+      if (molars.includes(numStr)) return 'molar';
+      return 'premolar';
+    }
+
+    // Colors mapping based on diagnostic status
+    function getStatusColors(status) {
+      switch (status) {
+        case 'healthy':
+          return {
+            fill: 'url(#toothGradHealthy)',
+            stroke: 'var(--color-healthy)',
+            canal: '#22d3ee',
+            pulp: 'rgba(34, 211, 238, 0.3)'
+          };
+        case 'caries':
+          return {
+            fill: 'url(#toothGradCaries)',
+            stroke: 'var(--color-caries)',
+            canal: '#f43f5e',
+            pulp: 'rgba(244, 63, 94, 0.4)'
+          };
+        case 'filled':
+          return {
+            fill: 'url(#toothGradFilled)',
+            stroke: 'var(--color-filled)',
+            canal: '#60a5fa',
+            pulp: 'rgba(96, 165, 250, 0.35)'
+          };
+        case 'under_treatment':
+          return {
+            fill: 'url(#toothGradTreatment)',
+            stroke: 'var(--color-treatment)',
+            canal: '#f59e0b',
+            pulp: 'rgba(245, 158, 11, 0.4)'
+          };
+        default:
+          return {
+            fill: 'transparent',
+            stroke: 'var(--color-missing)',
+            canal: 'transparent',
+            pulp: 'transparent'
+          };
+      }
+    }
+
+    // Toggle dentition between adult and child
+    function setDentition(mode) {
+      activeDentition = mode;
+      selectedToothNum = null;
+      
+      // Update UI Toggles
+      document.getElementById('btn-adult').classList.toggle('active', mode === 'adult');
+      document.getElementById('btn-child').classList.toggle('active', mode === 'child');
+
+      const upperGrid = document.getElementById('grid-upper');
+      const lowerGrid = document.getElementById('grid-lower');
+
+      if (mode === 'adult') {
+        upperGrid.className = 'teeth-grid teeth-grid-adult';
+        lowerGrid.className = 'teeth-grid teeth-grid-adult';
+      } else {
+        upperGrid.className = 'teeth-grid teeth-grid-child';
+        lowerGrid.className = 'teeth-grid teeth-grid-child';
+      }
+
+      // Adult teeth arrays
+      const upperAdult = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
+      const lowerAdult = [32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17];
+
+      // Child teeth arrays
+      const upperChild = ['A','B','C','D','E','F','G','H','I','J'];
+      const lowerChild = ['T','S','R','Q','P','O','N','M','L','K'];
+
+      const upperList = mode === 'adult' ? upperAdult : upperChild;
+      const lowerList = mode === 'adult' ? lowerAdult : lowerChild;
+
+      populateGrid(upperGrid, upperList, false);
+      populateGrid(lowerGrid, lowerList, true);
+
+      // Hide inspector content
+      updateInspector();
+      updateForm();
+    }
+
+    // Populate a grid container with tooth buttons
+    function populateGrid(gridElement, teethList, rotateSvg) {
+      gridElement.innerHTML = '';
+      
+      teethList.forEach(num => {
+        const type = getToothType(num);
+        const status = getLatestStatus(num);
+        const colors = getStatusColors(status);
+        
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tooth-btn';
+        btn.id = `btn-tooth-${num}`;
+        btn.setAttribute('data-status', status);
+        btn.onclick = () => selectTooth(num);
+
+        // Alphanumeric label at top for upper, bottom for lower
+        const label = document.createElement('span');
+        label.className = 'tooth-number';
+        label.innerText = num;
+
+        const svgWrap = document.createElement('span');
+        svgWrap.className = 'tooth-svg-wrap';
+
+        // Build SVG content
+        let svgHtml = `<svg viewBox="0 0 40 40" class="${rotateSvg ? 'rotate-180' : ''}">`;
+        if (status === 'missing') {
+          svgHtml += `<path d="${SVG_OUTLINES[type]}" fill="none" stroke="var(--color-missing)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+        } else {
+          svgHtml += `<path d="${SVG_OUTLINES[type]}" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1.5" filter="url(#shadow3d)"/>`;
+          // Mini Pulp
+          svgHtml += `<path d="${SVG_PULPS[type]}" fill="${colors.pulp}" stroke="${colors.canal}" stroke-width="0.75" filter="url(#neonGlow)"/>`;
+          // Mini Canals
+          svgHtml += `<path d="${SVG_CANALS[type]}" fill="none" stroke="${colors.canal}" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>`;
+        }
+        svgHtml += `</svg>`;
+        svgWrap.innerHTML = svgHtml;
+
+        if (rotateSvg) {
+          btn.appendChild(svgWrap);
+          btn.appendChild(label);
+        } else {
+          btn.appendChild(label);
+          btn.appendChild(svgWrap);
+        }
+
+        gridElement.appendChild(btn);
+      });
+    }
+
+    // Fetch latest status of a tooth
+    function getLatestStatus(num) {
+      if (dentalLogs[num] && dentalLogs[num].length > 0) {
+        return dentalLogs[num][dentalLogs[num].length - 1].status;
+      }
+      return 'healthy';
+    }
+
+    // Select a tooth from the chart
+    function selectTooth(num) {
+      selectedToothNum = num;
+      
+      // Update selected class
+      document.querySelectorAll('.tooth-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.id === `btn-tooth-${num}`);
+      });
+
+      // Update Inspector & Form
+      updateInspector();
+      updateForm();
+    }
+
+    // Update 3D Inspector tooth model
+    function updateInspector() {
+      const holoTooth = document.getElementById('holo-tooth');
+      const halo = document.getElementById('inspector-halo');
+      
+      if (!selectedToothNum) {
+        holoTooth.innerHTML = `
+          <div class="empty-state" style="padding:0;">
+            <svg viewBox="0 0 24 24" style="width:2.5rem; height:2.5rem; margin-bottom:0.5rem;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <p style="font-size:0.75rem; font-weight:700;">No Selection</p>
+          </div>
+        `;
+        halo.style.background = 'radial-gradient(circle, rgba(100, 116, 139, 0.08) 0%, transparent 70%)';
+        return;
+      }
+
+      const type = getToothType(selectedToothNum);
+      const status = getLatestStatus(selectedToothNum);
+      const colors = getStatusColors(status);
+
+      // Adjust Halo color to match status
+      let haloColor = 'rgba(6, 182, 212, 0.1)';
+      if (status === 'caries') haloColor = 'rgba(239, 68, 68, 0.15)';
+      if (status === 'filled') haloColor = 'rgba(59, 130, 246, 0.15)';
+      if (status === 'under_treatment') haloColor = 'rgba(245, 158, 11, 0.15)';
+      halo.style.background = `radial-gradient(circle, ${haloColor} 0%, transparent 70%)`;
+
+      // Draw volumetric parallax layer SVGs
+      let layersHtml = '';
+
+      if (status === 'missing') {
+        layersHtml = `
+          <div class="tooth-3d-layer" style="color: var(--color-missing)">
+            <svg viewBox="0 0 40 40" style="width:120px; height:120px;">
+              <path d="${SVG_OUTLINES[type]}" fill="none" stroke="currentColor" stroke-dasharray="3 3" stroke-width="1.5"/>
+            </svg>
+          </div>
+        `;
+      } else {
+        const shellVisibilityClass = showShell ? '' : 'style="display:none;"';
+        const canalAnimateClass = animateCanals && status === 'caries' ? 'pulse-caries-canal' : '';
+
+        layersHtml = `
+          <!-- Back Shell Layer -->
+          <div class="tooth-3d-layer layer-back-shell" ${shellVisibilityClass}>
+            <svg viewBox="0 0 40 40" style="width:120px; height:120px;">
+              <path d="${SVG_OUTLINES[type]}" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1" />
+            </svg>
+          </div>
+
+          <!-- Mid Enamel Shell -->
+          <div class="tooth-3d-layer layer-mid-shell" ${shellVisibilityClass}>
+            <svg viewBox="0 0 40 40" style="width:125px; height:125px;">
+              <path d="${SVG_OUTLINES[type]}" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1" opacity="0.65"/>
+            </svg>
+          </div>
+
+          <!-- Internal Root Canals & Pulp Chamber (Always Glowing) -->
+          <div class="tooth-3d-layer layer-canals">
+            <svg viewBox="0 0 40 40" style="width:120px; height:120px;" class="${canalAnimateClass}">
+              <!-- Pulp chamber -->
+              <path d="${SVG_PULPS[type]}" fill="${colors.pulp}" stroke="${colors.canal}" stroke-width="1.25" filter="url(#neonGlow)"/>
+              <!-- Canals -->
+              <path d="${SVG_CANALS[type]}" fill="none" stroke="${colors.canal}" stroke-width="2.25" stroke-linecap="round" filter="url(#neonGlow)"/>
+            </svg>
+          </div>
+
+          <!-- Front Shell Layer (Glossy Specular Highlights) -->
+          <div class="tooth-3d-layer layer-front-shell" ${shellVisibilityClass}>
+            <svg viewBox="0 0 40 40" style="width:128px; height:128px;">
+              <path d="${SVG_OUTLINES[type]}" fill="none" stroke="${colors.stroke}" stroke-width="1.5" opacity="0.8"/>
+            </svg>
+          </div>
+        `;
+      }
+
+      holoTooth.innerHTML = layersHtml;
+      rotateTooth(document.getElementById('rotation-slider').value);
+    }
+
+    // Orbit tooth rotation
+    function rotateTooth(value) {
+      rotationAngle = value;
+      document.getElementById('rotation-val').innerText = `${value}°`;
+      
+      const card = document.getElementById('holo-tooth');
+      if (card) {
+        card.style.transform = `rotateY(${value}deg) rotateX(10deg)`;
+      }
+    }
+
+    // Toggle enamel outer shell
+    function toggleShell() {
+      showShell = !showShell;
+      const btn = document.getElementById('btn-shell-toggle');
+      btn.classList.toggle('active', showShell);
+      btn.innerText = showShell ? 'Show Outer Enamel' : 'Hide Outer Enamel';
+      updateInspector();
+    }
+
+    // Toggle pulsing animation on canals
+    function togglePulse() {
+      animateCanals = !animateCanals;
+      const btn = document.getElementById('btn-pulse-toggle');
+      btn.classList.toggle('active', animateCanals);
+      btn.innerText = animateCanals ? 'Animate Canals' : 'Static Canals';
+      updateInspector();
+    }
+
+    // Update diagnosis form fields
+    function updateForm() {
+      const emptyState = document.getElementById('details-empty');
+      const formContainer = document.getElementById('details-form-container');
+
+      if (!selectedToothNum) {
+        emptyState.style.display = 'flex';
+        formContainer.style.display = 'none';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      formContainer.style.display = 'block';
+
+      // Title & Labels
+      const type = getToothType(selectedToothNum);
+      document.getElementById('form-tooth-title').innerText = `TOOTH #${selectedToothNum}`;
+      document.getElementById('form-tooth-type').innerText = type.toUpperCase();
+
+      // Fetch logs
+      const logs = dentalLogs[selectedToothNum] || [];
+      const latest = logs[logs.length - 1] || { status: 'healthy', painLevel: 0, treatment: '' };
+
+      document.getElementById('form-status').value = latest.status;
+      document.getElementById('form-pain').value = latest.painLevel || 0;
+      document.getElementById('pain-val').innerText = latest.painLevel || 0;
+      document.getElementById('form-treatment').value = latest.treatment || '';
+
+      // Populate history list
+      const historyList = document.getElementById('history-list');
+      historyList.innerHTML = '';
+
+      if (logs.length === 0) {
+        historyList.innerHTML = `<div style="font-size:0.7rem; color: #475569; text-align:center; padding: 1rem 0;">No diagnostic logs recorded yet.</div>`;
+      } else {
+        // Render logs in reverse order
+        [...logs].reverse().forEach(log => {
+          const item = document.createElement('div');
+          item.className = 'history-item';
+          
+          item.innerHTML = `
+            <div class="history-item-header">
+              <span style="color: ${getStatusColors(log.status).canal}; text-transform: capitalize;">${log.status.replace('_', ' ')}</span>
+              <span style="color: #475569; font-size: 0.65rem;">${log.date}</span>
+            </div>
+            <div>Pain Level: <span style="color:#ef4444; font-weight:700;">${log.painLevel}/10</span></div>
+            ${log.treatment ? `<div class="history-item-notes">"${log.treatment}"</div>` : ''}
+          `;
+          historyList.appendChild(item);
+        });
+      }
+    }
+
+    // Slide preview status change inside inspector before saving
+    function previewStatusChange(value) {
+      if (!selectedToothNum) return;
+      const type = getToothType(selectedToothNum);
+      const colors = getStatusColors(value);
+
+      // Temporary update inspector layers
+      const holoTooth = document.getElementById('holo-tooth');
+      const canalsLayer = holoTooth.querySelector('.layer-canals svg');
+      const enamelLayers = holoTooth.querySelectorAll('[class*="shell"] svg path');
+
+      if (value === 'missing') {
+        updateInspector();
+        return;
+      }
+
+      // Update outlines and pulp/canal fills
+      enamelLayers.forEach(path => {
+        path.setAttribute('fill', colors.fill);
+        path.setAttribute('stroke', colors.stroke);
+      });
+
+      if (canalsLayer) {
+        const pulp = canalsLayer.querySelector('path:first-child');
+        const canals = canalsLayer.querySelector('path:last-child');
+        pulp.setAttribute('fill', colors.pulp);
+        pulp.setAttribute('stroke', colors.canal);
+        canals.setAttribute('stroke', colors.canal);
+      }
+    }
+
+    function updatePainVal(value) {
+      document.getElementById('pain-val').innerText = value;
+    }
+
+    // Save tooth diagnostic log
+    function saveToothLog(event) {
+      event.preventDefault();
+      if (!selectedToothNum) return;
+
+      const status = document.getElementById('form-status').value;
+      const painLevel = parseInt(document.getElementById('form-pain').value);
+      const treatment = document.getElementById('form-treatment').value.trim();
+
+      const newLog = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        status,
+        painLevel,
+        treatment
+      };
+
+      if (!dentalLogs[selectedToothNum]) {
+        dentalLogs[selectedToothNum] = [];
+      }
+
+      dentalLogs[selectedToothNum].push(newLog);
+
+      // Save to localStorage
+      localStorage.setItem('endodontic_dental_logs', JSON.stringify(dentalLogs));
+
+      // Reload grids, forms, and inspector to match updated database
+      const activeBtn = document.getElementById(`btn-tooth-${selectedToothNum}`);
+      if (activeBtn) {
+        activeBtn.setAttribute('data-status', status);
+        
+        // Re-render button inner SVG
+        const type = getToothType(selectedToothNum);
+        const colors = getStatusColors(status);
+        const rotateSvg = activeBtn.querySelector('svg').classList.contains('rotate-180');
+        const svgWrap = activeBtn.querySelector('.tooth-svg-wrap');
+        
+        let svgHtml = `<svg viewBox="0 0 40 40" class="${rotateSvg ? 'rotate-180' : ''}">`;
+        if (status === 'missing') {
+          svgHtml += `<path d="${SVG_OUTLINES[type]}" fill="none" stroke="var(--color-missing)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+        } else {
+          svgHtml += `<path d="${SVG_OUTLINES[type]}" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1.5" filter="url(#shadow3d)"/>`;
+          svgHtml += `<path d="${SVG_PULPS[type]}" fill="${colors.pulp}" stroke="${colors.canal}" stroke-width="0.75" filter="url(#neonGlow)"/>`;
+          svgHtml += `<path d="${SVG_CANALS[type]}" fill="none" stroke="${colors.canal}" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>`;
+        }
+        svgHtml += `</svg>`;
+        svgWrap.innerHTML = svgHtml;
+      }
+
+      updateInspector();
+      updateForm();
+    }
+  </script>
+</body>
+</html>
