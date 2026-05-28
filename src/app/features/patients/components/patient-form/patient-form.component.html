@@ -1,25 +1,27 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
 
   <!-- Section 0: Clinic Selection (Visible to Super Admin only when activeClinicId is 'all') -->
-  <div *ngIf="showClinicSelector()" class="pb-4 border-b border-slate-100 text-start">
-    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">0</span>
+  <div *ngIf="showClinicSelector()" class="pb-4 border-b border-slate-100 dark:border-slate-800 text-start">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">0</span>
       {{ 'clinics.title' | translate }}
     </h3>
     <div class="grid grid-cols-1 gap-4">
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="clinicId">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="clinicId">
           {{ 'common.clinic' | translate }} <span class="text-rose-500">*</span>
         </label>
         <select
           id="clinicId"
           formControlName="clinicId"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
-          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('clinicId') }"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-800 dark:text-slate-200"
+          [ngClass]="isInvalid('clinicId')
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
         >
-          <option value="" disabled>{{ 'common.clinic' | translate }}</option>
+          <option value="" class="dark:bg-slate-800" disabled>{{ 'common.clinic' | translate }}</option>
           @for (c of clinicsList(); track c.id) {
-            <option [value]="c.id">{{ c.name }}</option>
+            <option [value]="c.id" class="dark:bg-slate-800">{{ c.name }}</option>
           }
         </select>
         @if (isInvalid('clinicId')) {
@@ -31,15 +33,15 @@
 
   <!-- Section: Personal Info -->
   <div class="text-start">
-    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
       {{ 'patients.overview' | translate }}
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- First Name -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="firstName">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="firstName">
           {{ 'patients.first_name' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
@@ -47,10 +49,10 @@
           type="text"
           formControlName="firstName"
           placeholder="e.g. John"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none placeholder-slate-450 dark:placeholder-slate-500"
           [ngClass]="isInvalid('firstName')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20 text-slate-800 dark:text-slate-200'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-800 dark:text-slate-200'"
         />
         @if (isInvalid('firstName')) {
           <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
@@ -62,7 +64,7 @@
 
       <!-- Last Name -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="lastName">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="lastName">
           {{ 'patients.last_name' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
@@ -70,10 +72,10 @@
           type="text"
           formControlName="lastName"
           placeholder="e.g. Doe"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none placeholder-slate-450 dark:placeholder-slate-500"
           [ngClass]="isInvalid('lastName')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20 text-slate-800 dark:text-slate-200'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-800 dark:text-slate-200'"
         />
         @if (isInvalid('lastName')) {
           <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
@@ -85,21 +87,21 @@
 
       <!-- Gender -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="gender">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="gender">
           {{ 'patients.gender' | translate }} <span class="text-rose-500">*</span>
         </label>
         <select
           id="gender"
           formControlName="gender"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-850 dark:text-slate-200"
           [ngClass]="isInvalid('gender')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20 text-slate-800 dark:text-slate-200'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-800 dark:text-slate-200'"
         >
-          <option value="" disabled>Select gender</option>
-          <option value="male">{{ 'patients.male' | translate }}</option>
-          <option value="female">{{ 'patients.female' | translate }}</option>
-          <option value="other">Other</option>
+          <option value="" class="dark:bg-slate-800" disabled>Select gender</option>
+          <option value="male" class="dark:bg-slate-800">{{ 'patients.male' | translate }}</option>
+          <option value="female" class="dark:bg-slate-800">{{ 'patients.female' | translate }}</option>
+          <option value="other" class="dark:bg-slate-800">Other</option>
         </select>
         @if (isInvalid('gender')) {
           <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
@@ -111,7 +113,7 @@
 
       <!-- Date of Birth -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="dateOfBirth">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="dateOfBirth">
           {{ 'patients.dob' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
@@ -120,8 +122,8 @@
           formControlName="dateOfBirth"
           class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none"
           [ngClass]="isInvalid('dateOfBirth')
-            ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20 text-slate-800 dark:text-slate-200'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-800 dark:text-slate-200'"
         />
         @if (isInvalid('dateOfBirth')) {
           <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
@@ -133,7 +135,7 @@
 
       <!-- Blood Group -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
           {{ 'patients.blood_group' | translate }}
         </label>
         <div class="flex flex-wrap gap-2">
@@ -141,10 +143,10 @@
             <button
               type="button"
               (click)="form.get('bloodGroup')!.setValue(bg); form.get('bloodGroup')!.markAsTouched()"
-              class="px-3 py-1.5 text-xs font-bold rounded-lg border transition-all"
+              class="px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer"
               [ngClass]="form.get('bloodGroup')?.value === bg
                 ? 'bg-red-500 text-white border-red-500 shadow-sm'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-red-300 hover:text-red-500'"
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-red-300 hover:text-red-500'"
             >
               {{ bg }}
             </button>
@@ -161,32 +163,32 @@
   </div>
 
   <!-- Divider -->
-  <div class="border-t border-slate-100"></div>
+  <div class="border-t border-slate-100 dark:border-slate-800"></div>
 
   <!-- Section: Contact Info -->
   <div class="text-start">
-    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
       {{ 'patients.phone' | translate }}
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Email -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="email">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="email">
           {{ 'patients.email' | translate }}
         </label>
         <div class="relative">
-          <i class="pi pi-envelope absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <i class="pi pi-envelope absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm"></i>
           <input
             id="email"
             type="email"
             formControlName="email"
             placeholder="john@example.com"
-            class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none"
+            class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none placeholder-slate-450 dark:placeholder-slate-500"
             [ngClass]="isInvalid('email')
-              ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-              : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+              ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20 text-slate-800 dark:text-slate-200'
+              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-800 dark:text-slate-200'"
           />
         </div>
         @if (isInvalid('email')) {
@@ -199,20 +201,20 @@
 
       <!-- Phone -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="contactNumber">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="contactNumber">
           {{ 'patients.phone' | translate }} <span class="text-rose-500">*</span>
         </label>
         <div class="relative">
-          <i class="pi pi-phone absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <i class="pi pi-phone absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm"></i>
           <input
             id="contactNumber"
             type="tel"
             formControlName="contactNumber"
             placeholder="+1 234 567 890"
-            class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none"
+            class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none placeholder-slate-450 dark:placeholder-slate-500"
             [ngClass]="isInvalid('contactNumber')
-              ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-              : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+              ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20 text-slate-800 dark:text-slate-200'
+              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-800 dark:text-slate-200'"
           />
         </div>
         @if (isInvalid('contactNumber')) {
@@ -225,20 +227,20 @@
 
       <!-- Address (full width) -->
       <div class="sm:col-span-2">
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="address">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="address">
           {{ 'patients.address' | translate }} <span class="text-rose-500">*</span>
         </label>
         <div class="relative">
-          <i class="pi pi-map-marker absolute start-3.5 top-3.5 text-slate-400 text-sm"></i>
+          <i class="pi pi-map-marker absolute start-3.5 top-3.5 text-slate-400 dark:text-slate-500 text-sm"></i>
           <textarea
             id="address"
             formControlName="address"
             rows="2"
             placeholder="123 Main St, City, Country"
-            class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none resize-none"
+            class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none resize-none placeholder-slate-455 dark:placeholder-slate-500"
             [ngClass]="isInvalid('address')
-              ? 'border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-500/20'
-              : 'border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400'"
+              ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20 text-slate-800 dark:text-slate-200'
+              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-800 dark:text-slate-200'"
           ></textarea>
         </div>
         @if (isInvalid('address')) {
@@ -252,18 +254,18 @@
   </div>
 
   <!-- Footer Actions -->
-  <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+  <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
     <button
       type="button"
       (click)="onCancel()"
-      class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+      class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
     >
       {{ 'common.cancel' | translate }}
     </button>
     <button
       type="submit"
       [disabled]="submitting"
-      class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+      class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
     >
       @if (submitting) {
         <i class="pi pi-spin pi-spinner text-xs"></i>

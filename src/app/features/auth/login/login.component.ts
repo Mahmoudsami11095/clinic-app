@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService, User } from '../../../core/auth/auth.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +18,7 @@ import { LanguageService } from '../../../core/i18n/language.service';
 export class LoginComponent implements OnDestroy {
   protected authService = inject(AuthService);
   protected languageService = inject(LanguageService);
+  protected themeService = inject(ThemeService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private toastr = inject(ToastrService);

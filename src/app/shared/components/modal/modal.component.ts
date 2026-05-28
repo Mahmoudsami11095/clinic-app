@@ -20,7 +20,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Panel -->
       <div
-        class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl shadow-slate-900/20 flex flex-col max-h-[90vh] overflow-hidden
+        class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/50 flex flex-col max-h-[90vh] overflow-hidden
           transform transition-all duration-300"
         [class.scale-100]="isOpen"
         [class.opacity-100]="isOpen"
@@ -28,14 +28,14 @@ import { CommonModule } from '@angular/common';
         [class.opacity-0]="!isOpen"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h2 class="text-lg font-bold text-slate-800 tracking-tight">{{ title }}</h2>
-            <p class="text-sm text-slate-500 mt-0.5">{{ subtitle }}</p>
+            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ title }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ subtitle }}</p>
           </div>
           <button
             (click)="close.emit()"
-            class="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            class="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Close modal"
           >
             <i class="pi pi-times text-base"></i>

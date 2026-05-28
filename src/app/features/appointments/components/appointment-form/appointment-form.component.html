@@ -1,25 +1,27 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
 
   <!-- Section 0: Clinic Selection (Visible to Super Admin only when activeClinicId is 'all') -->
-  <div *ngIf="showClinicSelector()" class="pb-4 border-b border-slate-100">
-    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">0</span>
+  <div *ngIf="showClinicSelector()" class="pb-4 border-b border-slate-100 dark:border-slate-800">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">0</span>
       {{ 'appointments.clinic_selection' | translate }}
     </h3>
     <div class="grid grid-cols-1 gap-4">
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="clinicId">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="clinicId">
           {{ 'appointments.clinic_branch' | translate }} <span class="text-rose-500">*</span>
         </label>
         <select
           id="clinicId"
           formControlName="clinicId"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
-          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('clinicId') }"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-850 dark:text-slate-200"
+          [ngClass]="isInvalid('clinicId')
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
         >
-          <option value="" disabled>{{ 'appointments.select_clinic_branch' | translate }}</option>
+          <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.select_clinic_branch' | translate }}</option>
           @for (c of clinicsList(); track c.id) {
-            <option [value]="c.id">{{ c.name }}</option>
+            <option [value]="c.id" class="dark:bg-slate-800">{{ c.name }}</option>
           }
         </select>
         @if (isInvalid('clinicId')) {
@@ -31,20 +33,20 @@
 
   <!-- Section 1: Participants -->
   <div>
-    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
       {{ 'appointments.participants' | translate }}
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Patient Select -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="patientId">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="patientId">
           {{ 'appointments.patient_label' | translate }} <span class="text-rose-500">*</span>
         </label>
         
         <!-- Locked Mode for Patients -->
-        <div *ngIf="authService.isPatient()" class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-500 font-semibold flex items-center gap-2">
+        <div *ngIf="authService.isPatient()" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-4 text-sm text-slate-500 dark:text-slate-450 font-semibold flex items-center gap-2">
           <i class="pi pi-user text-xs"></i>
           {{ authService.currentUser()?.name }}
         </div>
@@ -53,17 +55,19 @@
           *ngIf="!authService.isPatient()"
           id="patientId"
           formControlName="patientId"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
-          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('patientId') }"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-850 dark:text-slate-200"
+          [ngClass]="isInvalid('patientId')
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
         >
-          <option value="" disabled>{{ 'appointments.select_patient' | translate }}</option>
+          <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.select_patient' | translate }}</option>
           @if (filteredPatientsList().length === 0 && showClinicSelector() && !form.get('clinicId')?.value) {
-            <option value="" disabled>{{ 'appointments.no_patients_avail' | translate }}</option>
+            <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.no_patients_avail' | translate }}</option>
           } @else if (filteredPatientsList().length === 0) {
-            <option value="" disabled>{{ 'appointments.no_patients_in_clinic' | translate }}</option>
+            <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.no_patients_in_clinic' | translate }}</option>
           }
           @for (p of filteredPatientsList(); track p.id) {
-            <option [value]="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+            <option [value]="p.id" class="dark:bg-slate-800">{{ p.firstName }} {{ p.lastName }}</option>
           }
         </select>
         @if (isInvalid('patientId')) {
@@ -73,12 +77,12 @@
 
       <!-- Doctor Select -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="doctorId">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="doctorId">
           {{ 'appointments.doctor_label' | translate }} <span class="text-rose-500">*</span>
         </label>
         
         <!-- Locked Mode for Doctors/Assistants -->
-        <div *ngIf="authService.isDoctor() || authService.isAssistant()" class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-500 font-semibold flex items-center gap-2">
+        <div *ngIf="authService.isDoctor() || authService.isAssistant()" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-4 text-sm text-slate-500 dark:text-slate-450 font-semibold flex items-center gap-2">
           <i class="pi pi-user-plus text-xs"></i>
           {{ lockedDoctorLabel() || authService.currentUser()?.name }}
         </div>
@@ -87,17 +91,19 @@
           *ngIf="!authService.isDoctor() && !authService.isAssistant()"
           id="doctorId"
           formControlName="doctorId"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
-          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('doctorId') }"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-850 dark:text-slate-200"
+          [ngClass]="isInvalid('doctorId')
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
         >
-          <option value="" disabled>{{ 'appointments.select_doctor' | translate }}</option>
+          <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.select_doctor' | translate }}</option>
           @if (filteredDoctorsList().length === 0 && showClinicSelector() && !form.get('clinicId')?.value) {
-            <option value="" disabled>{{ 'appointments.no_doctors_avail' | translate }}</option>
+            <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.no_doctors_avail' | translate }}</option>
           } @else if (filteredDoctorsList().length === 0) {
-            <option value="" disabled>{{ 'appointments.no_doctors_in_clinic' | translate }}</option>
+            <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.no_doctors_in_clinic' | translate }}</option>
           }
           @for (d of filteredDoctorsList(); track d.id) {
-            <option [value]="d.id">Dr. {{ d.firstName }} {{ d.lastName }} ({{ d.specialization }})</option>
+            <option [value]="d.id" class="dark:bg-slate-800">Dr. {{ d.firstName }} {{ d.lastName }} ({{ d.specialization }})</option>
           }
         </select>
         @if (isInvalid('doctorId')) {
@@ -108,55 +114,61 @@
   </div>
 
   <!-- Section 2: Schedule -->
-  <div class="pt-4 border-t border-slate-100">
-    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
+  <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
       {{ 'appointments.date_time' | translate }}
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Date -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="date">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="date">
           {{ 'appointments.date_label' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
           id="date"
           type="date"
           formControlName="date"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none bg-slate-50 border-slate-200"
-          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('date') }"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-850 dark:text-slate-200"
+          [ngClass]="isInvalid('date')
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
         />
       </div>
 
       <!-- Time -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="time">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="time">
           {{ 'appointments.time_label' | translate }} <span class="text-rose-500">*</span>
         </label>
         <input
           id="time"
           type="time"
           formControlName="time"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none bg-slate-50 border-slate-200"
-          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('time') }"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-850 dark:text-slate-200"
+          [ngClass]="isInvalid('time')
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
         />
       </div>
 
       <!-- Type -->
       <div class="sm:col-span-2 lg:col-span-1">
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="type">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="type">
           {{ 'appointments.type_select' | translate }} <span class="text-rose-500">*</span>
         </label>
         <select
           id="type"
           formControlName="type"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
-          [ngClass]="{ 'border-rose-400 bg-rose-50': isInvalid('type') }"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-855 dark:text-slate-200"
+          [ngClass]="isInvalid('type')
+            ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
         >
-          <option value="" disabled>{{ 'appointments.select_type' | translate }}</option>
+          <option value="" class="dark:bg-slate-800" disabled>{{ 'appointments.select_type' | translate }}</option>
           @for (type of availableTypes(); track type) {
-            <option [value]="type">{{ 'appointments.' + type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</option>
+            <option [value]="type" class="dark:bg-slate-800">{{ 'appointments.' + type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</option>
           }
         </select>
       </div>
@@ -164,16 +176,16 @@
       <!-- Status (edit only) -->
       @if (isEditMode) {
         <div class="sm:col-span-2 lg:col-span-1">
-          <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="status">
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="status">
             {{ 'appointments.status_label' | translate }} <span class="text-rose-500">*</span>
           </label>
           <select
             id="status"
             formControlName="status"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 border-slate-200"
+            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
           >
             @for (st of appointmentStatuses; track st) {
-              <option [value]="st">{{ 'appointments.status_' + st | translate }}</option>
+              <option [value]="st" class="dark:bg-slate-800">{{ 'appointments.status_' + st | translate }}</option>
             }
           </select>
         </div>
@@ -182,16 +194,16 @@
   </div>
 
   <!-- Section 3: Optional Billing (Doctor / Assistant only, create only) -->
-  <div *ngIf="!isEditMode && (authService.isDoctor() || authService.isAssistant())" class="pt-4 border-t border-slate-100">
-    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span class="w-5 h-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">3</span>
+  <div *ngIf="!isEditMode && (authService.isDoctor() || authService.isAssistant())" class="pt-4 border-t border-slate-100 dark:border-slate-800">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+      <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">3</span>
       {{ 'appointments.billing_section' | translate }}
     </h3>
     
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <!-- Billing Amount -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="billingAmount">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="billingAmount">
           {{ 'appointments.total_fee' | translate }}
         </label>
         <input
@@ -200,13 +212,13 @@
           min="0"
           formControlName="billingAmount"
           placeholder="e.g. 150.00"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-4 text-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+          class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2.5 px-4 text-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-850 dark:text-slate-200 placeholder-slate-450 dark:placeholder-slate-500"
         />
       </div>
 
       <!-- Paid Amount -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="paidAmount">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="paidAmount">
           {{ 'appointments.paid_amount' | translate }}
         </label>
         <input
@@ -215,22 +227,22 @@
           min="0"
           formControlName="paidAmount"
           placeholder="e.g. 150.00"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-4 text-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+          class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2.5 px-4 text-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-850 dark:text-slate-200 placeholder-slate-450 dark:placeholder-slate-500"
         />
       </div>
 
       <!-- Payment Method -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="paymentMethod">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="paymentMethod">
           {{ 'appointments.payment_method' | translate }}
         </label>
         <select
           id="paymentMethod"
           formControlName="paymentMethod"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select"
+          class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-850 dark:text-slate-200"
         >
           @for (m of paymentMethods; track m) {
-            <option [value]="m">{{ 'billing.method_' + m.toLowerCase().replace(' ', '_') | translate }}</option>
+            <option [value]="m" class="dark:bg-slate-800">{{ 'billing.method_' + m.toLowerCase().replace(' ', '_') | translate }}</option>
           }
         </select>
       </div>
@@ -238,32 +250,32 @@
   </div>
 
   <!-- Notes -->
-  <div class="pt-4 border-t border-slate-100">
-    <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="notes">
+  <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="notes">
       {{ 'appointments.notes' | translate }}
     </label>
     <textarea
       id="notes"
       formControlName="notes"
       rows="3"
-      class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none resize-none"
+      class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none resize-none text-slate-850 dark:text-slate-200 placeholder-slate-450 dark:placeholder-slate-500"
       [placeholder]="'appointments.notes_placeholder' | translate"
     ></textarea>
   </div>
 
   <!-- Footer Actions -->
-  <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+  <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
     <button
       type="button"
       (click)="onCancel()"
-      class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+      class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
     >
       {{ 'common.cancel' | translate }}
     </button>
     <button
       type="submit"
       [disabled]="submitting"
-      class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+      class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
     >
       @if (submitting) {
         <i class="pi pi-spin pi-spinner text-xs"></i>
