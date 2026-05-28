@@ -50,12 +50,58 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
     }
   }
 
+  if (req.url.includes('/api/auth/register-send-otp')) {
+    if (req.method === 'POST') {
+      const { email } = req.body as { email: string };
+      if (!email) {
+        return throwError(() => new HttpErrorResponse({
+          status: 400,
+          statusText: 'Bad Request',
+          error: { message: 'Email required' },
+          url: req.url
+        })).pipe(delay(400));
+      }
+
+      const usersList = getList('users');
+      if (usersList.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
+        return throwError(() => new HttpErrorResponse({
+          status: 400,
+          statusText: 'Bad Request',
+          error: { message: 'Email already registered' },
+          url: req.url
+        })).pipe(delay(400));
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      localStorage.setItem(`otp_register_${email.toLowerCase()}`, code);
+
+      return of(new HttpResponse({ status: 200, body: { message: 'OTP sent', otp: code } })).pipe(delay(400));
+    }
+  }
+
   if (req.url.includes('/api/auth/register')) {
     if (req.method === 'POST') {
       const userData = req.body as any;
-      if (!userData || !userData.email || !userData.name || !userData.role) {
-        return of(new HttpResponse({ status: 400, body: { message: 'Missing required registration details' } })).pipe(delay(400));
+      if (!userData || !userData.email || !userData.name || !userData.role || !userData.otpCode) {
+        return throwError(() => new HttpErrorResponse({
+          status: 400,
+          statusText: 'Bad Request',
+          error: { message: 'Missing required registration details or verification code' },
+          url: req.url
+        })).pipe(delay(400));
       }
+
+      const storedCode = localStorage.getItem(`otp_register_${userData.email.toLowerCase()}`);
+      if (!storedCode || storedCode !== userData.otpCode) {
+        return throwError(() => new HttpErrorResponse({
+          status: 400,
+          statusText: 'Bad Request',
+          error: { message: 'Invalid or expired verification code' },
+          url: req.url
+        })).pipe(delay(400));
+      }
+
+      localStorage.removeItem(`otp_register_${userData.email.toLowerCase()}`);
 
       const usersList = [...getList('users')];
       

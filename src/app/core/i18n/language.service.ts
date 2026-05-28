@@ -70,6 +70,10 @@ export class LanguageService {
     'auth.resend_in': { en: 'Resend code in {time}s', ar: 'إعادة إرسال الرمز خلال {time} ثانية' },
     'auth.otp_sent': { en: 'Verification code sent successfully', ar: 'تم إرسال رمز التحقق بنجاح' },
     'auth.otp_invalid': { en: 'Invalid verification code', ar: 'رمز التحقق غير صحيح' },
+    'auth.register_verify_title': { en: 'Confirm Email Address', ar: 'تأكيد البريد الإلكتروني' },
+    'auth.register_verify_subtitle': { en: 'We sent a 6-digit verification code to', ar: 'لقد أرسلنا رمز تحقق من 6 أرقام إلى' },
+    'auth.change_email': { en: 'Edit Details / Go Back', ar: 'تعديل البيانات / العودة' },
+    'auth.verify_and_register': { en: 'Verify & Create Account', ar: 'تحقق وإنشاء الحساب' },
 
     // Sidebar
     'sidebar.dashboard': { en: 'Dashboard', ar: 'لوحة التحكم' },
