@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicService } from '../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-register',
@@ -19,6 +20,7 @@ export class RegisterComponent {
   protected authService = inject(AuthService);
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
+  protected themeService = inject(ThemeService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private toastr = inject(ToastrService);

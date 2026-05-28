@@ -2,6 +2,9 @@
 @import "primeicons/primeicons.css";
 @import "ngx-toastr/toastr";
 
+/* Enable Tailwind v4 class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Global font */
 body {
     font-family: "Inter", sans-serif;
@@ -22,3 +25,31 @@ html[dir="rtl"] .pi-arrow-left {
     transform: scaleX(-1);
 }
 
+/* ==============================
+   Dark-mode global overrides
+   ============================== */
+
+/* Smooth transition when switching themes */
+html {
+  color-scheme: light;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+/* Toastr dark overrides */
+html.dark .toast-container .ngx-toastr {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4) !important;
+}
+html.dark .toast-container .toast-success {
+  background-color: #064e3b !important;
+  border-color: #065f46 !important;
+}
+html.dark .toast-container .toast-error {
+  background-color: #7f1d1d !important;
+  border-color: #991b1b !important;
+}

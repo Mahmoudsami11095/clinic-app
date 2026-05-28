@@ -5,6 +5,7 @@ import { ClinicService } from '../../services/clinic.service';
 import { Router } from '@angular/router';
 import { LanguageService } from '../../i18n/language.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-header',
@@ -16,6 +17,7 @@ export class Header {
   protected authService = inject(AuthService);
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
+  protected themeService = inject(ThemeService);
   private router = inject(Router);
 
   isDropdownOpen = signal(false);

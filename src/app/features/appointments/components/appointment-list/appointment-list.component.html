@@ -3,16 +3,16 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">
+      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
         {{ (authService.isPatient() ? 'appointments.my_appointments' : 'appointments.title') | translate }}
       </h1>
-      <p class="text-sm text-slate-500 mt-1">
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
         {{ (authService.isPatient() ? 'appointments.my_appointments_sub' : 'appointments.manage_appointments_sub') | translate }}
       </p>
     </div>
     <button
       (click)="openModal()"
-      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
     >
       <i class="pi pi-calendar-plus text-xs"></i>
       {{ (authService.isPatient() ? 'appointments.request_appointment' : 'appointments.book_appointment') | translate }}
@@ -20,17 +20,17 @@
   </div>
 
   <!-- Filters Bar -->
-  <div class="bg-white rounded-2xl border border-slate-200/60 p-4 shadow-sm">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-4 shadow-sm">
     <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
       
       <!-- Search Input -->
       <div class="relative flex-1 w-full max-w-md">
-        <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
         <input
           type="text"
           [placeholder]="(authService.isPatient() ? 'appointments.search_doctor_placeholder' : 'appointments.search_patient_placeholder') | translate"
           (input)="onSearch($event)"
-          class="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2 ps-11 pe-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+          class="w-full bg-slate-50/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 ps-11 pe-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 dark:text-slate-255 placeholder-slate-400 dark:placeholder-slate-500"
         />
       </div>
 
@@ -42,12 +42,12 @@
             type="date"
             [value]="selectedDate()"
             (change)="onDateFilter($event)"
-            class="w-full sm:w-auto bg-slate-50/80 border border-slate-200 rounded-xl py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-700"
+            class="w-full sm:w-auto bg-slate-50/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-slate-200"
           />
           <button 
             *ngIf="selectedDate()" 
             (click)="clearDateFilter()"
-            class="absolute end-8 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            class="absolute end-8 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-350 cursor-pointer"
             [title]="'appointments.clear_date_filter' | translate"
           >
             <i class="pi pi-times text-xs"></i>
@@ -55,14 +55,14 @@
         </div>
 
         <!-- Status Filter Tabs -->
-        <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-full sm:w-auto">
+        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 w-full sm:w-auto">
           @for (option of ['all', 'scheduled', 'completed', 'cancelled']; track option) {
             <button
               (click)="onStatusFilter(option)"
               [class]="selectedStatus() === option
-                ? 'bg-white text-slate-800 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'"
-              class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex-1 sm:flex-none text-center">
+                ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+              class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex-1 sm:flex-none text-center cursor-pointer">
               {{ 'appointments.status_' + option | translate }}
             </button>
           }
@@ -73,10 +73,10 @@
   </div>
 
   <!-- Appointments Table -->
-  <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-start text-sm whitespace-nowrap">
-        <thead class="bg-slate-50/80 border-b border-slate-200/80 text-slate-500">
+        <thead class="bg-slate-50/80 dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-700 text-slate-500 dark:text-slate-400">
           <tr>
             <th *ngIf="!authService.isPatient()" class="py-4 px-6 font-semibold">{{ 'appointments.patient_label' | translate }}</th>
             <th class="py-4 px-6 font-semibold">{{ 'appointments.doctor_label' | translate }}</th>
@@ -87,30 +87,30 @@
             <th class="py-4 px-6 font-semibold text-end">{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 text-slate-700">
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300">
           @if (loading()) {
             @for (i of [1,2,3,4]; track i) {
               <tr class="animate-pulse">
-                <td *ngIf="!authService.isPatient()" class="py-4 px-6"><div class="h-8 w-32 bg-slate-200 rounded-lg"></div></td>
-                <td class="py-4 px-6"><div class="h-8 w-32 bg-slate-200 rounded-lg"></div></td>
-                <td class="py-4 px-6"><div class="h-4 bg-slate-200 rounded w-20"></div></td>
-                <td class="py-4 px-6"><div class="h-4 bg-slate-200 rounded w-24"></div></td>
-                <td class="py-4 px-6"><div class="h-6 bg-slate-200 rounded-full w-20"></div></td>
-                <td class="py-4 px-6"><div class="h-4 bg-slate-200 rounded w-32"></div></td>
-                <td class="py-4 px-6"><div class="h-8 bg-slate-200 rounded-lg w-20 ms-auto"></div></td>
+                <td *ngIf="!authService.isPatient()" class="py-4 px-6"><div class="h-8 w-32 bg-slate-200 dark:bg-slate-700 rounded-lg"></div></td>
+                <td class="py-4 px-6"><div class="h-8 w-32 bg-slate-200 dark:bg-slate-700 rounded-lg"></div></td>
+                <td class="py-4 px-6"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-20"></div></td>
+                <td class="py-4 px-6"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24"></div></td>
+                <td class="py-4 px-6"><div class="h-6 bg-slate-200 dark:bg-slate-700 rounded-full w-20"></div></td>
+                <td class="py-4 px-6"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32"></div></td>
+                <td class="py-4 px-6"><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded-lg w-20 ms-auto"></div></td>
               </tr>
             }
           } @else if (filteredAppointments().length === 0) {
             <tr>
-              <td [attr.colspan]="authService.isPatient() ? 6 : 7" class="py-16 text-center text-slate-500">
-                <i class="pi pi-calendar text-4xl mb-3 text-slate-300 block"></i>
+              <td [attr.colspan]="authService.isPatient() ? 6 : 7" class="py-16 text-center text-slate-500 dark:text-slate-400">
+                <i class="pi pi-calendar text-4xl mb-3 text-slate-300 dark:text-slate-600 block"></i>
                 <p class="font-medium">{{ 'appointments.no_appointments' | translate }}</p>
-                <p class="text-xs text-slate-400 mt-1">{{ 'appointments.no_appointments_sub' | translate }}</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ 'appointments.no_appointments_sub' | translate }}</p>
               </td>
             </tr>
           } @else {
             @for (appt of filteredAppointments(); track appt.id) {
-              <tr class="hover:bg-slate-50 transition-colors">
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                 <!-- Patient Name (hidden for patient role) -->
                 <td *ngIf="!authService.isPatient()" class="py-4 px-6">
                   <div class="flex items-center gap-3">
@@ -118,22 +118,22 @@
                          [class]="getAvatarColor(appt.patientName)">
                       {{ appt.patientName.charAt(0) }}
                     </div>
-                    <span class="font-semibold text-slate-800">{{ appt.patientName }}</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-100">{{ appt.patientName }}</span>
                   </div>
                 </td>
 
                 <!-- Doctor Name -->
                 <td class="py-4 px-6">
-                  <span class="font-semibold text-slate-700">{{ appt.doctorName }}</span>
+                  <span class="font-semibold text-slate-700 dark:text-slate-250">{{ appt.doctorName }}</span>
                 </td>
 
                 <!-- Visit Type -->
-                <td class="py-4 px-6 text-slate-600">{{ 'appointments.' + appt.type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</td>
+                <td class="py-4 px-6 text-slate-600 dark:text-slate-350">{{ 'appointments.' + appt.type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</td>
 
                 <!-- Date & Time -->
-                <td class="py-4 px-6 text-slate-500">
+                <td class="py-4 px-6 text-slate-500 dark:text-slate-400">
                   {{ appt.date | date:'mediumDate' }}
-                  <div class="text-xs text-slate-400 mt-0.5">{{ appt.date | date:'shortTime' }}</div>
+                  <div class="text-xs text-slate-400 dark:text-slate-550 mt-0.5">{{ appt.date | date:'shortTime' }}</div>
                 </td>
 
                 <!-- Status -->
@@ -145,7 +145,7 @@
                 </td>
 
                 <!-- Notes -->
-                <td class="py-4 px-6 text-slate-500 max-w-xs truncate" [title]="appt.notes || ''">
+                <td class="py-4 px-6 text-slate-500 dark:text-slate-400 max-w-xs truncate" [title]="appt.notes || ''">
                   {{ appt.notes || '—' }}
                 </td>
 
@@ -157,7 +157,7 @@
                       <button
                         type="button"
                         (click)="openEditModal(appt)"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                         [title]="'appointments.edit_appointment' | translate"
                       >
                         <i class="pi pi-pencil text-[10px]"></i>
@@ -166,7 +166,7 @@
                       <button
                         type="button"
                         (click)="deleteAppointment(appt)"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-semibold transition-colors"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                         [title]="'appointments.delete_appointment' | translate"
                       >
                         <i class="pi pi-trash text-[10px]"></i>
@@ -177,7 +177,7 @@
                           <button
                             type="button"
                             (click)="viewPrescribePage(appt)"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                             [title]="'appointments.edit_rx' | translate"
                           >
                             <i class="pi pi-file-edit text-[10px]"></i>
@@ -188,7 +188,7 @@
                             <button
                               type="button"
                               (click)="viewPrescribePage(appt)"
-                              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
+                              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                               [title]="'appointments.prescribe' | translate"
                             >
                               <i class="pi pi-file-plus text-[10px]"></i>
@@ -201,7 +201,7 @@
                           <button
                             type="button"
                             (click)="openPrescriptionModal(appt, true)"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                             [title]="'appointments.view_rx' | translate"
                           >
                             <i class="pi pi-file text-[10px]"></i>
@@ -217,7 +217,7 @@
                         <button
                           type="button"
                           (click)="openPrescriptionModal(appt, true)"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                           [title]="'appointments.view_rx' | translate"
                         >
                           <i class="pi pi-file text-[10px]"></i>
@@ -232,7 +232,7 @@
                         <button
                           type="button"
                           (click)="openPrescriptionModal(appt, true)"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                           [title]="'appointments.view_rx' | translate"
                         >
                           <i class="pi pi-file text-[10px]"></i>

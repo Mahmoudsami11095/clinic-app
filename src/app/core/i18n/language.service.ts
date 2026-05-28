@@ -475,7 +475,13 @@ export class LanguageService {
     'toast.dental_log_save_error': { en: 'Failed to save dental log.', ar: 'فشل في حفظ سجل الأسنان.' },
     'toast.prescription_saved': { en: 'Prescription saved successfully.', ar: 'تم حفظ الوصفة الطبية بنجاح.' },
     'toast.prescription_save_error': { en: 'Failed to save prescription.', ar: 'فشل في حفظ الوصفة الطبية.' },
-    'toast.prescription_min_med_error': { en: 'Please add at least one medication name.', ar: 'يرجى إضافة اسم دواء واحد على الأقل.' }
+    'toast.prescription_min_med_error': { en: 'Please add at least one medication name.', ar: 'يرجى إضافة اسم دواء واحد على الأقل.' },
+
+    // Theme
+    'theme.light': { en: 'Light', ar: 'فاتح' },
+    'theme.dark': { en: 'Dark', ar: 'داكن' },
+    'theme.system': { en: 'System', ar: 'النظام' },
+    'theme.toggle': { en: 'Toggle theme', ar: 'تبديل المظهر' }
   };
 
   constructor() {
