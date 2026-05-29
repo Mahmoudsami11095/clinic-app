@@ -19,7 +19,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
          [ngClass]="statCards.length === 5 ? 'xl:grid-cols-5' : 'lg:grid-cols-4'">
       @for (card of statCards; track card.key) {
-        <div class="stat-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div class="stat-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]">
           <!-- Ambient Glow -->
           <div class="absolute -top-8 -end-8 w-24 h-24 rounded-full opacity-10 transition-opacity group-hover:opacity-20"
                [class]="'bg-' + card.color + '-500'"></div>
@@ -29,9 +29,9 @@
               <span class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ card.labelKey | translate }}</span>
               <span class="text-3xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">{{ getStatValue(card.key) }}</span>
             </div>
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:rotate-6"
                  [class]="'bg-' + card.color + '-50 dark:bg-' + card.color + '-950/20 text-' + card.color + '-500 dark:text-' + card.color + '-400'">
-              <i [class]="card.icon + ' text-xl'"></i>
+              <i [class]="card.icon + ' text-xl transition-transform duration-300 group-hover:scale-110'"></i>
             </div>
           </div>
         </div>
