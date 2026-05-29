@@ -5,6 +5,13 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ClinicService } from '../../core/services/clinic.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
+export interface StatCard {
+  key: keyof DashboardStats;
+  labelKey: string;
+  icon: string;
+  color: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule, TranslatePipe],
@@ -20,7 +27,7 @@ export class Dashboard implements OnInit {
   recentAppointments = signal<RecentAppointment[]>([]);
   loading = signal(true);
 
-  statCards: any[] = [];
+  statCards: StatCard[] = [];
 
   constructor() {
     effect(() => {
@@ -63,10 +70,10 @@ export class Dashboard implements OnInit {
     });
   }
 
-  getStatValue(key: string): number | string {
+  getStatValue(key: keyof DashboardStats): number | string {
     const s = this.stats();
     if (!s) return '—';
-    const val = (s as any)[key] ?? 0;
+    const val = s[key] ?? 0;
     if (key === 'totalCollected' || key === 'totalOutstanding') {
       return '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }

@@ -5,6 +5,9 @@ import {
   resolveMockEntity,
   writeMockList,
 } from '../mock/mock-data.store';
+import { User, RegistrationData } from '../auth/auth.service';
+
+type InterceptorUser = User & { password?: string };
 
 const entityMemoryCache: Partial<Record<string, unknown[]>> = {};
 
@@ -33,11 +36,11 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
         return of(new HttpResponse({ status: 400, body: { message: 'Missing credentials' } })).pipe(delay(400));
       }
       
-      const usersList = getList('users');
-      const user = usersList.find((u: any) => u.email.toLowerCase() === credentials.email.toLowerCase());
+      const usersList = getList('users') as InterceptorUser[];
+      const user = usersList.find((u) => u.email.toLowerCase() === credentials.email.toLowerCase());
       
       if (user) {
-        const { password, ...safeUser } = user as any;
+        const { password, ...safeUser } = user;
         return of(new HttpResponse({ status: 200, body: { message: 'Login successful', data: safeUser } })).pipe(delay(400));
       } else {
         return throwError(() => new HttpErrorResponse({
@@ -62,8 +65,8 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
         })).pipe(delay(400));
       }
 
-      const usersList = getList('users');
-      if (usersList.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
+      const usersList = getList('users') as InterceptorUser[];
+      if (usersList.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
         return throwError(() => new HttpErrorResponse({
           status: 400,
           statusText: 'Bad Request',
@@ -81,7 +84,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
 
   if (req.url.includes('/api/auth/register')) {
     if (req.method === 'POST') {
-      const userData = req.body as any;
+      const userData = req.body as RegistrationData | null;
       if (!userData || !userData.email || !userData.name || !userData.role || !userData.otpCode) {
         return throwError(() => new HttpErrorResponse({
           status: 400,
@@ -103,9 +106,9 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
 
       localStorage.removeItem(`otp_register_${userData.email.toLowerCase()}`);
 
-      const usersList = [...getList('users')];
+      const usersList = [...getList('users')] as InterceptorUser[];
       
-      if (usersList.some((u: any) => u.email.toLowerCase() === userData.email.toLowerCase())) {
+      if (usersList.some((u) => u.email.toLowerCase() === userData.email!.toLowerCase())) {
         return throwError(() => new HttpErrorResponse({
           status: 400,
           statusText: 'Bad Request',
@@ -114,7 +117,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
         })).pipe(delay(400));
       }
 
-      const nextPatientId = String(usersList.filter((u: any) => u.role === 'patient').length + 3); // starts after pat-1, pat-2
+      const nextPatientId = String(usersList.filter((u) => u.role === 'patient').length + 3); // starts after pat-1, pat-2
 
       const newUser = {
         id: crypto.randomUUID(),
@@ -174,8 +177,8 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
         })).pipe(delay(400));
       }
 
-      const usersList = getList('users');
-      const user = usersList.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+      const usersList = getList('users') as InterceptorUser[];
+      const user = usersList.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
       if (!user) {
         return throwError(() => new HttpErrorResponse({
@@ -208,12 +211,12 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
 
       const storedCode = localStorage.getItem(`otp_${email.toLowerCase()}`);
       if (storedCode === code) {
-        const usersList = getList('users');
-        const user = usersList.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+        const usersList = getList('users') as InterceptorUser[];
+        const user = usersList.find((u) => u.email.toLowerCase() === email.toLowerCase());
         
         if (user) {
           localStorage.removeItem(`otp_${email.toLowerCase()}`);
-          const { password, ...safeUser } = user as any;
+          const { password, ...safeUser } = user;
           return of(new HttpResponse({ status: 200, body: { message: 'OTP verified', data: safeUser } })).pipe(delay(400));
         }
       }
@@ -231,13 +234,13 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next): Observable
   if (req.url.includes('/api/auth/social')) {
     if (req.method === 'POST') {
       const { provider } = req.body as { provider: string };
-      const usersList = getList('users');
+      const usersList = getList('users') as InterceptorUser[];
       // Google -> Dr. Jenkins, Microsoft/Apple -> John Doe
       const email = provider === 'google' ? 'dr.jenkins@clinic.com' : 'john.doe@example.com';
-      const user = usersList.find((u: any) => u.email === email);
+      const user = usersList.find((u) => u.email === email);
 
       if (user) {
-        const { password, ...safeUser } = user as any;
+        const { password, ...safeUser } = user;
         return of(new HttpResponse({ status: 200, body: { message: `Logged in via ${provider}`, data: safeUser } })).pipe(delay(500));
       }
 

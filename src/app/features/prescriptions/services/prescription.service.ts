@@ -2,6 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, forkJoin, Observable } from 'rxjs';
 import { Prescription, PrescriptionWithDetails } from '../models/prescription.model';
+import { Patient } from '../../patients/models/patient.model';
+import { Doctor } from '../../doctors/models/doctor.model';
+import { Appointment } from '../../appointments/models/appointment.model';
 
 @Injectable({ providedIn: 'root' })
 export class PrescriptionService {
@@ -16,9 +19,9 @@ export class PrescriptionService {
   getAllWithDetails(): Observable<PrescriptionWithDetails[]> {
     return forkJoin({
       prescriptions: this.getAll(),
-      patients: this.http.get<{ data: any[] }>('/api/patients').pipe(map(r => r.data)),
-      doctors: this.http.get<{ data: any[] }>('/api/doctors').pipe(map(r => r.data)),
-      appointments: this.http.get<{ data: any[] }>('/api/appointments').pipe(map(r => r.data))
+      patients: this.http.get<{ data: Patient[] }>('/api/patients').pipe(map(r => r.data)),
+      doctors: this.http.get<{ data: Doctor[] }>('/api/doctors').pipe(map(r => r.data)),
+      appointments: this.http.get<{ data: Appointment[] }>('/api/appointments').pipe(map(r => r.data))
     }).pipe(
       map(({ prescriptions, patients, doctors, appointments }) => {
         return prescriptions.map(pres => {

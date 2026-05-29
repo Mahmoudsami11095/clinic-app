@@ -33,7 +33,7 @@ export class LoginComponent implements OnDestroy {
   otpSent = signal(false);
   otpInputs = signal<string[]>(['', '', '', '', '', '']);
   countdown = signal(0);
-  private timerInterval: any;
+  private timerInterval: ReturnType<typeof setInterval> | undefined;
 
   constructor() {
     this.loginForm = this.fb.group({

@@ -8,7 +8,7 @@ import { ToothStatus } from '../../../../core/services/dental.service';
 interface HistoricalLog {
   id: number;
   date: string;
-  status: any;
+  status: ToothStatus[];
   painLevel: number;
   treatment: string;
 }
@@ -212,7 +212,7 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
   loadToothLog(toothId: string) {
     const record = this.records()[toothId];
     if (record) {
-      this.editStatuses = Array.isArray(record.status) ? [...record.status] : [record.status as any];
+      this.editStatuses = [...record.status];
       this.editPain = record.painLevel;
       this.editNotes = record.clinicalNotes;
     }
@@ -221,13 +221,13 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
     const historyKey = `dental_history_logs_${toothId}`;
     const cachedLogs = localStorage.getItem(historyKey);
     if (cachedLogs) {
-      const logs = JSON.parse(cachedLogs);
-      logs.forEach((l: any) => {
+      const logs = JSON.parse(cachedLogs) as { id: number; date: string; status: ToothStatus | ToothStatus[]; painLevel: number; treatment: string }[];
+      logs.forEach((l) => {
         if (l.status && !Array.isArray(l.status)) {
           l.status = [l.status];
         }
       });
-      this.historyLogs.set(logs);
+      this.historyLogs.set(logs as HistoricalLog[]);
     } else {
       // Generate initial diagnostic history log if empty to make it look detailed
       const defaultLogs: HistoricalLog[] = [];
@@ -255,6 +255,16 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
 
   updatePainVal(val: number) {
     this.editPain = val;
+  }
+
+  onPainInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.editPain = +target.value;
+  }
+
+  onRotationInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.rotationAngle.set(+target.value);
   }
 
   saveToothLog() {

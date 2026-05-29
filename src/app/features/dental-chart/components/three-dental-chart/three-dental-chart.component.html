@@ -142,7 +142,7 @@
                   [(ngModel)]="editPain" 
                   name="pain"
                   class="pain-range-slider"
-                  (input)="updatePainVal(+$any($event.target).value)">
+                  (input)="onPainInput($event)">
                 <span class="pain-indicator-val" [style.color]="editPain > 6 ? '#ef4444' : editPain > 3 ? '#f59e0b' : '#10b981'">
                   {{ editPain }}
                 </span>

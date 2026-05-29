@@ -600,7 +600,7 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
     // Sync Form fields and history logs
     this.dentalDataService.getEndodonticRecord(toothId).subscribe(record => {
       if (record) {
-        this.editStatuses = Array.isArray(record.status) ? [...record.status] : [record.status as any];
+        this.editStatuses = [...record.status];
         this.editPain = record.painLevel;
         this.editNotes = record.clinicalNotes;
 
@@ -608,13 +608,13 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
         const historyKey = `dental_history_logs_${toothId}`;
         const cachedLogs = localStorage.getItem(historyKey);
         if (cachedLogs) {
-          const logs = JSON.parse(cachedLogs);
-          logs.forEach((l: any) => {
+          const logs = JSON.parse(cachedLogs) as { id: number; date: string; status: ToothStatus | ToothStatus[]; painLevel: number; treatment: string }[];
+          logs.forEach((l) => {
             if (l.status && !Array.isArray(l.status)) {
               l.status = [l.status];
             }
           });
-          this.historyLogs.set(logs);
+          this.historyLogs.set(logs as HistoricalLog[]);
         } else {
           const defaultLogs = [{
             id: Date.now() - 5 * 24 * 60 * 60 * 1000,
@@ -775,6 +775,10 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
 
   updatePainVal(val: number) {
     this.editPain = val;
+  }
+  onPainInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.editPain = +target.value;
   }
   saveToothLog() {
     const id = this.selectedToothId();

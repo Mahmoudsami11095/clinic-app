@@ -53,8 +53,8 @@ export function isMockDatabaseInitialized(): boolean {
 export async function initializeMockDatabase(http: HttpClient): Promise<void> {
   if (isMockDatabaseInitialized()) {
     // Ensure Dr. Marcus Vance (id: '106') is loaded into the mock database even if it was previously initialized
-    const doctors = readMockList('doctors');
-    const hasVance = doctors.some((d: any) => d.id === '106');
+    const doctors = readMockList('doctors') as { id?: string }[];
+    const hasVance = doctors.some(d => d.id === '106');
     if (!hasVance) {
       const vance = {
         id: '106',

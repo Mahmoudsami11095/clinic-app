@@ -3,6 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, map } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicService } from '../../../core/services/clinic.service';
+import { Patient } from '../../patients/models/patient.model';
+import { Doctor } from '../../doctors/models/doctor.model';
+import { Appointment } from '../../appointments/models/appointment.model';
+import { BillingRecord } from '../../billing/models/billing.model';
 
 export interface DashboardStats {
   totalPatients: number;
@@ -33,10 +37,10 @@ export class DashboardService {
     const activeClinicId = this.clinicService.activeClinicId();
 
     return forkJoin({
-      patients: this.http.get<{ data: any[] }>('/api/patients'),
-      appointments: this.http.get<{ data: any[] }>('/api/appointments'),
-      doctors: this.http.get<{ data: any[] }>('/api/doctors'),
-      billing: this.http.get<{ data: any[] }>('/api/billing'),
+      patients: this.http.get<{ data: Patient[] }>('/api/patients'),
+      appointments: this.http.get<{ data: Appointment[] }>('/api/appointments'),
+      doctors: this.http.get<{ data: Doctor[] }>('/api/doctors'),
+      billing: this.http.get<{ data: BillingRecord[] }>('/api/billing'),
     }).pipe(
       map(({ patients, appointments, doctors, billing }) => {
         const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
@@ -75,15 +79,15 @@ export class DashboardService {
           todayAppointments: apptsList.filter(a => a.status === 'scheduled').length,
           totalRevenue: billsList
             .filter(b => b.status === 'paid')
-            .reduce((sum: number, b: any) => sum + b.amount, 0),
+            .reduce((sum: number, b: BillingRecord) => sum + b.amount, 0),
           pendingBills: billsList.filter(b => b.status === 'pending' || b.status === 'overdue').length,
-          totalCollected: billsList.reduce((sum: number, b: any) => {
+          totalCollected: billsList.reduce((sum: number, b: BillingRecord) => {
             if (b.status === 'paid') {
               return sum + (b.paidAmount !== undefined ? b.paidAmount : b.amount);
             }
             return sum + (b.paidAmount || 0);
           }, 0),
-          totalOutstanding: billsList.reduce((sum: number, b: any) => {
+          totalOutstanding: billsList.reduce((sum: number, b: BillingRecord) => {
             if (b.status === 'paid') return sum;
             const paid = b.paidAmount !== undefined ? b.paidAmount : 0;
             return sum + (b.amount - paid);
@@ -91,11 +95,11 @@ export class DashboardService {
         };
 
         const recentAppointments: RecentAppointment[] = apptsList
-          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .sort((a: Appointment, b: Appointment) => new Date(b.date).getTime() - new Date(a.date).getTime())
           .slice(0, 5)
-          .map((appt: any) => {
-            const patient = patients.data.find((p: any) => p.id === appt.patientId);
-            const doctor = doctors.data.find((d: any) => d.id === appt.doctorId);
+          .map((appt: Appointment) => {
+            const patient = patients.data.find((p: Patient) => p.id === appt.patientId);
+            const doctor = doctors.data.find((d: Doctor) => d.id === appt.doctorId);
             return {
               id: appt.id,
               patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown',
