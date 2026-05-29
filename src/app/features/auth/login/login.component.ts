@@ -137,6 +137,9 @@ export class LoginComponent implements OnDestroy {
           this.languageService.translate('toast.success')
         );
         this.startTimer();
+        setTimeout(() => {
+          document.getElementById('otp-input-0')?.focus();
+        }, 100);
       },
       error: (err) => {
         this.isLoading.set(false);

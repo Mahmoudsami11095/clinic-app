@@ -75,7 +75,6 @@ export class RegisterComponent implements OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set(null);
     const email = this.registerForm.get('email')?.value;
-
     this.authService.sendRegisterOtp(email).subscribe({
       next: (res) => {
         this.isLoading.set(false);
@@ -85,6 +84,9 @@ export class RegisterComponent implements OnDestroy {
           this.languageService.translate('toast.success')
         );
         this.startTimer();
+        setTimeout(() => {
+          document.getElementById('otp-input-0')?.focus();
+        }, 100);
       },
       error: (err) => {
         this.isLoading.set(false);
