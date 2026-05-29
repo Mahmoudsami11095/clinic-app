@@ -15,6 +15,24 @@ export interface User {
   clinicIds?: string[]; // Associated clinic IDs (for doctors)
 }
 
+export interface RegistrationData {
+  name: string;
+  email: string;
+  password?: string;
+  role: 'admin' | 'doctor' | 'assistant' | 'patient';
+  clinicId: string;
+  phone?: string;
+  gender?: 'Male' | 'Female';
+  age?: number;
+  otpCode?: string;
+  title?: string;
+  clinicIds?: string[];
+  doctorId?: string;
+  patientId?: string;
+  dob?: string;
+  bloodGroup?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -199,7 +217,7 @@ export class AuthService {
     return this.http.post<{ message: string; otp: string }>('/api/auth/register-send-otp', { email });
   }
 
-  register(userData: any): Observable<User> {
+  register(userData: RegistrationData): Observable<User> {
     return this.http.post<{ message: string; data: User }>('/api/auth/register', userData).pipe(
       map(res => res.data)
     );

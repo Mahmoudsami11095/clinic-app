@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, forkJoin, Observable } from 'rxjs';
 import { Appointment, AppointmentWithDetails } from '../models/appointment.model';
+import { Patient } from '../../patients/models/patient.model';
+import { Doctor } from '../../doctors/models/doctor.model';
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentService {
@@ -16,8 +18,8 @@ export class AppointmentService {
   getAllWithDetails(): Observable<AppointmentWithDetails[]> {
     return forkJoin({
       appointments: this.getAll(),
-      patients: this.http.get<{ data: any[] }>('/api/patients').pipe(map(r => r.data)),
-      doctors: this.http.get<{ data: any[] }>('/api/doctors').pipe(map(r => r.data)),
+      patients: this.http.get<{ data: Patient[] }>('/api/patients').pipe(map(r => r.data)),
+      doctors: this.http.get<{ data: Doctor[] }>('/api/doctors').pipe(map(r => r.data)),
     }).pipe(
       map(({ appointments, patients, doctors }) => {
         return appointments.map(appt => {

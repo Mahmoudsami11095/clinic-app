@@ -34,7 +34,7 @@ export class RegisterComponent implements OnDestroy {
   otpSent = signal(false);
   otpInputs = signal<string[]>(['', '', '', '', '', '']);
   countdown = signal(0);
-  private timerInterval: any;
+  private timerInterval: ReturnType<typeof setInterval> | undefined;
 
   availableRoles = [
     { value: 'patient', labelKey: 'auth.role_patient' },

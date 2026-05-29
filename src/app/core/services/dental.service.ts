@@ -20,6 +20,10 @@ export interface DentalLog {
   medication?: string;
 }
 
+export interface RawDentalLog extends Omit<DentalLog, 'status'> {
+  status: ToothStatus | ToothStatus[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -29,7 +33,7 @@ export class DentalService {
 
   /** Get all dental logs for a specific patient */
   getLogs(patientId: string): Observable<DentalLog[]> {
-    return this.http.get<{ data: any[] }>('/api/dental').pipe(
+    return this.http.get<{ data: RawDentalLog[] }>('/api/dental').pipe(
       map(res => (res.data || [])
         .filter(log => log.patientId === patientId)
         .map(log => ({
