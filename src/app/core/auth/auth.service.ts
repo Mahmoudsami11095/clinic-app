@@ -195,6 +195,10 @@ export class AuthService {
     );
   }
 
+  sendRegisterOtp(email: string): Observable<{ message: string; otp: string }> {
+    return this.http.post<{ message: string; otp: string }>('/api/auth/register-send-otp', { email });
+  }
+
   register(userData: any): Observable<User> {
     return this.http.post<{ message: string; data: User }>('/api/auth/register', userData).pipe(
       map(res => res.data)
