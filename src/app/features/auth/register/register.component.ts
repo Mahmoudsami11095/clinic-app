@@ -240,10 +240,12 @@ export class RegisterComponent implements OnDestroy {
             }
           }, 500);
         } else {
-          this.executeSocialLogin('google', 'demo_google_token');
+          this.toastr.error('Google sign-in popup was blocked or failed to open.', this.languageService.translate('toast.error'));
+          this.isLoading.set(false);
         }
       } catch (err) {
-        this.executeSocialLogin('google', 'demo_google_token');
+        this.toastr.error('An error occurred during Google sign-in.', this.languageService.translate('toast.error'));
+        this.isLoading.set(false);
       }
     }
     else if (prov === 'apple') {
@@ -259,14 +261,17 @@ export class RegisterComponent implements OnDestroy {
             .then((res: any) => {
               this.executeSocialLogin('apple', res.authorization.id_token);
             })
-            .catch(() => {
-              this.executeSocialLogin('apple', 'demo_apple_token');
+            .catch((err: any) => {
+              this.toastr.error('Apple sign-in failed or was cancelled.', this.languageService.translate('toast.error'));
+              this.isLoading.set(false);
             });
         } else {
-          this.executeSocialLogin('apple', 'demo_apple_token');
+          this.toastr.error('Apple Sign-In library is not loaded.', this.languageService.translate('toast.error'));
+          this.isLoading.set(false);
         }
       } catch (err) {
-        this.executeSocialLogin('apple', 'demo_apple_token');
+        this.toastr.error('An error occurred during Apple sign-in.', this.languageService.translate('toast.error'));
+        this.isLoading.set(false);
       }
     }
     else if (prov === 'microsoft') {
@@ -299,19 +304,23 @@ export class RegisterComponent implements OnDestroy {
             }
           }, 500);
         } else {
-          this.executeSocialLogin('microsoft', 'demo_microsoft_token');
+          this.toastr.error('Microsoft sign-in popup was blocked or failed to open.', this.languageService.translate('toast.error'));
+          this.isLoading.set(false);
         }
       } catch (err) {
-        this.executeSocialLogin('microsoft', 'demo_microsoft_token');
+        this.toastr.error('An error occurred during Microsoft sign-in.', this.languageService.translate('toast.error'));
+        this.isLoading.set(false);
       }
     }
   }
 
   private executeSocialLogin(provider: string, token: string) {
     this.isLoading.set(true);
-    this.authService.loginWithSocial(provider, token).subscribe({
-      next: (user) => {
+    const selectedRole = this.registerForm.get('role')?.value || 'patient';
+    this.authService.loginWithSocial(provider, token, selectedRole).subscribe({
+      next: (res) => {
         this.isLoading.set(false);
+        const user = res.data;
         this.toastr.success(
           `${this.languageService.translate('auth.login_success')}: ${user.name}`,
           this.languageService.translate('toast.success')
