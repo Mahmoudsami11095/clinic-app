@@ -105,6 +105,15 @@ export class ClinicService {
     );
   }
 
+  delete(id: string) {
+    return this.http.delete<{ message: string }>(`/api/clinics/${id}`).pipe(
+      map(res => {
+        this.clinicsSignal.update(list => list.filter(c => c.id !== id));
+        return res;
+      })
+    );
+  }
+
   assignDoctors(clinicId: string, doctorIds: string[]) {
     return this.http.post<{ message: string }>(`/api/clinics/${clinicId}/assign-doctors`, doctorIds);
   }

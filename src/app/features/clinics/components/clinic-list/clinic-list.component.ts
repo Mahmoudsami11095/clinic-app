@@ -161,6 +161,16 @@ export class ClinicListComponent implements OnInit {
     });
   }
 
+  deleteClinic(id: string) {
+    if (confirm('Are you sure you want to delete this clinic?')) {
+      this.clinicService.delete(id).subscribe({
+        next: () => {
+          this.clinicService.loadClinics();
+        }
+      });
+    }
+  }
+
   getAvatarColor(name: string): string {
     const colors = [
       'from-blue-500 to-indigo-600',

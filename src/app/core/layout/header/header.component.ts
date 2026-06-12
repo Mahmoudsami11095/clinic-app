@@ -43,18 +43,19 @@ export class Header {
   }
 
   switchUser(user: User) {
-    this.authService.setCurrentUser(user);
-    this.isUserSwitcherOpen.set(false);
-    this.isDropdownOpen.set(false);
+    this.authService.login({ email: user.email, password: 'password123' }).subscribe({
+      next: (loggedInUser) => {
+        this.isUserSwitcherOpen.set(false);
+        this.isDropdownOpen.set(false);
 
-    // Redirect to default page based on new user role
-    if (user.role === 'patient') {
-      this.router.navigate(['/appointments']);
-    } else if (user.role === 'assistant') {
-      this.router.navigate(['/appointments']);
-    } else {
-      this.router.navigate(['/dashboard']);
-    }
+        // Redirect to default page based on new user role
+        if (loggedInUser.role === 'patient' || loggedInUser.role === 'assistant') {
+          this.router.navigate(['/appointments']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
+      }
+    });
   }
 
   getAvatarInitials(name: string): string {
