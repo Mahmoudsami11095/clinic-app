@@ -210,12 +210,15 @@ export class AuthService {
     );
   }
 
-  loginWithSocial(provider: string, token: string): Observable<User> {
-    return this.http.post<{ message: string; data: User; token: string }>('/api/auth/social', { provider, token }).pipe(
+  loginWithSocial(provider: string, token: string, role?: string): Observable<any> {
+    const body: any = { provider, token };
+    if (role) body.role = role;
+    return this.http.post<any>('/api/auth/social', body).pipe(
       tap(res => {
-        this.setCurrentUser(res.data, res.token);
-      }),
-      map(res => res.data)
+        if (res.data && res.token) {
+          this.setCurrentUser(res.data, res.token);
+        }
+      })
     );
   }
 
