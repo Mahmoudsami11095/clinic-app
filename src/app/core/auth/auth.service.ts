@@ -173,21 +173,27 @@ export class AuthService {
     return null; // No user by default (requires login)
   }
 
-  setCurrentUser(user: User | null) {
+  setCurrentUser(user: User | null, token?: string) {
     this.currentUserSignal.set(user);
     if (user) {
       localStorage.setItem('clinic_current_user', JSON.stringify(user));
+      if (token) localStorage.setItem('clinic_token', token);
     } else {
       localStorage.removeItem('clinic_current_user');
+      localStorage.removeItem('clinic_token');
     }
   }
 
+  getToken(): string | null {
+    return localStorage.getItem('clinic_token');
+  }
+
   login(credentials: { email: string; password?: string }): Observable<User> {
-    return this.http.post<{ message: string; data: User }>('/api/auth/login', credentials).pipe(
-      map(res => res.data),
-      tap(user => {
-        this.setCurrentUser(user);
-      })
+    return this.http.post<{ message: string; data: User; token: string }>('/api/auth/login', credentials).pipe(
+      tap(res => {
+        this.setCurrentUser(res.data, res.token);
+      }),
+      map(res => res.data)
     );
   }
 
@@ -196,20 +202,20 @@ export class AuthService {
   }
 
   verifyOtp(email: string, code: string): Observable<User> {
-    return this.http.post<{ message: string; data: User }>('/api/auth/verify-otp', { email, code }).pipe(
-      map(res => res.data),
-      tap(user => {
-        this.setCurrentUser(user);
-      })
+    return this.http.post<{ message: string; data: User; token: string }>('/api/auth/verify-otp', { email, code }).pipe(
+      tap(res => {
+        this.setCurrentUser(res.data, res.token);
+      }),
+      map(res => res.data)
     );
   }
 
-  loginWithSocial(provider: string): Observable<User> {
-    return this.http.post<{ message: string; data: User }>('/api/auth/social', { provider }).pipe(
-      map(res => res.data),
-      tap(user => {
-        this.setCurrentUser(user);
-      })
+  loginWithSocial(provider: string, token: string): Observable<User> {
+    return this.http.post<{ message: string; data: User; token: string }>('/api/auth/social', { provider, token }).pipe(
+      tap(res => {
+        this.setCurrentUser(res.data, res.token);
+      }),
+      map(res => res.data)
     );
   }
 
