@@ -101,13 +101,44 @@
 
           <!-- Actions Footer -->
           <div class="p-4 bg-slate-50/20 dark:bg-slate-950/10 flex justify-end gap-2">
-            <button
-              (click)="openEditModal(clinic)"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none"
-            >
-              <i class="pi pi-pencil text-[10px]"></i>
-              {{ 'clinics.edit_details' | translate }}
-            </button>
+            @if (clinic.status === 'Pending') {
+              <button
+                (click)="respondToAssignment(clinic.id, 'Accepted')"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors focus:outline-none border border-transparent cursor-pointer"
+              >
+                <i class="pi pi-check text-[10px]"></i>
+                Accept
+              </button>
+              <button
+                (click)="respondToAssignment(clinic.id, 'Rejected')"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 transition-colors focus:outline-none border border-transparent cursor-pointer"
+              >
+                <i class="pi pi-times text-[10px]"></i>
+                Reject
+              </button>
+            } @else {
+              @if (canManageClinic(clinic)) {
+                <button
+                  (click)="openAssignModal(clinic)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors focus:outline-none border border-transparent cursor-pointer"
+                >
+                  <i class="pi pi-user-plus text-[10px]"></i>
+                  Assign Doctors
+                </button>
+                <button
+                  (click)="openEditModal(clinic)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none cursor-pointer"
+                >
+                  <i class="pi pi-pencil text-[10px]"></i>
+                  {{ 'clinics.edit_details' | translate }}
+                </button>
+              } @else {
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold">
+                  <i class="pi pi-check text-[9px]"></i>
+                  Assigned
+                </span>
+              }
+            }
           </div>
 
         </div>
@@ -127,5 +158,49 @@
       (saved)="handleClinicSaved()"
       (cancelled)="closeModal()"
     ></app-clinic-form>
+  </app-modal>
+
+  <!-- Assign Doctors Modal -->
+  <app-modal
+    [isOpen]="isAssignModalOpen()"
+    [title]="'Assign Doctors to ' + assignClinic()?.name"
+    subtitle="Select doctors to assign to this clinic"
+    (close)="isAssignModalOpen.set(false)"
+  >
+    <div class="space-y-4 py-2">
+      <div class="max-h-60 overflow-y-auto space-y-2 border border-slate-250 dark:border-slate-800 rounded-xl p-3">
+        <label *ngFor="let doc of doctors()" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+          <input
+            type="checkbox"
+            [checked]="selectedDoctorIds().includes(doc.id)"
+            (change)="toggleDoctorSelection(doc.id)"
+            class="w-4 h-4 rounded text-indigo-600 border-slate-350 focus:ring-indigo-500"
+          />
+          <div class="flex-1">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Dr. {{ doc.firstName }} {{ doc.lastName }}
+            </span>
+            <span class="text-xs text-slate-400 dark:text-slate-550 block mt-0.5">
+              {{ doc.specialization }}
+            </span>
+          </div>
+        </label>
+      </div>
+      
+      <div class="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button
+          (click)="isAssignModalOpen.set(false)"
+          class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="saveAssignments()"
+          class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-sm"
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
   </app-modal>
 </div>
