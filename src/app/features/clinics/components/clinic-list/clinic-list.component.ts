@@ -10,6 +10,7 @@ import { DoctorService } from '../../../doctors/services/doctor.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-clinic-list',
@@ -22,6 +23,7 @@ export class ClinicListComponent implements OnInit {
   private doctorService = inject(DoctorService);
   private patientService = inject(PatientService);
   private appointmentService = inject(AppointmentService);
+  protected authService = inject(AuthService);
 
   doctors = signal<any[]>([]);
   patients = signal<any[]>([]);
@@ -31,6 +33,10 @@ export class ClinicListComponent implements OnInit {
   searchQuery = signal('');
   isModalOpen = signal(false);
   selectedClinic = signal<Clinic | undefined>(undefined);
+
+  isAssignModalOpen = signal(false);
+  assignClinic = signal<Clinic | undefined>(undefined);
+  selectedDoctorIds = signal<string[]>([]);
 
   clinicsWithStats = computed(() => {
     const clinicsList = this.clinicService.clinics();
@@ -103,6 +109,66 @@ export class ClinicListComponent implements OnInit {
     this.closeModal();
     // Reload clinics to make sure stats stay fresh or reflect any service updates
     this.clinicService.loadClinics();
+  }
+
+  openAssignModal(clinic: Clinic) {
+    this.assignClinic.set(clinic);
+    const assignedIds = this.doctors()
+      .filter(d => d.clinicIds?.includes(clinic.id))
+      .map(d => d.id);
+    this.selectedDoctorIds.set(assignedIds);
+    this.isAssignModalOpen.set(true);
+  }
+
+  toggleDoctorSelection(id: string) {
+    const current = this.selectedDoctorIds();
+    if (current.includes(id)) {
+      this.selectedDoctorIds.set(current.filter(x => x !== id));
+    } else {
+      this.selectedDoctorIds.set([...current, id]);
+    }
+  }
+
+  saveAssignments() {
+    const clinic = this.assignClinic();
+    if (!clinic) return;
+
+    this.clinicService.assignDoctors(clinic.id, this.selectedDoctorIds()).subscribe({
+      next: () => {
+        this.isAssignModalOpen.set(false);
+        this.clinicService.loadClinics();
+        this.doctorService.getAll().subscribe(docs => this.doctors.set(docs));
+      }
+    });
+  }
+
+  canManageClinic(clinic: Clinic): boolean {
+    const user = this.authService.currentUser();
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (user.role === 'doctor') {
+      return clinic.creatorDoctorId === user.doctorId;
+    }
+    return false;
+  }
+
+  respondToAssignment(clinicId: string, status: 'Accepted' | 'Rejected') {
+    this.clinicService.respondToAssignment(clinicId, status).subscribe({
+      next: () => {
+        this.clinicService.loadClinics();
+        this.doctorService.getAll().subscribe(docs => this.doctors.set(docs));
+      }
+    });
+  }
+
+  deleteClinic(id: string) {
+    if (confirm('Are you sure you want to delete this clinic?')) {
+      this.clinicService.delete(id).subscribe({
+        next: () => {
+          this.clinicService.loadClinics();
+        }
+      });
+    }
   }
 
   getAvatarColor(name: string): string {

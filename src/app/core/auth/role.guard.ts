@@ -14,8 +14,8 @@ export const roleGuard: CanActivateFn = (route, state) => {
   }
 
   if (!allowedRoles || allowedRoles.includes(user.role)) {
-    // Block access to '/clinics' if the user is not a Super Admin (must be admin with no clinicId)
-    if (state.url.startsWith('/clinics') && (user.role !== 'admin' || user.clinicId)) {
+    // Block access to '/clinics' if the user is not a Super Admin or Doctor
+    if (state.url.startsWith('/clinics') && user.role !== 'doctor' && (user.role !== 'admin' || user.clinicId)) {
       router.navigate(['/dashboard']);
       return false;
     }

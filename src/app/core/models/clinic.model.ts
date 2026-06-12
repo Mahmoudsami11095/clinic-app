@@ -3,4 +3,6 @@ export interface Clinic {
   name: string;
   address: string;
   phone: string;
+  creatorDoctorId?: string;
+  status?: string;
 }

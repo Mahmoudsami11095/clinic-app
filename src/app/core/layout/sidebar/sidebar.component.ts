@@ -20,7 +20,7 @@ export class Sidebar {
     { labelKey: 'sidebar.appointments', route: '/appointments', icon: 'pi pi-calendar', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { labelKey: 'sidebar.doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
     { labelKey: 'sidebar.billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
-    { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin'] },
+    { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor'] },
   ];
 
   menuItems = computed(() => {
@@ -30,7 +30,7 @@ export class Sidebar {
     return this.allMenuItems
       .filter(item => {
         if (item.route === '/clinics') {
-          return role === 'admin' && !user.clinicId;
+          return (role === 'admin' && !user.clinicId) || role === 'doctor';
         }
         return item.roles.includes(role);
       })

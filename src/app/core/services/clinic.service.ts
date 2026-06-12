@@ -49,8 +49,7 @@ export class ClinicService {
     if (!user) return [];
     if (user.role === 'admin' && !user.clinicId) return all; // Super Admin sees all
     if (user.role === 'doctor') {
-      const ids = new Set(user.clinicIds || []);
-      return all.filter(c => ids.has(c.id));
+      return all.filter(c => c.status !== 'Pending');
     }
     const singleId = user.clinicId;
     return all.filter(c => c.id === singleId);
@@ -102,6 +101,28 @@ export class ClinicService {
       map(res => {
         this.clinicsSignal.update(list => list.map(c => c.id === clinic.id ? res.data : c));
         return res.data;
+      })
+    );
+  }
+
+  delete(id: string) {
+    return this.http.delete<{ message: string }>(`/api/clinics/${id}`).pipe(
+      map(res => {
+        this.clinicsSignal.update(list => list.filter(c => c.id !== id));
+        return res;
+      })
+    );
+  }
+
+  assignDoctors(clinicId: string, doctorIds: string[]) {
+    return this.http.post<{ message: string }>(`/api/clinics/${clinicId}/assign-doctors`, doctorIds);
+  }
+
+  respondToAssignment(clinicId: string, status: 'Accepted' | 'Rejected') {
+    return this.http.post<{ message: string }>(`/api/clinics/${clinicId}/respond-assignment`, { status }).pipe(
+      map(res => {
+        this.loadClinics();
+        return res;
       })
     );
   }
