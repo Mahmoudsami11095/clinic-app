@@ -28,4 +28,22 @@ export class PatientService {
   delete(id: string) {
     return this.http.delete<{ message: string }>(`/api/patients/${id}`);
   }
+
+  getFiles(patientId: string) {
+    return this.http.get<{ data: any[] }>(`/api/patients/${patientId}/files`).pipe(map(res => res.data));
+  }
+
+  uploadFile(patientId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ message: string; data: any }>(`/api/patients/${patientId}/files`, formData);
+  }
+
+  downloadFile(patientId: string, fileName: string) {
+    return this.http.get(`/api/patients/${patientId}/files/${fileName}`, { responseType: 'blob' });
+  }
+
+  deleteFile(patientId: string, fileName: string) {
+    return this.http.delete<{ message: string }>(`/api/patients/${patientId}/files/${fileName}`);
+  }
 }
