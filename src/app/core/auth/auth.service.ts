@@ -21,6 +21,7 @@ export interface RegistrationData {
   password?: string;
   role: 'admin' | 'doctor' | 'assistant' | 'patient';
   clinicId: string;
+  clinicName?: string;
   phone?: string;
   gender?: 'Male' | 'Female';
   age?: number;

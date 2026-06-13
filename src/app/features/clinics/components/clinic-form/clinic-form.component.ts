@@ -25,10 +25,14 @@ export class ClinicFormComponent implements OnInit {
 
   submitting = false;
 
+  selectedDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
   form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3)]],
     address: ['', [Validators.required, Validators.minLength(5)]],
-    phone: ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-()]{7,15}$/)]]
+    phone: ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-()]{7,15}$/)]],
+    availabilityHours: ['09:00-17:00', [Validators.required]],
+    availabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']), [Validators.required]]
   });
 
   ngOnInit() {
@@ -36,9 +40,28 @@ export class ClinicFormComponent implements OnInit {
       this.form.patchValue({
         name: this.clinic.name,
         address: this.clinic.address,
-        phone: this.clinic.phone
+        phone: this.clinic.phone,
+        availabilityHours: this.clinic.availabilityHours || '09:00-17:00',
+        availabilityDays: this.clinic.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       });
+      if (this.clinic.availabilityDays) {
+        try {
+          this.selectedDays = JSON.parse(this.clinic.availabilityDays);
+        } catch (e) {
+          this.selectedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        }
+      }
     }
+  }
+
+  toggleDay(day: string) {
+    const hasDay = this.selectedDays.includes(day);
+    if (hasDay) {
+      this.selectedDays = this.selectedDays.filter(d => d !== day);
+    } else {
+      this.selectedDays = [...this.selectedDays, day];
+    }
+    this.form.get('availabilityDays')?.setValue(JSON.stringify(this.selectedDays));
   }
 
   isInvalid(field: string): boolean {
@@ -60,7 +83,9 @@ export class ClinicFormComponent implements OnInit {
         ...this.clinic,
         name: formValue.name || '',
         address: formValue.address || '',
-        phone: formValue.phone || ''
+        phone: formValue.phone || '',
+        availabilityHours: formValue.availabilityHours || '09:00-17:00',
+        availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       };
 
       this.clinicService.update(updatedClinic).subscribe({
@@ -86,7 +111,9 @@ export class ClinicFormComponent implements OnInit {
         id: crypto.randomUUID(),
         name: formValue.name || '',
         address: formValue.address || '',
-        phone: formValue.phone || ''
+        phone: formValue.phone || '',
+        availabilityHours: formValue.availabilityHours || '09:00-17:00',
+        availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       };
 
       this.clinicService.create(newClinic).subscribe({

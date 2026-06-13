@@ -50,6 +50,11 @@ export class LoginComponent implements OnDestroy {
   socialAvailabilityHours = signal<string>('09:00-17:00');
   socialAvailabilityDays = signal<string[]>([ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ]);
   socialClinics = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
+  socialClinicName = signal<string>('');
+  socialClinicAddress = signal<string>('');
+  socialClinicPhone = signal<string>('');
+  socialNewClinicHours = signal<string>('09:00-17:00');
+  socialNewClinicDays = signal<string[]>([ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ]);
 
   // OTP Login States
   loginMode = signal<'password' | 'otp'>('password');
@@ -417,6 +422,13 @@ export class LoginComponent implements OnDestroy {
     }));
   }
 
+  toggleSocialNewClinicDay(day: string) {
+    this.socialNewClinicDays.update(days => {
+      const hasDay = days.includes(day);
+      return hasDay ? days.filter(d => d !== day) : [...days, day];
+    });
+  }
+
   getSelectedClinicsCount(): number {
     return this.socialClinics().filter(c => c.selected).length;
   }
@@ -432,16 +444,12 @@ export class LoginComponent implements OnDestroy {
       payload.contactNumber = this.socialPhone();
       payload.specialization = this.socialSpecialization();
       
-      const selectedClinics = this.socialClinics().filter(c => c.selected);
-      payload.clinicAvailabilities = selectedClinics.map(c => ({
-        clinicId: c.id,
-        availabilityHours: c.hours,
-        availabilityDays: c.days
-      }));
-      
-      if (selectedClinics.length > 0) {
-        payload.clinicId = selectedClinics[0].id;
-        payload.clinicIds = selectedClinics.map(c => c.id);
+      if (this.socialClinicName() && this.socialClinicName().trim().length >= 3) {
+        payload.clinicName = this.socialClinicName().trim();
+        payload.clinicAddress = this.socialClinicAddress().trim();
+        payload.clinicPhone = this.socialClinicPhone().trim();
+        payload.availabilityHours = this.socialNewClinicHours();
+        payload.availabilityDays = JSON.stringify(this.socialNewClinicDays());
       }
     } else {
       payload.contactNumber = this.socialPhone();

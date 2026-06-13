@@ -19,7 +19,7 @@ export class LanguageService {
     'common.switch_user': { en: 'Switch User', ar: 'تبديل المستخدم' },
     'common.select_profile': { en: 'Select Profile', ar: 'اختر حساباً' },
     'common.logged_in_as': { en: 'Logged in as', ar: 'تم الدخول باسم' },
-    'common.reset_admin': { en: 'Reset to Admin', ar: 'إعادة تعيين إلى مدير' },
+    'common.sign_out': { en: 'Sign Out', ar: 'تسجيل الخروج' },
     'common.clinic': { en: 'Clinic', ar: 'العيادة' },
     'common.all_clinics': { en: 'All Clinics', ar: 'جميع العيادات' },
     'common.loading': { en: 'Loading...', ar: 'جاري التحميل...' },
