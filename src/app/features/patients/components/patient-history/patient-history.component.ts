@@ -22,53 +22,70 @@ import { gsap } from 'gsap';
   imports: [CommonModule, TranslatePipe, FormsModule],
   template: `
     <div class="space-y-6">
-      <!-- Tabs Navigation -->
-      <div class="flex border-b border-slate-200">
-        <button
-          type="button"
-          (click)="setActiveTab('overview')"
-          [class]="activeTab() === 'overview' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
-        >
-          <i class="pi pi-user me-1.5 text-xs"></i>
-          {{ 'patients.overview' | translate }}
-        </button>
-        <button
-          type="button"
-          (click)="setActiveTab('appointments')"
-          [class]="activeTab() === 'appointments' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
-        >
-          <i class="pi pi-calendar me-1.5 text-xs"></i>
-          {{ 'sidebar.appointments' | translate }}
-        </button>
-        <button
-          type="button"
-          (click)="setActiveTab('prescriptions')"
-          [class]="activeTab() === 'prescriptions' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
-        >
-          <i class="pi pi-briefcase me-1.5 text-xs"></i>
-          {{ 'patients.prescriptions' | translate }}
-        </button>
-        <button
-          type="button"
-          (click)="setActiveTab('billing')"
-          [class]="activeTab() === 'billing' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
-        >
-          <i class="pi pi-wallet me-1.5 text-xs"></i>
-          {{ 'sidebar.billing' | translate }}
-        </button>
-        <button
-          type="button"
-          (click)="setActiveTab('dental')"
-          [class]="activeTab() === 'dental' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
-          class="flex-1 py-3 text-center border-b-2 text-sm font-semibold transition-colors focus:outline-none"
-        >
-          <i class="pi pi-table me-1.5 text-xs"></i>
-          {{ 'patients.dental' | translate }}
-        </button>
+      <!-- Top Row: Summary Info Grid (3 Cards) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1: Identity Card -->
+        <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex items-center gap-4 text-start">
+          <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xl uppercase shadow-inner flex-shrink-0">
+            {{ patient.firstName[0] }}{{ patient.lastName[0] }}
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-lg font-bold text-slate-800 truncate">{{ patient.firstName }} {{ patient.lastName }}</h3>
+            <div class="flex flex-col gap-1 mt-1 text-slate-500 text-xs">
+              <span class="flex items-center gap-1.5 truncate"><i class="pi pi-phone text-[10px] text-slate-400"></i> {{ patient.contactNumber }}</span>
+              <span class="flex items-center gap-1.5 truncate"><i class="pi pi-envelope text-[10px] text-slate-400"></i> {{ patient.email }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: General Information -->
+        <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-start">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{{ 'patients.general_info' | translate }}</h4>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <div>
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.dob' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ patient.dateOfBirth | date:'mediumDate' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.age' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ getAge(patient.dateOfBirth) }} y.o.</p>
+            </div>
+            <div class="col-span-2">
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.address' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5 truncate">{{ patient.address }}</p>
+            </div>
+            <div class="col-span-2">
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.registered_on' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ patient.registrationDate | date:'mediumDate' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Anamnesis -->
+        <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-start">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{{ 'patients.anamnesis' | translate }}</h4>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <div>
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.allergies' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ 'patients.nuts_pollen' | translate }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.chronic_diseases' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ 'patients.asthma' | translate }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.blood_group' | translate }}</p>
+              <span class="inline-flex px-2 py-0.5 text-[10px] font-bold rounded-md ring-1 ring-inset mt-1"
+                    [class]="getBloodGroupClass(patient.bloodGroup)">
+                {{ patient.bloodGroup || 'O+' }}
+              </span>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.past_illnesses' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ 'patients.corona' | translate }}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -77,463 +94,610 @@ import { gsap } from 'gsap';
           <div class="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent"></div>
         </div>
       } @else {
-        <!-- Tab Contents -->
-        
-        <!-- 1. Overview Tab -->
-        @if (activeTab() === 'overview') {
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 text-start">
-            <!-- Demographics -->
-            <div class="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-4">
-              <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">{{ 'patients.overview' | translate }}</h4>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'doctors.name' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ patient.firstName }} {{ patient.lastName }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.gender' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700 capitalize">{{ 'patients.' + patient.gender | translate }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.dob' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ patient.dateOfBirth | date:'mediumDate' }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.age' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ getAge(patient.dateOfBirth) }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.blood_group' | translate }}</p>
-                  <span class="inline-flex px-2 py-0.5 text-xs font-bold rounded-md ring-1 ring-inset mt-1"
-                        [class]="getBloodGroupClass(patient.bloodGroup)">
-                    {{ patient.bloodGroup }}
-                  </span>
-                </div>
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.registered_on' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ patient.registrationDate | date:'mediumDate' }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Contact Details -->
-            <div class="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-4">
-              <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">{{ 'patients.phone' | translate }}</h4>
-              <div class="space-y-3">
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.email' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700 break-all">{{ patient.email }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.phone' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ patient.contactNumber }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-slate-400 font-medium">{{ 'patients.address' | translate }}</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ patient.address }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- 2. Appointments Tab -->
-        @if (activeTab() === 'appointments') {
-          <div class="space-y-4 pt-2 text-start">
-            @if (appointments().length === 0) {
-              <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
-                <i class="pi pi-calendar text-3xl mb-2 opacity-50 block"></i>
-                <p>{{ 'appointments.no_appointments' | translate }}</p>
-              </div>
-            } @else {
-              <div class="space-y-3 max-h-[50vh] overflow-y-auto pe-1">
-                @for (appt of appointments(); track appt.id) {
-                  <div class="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-start gap-4">
-                      <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 flex-shrink-0">
-                        <i class="pi pi-calendar-plus text-lg"></i>
-                      </div>
-                      <div>
-                        <div class="flex items-center gap-2">
-                          <p class="font-semibold text-slate-800">{{ appt.type }}</p>
-                          <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full capitalize ring-1 ring-inset"
-                                [ngClass]="getStatusClass(appt.status)">
-                            {{ 'dashboard.' + appt.status | translate }}
-                          </span>
-                        </div>
-                        <p class="text-xs text-slate-400 font-medium mt-0.5">Consulted by {{ appt.doctorName }}</p>
-                        <p class="text-xs text-slate-500 mt-1.5 italic" *ngIf="appt.notes">"{{ appt.notes }}"</p>
-                      </div>
-                    </div>
-                    <div class="text-start md:text-end border-t md:border-t-0 pt-3 md:pt-0 flex flex-col gap-1">
-                      <p class="text-sm font-semibold text-slate-700">{{ appt.date | date:'mediumDate' }}</p>
-                      <p class="text-xs text-slate-400 font-medium">{{ appt.date | date:'shortTime' }}</p>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-
-        <!-- 3. Prescriptions Tab -->
-        @if (activeTab() === 'prescriptions') {
-          <div class="space-y-4 pt-2 max-h-[50vh] overflow-y-auto pe-1 text-start">
-            @if (prescriptions().length === 0) {
-              <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
-                <i class="pi pi-briefcase text-3xl mb-2 opacity-50 block"></i>
-                <p>{{ 'patients.no_prescriptions' | translate }}</p>
-              </div>
-            } @else {
-              <div class="space-y-4">
-                @for (pres of prescriptions(); track pres.id) {
-                  <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
-                    <!-- Prescription Header -->
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div>
-                        <p class="font-semibold text-slate-800">{{ 'patients.prescription_from' | translate }} {{ pres.doctorName }}</p>
-                        <p class="text-xs text-slate-400 font-medium mt-0.5">Issued on {{ pres.date | date:'mediumDate' }}</p>
-                      </div>
-                      <span class="text-xs font-mono bg-slate-50 px-2.5 py-1 border border-slate-200/50 rounded-lg text-slate-600">ID: {{ pres.id.substring(0,8) }}</span>
-                    </div>
-                    
-                    <!-- Medications Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      @for (med of pres.medications; track $index) {
-                        <div class="bg-slate-50/60 border border-slate-100 rounded-xl p-3.5 flex items-start gap-3">
-                          <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <i class="pi pi-check-circle text-sm"></i>
-                          </div>
-                          <div>
-                            <p class="font-semibold text-slate-800 text-sm">{{ med.name }}</p>
-                            <p class="text-xs text-slate-500 mt-1">
-                              {{ 'patients.dosage' | translate }}: <span class="font-medium text-slate-700">{{ med.dosage }}</span> | 
-                              {{ 'patients.frequency' | translate }}: <span class="font-medium text-slate-700">{{ med.frequency }}</span> | 
-                              {{ 'patients.duration' | translate }}: <span class="font-medium text-slate-700">{{ med.duration }}</span>
-                            </p>
-                          </div>
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Instructions -->
-                    <div class="bg-amber-50/30 border border-amber-100/40 rounded-xl p-3.5" *ngIf="pres.notes">
-                      <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">{{ 'patients.instructions' | translate }}</p>
-                      <p class="text-sm text-slate-600">{{ pres.notes }}</p>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-
-        <!-- 4. Billing Tab -->
-        @if (activeTab() === 'billing') {
-          <div class="space-y-4 pt-2 text-start">
-            @if (billingRecords().length === 0) {
-              <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
-                <i class="pi pi-wallet text-3xl mb-2 opacity-50 block"></i>
-                <p>{{ 'billing.no_bills' | translate }}</p>
-              </div>
-            } @else {
-              <div class="bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden max-h-[50vh] overflow-y-auto">
-                <table class="w-full text-start text-sm whitespace-nowrap">
-                  <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0">
-                    <tr>
-                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.invoice_no' | translate }}</th>
-                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.issue_date' | translate }}</th>
-                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.amount' | translate }}</th>
-                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
-                      <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
-                    </tr>
-                  </thead>
-                    <tbody class="divide-y divide-slate-100 text-slate-600">
-                      @for (bill of billingRecords(); track bill.id) {
-                        <tr class="hover:bg-slate-50/50">
-                          <td class="py-3.5 px-5 font-semibold text-slate-755 text-start">
-                            <div>INV-{{ bill.id.padStart(4, '0') }}</div>
-                            @if (bill.appointmentType) {
-                              <div class="text-[11px] text-slate-400 font-medium mt-0.5">
-                                {{ bill.appointmentType }} ({{ bill.appointmentDate | date:'mediumDate' }})
-                              </div>
-                            }
-                          </td>
-                          <td class="py-3.5 px-5 text-start">{{ bill.dateIssued | date:'mediumDate' }}</td>
-                          <td class="py-3.5 px-5 text-start">
-                            <div class="font-bold text-slate-800">{{ bill.amount | currency }}</div>
-                            @if (bill.paidAmount && bill.status === 'partially_paid') {
-                              <div class="text-[10px] text-slate-400 font-semibold mt-0.5">Paid: {{ bill.paidAmount | currency }}</div>
-                            }
-                          </td>
-                          <td class="py-3.5 px-5 text-start">
-                            <span class="px-2.5 py-0.5 text-xs font-bold rounded-full capitalize ring-1 ring-inset"
-                                  [ngClass]="getBillingStatusClass(bill.status)">
-                              {{ 'billing.' + bill.status | translate }}
-                            </span>
-                          </td>
-                          <td class="py-3.5 px-5 text-slate-500 font-medium text-start">{{ bill.paymentMethod || '—' }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                </table>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- 5. Dental Tab -->
-        @if (activeTab() === 'dental') {
-          <!-- View switcher segmented toggle -->
-          <div class="flex justify-between items-center mb-4 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60">
-            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider ps-1">
-              {{ 'dental.select_view_mode' | translate }}
-            </div>
-            <div class="flex bg-slate-200/50 p-1 rounded-xl gap-1 border border-slate-200/60">
+        <!-- Bottom Layout: Split Left (Tabs) & Right (Files & Notes) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <!-- Left Column (Tabs Container - 2/3 width) -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Tabs Navigation -->
+            <div class="flex border-b border-slate-200 bg-white rounded-t-2xl px-2">
               <button
                 type="button"
-                (click)="setDentalView('grid')"
-                [class]="activeDentalView() === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none"
+                (click)="setActiveTab('future-visits')"
+                [class]="activeTab() === 'future-visits' ? 'border-indigo-600 text-indigo-600 font-bold border-b-2' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                class="flex-1 py-3 text-center text-sm font-semibold transition-colors focus:outline-none"
               >
-                <i class="pi pi-table"></i>
-                <span>{{ 'dental.view_skeuomorphic_grid' | translate }}</span>
+                {{ 'patients.future_visits' | translate }} ({{ futureAppointments().length }})
               </button>
+              <button
+                type="button"
+                (click)="setActiveTab('past-visits')"
+                [class]="activeTab() === 'past-visits' ? 'border-indigo-600 text-indigo-600 font-bold border-b-2' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                class="flex-1 py-3 text-center text-sm font-semibold transition-colors focus:outline-none"
+              >
+                {{ 'patients.past_visits' | translate }} ({{ pastAppointments().length }})
+              </button>
+              <button
+                type="button"
+                (click)="setActiveTab('prescriptions')"
+                [class]="activeTab() === 'prescriptions' ? 'border-indigo-600 text-indigo-600 font-bold border-b-2' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                class="flex-1 py-3 text-center text-sm font-semibold transition-colors focus:outline-none"
+              >
+                {{ 'patients.prescriptions' | translate }} ({{ prescriptions().length }})
+              </button>
+              <button
+                type="button"
+                (click)="setActiveTab('billing')"
+                [class]="activeTab() === 'billing' ? 'border-indigo-600 text-indigo-600 font-bold border-b-2' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                class="flex-1 py-3 text-center text-sm font-semibold transition-colors focus:outline-none"
+              >
+                {{ 'sidebar.billing' | translate }} ({{ billingRecords().length }})
+              </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="bg-white border border-slate-200/60 border-t-0 rounded-b-2xl p-6">
+              <!-- 1. Future Visits -->
+              @if (activeTab() === 'future-visits') {
+                <div class="space-y-4 text-start">
+                  @if (futureAppointments().length === 0) {
+                    <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
+                      <i class="pi pi-calendar text-3xl mb-2 opacity-50 block"></i>
+                      <p>No future visits scheduled</p>
+                    </div>
+                  } @else {
+                    <div class="space-y-3 max-h-[50vh] overflow-y-auto pe-1">
+                      @for (appt of futureAppointments(); track appt.id) {
+                        <div class="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 flex-shrink-0">
+                              <i class="pi pi-calendar-plus text-lg"></i>
+                            </div>
+                            <div>
+                              <div class="flex items-center gap-2">
+                                <p class="font-semibold text-slate-800">{{ appt.type }}</p>
+                                <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full capitalize ring-1 ring-inset"
+                                      [ngClass]="getStatusClass(appt.status)">
+                                  {{ 'dashboard.' + appt.status | translate }}
+                                </span>
+                              </div>
+                              <p class="text-xs text-slate-400 font-medium mt-0.5">Consulted by {{ appt.doctorName }}</p>
+                              <p class="text-xs text-slate-500 mt-1.5 italic" *ngIf="appt.notes">"{{ appt.notes }}"</p>
+                            </div>
+                          </div>
+                          <div class="text-start md:text-end border-t md:border-t-0 pt-3 md:pt-0 flex flex-col gap-1">
+                            <p class="text-sm font-semibold text-slate-700">{{ appt.date | date:'mediumDate' }}</p>
+                            <p class="text-xs text-slate-400 font-medium">{{ appt.date | date:'shortTime' }}</p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 2. Past Visits -->
+              @if (activeTab() === 'past-visits') {
+                <div class="space-y-4 text-start">
+                  @if (pastAppointments().length === 0) {
+                    <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
+                      <i class="pi pi-calendar text-3xl mb-2 opacity-50 block"></i>
+                      <p>No past visits found</p>
+                    </div>
+                  } @else {
+                    <div class="space-y-3 max-h-[50vh] overflow-y-auto pe-1">
+                      @for (appt of pastAppointments(); track appt.id) {
+                        <div class="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 flex-shrink-0">
+                              <i class="pi pi-calendar text-lg"></i>
+                            </div>
+                            <div>
+                              <div class="flex items-center gap-2">
+                                <p class="font-semibold text-slate-800">{{ appt.type }}</p>
+                                <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full capitalize ring-1 ring-inset"
+                                      [ngClass]="getStatusClass(appt.status)">
+                                  {{ 'dashboard.' + appt.status | translate }}
+                                </span>
+                              </div>
+                              <p class="text-xs text-slate-400 font-medium mt-0.5">Consulted by {{ appt.doctorName }}</p>
+                              <p class="text-xs text-slate-500 mt-1.5 italic" *ngIf="appt.notes">"{{ appt.notes }}"</p>
+                            </div>
+                          </div>
+                          <div class="text-start md:text-end border-t md:border-t-0 pt-3 md:pt-0 flex flex-col gap-1">
+                            <p class="text-sm font-semibold text-slate-700">{{ appt.date | date:'mediumDate' }}</p>
+                            <p class="text-xs text-slate-400 font-medium">{{ appt.date | date:'shortTime' }}</p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 3. Prescriptions Tab -->
+              @if (activeTab() === 'prescriptions') {
+                <div class="space-y-4 max-h-[50vh] overflow-y-auto pe-1 text-start">
+                  @if (prescriptions().length === 0) {
+                    <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
+                      <i class="pi pi-briefcase text-3xl mb-2 opacity-50 block"></i>
+                      <p>{{ 'patients.no_prescriptions' | translate }}</p>
+                    </div>
+                  } @else {
+                    <div class="space-y-4">
+                      @for (pres of prescriptions(); track pres.id) {
+                        <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
+                          <!-- Prescription Header -->
+                          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                              <p class="font-semibold text-slate-800">{{ 'patients.prescription_from' | translate }} {{ pres.doctorName }}</p>
+                              <p class="text-xs text-slate-400 font-medium mt-0.5">Issued on {{ pres.date | date:'mediumDate' }}</p>
+                            </div>
+                            <span class="text-xs font-mono bg-slate-50 px-2.5 py-1 border border-slate-200/50 rounded-lg text-slate-600">ID: {{ pres.id.substring(0,8) }}</span>
+                          </div>
+                          
+                          <!-- Medications Grid -->
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            @for (med of pres.medications; track $index) {
+                              <div class="bg-slate-50/60 border border-slate-100 rounded-xl p-3.5 flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <i class="pi pi-check-circle text-sm"></i>
+                                </div>
+                                <div>
+                                  <p class="font-semibold text-slate-800 text-sm">{{ med.name }}</p>
+                                  <p class="text-xs text-slate-500 mt-1">
+                                    {{ 'patients.dosage' | translate }}: <span class="font-medium text-slate-700">{{ med.dosage }}</span> | 
+                                    {{ 'patients.frequency' | translate }}: <span class="font-medium text-slate-700">{{ med.frequency }}</span> | 
+                                    {{ 'patients.duration' | translate }}: <span class="font-medium text-slate-700">{{ med.duration }}</span>
+                                  </p>
+                                </div>
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Instructions -->
+                          <div class="bg-amber-50/30 border border-amber-100/40 rounded-xl p-3.5" *ngIf="pres.notes">
+                            <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">{{ 'patients.instructions' | translate }}</p>
+                            <p class="text-sm text-slate-600">{{ pres.notes }}</p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 4. Billing Tab -->
+              @if (activeTab() === 'billing') {
+                <div class="space-y-4 text-start">
+                  @if (billingRecords().length === 0) {
+                    <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-400">
+                      <i class="pi pi-wallet text-3xl mb-2 opacity-50 block"></i>
+                      <p>{{ 'billing.no_bills' | translate }}</p>
+                    </div>
+                  } @else {
+                    <div class="bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden max-h-[50vh] overflow-y-auto">
+                      <table class="w-full text-start text-sm whitespace-nowrap">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0">
+                          <tr>
+                            <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.invoice_no' | translate }}</th>
+                            <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.issue_date' | translate }}</th>
+                            <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.amount' | translate }}</th>
+                            <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
+                            <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
+                          </tr>
+                        </thead>
+                          <tbody class="divide-y divide-slate-100 text-slate-600">
+                            @for (bill of billingRecords(); track bill.id) {
+                              <tr class="hover:bg-slate-50/50">
+                                <td class="py-3.5 px-5 font-semibold text-slate-755 text-start">
+                                  <div>INV-{{ bill.id.padStart(4, '0') }}</div>
+                                  @if (bill.appointmentType) {
+                                    <div class="text-[11px] text-slate-400 font-medium mt-0.5">
+                                      {{ bill.appointmentType }} ({{ bill.appointmentDate | date:'mediumDate' }})
+                                    </div>
+                                  }
+                                </td>
+                                <td class="py-3.5 px-5 text-start">{{ bill.dateIssued | date:'mediumDate' }}</td>
+                                <td class="py-3.5 px-5 text-start">
+                                  <div class="font-bold text-slate-800">{{ bill.amount | currency }}</div>
+                                  @if (bill.paidAmount && bill.status === 'partially_paid') {
+                                    <div class="text-[10px] text-slate-400 font-semibold mt-0.5">Paid: {{ bill.paidAmount | currency }}</div>
+                                  }
+                                </td>
+                                <td class="py-3.5 px-5 text-start">
+                                  <span class="px-2.5 py-0.5 text-xs font-bold rounded-full capitalize ring-1 ring-inset"
+                                        [ngClass]="getBillingStatusClass(bill.status)">
+                                    {{ 'billing.' + bill.status | translate }}
+                                  </span>
+                                </td>
+                                <td class="py-3.5 px-5 text-slate-500 font-medium text-start">{{ bill.paymentMethod || '—' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                      </table>
+                    </div>
+                  }
+                </div>
+              }
+
+            </div>
+          </div>
+
+          <!-- Right Column (Files & Notes - 1/3 width) -->
+          <div class="space-y-6">
+            <!-- Files Card -->
+            <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-start animate-fade-in">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <i class="pi pi-file-pdf text-rose-500"></i>
+                  <span>{{ 'patients.files' | translate }}</span>
+                </h4>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 rounded-full text-slate-500">{{ filesList().length }} {{ 'patients.files' | translate }}</span>
+                  <label class="cursor-pointer text-xs font-bold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-1">
+                    <i class="pi pi-plus text-[10px]"></i>
+                    <span>Add</span>
+                    <input type="file" class="hidden" (change)="onFileSelected($event)" accept=".pdf,.png,.jpg,.jpeg">
+                  </label>
+                </div>
+              </div>
+              
+              <div class="space-y-3">
+                @if (filesList().length === 0) {
+                  <p class="text-xs text-slate-400 text-center py-6">No files uploaded yet.</p>
+                } @else {
+                  @for (file of filesList(); track file.name) {
+                    <div class="flex items-center justify-between p-3 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors animate-fade-in">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center flex-shrink-0">
+                          <i class="pi pi-file text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                          <p class="text-xs font-semibold text-slate-700 truncate">{{ file.name }}</p>
+                          <p class="text-[10px] text-slate-400">{{ file.size }} • {{ file.date }}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <button
+                          type="button"
+                          (click)="downloadFile(file.name)"
+                          class="p-1.5 hover:bg-slate-200/60 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                          title="Download"
+                        >
+                          <i class="pi pi-download text-xs"></i>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteFile(file.name)"
+                          class="p-1.5 hover:bg-slate-200/60 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          title="Delete"
+                        >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+
+            <!-- Notes Card -->
+            <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-start animate-fade-in">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <i class="pi pi-paperclip text-slate-500"></i>
+                  <span>{{ 'patients.patient_notes' | translate }}</span>
+                </h4>
+                <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 rounded-full text-slate-500">{{ 'patients.notes_count' | translate }}</span>
+              </div>
+              
+              <div class="space-y-4">
+                <div class="border-s-2 border-slate-100 ps-3.5 space-y-1 py-0.5 text-start relative">
+                  <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] text-slate-400 font-semibold">Jun 10, 2026</span>
+                    <button type="button" (click)="downloadNote('1')" class="text-[10px] text-indigo-500 hover:underline font-semibold cursor-pointer">{{ 'patients.export' | translate }}</button>
+                  </div>
+                  <p class="text-xs text-slate-600">{{ 'patients.reported_pain' | translate }}</p>
+                </div>
+
+                <div class="border-s-2 border-slate-100 ps-3.5 space-y-1 py-0.5 text-start relative">
+                  <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] text-slate-400 font-semibold">May 15, 2026</span>
+                    <button type="button" (click)="downloadNote('2')" class="text-[10px] text-indigo-500 hover:underline font-semibold cursor-pointer">{{ 'patients.export' | translate }}</button>
+                  </div>
+                  <p class="text-xs text-slate-600">{{ 'patients.scaling_polishing' | translate }}</p>
+                </div>
+
+                <div class="border-s-2 border-slate-100 ps-3.5 space-y-1 py-0.5 text-start relative">
+                  <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] text-slate-400 font-semibold">May 15, 2026</span>
+                    <button type="button" (click)="downloadNote('3')" class="text-[10px] text-indigo-500 hover:underline font-semibold cursor-pointer">{{ 'patients.export' | translate }}</button>
+                  </div>
+                  <p class="text-xs text-slate-600">{{ 'patients.follow_up_6m' | translate }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dedicated Dental Chart Card Section below the split row container -->
+        <div class="mt-6 space-y-6 animate-fade-in">
+          <!-- Dental Chart Main Header Card -->
+          <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-start">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner flex-shrink-0">
+                <i class="pi pi-compass text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-slate-800 uppercase">DENTAL CHART</h3>
+                <p class="text-xs text-slate-400 font-medium mt-0.5">Select Chart Interface</p>
+              </div>
+            </div>
+            
+            <!-- View Mode Selector (Segmented Control) -->
+            <div class="flex bg-slate-100 p-1 rounded-xl gap-1 border border-slate-200/60">
               <button
                 type="button"
                 (click)="setDentalView('3d')"
-                [class]="activeDentalView() === '3d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none"
+                [class]="activeDentalView() === '3d' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'"
+                class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 focus:outline-none cursor-pointer border-none"
               >
                 <i class="pi pi-box"></i>
-                <span>{{ 'dental.view_3d_volumetric' | translate }}</span>
+                <span>3D Volumetric Model</span>
+              </button>
+              <button
+                type="button"
+                (click)="setDentalView('grid')"
+                [class]="activeDentalView() === 'grid' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'"
+                class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 focus:outline-none cursor-pointer border-none"
+              >
+                <i class="pi pi-table"></i>
+                <span>Interactive Grid View</span>
               </button>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2 text-start animate-fade-in">
-            <!-- Left 2 Cols: Teeth Chart & Summary -->
+          <!-- Dental Chart Content Grid (Two columns) -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start text-start">
+            <!-- Left 2 Cols: Teeth Chart & All Teeth Summary -->
             <div class="lg:col-span-2 space-y-6">
-              @if (activeDentalView() === 'grid') {
-                <!-- Teeth Chart Card -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6 text-white">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-3">
-                  <div>
-                    <h4 class="text-base font-bold text-slate-100">{{ 'dental.teeth_chart' | translate }}</h4>
-                    <p class="text-xs text-slate-400 font-medium mt-0.5">{{ 'dental.select_tooth_prompt' | translate }}</p>
+              <!-- Teeth Chart Card -->
+              <div class="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm space-y-6">
+                <!-- Inner Header: Title, Adult/Child buttons, Status Legend -->
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                  <div class="flex flex-wrap items-center gap-4">
+                    <h4 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                      <i class="pi pi-minus text-xs text-slate-500"></i>
+                      <span>Teeth Chart</span>
+                    </h4>
+                    <!-- Manual ADULT/CHILD Toggle -->
+                    <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/30">
+                      <button
+                        type="button"
+                        (click)="isChildOverride.set(false)"
+                        [class]="!isChild() ? 'bg-white text-cyan-600 border border-slate-200/60 font-bold shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                        class="px-3 py-1 rounded-lg text-xs transition-all cursor-pointer focus:outline-none border-none"
+                      >
+                        ADULT (1 - 32)
+                      </button>
+                      <button
+                        type="button"
+                        (click)="isChildOverride.set(true)"
+                        [class]="isChild() ? 'bg-white text-cyan-600 border border-slate-200/60 font-bold shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                        class="px-3 py-1 rounded-lg text-xs transition-all cursor-pointer focus:outline-none border-none"
+                      >
+                        CHILD (A - T)
+                      </button>
+                    </div>
                   </div>
+                  
                   <!-- Status Legend -->
                   <div class="flex flex-wrap gap-2 text-[10px] font-bold">
-                    <span class="px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                      {{ 'dental.healthy' | translate }}
+                    <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+                      HEALTHY
                     </span>
-                    <span class="px-2 py-1 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400">
-                      {{ 'dental.caries' | translate }}
+                    <span class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200/60">
+                      CARIES (DECAY)
                     </span>
-                    <span class="px-2 py-1 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400">
-                      {{ 'dental.filled' | translate }}
+                    <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 border border-blue-200/60">
+                      FILLED
                     </span>
-                    <span class="px-2 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                      {{ 'dental.under_treatment' | translate }}
+                    <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-600 border border-amber-200/60">
+                      UNDER TX
                     </span>
-                    <span class="px-2 py-1 rounded bg-slate-800/50 border border-slate-700 border-dashed text-slate-400">
-                      {{ 'dental.missing' | translate }}
+                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200/60 border-dashed">
+                      MISSING
                     </span>
                   </div>
                 </div>
 
-                <!-- Interactive Teeth Grid (Horizontal Scrolling on Mobile) -->
-                <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
-                  <defs>
-                    <!-- Drop shadow for 3D tooth shell effect -->
-                    <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6" />
-                    </filter>
-                    
-                    <!-- Neon glow filter for root canals -->
-                    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                    
-                    <!-- Translucent Cyan/Blue Radial Gradient for Healthy Teeth -->
-                    <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
-                      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8" />
-                      <stop offset="70%" stop-color="#0891b2" stop-opacity="0.4" />
-                      <stop offset="100%" stop-color="#083344" stop-opacity="0.2" />
-                    </radialGradient>
-                    
-                    <!-- Translucent Rose/Red Radial Gradient for Caries -->
-                    <radialGradient id="toothGradCaries" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
-                      <stop offset="0%" stop-color="#fda4af" stop-opacity="0.8" />
-                      <stop offset="65%" stop-color="#e11d48" stop-opacity="0.4" />
-                      <stop offset="100%" stop-color="#4c0519" stop-opacity="0.2" />
-                    </radialGradient>
-                    
-                    <!-- Translucent Sky/Blue Radial Gradient for Filled Teeth -->
-                    <radialGradient id="toothGradFilled" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
-                      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8" />
-                      <stop offset="70%" stop-color="#2563eb" stop-opacity="0.4" />
-                      <stop offset="100%" stop-color="#172554" stop-opacity="0.2" />
-                    </radialGradient>
-                    
-                    <!-- Translucent Amber/Orange Radial Gradient for Under Treatment -->
-                    <radialGradient id="toothGradTreatment" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
-                      <stop offset="0%" stop-color="#fde047" stop-opacity="0.8" />
-                      <stop offset="65%" stop-color="#d97706" stop-opacity="0.4" />
-                      <stop offset="100%" stop-color="#451a03" stop-opacity="0.2" />
-                    </radialGradient>
+                @if (activeDentalView() === 'grid') {
+                  <!-- Teeth Chart 2D Grid -->
+                  <!-- SVG definitions for translucent gradients -->
+                  <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+                    <defs>
+                      <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.3" />
+                      </filter>
+                      <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                      <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#e0f2fe" />
+                        <stop offset="70%" stop-color="#bae6fd" />
+                        <stop offset="100%" stop-color="#7dd3fc" />
+                      </radialGradient>
+                      <radialGradient id="toothGradCaries" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#ffe4e6" />
+                        <stop offset="65%" stop-color="#fecdd3" />
+                        <stop offset="100%" stop-color="#fda4af" />
+                      </radialGradient>
+                      <radialGradient id="toothGradFilled" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#dbeafe" />
+                        <stop offset="70%" stop-color="#bfdbfe" />
+                        <stop offset="100%" stop-color="#93c5fd" />
+                      </radialGradient>
+                      <radialGradient id="toothGradTreatment" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#fef9c3" />
+                        <stop offset="65%" stop-color="#fef08a" />
+                        <stop offset="100%" stop-color="#fde047" />
+                      </radialGradient>
+                      <radialGradient id="toothGradCrown" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#fef08a" />
+                        <stop offset="65%" stop-color="#ca8a04" />
+                        <stop offset="100%" stop-color="#a16207" />
+                      </radialGradient>
+                      <radialGradient id="toothGradImplant" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#f1f5f9" />
+                        <stop offset="65%" stop-color="#cbd5e1" />
+                        <stop offset="100%" stop-color="#94a3b8" />
+                      </radialGradient>
+                      <radialGradient id="toothGradFractured" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#ffedd5" />
+                        <stop offset="65%" stop-color="#fed7aa" />
+                        <stop offset="100%" stop-color="#fdba74" />
+                      </radialGradient>
+                    </defs>
+                  </svg>
 
-                    <!-- Translucent Gold Radial Gradient for Crowns -->
-                    <radialGradient id="toothGradCrown" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
-                      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9" />
-                      <stop offset="65%" stop-color="#ca8a04" stop-opacity="0.6" />
-                      <stop offset="100%" stop-color="#422006" stop-opacity="0.3" />
-                    </radialGradient>
-
-                    <!-- Translucent Titanium Silver Radial Gradient for Implants -->
-                    <radialGradient id="toothGradImplant" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
-                      <stop offset="0%" stop-color="#cbd5e1" stop-opacity="0.9" />
-                      <stop offset="65%" stop-color="#475569" stop-opacity="0.6" />
-                      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.3" />
-                    </radialGradient>
-
-                    <!-- Translucent Orange/Red Radial Gradient for Fractures -->
-                    <radialGradient id="toothGradFractured" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
-                      <stop offset="0%" stop-color="#ffedd5" stop-opacity="0.8" />
-                      <stop offset="65%" stop-color="#ea580c" stop-opacity="0.5" />
-                      <stop offset="100%" stop-color="#431407" stop-opacity="0.25" />
-                    </radialGradient>
-                  </defs>
-                </svg>
-
-                <div class="overflow-x-auto pb-2">
-                  <div class="min-w-[760px] space-y-6 py-2 px-1" style="min-width: 760px;">
-                    <!-- Maxillary (Upper Jaw) -->
-                    <div class="space-y-2">
-                      <div class="flex items-center justify-between text-xs font-semibold text-slate-400 px-2">
-                        <span>{{ 'dental.upper_jaw' | translate }}</span>
-                        <div class="flex gap-4">
-                          <span>{{ 'dental.right' | translate }}</span>
-                          <span class="w-12"></span>
-                          <span class="text-end">{{ 'dental.left' | translate }}</span>
+                  <div class="overflow-x-auto pb-2">
+                    <div class="min-w-[760px] space-y-6 py-2 px-1">
+                      <!-- Maxillary (Upper Jaw) -->
+                      <div class="space-y-2">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-400 px-2">
+                          <span>UPPER JAW (MAXILLARY)</span>
+                          <div class="flex gap-4">
+                            <span>RIGHT (R)</span>
+                            <span class="w-12"></span>
+                            <span class="text-end">LEFT (L)</span>
+                          </div>
+                        </div>
+                        <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
+                          @for (toothNum of upperTeethList(); track toothNum) {
+                            <button
+                              type="button"
+                              (click)="selectTooth(toothNum)"
+                              [class]="getToothClasses(toothNum)"
+                              [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
+                            >
+                              <span class="text-[10px] leading-none opacity-60 mt-0.5">{{ toothNum }}</span>
+                              <span class="w-8 h-8 flex items-center justify-center">
+                                <svg class="w-8 h-8 mx-auto" viewBox="0 0 40 40">
+                                  @if (getToothLatestStatus(toothNum) === 'missing') {
+                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                          fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                  } @else {
+                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                          [attr.fill]="getToothFillUrl(toothNum)"
+                                          [attr.stroke]="getToothStrokeColor(toothNum)"
+                                          stroke-width="1.5"
+                                          filter="url(#shadow3d)"/>
+                                    <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                          [attr.fill]="getPulpFillColor(toothNum)"
+                                          [attr.stroke]="getCanalStroke(toothNum)"
+                                          stroke-width="1"
+                                          filter="url(#neonGlow)"/>
+                                    <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                          fill="none"
+                                          [attr.stroke]="getCanalStroke(toothNum)"
+                                          stroke-width="1.75"
+                                          stroke-linecap="round"
+                                          filter="url(#neonGlow)"/>
+                                  }
+                                </svg>
+                              </span>
+                            </button>
+                          }
                         </div>
                       </div>
-                      <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
-                        @for (toothNum of upperTeethList(); track toothNum) {
-                          <button
-                            type="button"
-                            (click)="selectTooth(toothNum)"
-                            [class]="getToothClasses(toothNum)"
-                            [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
-                          >
-                            <span class="text-[10px] leading-none opacity-60 mt-0.5">{{ toothNum }}</span>
-                            <span class="w-8 h-8 flex items-center justify-center">
-                              <svg class="w-8 h-8 mx-auto" viewBox="0 0 40 40">
-                                @if (getToothLatestStatus(toothNum) === 'missing') {
-                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                        fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3"/>
-                                } @else {
-                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                        [attr.fill]="getToothFillUrl(toothNum)"
-                                        [attr.stroke]="getToothStrokeColor(toothNum)"
-                                        stroke-width="1.5"
-                                        filter="url(#shadow3d)"/>
-                                  <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
-                                        [attr.fill]="getPulpFillColor(toothNum)"
-                                        [attr.stroke]="getCanalStroke(toothNum)"
-                                        stroke-width="1"
-                                        filter="url(#neonGlow)"/>
-                                  <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
-                                        fill="none"
-                                        [attr.stroke]="getCanalStroke(toothNum)"
-                                        stroke-width="1.75"
-                                        stroke-linecap="round"
-                                        filter="url(#neonGlow)"/>
-                                }
-                              </svg>
-                            </span>
-                          </button>
-                        }
-                      </div>
-                    </div>
 
-                    <!-- Mandibular (Lower Jaw) -->
-                    <div class="space-y-2">
-                      <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
-                        @for (toothNum of lowerTeethList(); track toothNum) {
-                          <button
-                            type="button"
-                            (click)="selectTooth(toothNum)"
-                            [class]="getToothClasses(toothNum)"
-                            [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
-                          >
-                            <span class="w-8 h-8 flex items-center justify-center">
-                              <svg class="w-8 h-8 mx-auto rotate-180" viewBox="0 0 40 40">
-                                @if (getToothLatestStatus(toothNum) === 'missing') {
-                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                        fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3"/>
-                                } @else {
-                                  <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                        [attr.fill]="getToothFillUrl(toothNum)"
-                                        [attr.stroke]="getToothStrokeColor(toothNum)"
-                                        stroke-width="1.5"
-                                        filter="url(#shadow3d)"/>
-                                  <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
-                                        [attr.fill]="getPulpFillColor(toothNum)"
-                                        [attr.stroke]="getCanalStroke(toothNum)"
-                                        stroke-width="1"
-                                        filter="url(#neonGlow)"/>
-                                  <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
-                                        fill="none"
-                                        [attr.stroke]="getCanalStroke(toothNum)"
-                                        stroke-width="1.75"
-                                        stroke-linecap="round"
-                                        filter="url(#neonGlow)"/>
-                                }
-                              </svg>
-                            </span>
-                            <span class="text-[10px] leading-none opacity-60 mb-0.5">{{ toothNum }}</span>
-                          </button>
-                        }
+                      <!-- Occlusal Plane text indicator like in the mockup -->
+                      <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-slate-100"></div>
+                        <span class="flex-shrink mx-4 text-[10px] font-bold text-slate-300 uppercase tracking-wider">OCCLUSAL PLANE</span>
+                        <div class="flex-grow border-t border-slate-100"></div>
                       </div>
-                      <div class="flex items-center justify-between text-xs font-semibold text-slate-400 px-2 pt-1">
-                        <span>{{ 'dental.lower_jaw' | translate }}</span>
-                        <div class="flex gap-4">
-                          <span>{{ 'dental.right' | translate }}</span>
-                          <span class="w-12"></span>
-                          <span class="text-end">{{ 'dental.left' | translate }}</span>
+
+                      <!-- Mandibular (Lower Jaw) -->
+                      <div class="space-y-2">
+                        <div class="grid gap-2" [style.grid-template-columns]="isChild() ? 'repeat(10, minmax(0, 1fr))' : 'repeat(16, minmax(0, 1fr))'">
+                          @for (toothNum of lowerTeethList(); track toothNum) {
+                            <button
+                              type="button"
+                              (click)="selectTooth(toothNum)"
+                              [class]="getToothClasses(toothNum)"
+                              [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
+                            >
+                              <span class="w-8 h-8 flex items-center justify-center">
+                                <svg class="w-8 h-8 mx-auto rotate-180" viewBox="0 0 40 40">
+                                  @if (getToothLatestStatus(toothNum) === 'missing') {
+                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                          fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                  } @else {
+                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                          [attr.fill]="getToothFillUrl(toothNum)"
+                                          [attr.stroke]="getToothStrokeColor(toothNum)"
+                                          stroke-width="1.5"
+                                          filter="url(#shadow3d)"/>
+                                    <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                          [attr.fill]="getPulpFillColor(toothNum)"
+                                          [attr.stroke]="getCanalStroke(toothNum)"
+                                          stroke-width="1"
+                                          filter="url(#neonGlow)"/>
+                                    <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                          fill="none"
+                                          [attr.stroke]="getCanalStroke(toothNum)"
+                                          stroke-width="1.75"
+                                          stroke-linecap="round"
+                                          filter="url(#neonGlow)"/>
+                                  }
+                                </svg>
+                              </span>
+                              <span class="text-[10px] leading-none opacity-60 mb-0.5">{{ toothNum }}</span>
+                            </button>
+                          }
+                        </div>
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-400 px-2 pt-1">
+                          <span>LOWER JAW (MANDIBULAR)</span>
+                          <div class="flex gap-4">
+                            <span>RIGHT (R)</span>
+                            <span class="w-12"></span>
+                            <span class="text-end">LEFT (L)</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                } @else {
+                  <!-- 3D Volumetric Viewport -->
+                  <div class="bg-slate-955 border border-slate-900 rounded-2xl shadow-inner overflow-hidden relative flex flex-col min-h-[480px]">
+                    <div #canvasContainer class="w-full h-[480px] cursor-grab active:cursor-grabbing" (click)="onCanvasClick($event)"></div>
+                    
+                    <div class="absolute top-4 left-4 p-3 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-xl flex flex-col gap-2 z-10">
+                      <button type="button" (click)="toggleEnamel()" [class.text-indigo-400]="showEnamel()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none">
+                        <i class="pi" [class.pi-eye]="showEnamel()" [class.pi-eye-slash]="!showEnamel()"></i>
+                        <span>{{ showEnamel() ? 'Hide Glass Enamel' : 'Show Glass Enamel' }}</span>
+                      </button>
+                      <button type="button" (click)="toggleRotation()" [class.text-indigo-400]="isRotating()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none">
+                        <i class="pi pi-sync" [class.animate-spin]="isRotating()"></i>
+                        <span>{{ isRotating() ? 'Stop Auto Orbit' : 'Auto Orbit Model' }}</span>
+                      </button>
+                    </div>
+
+                    <div class="absolute bottom-4 right-4 py-1.5 px-3 bg-slate-900/60 backdrop-blur rounded-lg text-[10px] text-slate-400 flex items-center gap-1.5">
+                      <i class="pi pi-info-circle text-indigo-400"></i>
+                      <span>Left Click to Select | Right Click + Drag to Orbit | Scroll to Zoom</span>
+                    </div>
+                  </div>
+                }
               </div>
-              } @else {
-                <!-- 3D Volumetric Viewport Card -->
-                <div class="bg-slate-950 border border-slate-900 rounded-2xl shadow-xl overflow-hidden relative flex flex-col min-h-[480px]">
-                  <div #canvasContainer class="w-full h-[480px] cursor-grab active:cursor-grabbing" (click)="onCanvasClick($event)"></div>
-                  
-                  <div class="absolute top-4 left-4 p-3 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-xl flex flex-col gap-2 z-10">
-                    <button type="button" (click)="toggleEnamel()" [class.text-indigo-400]="showEnamel()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none">
-                      <i class="pi" [class.pi-eye]="showEnamel()" [class.pi-eye-slash]="!showEnamel()"></i>
-                      <span>{{ showEnamel() ? 'Hide Glass Enamel' : 'Show Glass Enamel' }}</span>
-                    </button>
-                    <button type="button" (click)="toggleRotation()" [class.text-indigo-400]="isRotating()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none">
-                      <i class="pi pi-sync" [class.animate-spin]="isRotating()"></i>
-                      <span>{{ isRotating() ? 'Stop Auto Orbit' : 'Auto Orbit Model' }}</span>
-                    </button>
-                  </div>
-
-                  <div class="absolute bottom-4 right-4 py-1.5 px-3 bg-slate-900/60 backdrop-blur rounded-lg text-[10px] text-slate-400 flex items-center gap-1.5">
-                    <i class="pi pi-info-circle text-indigo-400"></i>
-                    <span>Left Click to Select | Right Click + Drag to Orbit | Scroll to Zoom</span>
-                  </div>
-                </div>
-              }
 
               <!-- Treatment/Decay Summary Card -->
               <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
@@ -583,203 +747,207 @@ import { gsap } from 'gsap';
               </div>
             </div>
 
-            <!-- Right 1 Col: Selected Tooth Details, History & Form -->
+            <!-- Right 1 Col: 3D TOOTH INSPECTOR (Selected Tooth Details, History & Form) -->
             <div class="space-y-6">
-              @if (selectedTooth() === null) {
-                <div class="bg-slate-50 border border-slate-200/60 rounded-2xl p-6 text-center text-slate-400 flex flex-col items-center justify-center min-h-[300px]">
-                  <i class="pi pi-table text-4xl mb-3 opacity-40"></i>
-                  <p class="text-sm font-semibold text-slate-500 px-4">{{ 'dental.select_tooth_prompt' | translate }}</p>
-                </div>
-              } @else {
-                <!-- Selected Tooth Details & History -->
-                <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
-                  <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <i class="pi pi-info-circle text-slate-500"></i>
+                  <span>3D TOOTH INSPECTOR</span>
+                </h4>
+
+                @if (selectedTooth() === null) {
+                  <div class="text-center text-slate-400 flex flex-col items-center justify-center py-12">
+                    <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                      <i class="pi pi-info-circle text-2xl"></i>
+                    </div>
+                    <p class="text-sm font-bold text-slate-650">No Selection</p>
+                    <p class="text-xs text-slate-400 mt-1 max-w-[200px] mx-auto">Select a tooth from the 3D model or grid to view details</p>
+                  </div>
+                } @else {
+                  <!-- Tooth History & Info -->
+                  <div class="space-y-4">
                     <div>
-                      <h4 class="text-sm font-bold text-slate-800">
-                        {{ 'dental.history_for_tooth' | translate }} #{{ selectedTooth() }}
-                      </h4>
-                      <p class="text-xs text-slate-400 font-medium mt-0.5 capitalize flex flex-wrap gap-1 items-center">
-                        {{ 'dental.status' | translate }}:
+                      <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">History for Tooth #{{ selectedTooth() }}</h5>
+                      <div class="flex flex-wrap gap-1 items-center mb-3">
+                        <span class="text-xs font-medium text-slate-500">Status:</span>
                         @for (st of getToothLatestStatuses(selectedTooth()!); track st) {
                           <span [class]="getBadgeClasses(st)" class="px-1.5 py-0.5 text-[9px] font-bold rounded capitalize">
                             {{ 'dental.' + st | translate }}
                           </span>
                         }
-                      </p>
-                    </div>
-                  </div>
+                      </div>
 
-                  <!-- Tooth History List -->
-                  <div class="space-y-3 max-h-[280px] overflow-y-auto pe-1">
-                    @if (getSelectedToothHistory().length === 0) {
-                      <p class="text-xs text-slate-400 text-center py-6">
-                        {{ 'dental.no_history' | translate }}
-                      </p>
-                    } @else {
-                      @for (log of getSelectedToothHistory(); track log.id) {
-                        <div class="border-s-2 border-slate-200 ps-3.5 space-y-1.5 py-1 text-start relative">
-                          <!-- Timeline circle indicator -->
-                          <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
-                          
-                          <div class="flex items-center justify-between gap-2">
-                            <div class="flex flex-wrap gap-1">
-                              @let logStatuses = log.status || [];
-                              @for (st of logStatuses; track st) {
-                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
-                                  {{ 'dental.' + st | translate }}
+                      <!-- Tooth History List -->
+                      <div class="space-y-3 max-h-[200px] overflow-y-auto pe-1">
+                        @if (getSelectedToothHistory().length === 0) {
+                          <p class="text-xs text-slate-400 text-center py-4">
+                            {{ 'dental.no_history' | translate }}
+                          </p>
+                        } @else {
+                          @for (log of getSelectedToothHistory(); track log.id) {
+                            <div class="border-s-2 border-slate-200 ps-3.5 space-y-1.5 py-1 text-start relative">
+                              <!-- Timeline circle indicator -->
+                              <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
+                              
+                              <div class="flex items-center justify-between gap-2">
+                                <div class="flex flex-wrap gap-1">
+                                  @let logStatuses = log.status || [];
+                                  @for (st of logStatuses; track st) {
+                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
+                                      {{ 'dental.' + st | translate }}
+                                    </span>
+                                  }
+                                </div>
+                                <span class="text-[10px] text-slate-400 font-medium">
+                                  {{ log.date | date:'mediumDate' }}
                                 </span>
+                              </div>
+
+                              <div class="text-xs text-slate-600 space-y-1">
+                                @if (log.painLevel > 0) {
+                                  <p>
+                                    <span class="font-semibold text-slate-700">{{ 'dental.pain_level' | translate }}:</span>
+                                    <span class="text-rose-500 font-medium"> {{ log.painLevel }}/10</span>
+                                    @if (log.painDetails) {
+                                      <span class="italic text-slate-400 block mt-0.5 font-normal">"{{ log.painDetails }}"</span>
+                                    }
+                                  </p>
+                                }
+                                @if (log.treatment) {
+                                  <p>
+                                    <span class="font-semibold text-slate-700">{{ 'dental.treatment' | translate }}:</span>
+                                    <span> {{ log.treatment }}</span>
+                                  </p>
+                                }
+                                @if (log.medication) {
+                                  <p>
+                                    <span class="font-semibold text-slate-700">{{ 'dental.medication' | translate }}:</span>
+                                    <span> {{ log.medication }}</span>
+                                  </p>
+                                }
+                              </div>
+                              
+                              <p class="text-[10px] text-slate-400">
+                                {{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}
+                              </p>
+                            </div>
+                          }
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Add Log Form (Only for Doctors) -->
+                    @if (authService.isDoctor()) {
+                      <div class="border-t border-slate-100 pt-4 space-y-4">
+                        <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ 'dental.add_log' | translate }}</h5>
+                        
+                        <form (ngSubmit)="submitDentalLog()" class="space-y-4">
+                          <!-- Status Selection -->
+                          <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">{{ 'dental.status' | translate }}</label>
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                              @for (opt of statusOptions; track opt.value) {
+                                <button
+                                  type="button"
+                                  (click)="toggleStatus(opt.value)"
+                                  [class]="isStatusSelected(opt.value) ? opt.activeClass : opt.inactiveClass"
+                                  class="px-2 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer border focus:outline-none border-solid"
+                                >
+                                  <i [class]="opt.icon"></i>
+                                  <span>{{ 'dental.' + opt.value | translate }}</span>
+                                </button>
                               }
                             </div>
-                            <span class="text-[10px] text-slate-400 font-medium">
-                              {{ log.date | date:'mediumDate' }}
-                            </span>
                           </div>
 
-                          <div class="text-xs text-slate-600 space-y-1">
-                            @if (log.painLevel > 0) {
-                              <p>
-                                <span class="font-semibold text-slate-700">{{ 'dental.pain_level' | translate }}:</span>
-                                <span class="text-rose-500 font-medium"> {{ log.painLevel }}/10</span>
-                                @if (log.painDetails) {
-                                  <span class="italic text-slate-400 block mt-0.5 font-normal">"{{ log.painDetails }}"</span>
-                                }
-                              </p>
-                            }
-                            @if (log.treatment) {
-                              <p>
-                                <span class="font-semibold text-slate-700">{{ 'dental.treatment' | translate }}:</span>
-                                <span> {{ log.treatment }}</span>
-                              </p>
-                            }
-                            @if (log.medication) {
-                              <p>
-                                <span class="font-semibold text-slate-700">{{ 'dental.medication' | translate }}:</span>
-                                <span> {{ log.medication }}</span>
-                              </p>
-                            }
+                          <!-- Pain Level Slider -->
+                          <div>
+                            <div class="flex justify-between items-center mb-1">
+                              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">{{ 'dental.pain_level' | translate }}</label>
+                              <span class="text-xs font-bold text-slate-700">{{ painLevel() }}/10</span>
+                            </div>
+                            <input
+                              type="range"
+                              [ngModel]="painLevel()"
+                              (ngModelChange)="painLevel.set(+$event)"
+                              name="painLevel"
+                              min="0"
+                              max="10"
+                              class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            />
                           </div>
-                          
-                          <p class="text-[10px] text-slate-400">
-                            {{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}
-                          </p>
-                        </div>
-                      }
+
+                          <!-- Pain Details -->
+                          @if (painLevel() > 0) {
+                            <div>
+                              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.pain_details' | translate }}</label>
+                              <textarea
+                                [ngModel]="painDetails()"
+                                (ngModelChange)="painDetails.set($event)"
+                                name="painDetails"
+                                rows="2"
+                                [placeholder]="'dental.pain_details' | translate"
+                                class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
+                              ></textarea>
+                            </div>
+                          }
+
+                          <!-- Treatment / Procedure -->
+                          <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.treatment' | translate }}</label>
+                            <input
+                              type="text"
+                              [ngModel]="treatment()"
+                              (ngModelChange)="treatment.set($event)"
+                              name="treatment"
+                              [placeholder]="'dental.treatment' | translate"
+                              class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
+                            />
+                          </div>
+
+                          <!-- Medication -->
+                          <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.medication' | translate }}</label>
+                            <input
+                              type="text"
+                              [ngModel]="medication()"
+                              (ngModelChange)="medication.set($event)"
+                              name="medication"
+                              [placeholder]="'dental.medication' | translate"
+                              class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
+                            />
+                          </div>
+
+                          <!-- Submit Button -->
+                          <button
+                            type="submit"
+                            [disabled]="submittingDentalLog()"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer border-none"
+                          >
+                            @if (submittingDentalLog()) {
+                              <div class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+                              {{ 'dental.saving' | translate }}
+                            } @else {
+                              <i class="pi pi-check text-[10px]"></i>
+                              {{ 'common.save' | translate }}
+                            }
+                          </button>
+                        </form>
+                      </div>
                     }
                   </div>
-                </div>
-
-                <!-- Add Log Form (Only for Doctors) -->
-                @if (authService.isDoctor()) {
-                  <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
-                    <h4 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">
-                      {{ 'dental.add_log' | translate }}
-                    </h4>
-                    
-                    <form (ngSubmit)="submitDentalLog()" class="space-y-4">
-                      <!-- Status Selection -->
-                      <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{{ 'dental.status' | translate }}</label>
-                        <div class="flex flex-wrap gap-2 mt-1">
-                          @for (opt of statusOptions; track opt.value) {
-                            <button
-                              type="button"
-                              (click)="toggleStatus(opt.value)"
-                              [class]="isStatusSelected(opt.value) ? opt.activeClass : opt.inactiveClass"
-                              class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border focus:outline-none"
-                            >
-                              <i [class]="opt.icon"></i>
-                              <span>{{ 'dental.' + opt.value | translate }}</span>
-                            </button>
-                          }
-                        </div>
-                      </div>
-
-                      <!-- Pain Level Slider -->
-                      <div>
-                        <div class="flex justify-between items-center mb-1">
-                          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">{{ 'dental.pain_level' | translate }}</label>
-                          <span class="text-xs font-bold text-slate-700">{{ painLevel() }}/10</span>
-                        </div>
-                        <input
-                          type="range"
-                          [ngModel]="painLevel()"
-                          (ngModelChange)="painLevel.set(+$event)"
-                          name="painLevel"
-                          min="0"
-                          max="10"
-                          class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                        />
-                      </div>
-
-                      <!-- Pain Details -->
-                      @if (painLevel() > 0) {
-                        <div>
-                          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.pain_details' | translate }}</label>
-                          <textarea
-                            [ngModel]="painDetails()"
-                            (ngModelChange)="painDetails.set($event)"
-                            name="painDetails"
-                            rows="2"
-                            [placeholder]="'dental.pain_details' | translate"
-                            class="w-full text-sm font-semibold border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
-                          ></textarea>
-                        </div>
-                      }
-
-                      <!-- Treatment / Procedure -->
-                      <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.treatment' | translate }}</label>
-                        <input
-                          type="text"
-                          [ngModel]="treatment()"
-                          (ngModelChange)="treatment.set($event)"
-                          name="treatment"
-                          [placeholder]="'dental.treatment' | translate"
-                          class="w-full text-sm font-semibold border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
-                        />
-                      </div>
-
-                      <!-- Medication -->
-                      <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.medication' | translate }}</label>
-                        <input
-                          type="text"
-                          [ngModel]="medication()"
-                          (ngModelChange)="medication.set($event)"
-                          name="medication"
-                          [placeholder]="'dental.medication' | translate"
-                          class="w-full text-sm font-semibold border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
-                        />
-                      </div>
-
-                      <!-- Submit Button -->
-                      <button
-                        type="submit"
-                        [disabled]="submittingDentalLog()"
-                        class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-sm py-2.5 px-4 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        @if (submittingDentalLog()) {
-                          <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                          {{ 'dental.saving' | translate }}
-                        } @else {
-                          <i class="pi pi-check text-xs"></i>
-                          {{ 'common.save' | translate }}
-                        }
-                      </button>
-                    </form>
-                  </div>
                 }
-              }
+              </div>
             </div>
           </div>
-        }
+        </div>
       }
     </div>
   `
 })
 export class PatientHistoryComponent implements OnInit {
   @Input({ required: true }) patient!: Patient;
-  @Input() initialTab?: 'overview' | 'appointments' | 'prescriptions' | 'billing' | 'dental';
+  @Input() initialTab?: 'future-visits' | 'past-visits' | 'prescriptions' | 'billing' | 'dental';
 
   private appointmentService = inject(AppointmentService);
   private prescriptionService = inject(PrescriptionService);
@@ -789,11 +957,25 @@ export class PatientHistoryComponent implements OnInit {
   private toastr = inject(ToastrService);
   private langService = inject(LanguageService);
 
-  activeTab = signal<'overview' | 'appointments' | 'prescriptions' | 'billing' | 'dental'>('overview');
+  activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
   appointments = signal<any[]>([]);
+  
+  futureAppointments = computed(() => {
+    return this.appointments().filter(a => a.status === 'scheduled');
+  });
+
+  pastAppointments = computed(() => {
+    return this.appointments().filter(a => a.status === 'completed' || a.status === 'cancelled');
+  });
+
   prescriptions = signal<any[]>([]);
   billingRecords = signal<any[]>([]);
   dentalLogs = signal<DentalLog[]>([]);
+  filesList = signal<any[]>([
+    { name: 'Checkups.pdf', size: '1.2 MB', date: 'Jun 12, 2026' },
+    { name: 'Dental_xray.pdf', size: '3.5 MB', date: 'Jun 10, 2026' },
+    { name: 'Prescription_Jun.pdf', size: '850 KB', date: 'Jun 05, 2026' }
+  ]);
   loadingData = signal(true);
   // Dental interactive chart signals and state
   selectedTooth = signal<number | string | null>(null);
@@ -909,13 +1091,13 @@ export class PatientHistoryComponent implements OnInit {
     const isSelected = this.selectedTooth()?.toString() === num.toString();
     const base = 'flex flex-col items-center justify-between p-2 rounded-xl border transition-all duration-300 focus:outline-none cursor-pointer ';
     if (isSelected) {
-      return base + 'bg-slate-800 border-indigo-500 ring-2 ring-indigo-500/30 text-white scale-105 shadow-[0_0_15px_rgba(99,102,241,0.25)]';
+      return base + 'bg-slate-50 border-indigo-500 ring-2 ring-indigo-500/20 text-indigo-650 scale-105 shadow-[0_0_10px_rgba(99,102,241,0.15)]';
     }
     const statuses = this.getToothLatestStatuses(num);
     if (statuses.includes('missing')) {
-      return base + 'bg-slate-950/20 border-slate-800/80 text-slate-500 opacity-60 hover:opacity-90 hover:border-slate-700';
+      return base + 'bg-slate-100/45 border-slate-200/60 text-slate-400 opacity-60 hover:opacity-90';
     }
-    return base + 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700';
+    return base + 'bg-white border-slate-200/60 text-slate-650 hover:bg-slate-50';
   }
 
   getBadgeClasses(status: string): string {
@@ -1008,7 +1190,10 @@ export class PatientHistoryComponent implements OnInit {
     });
   }
 
+  isChildOverride = signal<boolean | null>(null);
   isChild = computed(() => {
+    const override = this.isChildOverride();
+    if (override !== null) return override;
     return this.getAge(this.patient.dateOfBirth) < 12;
   });
 
@@ -1056,10 +1241,14 @@ export class PatientHistoryComponent implements OnInit {
   ngOnInit() {
     this.initMaterials();
     if (this.initialTab) {
-      this.activeTab.set(this.initialTab);
+      if ((this.initialTab as string) === 'overview' || (this.initialTab as string) === 'appointments' || (this.initialTab as string) === 'dental') {
+        this.activeTab.set('future-visits');
+      } else {
+        this.activeTab.set(this.initialTab as any);
+      }
     }
     this.loadPatientHistory();
-    if (this.activeTab() === 'dental' && this.activeDentalView() === '3d') {
+    if (this.activeDentalView() === '3d') {
       setTimeout(() => {
         this.initThree();
         this.loadDentalModel();
@@ -1102,17 +1291,36 @@ export class PatientHistoryComponent implements OnInit {
     });
   }
 
-  setActiveTab(tab: 'overview' | 'appointments' | 'prescriptions' | 'billing' | 'dental') {
+  setActiveTab(tab: 'future-visits' | 'past-visits' | 'prescriptions' | 'billing') {
     this.activeTab.set(tab);
-    if (tab !== 'dental' || this.activeDentalView() !== '3d') {
-      this.destroyThree();
-    } else if (tab === 'dental' && this.activeDentalView() === '3d') {
-      setTimeout(() => {
-        this.initThree();
-        this.loadDentalModel();
-        this.animate();
-      }, 100);
+  }
+
+  downloadFile(fileName: string) {
+    this.toastr.success(`Downloading ${fileName}...`, 'Download Started');
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      const newFile = {
+        name: file.name,
+        size: `${fileSizeMB} MB`,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      };
+      this.filesList.update(list => [newFile, ...list]);
+      this.toastr.success(`${file.name} added successfully.`, 'File Added');
     }
+  }
+
+  deleteFile(fileName: string) {
+    this.filesList.update(list => list.filter(f => f.name !== fileName));
+    this.toastr.warning(`${fileName} deleted successfully.`, 'File Deleted');
+  }
+
+  downloadNote(noteId: string) {
+    this.toastr.info(`Exporting note details...`, 'Export Note');
   }
 
   getAge(dob: string): number {

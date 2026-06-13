@@ -20,4 +20,12 @@ export class PatientService {
   create(patient: Patient) {
     return this.http.post<{ message: string }>('/api/patients', patient);
   }
+
+  update(id: string, patient: Patient) {
+    return this.http.put<{ message: string }>(`/api/patients/${id}`, patient);
+  }
+
+  delete(id: string) {
+    return this.http.delete<{ message: string }>(`/api/patients/${id}`);
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, inject, signal } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { PatientService } from '../../services/patient.service';
@@ -23,6 +23,7 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
   styleUrl: './patient-form.component.css'
 })
 export class PatientFormComponent implements OnInit {
+  @Input() patient?: Patient;
   @Output() saved = new EventEmitter<Patient>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -64,6 +65,24 @@ export class PatientFormComponent implements OnInit {
       this.showClinicSelector.set(false);
     }
     this.form.get('clinicId')?.updateValueAndValidity();
+
+    if (this.patient) {
+      this.form.patchValue({
+        firstName: this.patient.firstName,
+        lastName: this.patient.lastName,
+        gender: this.patient.gender,
+        dateOfBirth: this.patient.dateOfBirth.substring(0, 10),
+        contactNumber: this.patient.contactNumber,
+        email: this.patient.email,
+        bloodGroup: this.patient.bloodGroup,
+        address: this.patient.address,
+        clinicId: this.patient.clinicId || ''
+      });
+      // Also show clinic selector when editing if patient belongs to another clinic
+      if (activeId === 'all' || this.patient.clinicId !== activeId) {
+        this.showClinicSelector.set(true);
+      }
+    }
   }
 
   // Helper for template
@@ -99,38 +118,73 @@ export class PatientFormComponent implements OnInit {
           ? activeId
           : rawValue.clinicId!;
 
-    const newPatient: Patient = {
-      id: crypto.randomUUID(),
-      registrationDate: new Date().toISOString(),
-      firstName: rawValue.firstName!,
-      lastName: rawValue.lastName!,
-      gender: rawValue.gender!,
-      dateOfBirth: rawValue.dateOfBirth!,
-      contactNumber: rawValue.contactNumber!,
-      email: rawValue.email || '',
-      bloodGroup: rawValue.bloodGroup || '',
-      address: rawValue.address!,
-      clinicId: clinicId
-    };
+    if (this.patient) {
+      const updatedPatient: Patient = {
+        id: this.patient.id,
+        registrationDate: this.patient.registrationDate,
+        firstName: rawValue.firstName!,
+        lastName: rawValue.lastName!,
+        gender: rawValue.gender!,
+        dateOfBirth: rawValue.dateOfBirth!,
+        contactNumber: rawValue.contactNumber!,
+        email: rawValue.email || '',
+        bloodGroup: rawValue.bloodGroup || '',
+        address: rawValue.address!,
+        clinicId: clinicId
+      };
 
-    this.patientService.create(newPatient).subscribe({
-      next: () => {
-        this.submitting = false;
-        this.toastr.success(
-          this.langService.translate('toast.patient_created'),
-          this.langService.translate('toast.success')
-        );
-        this.saved.emit(newPatient);
-        this.form.reset();
-      },
-      error: () => {
-        this.submitting = false;
-        this.toastr.error(
-          this.langService.translate('toast.patient_create_error'),
-          this.langService.translate('toast.error')
-        );
-      }
-    });
+      this.patientService.update(this.patient.id, updatedPatient).subscribe({
+        next: () => {
+          this.submitting = false;
+          this.toastr.success(
+            this.langService.translate('toast.patient_updated'),
+            this.langService.translate('toast.success')
+          );
+          this.saved.emit(updatedPatient);
+          this.form.reset();
+        },
+        error: () => {
+          this.submitting = false;
+          this.toastr.error(
+            this.langService.translate('toast.patient_update_error'),
+            this.langService.translate('toast.error')
+          );
+        }
+      });
+    } else {
+      const newPatient: Patient = {
+        id: crypto.randomUUID(),
+        registrationDate: new Date().toISOString(),
+        firstName: rawValue.firstName!,
+        lastName: rawValue.lastName!,
+        gender: rawValue.gender!,
+        dateOfBirth: rawValue.dateOfBirth!,
+        contactNumber: rawValue.contactNumber!,
+        email: rawValue.email || '',
+        bloodGroup: rawValue.bloodGroup || '',
+        address: rawValue.address!,
+        clinicId: clinicId
+      };
+
+      this.patientService.create(newPatient).subscribe({
+        next: () => {
+          this.submitting = false;
+          this.toastr.success(
+            this.langService.translate('toast.patient_created'),
+            this.langService.translate('toast.success')
+          );
+          this.saved.emit(newPatient);
+          this.form.reset();
+        },
+        error: () => {
+          this.submitting = false;
+          this.toastr.error(
+            this.langService.translate('toast.patient_create_error'),
+            this.langService.translate('toast.error')
+          );
+        }
+      });
+    }
   }
 
   onCancel() {
