@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -22,6 +22,11 @@ interface HistoricalLog {
 })
 export class SkeuomorphicDentalChartComponent implements OnInit {
   private dentalDataService = inject(DentalDataService);
+
+  @Input() set dentition(val: 'adult' | 'child') {
+    this.activeDentition.set(val);
+    this.selectedToothNum.set(null);
+  }
 
   // Constants for Tooth SVGs (Crown/Enamel Outlines, Pulps, Canals)
   readonly SVG_OUTLINES = {

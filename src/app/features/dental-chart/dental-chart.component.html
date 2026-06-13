@@ -11,6 +11,26 @@
       </div>
     </div>
     
+    <!-- Dynamic Age-based Dentition Controls -->
+    <div class="age-controls">
+      <div class="age-label-wrap">
+        <span class="age-label">Patient Age</span>
+        <span class="age-value">{{ patientAge() }} years</span>
+      </div>
+      <input 
+        type="range" 
+        min="3" 
+        max="80" 
+        [value]="patientAge()" 
+        (input)="setAge(+$any($event.target).value)" 
+        class="age-slider"
+        title="Slide to change patient age to view adult/child dental chart"
+      >
+      <span class="dentition-badge" [class.adult]="activeDentition() === 'adult'" [class.child]="activeDentition() === 'child'">
+        {{ activeDentition() }} chart
+      </span>
+    </div>
+    
     <!-- Design Selector (Segmented Toggle) -->
     <div class="view-toggle-segmented">
       <button 
@@ -33,9 +53,9 @@
   <!-- Main View Workspace -->
   <main class="chart-workspace">
     @if (activeView() === '3d') {
-      <app-three-dental-chart class="view-component"></app-three-dental-chart>
+      <app-three-dental-chart class="view-component" [dentition]="activeDentition()"></app-three-dental-chart>
     } @else {
-      <app-skeuomorphic-dental-chart class="view-component"></app-skeuomorphic-dental-chart>
+      <app-skeuomorphic-dental-chart class="view-component" [dentition]="activeDentition()"></app-skeuomorphic-dental-chart>
     }
   </main>
 </div>

@@ -1,4 +1,4 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ThreeDentalChartComponent } from './components/three-dental-chart/three-dental-chart.component';
@@ -22,6 +22,13 @@ export class DentalChartComponent {
     (localStorage.getItem('preferred_dental_chart_view') as '3d' | 'grid') || '3d'
   );
 
+  // Patient age simulation for demo/switching charts dynamically
+  patientAge = signal<number>(25);
+  
+  activeDentition = computed<'adult' | 'child'>(() => {
+    return this.patientAge() < 12 ? 'child' : 'adult';
+  });
+
   constructor() {
     // Sync view preference with local storage
     effect(() => {
@@ -31,5 +38,9 @@ export class DentalChartComponent {
 
   setView(view: '3d' | 'grid') {
     this.activeView.set(view);
+  }
+
+  setAge(age: number) {
+    this.patientAge.set(age);
   }
 }
