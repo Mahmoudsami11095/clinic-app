@@ -10,4 +10,7 @@ export interface Patient {
   address: string;
   registrationDate: string;
   clinicId?: string;
+  allergies?: string;
+  chronicDiseases?: string;
+  pastIllnesses?: string;
 }
