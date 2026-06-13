@@ -9,7 +9,8 @@ import {
   inject,
   signal,
   computed,
-  effect
+  effect,
+  Input
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -45,6 +46,14 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
   @ViewChild('canvasContainer', { static: true }) canvasContainer!: ElementRef<HTMLDivElement>;
 
   private dentalDataService = inject(DentalDataService);
+
+  @Input() set dentition(val: 'adult' | 'child') {
+    this._dentition.set(val);
+  }
+  get dentition() {
+    return this._dentition();
+  }
+  _dentition = signal<'adult' | 'child'>('adult');
 
   // Signals
   selectedToothId = signal<string | null>(null);
@@ -139,6 +148,26 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
       this.showEnamel();
       this.allRecords();
       this.updateAllTeethAppearances();
+    });
+
+    // React to dentition style changes to rebuild the 3D teeth
+    effect(() => {
+      const dent = this._dentition();
+      if (this.jawGroup) {
+        // Clear previous teeth and gums meshes from jawGroup
+        while (this.jawGroup.children.length > 0) {
+          const child = this.jawGroup.children[0];
+          this.jawGroup.remove(child);
+        }
+        
+        // Load GLB (only for adult, since we don't have a child GLB) or build procedural teeth
+        if (dent === 'child') {
+          this.buildProceduralTeeth();
+          this.updateAllTeethAppearances();
+        } else {
+          this.loadDentalModel();
+        }
+      }
     });
   }
 
@@ -400,12 +429,12 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   /**
-   * Generates a procedurally drawn 3D jaw of 32 teeth
+   * Generates a procedurally drawn 3D jaw of teeth based on active dentition type
    */
   private buildProceduralTeeth() {
+    const isChild = this._dentition() === 'child';
     const rx = 4.8;
     const rz = 5.6;
-    const numTeeth = 16;
 
     const gumPointsUpper: THREE.Vector3[] = [];
     const gumPointsLower: THREE.Vector3[] = [];
@@ -413,14 +442,21 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
     const enamelMaterial = this.materials['healthy'].enamel;
     const pulpMaterial = this.materials['healthy'].pulp;
 
-    const buildSingleTooth = (universalNum: number, isUpper: boolean): THREE.Group => {
+    const buildSingleTooth = (label: string, isUpper: boolean): THREE.Group => {
       const tooth = new THREE.Group();
-      tooth.name = `tooth_${universalNum}`;
-      tooth.userData = { toothNumber: universalNum };
+      tooth.name = `tooth_${label}`;
+      tooth.userData = { toothNumber: label };
 
       // Determine size factors based on tooth type
-      const isMolar = [18, 17, 16, 26, 27, 28, 38, 37, 36, 46, 47, 48].includes(universalNum);
-      const isPremolar = [15, 14, 24, 25, 34, 35, 44, 45].includes(universalNum);
+      const molars = [
+        '18', '17', '16', '26', '27', '28', '38', '37', '36', '46', '47', '48',
+        '55', '54', '64', '65', '74', '75', '84', '85'
+      ];
+      const premolars = [
+        '15', '14', '25', '24', '35', '34', '45', '44'
+      ];
+      const isMolar = molars.includes(label);
+      const isPremolar = premolars.includes(label);
       
       let crownRadius = 0.5;
       let crownHeight = 0.9;
@@ -497,18 +533,52 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
       return tooth;
     };
 
+    const upperTeeth = isChild 
+      ? [
+          { label: '55', posIndex: 3 },
+          { label: '54', posIndex: 4 },
+          { label: '53', posIndex: 5 },
+          { label: '52', posIndex: 6 },
+          { label: '51', posIndex: 7 },
+          { label: '61', posIndex: 8 },
+          { label: '62', posIndex: 9 },
+          { label: '63', posIndex: 10 },
+          { label: '64', posIndex: 11 },
+          { label: '65', posIndex: 12 }
+        ]
+      : Array.from({ length: 16 }, (_, i) => ({
+          label: i < 8 ? String(18 - i) : String(21 + (i - 8)),
+          posIndex: i
+        }));
+
+    const lowerTeeth = isChild
+      ? [
+          { label: '85', posIndex: 3 },
+          { label: '84', posIndex: 4 },
+          { label: '83', posIndex: 5 },
+          { label: '82', posIndex: 6 },
+          { label: '81', posIndex: 7 },
+          { label: '71', posIndex: 8 },
+          { label: '72', posIndex: 9 },
+          { label: '73', posIndex: 10 },
+          { label: '74', posIndex: 11 },
+          { label: '75', posIndex: 12 }
+        ]
+      : Array.from({ length: 16 }, (_, i) => ({
+          label: i < 8 ? String(48 - i) : String(31 + (i - 8)),
+          posIndex: i
+        }));
+
     // Build Maxillary Arch (Upper Jaw)
-    for (let i = 0; i < numTeeth; i++) {
-      const pct = i / (numTeeth - 1);
+    upperTeeth.forEach(t => {
+      const pct = t.posIndex / 15;
       const theta = -1.25 + pct * 2.5;
 
       const x = rx * Math.sin(theta);
       const z = rz * Math.cos(theta) - rz * 0.35;
       const y = 1.05;
 
-      const universalNum = i < 8 ? (18 - i) : (21 + (i - 8));
-      const tooth = buildSingleTooth(universalNum, true);
-      
+      const tooth = buildSingleTooth(t.label, true);
       tooth.position.set(x, y, z);
       
       // Face teeth outwards
@@ -518,20 +588,18 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
 
       this.jawGroup.add(tooth);
       gumPointsUpper.push(new THREE.Vector3(x, y + 0.5, z));
-    }
+    });
 
     // Build Mandibular Arch (Lower Jaw)
-    for (let i = 0; i < numTeeth; i++) {
-      const pct = i / (numTeeth - 1);
+    lowerTeeth.forEach(t => {
+      const pct = t.posIndex / 15;
       const theta = -1.25 + pct * 2.5;
 
       const x = (rx * 0.96) * Math.sin(theta);
       const z = (rz * 0.96) * Math.cos(theta) - (rz * 0.96) * 0.35;
       const y = -1.05;
 
-      const universalNum = i < 8 ? (48 - i) : (31 + (i - 8));
-      const tooth = buildSingleTooth(universalNum, false);
-      
+      const tooth = buildSingleTooth(t.label, false);
       tooth.position.set(x, y, z);
       
       // Face teeth outwards
@@ -540,7 +608,7 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
 
       this.jawGroup.add(tooth);
       gumPointsLower.push(new THREE.Vector3(x, y - 0.5, z));
-    }
+    });
 
     // Gums Support structures (Mesh Tubes along jaw curves)
     const gumMat = new THREE.MeshPhysicalMaterial({

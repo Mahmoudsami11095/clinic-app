@@ -175,3 +175,98 @@
     justify-content: center;
   }
 }
+
+/* Age Controller */
+.age-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: var(--toggle-bg);
+  border: var(--toggle-border);
+  padding: 0.35rem 1rem;
+  border-radius: 0.85rem;
+  margin-left: auto;
+  margin-right: 1.5rem;
+}
+
+.age-label-wrap {
+  display: flex;
+  flex-direction: column;
+  text-align: start;
+}
+
+.age-label {
+  font-size: 0.65rem;
+  color: var(--subtitle-color);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.age-value {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.age-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 6px;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 3px;
+  outline: none;
+  transition: background 0.3s;
+}
+
+.age-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #6366f1;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+  transition: transform 0.1s;
+}
+
+.age-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.dentition-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.dentition-badge.adult {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.dentition-badge.child {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+@media (max-width: 900px) {
+  .chart-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .age-controls {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+

@@ -474,25 +474,13 @@ import { gsap } from 'gsap';
                       <i class="pi pi-minus text-xs text-slate-500"></i>
                       <span>Teeth Chart</span>
                     </h4>
-                    <!-- Manual ADULT/CHILD Toggle -->
-                    <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/30">
-                      <button
-                        type="button"
-                        (click)="isChildOverride.set(false)"
-                        [class]="!isChild() ? 'bg-white text-cyan-600 border border-slate-200/60 font-bold shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                        class="px-3 py-1 rounded-lg text-xs transition-all cursor-pointer focus:outline-none border-none"
-                      >
-                        ADULT (1 - 32)
-                      </button>
-                      <button
-                        type="button"
-                        (click)="isChildOverride.set(true)"
-                        [class]="isChild() ? 'bg-white text-cyan-600 border border-slate-200/60 font-bold shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                        class="px-3 py-1 rounded-lg text-xs transition-all cursor-pointer focus:outline-none border-none"
-                      >
-                        CHILD (A - T)
-                      </button>
-                    </div>
+                    <!-- Dentition Status Badge (Read-only, based on age) -->
+                    <span 
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg border"
+                      [class]="isChild() ? 'bg-cyan-50 text-cyan-600 border-cyan-200/60' : 'bg-indigo-50 text-indigo-600 border-indigo-200/60'"
+                    >
+                      {{ isChild() ? 'CHILD CHART (A - T)' : 'ADULT CHART (1 - 32)' }}
+                    </span>
                   </div>
                   
                   <!-- Status Legend -->
@@ -1265,8 +1253,20 @@ export class PatientHistoryComponent implements OnInit {
       this.showEnamel();
       this.dentalLogs();
       this.activeDentalView();
+      const child = this.isChild();
       if (this.activeDentalView() === '3d' && this.jawGroup) {
-        this.updateAllTeethAppearances();
+        // Clear previous teeth and gums meshes from jawGroup
+        while (this.jawGroup.children.length > 0) {
+          const m = this.jawGroup.children[0];
+          this.jawGroup.remove(m);
+        }
+        
+        if (child) {
+          this.buildProceduralTeeth();
+          this.updateAllTeethAppearances();
+        } else {
+          this.loadDentalModel();
+        }
       }
     });
     // Sync preferred view mode to local storage
@@ -1275,10 +1275,7 @@ export class PatientHistoryComponent implements OnInit {
     });
   }
 
-  isChildOverride = signal<boolean | null>(null);
   isChild = computed(() => {
-    const override = this.isChildOverride();
-    if (override !== null) return override;
     return this.getAge(this.patient.dateOfBirth) < 12;
   });
 
