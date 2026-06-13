@@ -140,10 +140,21 @@
                   Delete
                 </button>
               } @else {
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                  <i class="pi pi-check text-[9px]"></i>
-                  Assigned
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-455 text-xs font-semibold">
+                    <i class="pi pi-check text-[9px]"></i>
+                    Assigned
+                  </span>
+                  @if (authService.isDoctor()) {
+                    <button
+                      (click)="respondToAssignment(clinic.id, 'Rejected')"
+                      class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/35 text-rose-600 dark:text-rose-450 rounded-full text-xs font-semibold transition-all focus:outline-none border border-transparent cursor-pointer"
+                    >
+                      <i class="pi pi-sign-out text-[9px]"></i>
+                      Leave
+                    </button>
+                  }
+                </div>
               }
             }
           </div>

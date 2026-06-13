@@ -61,6 +61,7 @@ export class ClinicService {
     // Automatically react to user switching to set default active clinic
     effect(() => {
       const user = this.authService.currentUser();
+      this.loadClinics();
       if (!user) {
         this.activeClinicIdSignal.set('all');
         return;
