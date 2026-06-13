@@ -5,4 +5,6 @@ export interface Clinic {
   phone: string;
   creatorDoctorId?: string;
   status?: string;
+  availabilityHours?: string;
+  availabilityDays?: string;
 }

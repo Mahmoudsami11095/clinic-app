@@ -45,16 +45,38 @@ export class RegisterComponent implements OnDestroy {
     { value: 'assistant', labelKey: 'auth.role_assistant' }
   ];
 
+  selectedClinicDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
   constructor() {
     this.registerForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       role: ['patient', Validators.required],
-      clinicId: [''],
+      clinicName: [''],
+      clinicAddress: [''],
+      clinicPhone: [''],
+      clinicAvailabilityHours: ['09:00-17:00'],
+      clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
       phone: ['', [Validators.pattern(/^\+?[0-9]{8,15}$/)]],
       gender: ['Male'],
       age: [30, [Validators.min(1), Validators.max(120)]]
+    });
+
+    this.registerForm.get('role')?.valueChanges.subscribe(role => {
+      const clinicNameCtrl = this.registerForm.get('clinicName');
+      const clinicAddressCtrl = this.registerForm.get('clinicAddress');
+      const clinicPhoneCtrl = this.registerForm.get('clinicPhone');
+      const clinicAvailabilityHoursCtrl = this.registerForm.get('clinicAvailabilityHours');
+      const clinicAvailabilityDaysCtrl = this.registerForm.get('clinicAvailabilityDays');
+
+      if (role !== 'doctor') {
+        clinicNameCtrl?.setValue('');
+        clinicAddressCtrl?.setValue('');
+        clinicPhoneCtrl?.setValue('');
+        clinicAvailabilityHoursCtrl?.setValue('09:00-17:00');
+        clinicAvailabilityDaysCtrl?.setValue(JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']));
+      }
     });
 
     this.registerForm.valueChanges.subscribe(() => {
@@ -62,6 +84,16 @@ export class RegisterComponent implements OnDestroy {
         this.errorMessage.set(null);
       }
     });
+  }
+
+  toggleRegisterClinicDay(day: string) {
+    const hasDay = this.selectedClinicDays.includes(day);
+    if (hasDay) {
+      this.selectedClinicDays = this.selectedClinicDays.filter(d => d !== day);
+    } else {
+      this.selectedClinicDays = [...this.selectedClinicDays, day];
+    }
+    this.registerForm.get('clinicAvailabilityDays')?.setValue(JSON.stringify(this.selectedClinicDays));
   }
 
   togglePassword() {

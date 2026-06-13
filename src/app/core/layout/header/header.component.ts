@@ -21,7 +21,6 @@ export class Header {
   private router = inject(Router);
 
   isDropdownOpen = signal(false);
-  isUserSwitcherOpen = signal(false);
 
   onClinicChange(event: Event) {
     const select = event.target as HTMLSelectElement;
@@ -30,32 +29,6 @@ export class Header {
 
   toggleDropdown() {
     this.isDropdownOpen.update(v => !v);
-    if (this.isDropdownOpen()) {
-      this.isUserSwitcherOpen.set(false);
-    }
-  }
-
-  toggleUserSwitcher() {
-    this.isUserSwitcherOpen.update(v => !v);
-    if (this.isUserSwitcherOpen()) {
-      this.isDropdownOpen.set(false);
-    }
-  }
-
-  switchUser(user: User) {
-    this.authService.login({ email: user.email, password: 'password123' }).subscribe({
-      next: (loggedInUser) => {
-        this.isUserSwitcherOpen.set(false);
-        this.isDropdownOpen.set(false);
-
-        // Redirect to default page based on new user role
-        if (loggedInUser.role === 'patient' || loggedInUser.role === 'assistant') {
-          this.router.navigate(['/appointments']);
-        } else {
-          this.router.navigate(['/dashboard']);
-        }
-      }
-    });
   }
 
   getAvatarInitials(name: string): string {
