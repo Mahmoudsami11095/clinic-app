@@ -68,11 +68,11 @@ import { gsap } from 'gsap';
           <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
             <div>
               <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.allergies' | translate }}</p>
-              <p class="font-semibold text-slate-700 mt-0.5">{{ 'patients.nuts_pollen' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ patient.allergies || 'None' }}</p>
             </div>
             <div>
               <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.chronic_diseases' | translate }}</p>
-              <p class="font-semibold text-slate-700 mt-0.5">{{ 'patients.asthma' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ patient.chronicDiseases || 'None' }}</p>
             </div>
             <div>
               <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.blood_group' | translate }}</p>
@@ -83,7 +83,7 @@ import { gsap } from 'gsap';
             </div>
             <div>
               <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.past_illnesses' | translate }}</p>
-              <p class="font-semibold text-slate-700 mt-0.5">{{ 'patients.corona' | translate }}</p>
+              <p class="font-semibold text-slate-700 mt-0.5">{{ patient.pastIllnesses || 'None' }}</p>
             </div>
           </div>
         </div>
