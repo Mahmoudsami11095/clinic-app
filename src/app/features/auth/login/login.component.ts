@@ -8,6 +8,8 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
 
+import { ClinicService } from '../../../core/services/clinic.service';
+
 declare var google: any;
 declare var AppleID: any;
 
@@ -25,6 +27,7 @@ export class LoginComponent implements OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private toastr = inject(ToastrService);
+  private clinicService = inject(ClinicService);
 
   loginForm: FormGroup;
   showPassword = signal(false);
@@ -32,7 +35,7 @@ export class LoginComponent implements OnDestroy {
   errorMessage = signal<string | null>(null);
 
   // Social signup multi stage signals
-  socialSignUpState = signal<'none' | 'role' | 'data'>('none');
+  socialSignUpState = signal<'none' | 'role' | 'data' | 'doctor-clinics'>('none');
   socialProvider = signal<string>('');
   socialToken = signal<string>('');
   socialRole = signal<'doctor' | 'patient'>('patient');
@@ -46,6 +49,7 @@ export class LoginComponent implements OnDestroy {
   socialSpecialization = signal<string>('General Dentistry');
   socialAvailabilityHours = signal<string>('09:00-17:00');
   socialAvailabilityDays = signal<string[]>([ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ]);
+  socialClinics = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
 
   // OTP Login States
   loginMode = signal<'password' | 'otp'>('password');
@@ -390,16 +394,55 @@ export class LoginComponent implements OnDestroy {
   onSelectSocialRole(role: 'doctor' | 'patient') {
     this.socialRole.set(role);
     this.socialSignUpState.set('data');
+    if (role === 'doctor') {
+      const clinics = this.clinicService.clinics().map(c => ({
+        id: c.id,
+        name: c.name,
+        hours: '09:00-17:00',
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        selected: false
+      }));
+      this.socialClinics.set(clinics);
+    }
+  }
+
+  toggleSocialClinicDay(clinicId: string, day: string) {
+    this.socialClinics.update(list => list.map(c => {
+      if (c.id === clinicId) {
+        const hasDay = c.days.includes(day);
+        const updatedDays = hasDay ? c.days.filter(d => d !== day) : [...c.days, day];
+        return { ...c, days: updatedDays };
+      }
+      return c;
+    }));
+  }
+
+  getSelectedClinicsCount(): number {
+    return this.socialClinics().filter(c => c.selected).length;
   }
 
   onSubmitSocialExtraData() {
+    if (this.socialRole() === 'doctor' && this.socialSignUpState() === 'data') {
+      this.socialSignUpState.set('doctor-clinics');
+      return;
+    }
+
     const payload: any = {};
     if (this.socialRole() === 'doctor') {
       payload.contactNumber = this.socialPhone();
       payload.specialization = this.socialSpecialization();
-      payload.availabilityDays = JSON.stringify(this.socialAvailabilityDays());
-      payload.availabilityHours = this.socialAvailabilityHours();
-      payload.clinicIds = [this.socialClinicId()];
+      
+      const selectedClinics = this.socialClinics().filter(c => c.selected);
+      payload.clinicAvailabilities = selectedClinics.map(c => ({
+        clinicId: c.id,
+        availabilityHours: c.hours,
+        availabilityDays: c.days
+      }));
+      
+      if (selectedClinics.length > 0) {
+        payload.clinicId = selectedClinics[0].id;
+        payload.clinicIds = selectedClinics.map(c => c.id);
+      }
     } else {
       payload.contactNumber = this.socialPhone();
       payload.gender = this.socialGender();

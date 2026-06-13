@@ -13,4 +13,5 @@ export interface Doctor {
   avatar: string | null;
   availability: DoctorAvailability;
   clinicIds?: string[];
+  clinicAvailabilities?: { clinicId: string; availabilityHours: string; availabilityDays: string[] }[];
 }

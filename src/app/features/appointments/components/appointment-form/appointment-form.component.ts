@@ -291,13 +291,60 @@ export class AppointmentFormComponent implements OnInit {
     return !!(ctrl && !ctrl.disabled && ctrl.invalid && (ctrl.dirty || ctrl.touched));
   }
 
+  validateDoctorAvailability(doc: Doctor, clinicId: string, dateStr: string, timeStr: string): string | null {
+    if (!doc || !clinicId || !dateStr || !timeStr) return null;
+
+    const dateObj = new Date(dateStr);
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = daysOfWeek[dateObj.getDay()];
+
+    const timeParts = timeStr.split(':');
+    if (timeParts.length < 2) return 'Invalid time format';
+    const apptMinutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+
+    const clinicAvail = doc.clinicAvailabilities?.find(ca => ca.clinicId === clinicId);
+
+    let hoursStr = '';
+    let days: string[] = [];
+
+    if (clinicAvail && clinicAvail.availabilityHours) {
+      hoursStr = clinicAvail.availabilityHours;
+      days = clinicAvail.availabilityDays || [];
+    } else {
+      hoursStr = doc.availability?.hours || '';
+      days = doc.availability?.days || [];
+    }
+
+    if (!hoursStr) {
+      return null;
+    }
+
+    if (days.length > 0 && !days.some(d => d.toLowerCase() === dayOfWeek.toLowerCase())) {
+      return `Doctor is not available on ${dayOfWeek} at this clinic. Working days: ${days.join(', ')}`;
+    }
+
+    const rangeParts = hoursStr.split('-');
+    if (rangeParts.length === 2) {
+      const startParts = rangeParts[0].trim().split(':');
+      const endParts = rangeParts[1].trim().split(':');
+      if (startParts.length >= 2 && endParts.length >= 2) {
+        const startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+        const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+        if (apptMinutes < startMinutes || apptMinutes > endMinutes) {
+          return `Appointment time is outside the doctor's availability (${hoursStr}) for this clinic.`;
+        }
+      }
+    }
+
+    return null;
+  }
+
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    this.submitting = true;
     const rawValue = this.form.getRawValue();
     const patient = this.allPatients.find(p => p.id === rawValue.patientId);
     let clinicId = rawValue.clinicId || this.resolveClinicId();
@@ -310,6 +357,17 @@ export class AppointmentFormComponent implements OnInit {
         clinicId = firstClinic;
       }
     }
+
+    const doc = this.allDoctors.find(d => d.id === rawValue.doctorId);
+    if (doc) {
+      const error = this.validateDoctorAvailability(doc, clinicId, rawValue.date!, rawValue.time!);
+      if (error) {
+        this.toastr.error(error, 'Availability Error');
+        return;
+      }
+    }
+
+    this.submitting = true;
 
     if (this.isEditMode && this.appointment) {
       const updated: Appointment = {
