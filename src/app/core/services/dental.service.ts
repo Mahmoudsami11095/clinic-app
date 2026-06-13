@@ -18,10 +18,12 @@ export interface DentalLog {
   painDetails?: string;
   treatment?: string;
   medication?: string;
+  isPlanned?: boolean;
 }
 
 export interface RawDentalLog extends Omit<DentalLog, 'status'> {
   status: ToothStatus | ToothStatus[];
+  isPlanned?: boolean;
 }
 
 @Injectable({

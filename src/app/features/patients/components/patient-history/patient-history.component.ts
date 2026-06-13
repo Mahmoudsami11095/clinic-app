@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { Patient } from '../../models/patient.model';
+import { PatientService } from '../../services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
 import { BillingService } from '../../../billing/services/billing.service';
@@ -777,62 +778,124 @@ import { gsap } from 'gsap';
                         }
                       </div>
 
-                      <!-- Tooth History List -->
-                      <div class="space-y-3 max-h-[200px] overflow-y-auto pe-1">
-                        @if (getSelectedToothHistory().length === 0) {
-                          <p class="text-xs text-slate-400 text-center py-4">
-                            {{ 'dental.no_history' | translate }}
-                          </p>
-                        } @else {
-                          @for (log of getSelectedToothHistory(); track log.id) {
-                            <div class="border-s-2 border-slate-200 ps-3.5 space-y-1.5 py-1 text-start relative">
-                              <!-- Timeline circle indicator -->
-                              <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
-                              
-                              <div class="flex items-center justify-between gap-2">
-                                <div class="flex flex-wrap gap-1">
-                                  @let logStatuses = log.status || [];
-                                  @for (st of logStatuses; track st) {
-                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
-                                      {{ 'dental.' + st | translate }}
-                                    </span>
+                      <!-- Completed Treatments -->
+                      <div class="mb-4">
+                        <h6 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <i class="pi pi-check-circle text-emerald-500"></i>
+                          <span>Completed Treatments</span>
+                        </h6>
+                        <div class="space-y-3 max-h-[140px] overflow-y-auto pe-1">
+                          @if (getSelectedToothHistory().length === 0) {
+                            <p class="text-xs text-slate-400 italic ps-3.5">
+                              No completed treatments recorded.
+                            </p>
+                          } @else {
+                            @for (log of getSelectedToothHistory(); track log.id) {
+                              <div class="border-s-2 border-emerald-300 ps-3.5 space-y-1.5 py-1 text-start relative">
+                                <div class="absolute w-2 h-2 rounded-full bg-emerald-400 -start-[5px] top-2"></div>
+                                <div class="flex items-center justify-between gap-2">
+                                  <div class="flex flex-wrap gap-1">
+                                    @let logStatuses = log.status || [];
+                                    @for (st of logStatuses; track st) {
+                                      <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
+                                        {{ 'dental.' + st | translate }}
+                                      </span>
+                                    }
+                                  </div>
+                                  <span class="text-[10px] text-slate-400 font-medium">
+                                    {{ log.date | date:'mediumDate' }}
+                                  </span>
+                                </div>
+                                <div class="text-xs text-slate-600 space-y-1">
+                                  @if (log.painLevel > 0) {
+                                    <p>
+                                      <span class="font-semibold text-slate-700">{{ 'dental.pain_level' | translate }}:</span>
+                                      <span class="text-rose-500 font-medium"> {{ log.painLevel }}/10</span>
+                                      @if (log.painDetails) {
+                                        <span class="italic text-slate-400 block mt-0.5 font-normal">"{{ log.painDetails }}"</span>
+                                      }
+                                    </p>
+                                  }
+                                  @if (log.treatment) {
+                                    <p>
+                                      <span class="font-semibold text-slate-700">{{ 'dental.treatment' | translate }}:</span>
+                                      <span> {{ log.treatment }}</span>
+                                    </p>
+                                  }
+                                  @if (log.medication) {
+                                    <p>
+                                      <span class="font-semibold text-slate-700">{{ 'dental.medication' | translate }}:</span>
+                                      <span> {{ log.medication }}</span>
+                                    </p>
                                   }
                                 </div>
-                                <span class="text-[10px] text-slate-400 font-medium">
-                                  {{ log.date | date:'mediumDate' }}
-                                </span>
+                                <p class="text-[10px] text-slate-400">
+                                  {{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}
+                                </p>
                               </div>
-
-                              <div class="text-xs text-slate-600 space-y-1">
-                                @if (log.painLevel > 0) {
-                                  <p>
-                                    <span class="font-semibold text-slate-700">{{ 'dental.pain_level' | translate }}:</span>
-                                    <span class="text-rose-500 font-medium"> {{ log.painLevel }}/10</span>
-                                    @if (log.painDetails) {
-                                      <span class="italic text-slate-400 block mt-0.5 font-normal">"{{ log.painDetails }}"</span>
-                                    }
-                                  </p>
-                                }
-                                @if (log.treatment) {
-                                  <p>
-                                    <span class="font-semibold text-slate-700">{{ 'dental.treatment' | translate }}:</span>
-                                    <span> {{ log.treatment }}</span>
-                                  </p>
-                                }
-                                @if (log.medication) {
-                                  <p>
-                                    <span class="font-semibold text-slate-700">{{ 'dental.medication' | translate }}:</span>
-                                    <span> {{ log.medication }}</span>
-                                  </p>
-                                }
-                              </div>
-                              
-                              <p class="text-[10px] text-slate-400">
-                                {{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}
-                              </p>
-                            </div>
+                            }
                           }
-                        }
+                        </div>
+                      </div>
+
+                      <!-- Planned Treatments -->
+                      <div class="mb-4">
+                        <h6 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <i class="pi pi-calendar text-indigo-500"></i>
+                          <span>Planned Treatments (Future)</span>
+                        </h6>
+                        <div class="space-y-3 max-h-[140px] overflow-y-auto pe-1">
+                          @if (getSelectedToothPlanned().length === 0) {
+                            <p class="text-xs text-slate-400 italic ps-3.5">
+                              No planned treatments scheduled.
+                            </p>
+                          } @else {
+                            @for (log of getSelectedToothPlanned(); track log.id) {
+                              <div class="border-s-2 border-indigo-300 ps-3.5 space-y-1.5 py-1 text-start relative">
+                                <div class="absolute w-2 h-2 rounded-full bg-indigo-400 -start-[5px] top-2"></div>
+                                <div class="flex items-center justify-between gap-2">
+                                  <div class="flex flex-wrap gap-1">
+                                    @let logStatuses = log.status || [];
+                                    @for (st of logStatuses; track st) {
+                                      <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
+                                        {{ 'dental.' + st | translate }}
+                                      </span>
+                                    }
+                                  </div>
+                                  <span class="text-[10px] text-slate-400 font-medium">
+                                    {{ log.date | date:'mediumDate' }}
+                                  </span>
+                                </div>
+                                <div class="text-xs text-slate-600 space-y-1">
+                                  @if (log.painLevel > 0) {
+                                    <p>
+                                      <span class="font-semibold text-slate-700">{{ 'dental.pain_level' | translate }}:</span>
+                                      <span class="text-rose-500 font-medium"> {{ log.painLevel }}/10</span>
+                                      @if (log.painDetails) {
+                                        <span class="italic text-slate-400 block mt-0.5 font-normal">"{{ log.painDetails }}"</span>
+                                      }
+                                    </p>
+                                  }
+                                  @if (log.treatment) {
+                                    <p>
+                                      <span class="font-semibold text-slate-700">{{ 'dental.treatment' | translate }}:</span>
+                                      <span> {{ log.treatment }}</span>
+                                    </p>
+                                  }
+                                  @if (log.medication) {
+                                    <p>
+                                      <span class="font-semibold text-slate-700">{{ 'dental.medication' | translate }}:</span>
+                                      <span> {{ log.medication }}</span>
+                                    </p>
+                                  }
+                                </div>
+                                <p class="text-[10px] text-slate-400">
+                                  {{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}
+                                </p>
+                              </div>
+                            }
+                          }
+                        </div>
                       </div>
                     </div>
 
@@ -842,6 +905,29 @@ import { gsap } from 'gsap';
                         <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ 'dental.add_log' | translate }}</h5>
                         
                         <form (ngSubmit)="submitDentalLog()" class="space-y-4">
+                          <!-- Log Type Toggle -->
+                          <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Log Type</label>
+                            <div class="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200/60 max-w-[280px]">
+                              <button
+                                type="button"
+                                (click)="isPlannedForm.set(false)"
+                                [class]="!isPlannedForm() ? 'bg-indigo-600 text-white shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800'"
+                                class="flex-1 py-1 rounded-lg text-[10px] transition-all cursor-pointer border-none focus:outline-none"
+                              >
+                                Completed
+                              </button>
+                              <button
+                                type="button"
+                                (click)="isPlannedForm.set(true)"
+                                [class]="isPlannedForm() ? 'bg-indigo-600 text-white shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800'"
+                                class="flex-1 py-1 rounded-lg text-[10px] transition-all cursor-pointer border-none focus:outline-none"
+                              >
+                                Planned
+                              </button>
+                            </div>
+                          </div>
+
                           <!-- Status Selection -->
                           <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">{{ 'dental.status' | translate }}</label>
@@ -953,6 +1039,7 @@ export class PatientHistoryComponent implements OnInit {
   private prescriptionService = inject(PrescriptionService);
   private billingService = inject(BillingService);
   private dentalService = inject(DentalService);
+  private patientService = inject(PatientService);
   protected authService = inject(AuthService);
   private toastr = inject(ToastrService);
   private langService = inject(LanguageService);
@@ -971,11 +1058,7 @@ export class PatientHistoryComponent implements OnInit {
   prescriptions = signal<any[]>([]);
   billingRecords = signal<any[]>([]);
   dentalLogs = signal<DentalLog[]>([]);
-  filesList = signal<any[]>([
-    { name: 'Checkups.pdf', size: '1.2 MB', date: 'Jun 12, 2026' },
-    { name: 'Dental_xray.pdf', size: '3.5 MB', date: 'Jun 10, 2026' },
-    { name: 'Prescription_Jun.pdf', size: '850 KB', date: 'Jun 05, 2026' }
-  ]);
+  filesList = signal<any[]>([]);
   loadingData = signal(true);
   // Dental interactive chart signals and state
   selectedTooth = signal<number | string | null>(null);
@@ -985,6 +1068,7 @@ export class PatientHistoryComponent implements OnInit {
   treatment = signal<string>('');
   medication = signal<string>('');
   submittingDentalLog = signal<boolean>(false);
+  isPlannedForm = signal<boolean>(false);
 
   readonly statusOptions = [
     { value: 'healthy' as ToothStatus, icon: 'pi pi-check-circle', activeClass: 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
@@ -1129,6 +1213,7 @@ export class PatientHistoryComponent implements OnInit {
 
   selectTooth(num: number | string | null) {
     this.selectedTooth.set(num);
+    this.isPlannedForm.set(false);
     if (num !== null) {
       const latestStatuses = this.getToothLatestStatuses(num);
       this.dentalStatus.set(latestStatuses);
@@ -1209,11 +1294,13 @@ export class PatientHistoryComponent implements OnInit {
       : ['48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38'];
   });
 
-  // Map to speed up looking up the latest dental log per tooth
+  // Map to speed up looking up the latest actual (completed) dental log per tooth
   toothLatestLogs = computed(() => {
     const logs = this.dentalLogs();
     const dict: { [toothNum: string]: DentalLog } = {};
-    const sorted = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sorted = [...logs]
+      .filter(log => !log.isPlanned)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     for (const log of sorted) {
       dict[log.toothNumber.toString()] = log;
     }
@@ -1225,6 +1312,7 @@ export class PatientHistoryComponent implements OnInit {
     const logs = this.dentalLogs();
     const summary: { toothNumber: number | string; status: ToothStatus; log: DentalLog }[] = [];
     for (const log of logs) {
+      if (log.isPlanned) continue;
       const statusArr = Array.isArray(log.status) ? log.status : [log.status as ToothStatus];
       const dominant = this.getDominantStatus(statusArr);
       if (dominant !== 'healthy') {
@@ -1267,9 +1355,10 @@ export class PatientHistoryComponent implements OnInit {
       appointments: this.appointmentService.getAllWithDetails(),
       prescriptions: this.prescriptionService.getAllWithDetails(),
       billing: this.billingService.getAllWithDetails(),
-      dental: this.dentalService.getLogs(this.patient.id)
+      dental: this.dentalService.getLogs(this.patient.id),
+      files: this.patientService.getFiles(this.patient.id)
     }).subscribe({
-      next: ({ appointments, prescriptions, billing, dental }) => {
+      next: ({ appointments, prescriptions, billing, dental, files }) => {
         // Filter appointments for this patient
         const filteredAppts = appointments.filter(a => a.patientId === this.patient.id);
         this.appointments.set(filteredAppts);
@@ -1285,6 +1374,9 @@ export class PatientHistoryComponent implements OnInit {
         // Set dental logs
         this.dentalLogs.set(dental);
 
+        // Set patient files
+        this.filesList.set(files || []);
+
         this.loadingData.set(false);
       },
       error: () => this.loadingData.set(false)
@@ -1296,27 +1388,56 @@ export class PatientHistoryComponent implements OnInit {
   }
 
   downloadFile(fileName: string) {
-    this.toastr.success(`Downloading ${fileName}...`, 'Download Started');
+    this.toastr.info(`Downloading ${fileName}...`, 'Download Started');
+    this.patientService.downloadFile(this.patient.id, fileName).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        this.toastr.success(`${fileName} downloaded successfully.`, 'Download Complete');
+      },
+      error: (err) => {
+        console.error('Error downloading file:', err);
+        this.toastr.error('Failed to download file.', 'Error');
+      }
+    });
   }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-      const newFile = {
-        name: file.name,
-        size: `${fileSizeMB} MB`,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      };
-      this.filesList.update(list => [newFile, ...list]);
-      this.toastr.success(`${file.name} added successfully.`, 'File Added');
+      this.patientService.uploadFile(this.patient.id, file).subscribe({
+        next: (res) => {
+          this.filesList.update(list => [res.data, ...list]);
+          this.toastr.success(`${file.name} uploaded successfully.`, 'File Uploaded');
+        },
+        error: (err) => {
+          console.error('Error uploading file:', err);
+          this.toastr.error('Failed to upload file.', 'Error');
+        }
+      });
     }
   }
 
   deleteFile(fileName: string) {
-    this.filesList.update(list => list.filter(f => f.name !== fileName));
-    this.toastr.warning(`${fileName} deleted successfully.`, 'File Deleted');
+    if (confirm(`Are you sure you want to delete ${fileName}?`)) {
+      this.patientService.deleteFile(this.patient.id, fileName).subscribe({
+        next: () => {
+          this.filesList.update(list => list.filter(f => f.name !== fileName));
+          this.toastr.warning(`${fileName} deleted successfully.`, 'File Deleted');
+        },
+        error: (err) => {
+          console.error('Error deleting file:', err);
+          this.toastr.error('Failed to delete file.', 'Error');
+        }
+      });
+    }
   }
 
   downloadNote(noteId: string) {
@@ -1360,7 +1481,16 @@ export class PatientHistoryComponent implements OnInit {
     if (num === null) return [];
     const numStr = num.toString();
     return this.dentalLogs()
-      .filter(log => log.toothNumber.toString() === numStr)
+      .filter(log => log.toothNumber.toString() === numStr && !log.isPlanned)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  getSelectedToothPlanned(): DentalLog[] {
+    const num = this.selectedTooth();
+    if (num === null) return [];
+    const numStr = num.toString();
+    return this.dentalLogs()
+      .filter(log => log.toothNumber.toString() === numStr && log.isPlanned)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
@@ -1377,7 +1507,8 @@ export class PatientHistoryComponent implements OnInit {
       painLevel: this.painLevel(),
       painDetails: this.painLevel() > 0 ? this.painDetails().trim() : undefined,
       treatment: this.treatment().trim() || undefined,
-      medication: this.medication().trim() || undefined
+      medication: this.medication().trim() || undefined,
+      isPlanned: this.isPlannedForm()
     };
 
     this.dentalService.addLog(logData).subscribe({
