@@ -391,8 +391,8 @@
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
             </div>
 
-            <!-- Clinic ID selection -->
-            <div>
+            <!-- Clinic ID selection (Patients only) -->
+            <div *ngIf="socialRole() === 'patient'">
               <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
               <select [ngModel]="socialClinicId()" (ngModelChange)="socialClinicId.set($event)" name="socialClinicId" required
                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
@@ -408,13 +408,6 @@
                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Specialization</label>
                 <input type="text" [ngModel]="socialSpecialization()" (ngModelChange)="socialSpecialization.set($event)" name="socialSpecialization" required
                        placeholder="e.g. Dentistry, Cardiology"
-                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-              </div>
-
-              <div>
-                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Availability Hours</label>
-                <input type="text" [ngModel]="socialAvailabilityHours()" (ngModelChange)="socialAvailabilityHours.set($event)" name="socialAvailabilityHours" required
-                       placeholder="e.g. 09:00-17:00"
                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
               </div>
             </div>
@@ -460,6 +453,65 @@
                 Back
               </button>
               <button type="submit" [disabled]="isLoading()"
+                      class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
+                <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
+                <span>{{ socialRole() === 'doctor' ? 'Next' : 'Register & Log In' }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- STAGE 3: Doctor Clinic Details & Availability (Doctor only) -->
+        <div *ngIf="socialSignUpState() === 'doctor-clinics'" class="space-y-4 text-start">
+          <div class="text-center mb-2">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1">Clinic Details & Availability</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Select the clinics you practice in and set your availability hours for each.</p>
+          </div>
+
+          <form (ngSubmit)="onSubmitSocialExtraData()" class="space-y-5">
+            <div class="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
+              <div *ngFor="let clinic of socialClinics()" class="p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/40 dark:bg-slate-850/20 space-y-3">
+                <label class="flex items-center gap-2.5 cursor-pointer">
+                  <input type="checkbox" [(ngModel)]="clinic.selected" [name]="'sel_' + clinic.id"
+                         class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500/20 border-slate-300 dark:border-slate-700">
+                  <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ clinic.name }}</span>
+                </label>
+
+                <!-- Show hours/days config only if clinic is selected -->
+                <div *ngIf="clinic.selected" class="pl-6 space-y-3 animate-in slide-in-from-top-1 duration-200">
+                  <div>
+                    <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
+                    <input type="text" [(ngModel)]="clinic.hours" [name]="'hours_' + clinic.id" required
+                           placeholder="e.g. 09:00-17:00"
+                           class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                  </div>
+
+                  <div>
+                    <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Days</label>
+                    <div class="flex flex-wrap gap-1.5">
+                      <button *ngFor="let day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']"
+                              type="button"
+                              (click)="toggleSocialClinicDay(clinic.id, day)"
+                              class="px-2.5 py-1 text-[9px] font-bold rounded-lg border transition-all cursor-pointer"
+                              [ngClass]="clinic.days.includes(day)
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:text-indigo-600'"
+                      >
+                        {{ day.substring(0, 3) }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage 3 Buttons -->
+            <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" (click)="socialSignUpState.set('data')"
+                      class="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                Back
+              </button>
+              <button type="submit" [disabled]="isLoading() || getSelectedClinicsCount() === 0"
                       class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
                 <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
                 <span>Register & Log In</span>
