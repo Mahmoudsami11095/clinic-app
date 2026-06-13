@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService, User } from '../../../core/auth/auth.service';
@@ -14,7 +14,7 @@ declare var AppleID: any;
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -30,6 +30,22 @@ export class LoginComponent implements OnDestroy {
   showPassword = signal(false);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+
+  // Social signup multi stage signals
+  socialSignUpState = signal<'none' | 'role' | 'data'>('none');
+  socialProvider = signal<string>('');
+  socialToken = signal<string>('');
+  socialRole = signal<'doctor' | 'patient'>('patient');
+
+  socialPhone = signal<string>('');
+  socialGender = signal<'Male' | 'Female'>('Male');
+  socialDob = signal<string>('1996-01-01');
+  socialBloodGroup = signal<string>('O+');
+  socialAddress = signal<string>('');
+  socialClinicId = signal<string>('clinic-1');
+  socialSpecialization = signal<string>('General Dentistry');
+  socialAvailabilityHours = signal<string>('09:00-17:00');
+  socialAvailabilityDays = signal<string[]>([ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ]);
 
   // OTP Login States
   loginMode = signal<'password' | 'otp'>('password');
@@ -350,9 +366,9 @@ export class LoginComponent implements OnDestroy {
       next: (res) => {
         this.isLoading.set(false);
         if (res.requiresRoleSelection) {
-          const registerAsDoctor = confirm("It looks like this is your first time signing in with this account. Would you like to register as a Doctor? (Click 'OK' for Doctor, or 'Cancel' to register as a Patient)");
-          const chosenRole = registerAsDoctor ? 'doctor' : 'patient';
-          this.executeSocialLogin(provider, token, chosenRole);
+          this.socialProvider.set(provider);
+          this.socialToken.set(token);
+          this.socialSignUpState.set('role');
         } else {
           const user = res.data;
           this.toastr.success(
@@ -361,6 +377,49 @@ export class LoginComponent implements OnDestroy {
           );
           this.redirectToDefaultPage(user);
         }
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const errorMsg = err?.error?.message || this.languageService.translate('auth.login_failed');
+        this.errorMessage.set(errorMsg);
+        this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
+      }
+    });
+  }
+
+  onSelectSocialRole(role: 'doctor' | 'patient') {
+    this.socialRole.set(role);
+    this.socialSignUpState.set('data');
+  }
+
+  onSubmitSocialExtraData() {
+    const payload: any = {};
+    if (this.socialRole() === 'doctor') {
+      payload.contactNumber = this.socialPhone();
+      payload.specialization = this.socialSpecialization();
+      payload.availabilityDays = JSON.stringify(this.socialAvailabilityDays());
+      payload.availabilityHours = this.socialAvailabilityHours();
+      payload.clinicIds = [this.socialClinicId()];
+    } else {
+      payload.contactNumber = this.socialPhone();
+      payload.gender = this.socialGender();
+      payload.dateOfBirth = this.socialDob();
+      payload.bloodGroup = this.socialBloodGroup();
+      payload.address = this.socialAddress();
+      payload.clinicId = this.socialClinicId();
+    }
+
+    this.isLoading.set(true);
+    this.authService.loginWithSocial(this.socialProvider(), this.socialToken(), this.socialRole(), payload).subscribe({
+      next: (res) => {
+        this.isLoading.set(false);
+        this.socialSignUpState.set('none');
+        const user = res.data;
+        this.toastr.success(
+          `${this.languageService.translate('auth.login_success')}: ${user.name}`,
+          this.languageService.translate('toast.success')
+        );
+        this.redirectToDefaultPage(user);
       },
       error: (err) => {
         this.isLoading.set(false);

@@ -126,8 +126,8 @@ export class AuthService {
     );
   }
 
-  loginWithSocial(provider: string, token: string, role?: string): Observable<any> {
-    const body: any = { provider, token };
+  loginWithSocial(provider: string, token: string, role?: string, payload?: any): Observable<any> {
+    const body: any = { provider, token, ...payload };
     if (role) body.role = role;
     return this.http.post<any>('/api/auth/social', body).pipe(
       tap(res => {
