@@ -29,7 +29,8 @@
   <!-- Bottom Profile Area -->
   @if (authService.currentUser(); as user) {
     <div class="p-4 border-t border-slate-200/60 dark:border-slate-800/60 mt-auto">
-      <div class="flex items-center gap-3 w-full p-3 rounded-xl bg-slate-200/40 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/40">
+      <a routerLink="/profile" 
+         class="flex items-center gap-3 w-full p-3 rounded-xl bg-slate-200/40 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/40 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800/60 transition-colors duration-200">
         <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
           {{ getAvatarInitials(user.name) }}
         </div>
@@ -37,7 +38,7 @@
           <span class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{{ user.name }}</span>
           <span class="text-xs text-slate-500 dark:text-slate-400 truncate capitalize">{{ user.title }}</span>
         </div>
-      </div>
+      </a>
     </div>
   }
 </aside>
