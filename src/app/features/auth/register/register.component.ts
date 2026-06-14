@@ -35,6 +35,11 @@ export class RegisterComponent implements OnDestroy {
 
   // OTP Verification States
   otpSent = signal(false);
+  otpStep = signal<'none' | 'email' | 'phone'>('none');
+  emailOtpCode = signal('');
+  phoneOtpCode = signal('');
+  emailOtpDemo = signal('');
+  whatsappOtpDemo = signal('');
   otpInputs = signal<string[]>(['', '', '', '', '', '']);
   countdown = signal(0);
   private timerInterval: ReturnType<typeof setInterval> | undefined;
@@ -110,14 +115,21 @@ export class RegisterComponent implements OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set(null);
     const email = this.registerForm.get('email')?.value;
-    this.authService.sendRegisterOtp(email).subscribe({
-      next: (res) => {
+    const phone = this.registerForm.get('phone')?.value;
+    this.authService.sendRegisterOtp(email, phone).subscribe({
+      next: (res: any) => {
         this.isLoading.set(false);
         this.otpSent.set(true);
-        this.toastr.success(
-          `${this.languageService.translate('auth.otp_sent')} [Demo Code: ${res.otp}]`,
-          this.languageService.translate('toast.success')
-        );
+        this.otpStep.set('email');
+        this.emailOtpDemo.set(res.emailOtp || res.otp || '');
+        this.whatsappOtpDemo.set(res.whatsappOtp || '');
+
+        let toastMsg = `${this.languageService.translate('auth.otp_sent')} [Email Demo Code: ${res.emailOtp || res.otp}]`;
+        if (phone && res.whatsappOtp) {
+          toastMsg += ` [WhatsApp Demo Code: ${res.whatsappOtp}]`;
+        }
+
+        this.toastr.success(toastMsg, this.languageService.translate('toast.success'));
         this.startTimer();
         setTimeout(() => {
           document.getElementById('otp-input-0')?.focus();
@@ -190,7 +202,20 @@ export class RegisterComponent implements OnDestroy {
   }
 
   goBackToForm() {
+    if (this.otpStep() === 'phone') {
+      this.otpStep.set('email');
+      this.otpInputs.set(['', '', '', '', '', '']);
+      this.errorMessage.set(null);
+      setTimeout(() => {
+        document.getElementById('otp-input-0')?.focus();
+      }, 100);
+      return;
+    }
+
     this.otpSent.set(false);
+    this.otpStep.set('none');
+    this.emailOtpCode.set('');
+    this.phoneOtpCode.set('');
     this.otpInputs.set(['', '', '', '', '', '']);
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
@@ -211,11 +236,31 @@ export class RegisterComponent implements OnDestroy {
       return;
     }
 
+    const phone = this.registerForm.get('phone')?.value;
+
+    if (this.otpStep() === 'email') {
+      this.emailOtpCode.set(code);
+      if (phone) {
+        // Go to Phone verification step
+        this.otpStep.set('phone');
+        this.otpInputs.set(['', '', '', '', '', '']);
+        this.errorMessage.set(null);
+        this.toastr.info('Email verification code accepted. Please enter the OTP sent to your WhatsApp.', 'WhatsApp Verification');
+        setTimeout(() => {
+          document.getElementById('otp-input-0')?.focus();
+        }, 100);
+        return;
+      }
+    } else if (this.otpStep() === 'phone') {
+      this.phoneOtpCode.set(code);
+    }
+
     this.isLoading.set(true);
     this.errorMessage.set(null);
     const formValues = {
       ...this.registerForm.value,
-      otpCode: code
+      otpCode: this.emailOtpCode() || code,
+      phoneOtpCode: this.otpStep() === 'phone' ? code : undefined
     };
 
     this.authService.register(formValues).subscribe({
@@ -248,6 +293,16 @@ export class RegisterComponent implements OnDestroy {
         const redirectUri = encodeURIComponent(window.location.origin + '/login');
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
         
+        const listener = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+          if (event.data && event.data.type === 'oauth-token') {
+            const idToken = event.data.token;
+            this.executeSocialLogin('google', idToken);
+            window.removeEventListener('message', listener);
+          }
+        };
+        window.addEventListener('message', listener);
+
         const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
         
         if (popup) {
@@ -255,6 +310,7 @@ export class RegisterComponent implements OnDestroy {
             try {
               if (popup.closed) {
                 clearInterval(interval);
+                window.removeEventListener('message', listener);
                 this.isLoading.set(false);
               }
               const hash = popup.location.hash;
@@ -264,6 +320,7 @@ export class RegisterComponent implements OnDestroy {
                 if (idToken) {
                   popup.close();
                   clearInterval(interval);
+                  window.removeEventListener('message', listener);
                   this.executeSocialLogin('google', idToken);
                 }
               }

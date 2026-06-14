@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService, User } from '../../../core/auth/auth.service';
@@ -12,6 +12,21 @@ import { ClinicService } from '../../../core/services/clinic.service';
 
 declare var google: any;
 declare var AppleID: any;
+
+function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (!value) return null;
+
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  // Allow phone numbers of length 6 to 15 digits (with optional leading +)
+  const phoneRegex = /^\+?[0-9]{6,15}$/;
+  const cleaned = value.replace(/[\s\-]/g, '');
+
+  if (emailRegex.test(value) || phoneRegex.test(cleaned)) {
+    return null;
+  }
+  return { email: true };
+}
 
 @Component({
   selector: 'app-login',
@@ -64,8 +79,23 @@ export class LoginComponent implements OnDestroy {
   private timerInterval: ReturnType<typeof setInterval> | undefined;
 
   constructor() {
+    // Check if this window is a popup initialized by an opener window with hash parameters
+    if (window.opener && window.location.hash) {
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.substring(1));
+      const idToken = params.get('id_token');
+      if (idToken) {
+        try {
+          window.opener.postMessage({ type: 'oauth-token', token: idToken }, window.location.origin);
+          window.close();
+        } catch (e) {
+          // Fallback if cross-origin or other issues
+        }
+      }
+    }
+
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, emailOrPhoneValidator]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
@@ -271,6 +301,16 @@ export class LoginComponent implements OnDestroy {
         const redirectUri = encodeURIComponent(window.location.origin + '/login');
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
         
+        const listener = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+          if (event.data && event.data.type === 'oauth-token') {
+            const idToken = event.data.token;
+            this.executeSocialLogin('google', idToken);
+            window.removeEventListener('message', listener);
+          }
+        };
+        window.addEventListener('message', listener);
+
         const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
         
         if (popup) {
@@ -278,6 +318,7 @@ export class LoginComponent implements OnDestroy {
             try {
               if (popup.closed) {
                 clearInterval(interval);
+                window.removeEventListener('message', listener);
                 this.isLoading.set(false);
               }
               const hash = popup.location.hash;
@@ -287,6 +328,7 @@ export class LoginComponent implements OnDestroy {
                 if (idToken) {
                   popup.close();
                   clearInterval(interval);
+                  window.removeEventListener('message', listener);
                   this.executeSocialLogin('google', idToken);
                 }
               }
