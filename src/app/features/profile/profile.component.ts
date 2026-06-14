@@ -29,6 +29,10 @@ export class ProfileComponent implements OnInit {
   isSendingPhoneOtp = signal(false);
   emailOtpSent = signal(false);
   phoneOtpSent = signal(false);
+  isConfirmingEmailOtp = signal(false);
+  isConfirmingPhoneOtp = signal(false);
+  emailOtpConfirmed = signal(false);
+  phoneOtpConfirmed = signal(false);
 
   selectedAvailabilityDays: string[] = [];
   availableDaysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -80,6 +84,8 @@ export class ProfileComponent implements OnInit {
         this.originalContactNumber = data.contactNumber || '';
         this.emailOtpSent.set(false);
         this.phoneOtpSent.set(false);
+        this.emailOtpConfirmed.set(false);
+        this.phoneOtpConfirmed.set(false);
 
         this.profileForm.patchValue({
           name: data.name,
@@ -167,6 +173,48 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  confirmEmailOtp() {
+    const email = this.profileForm.get('email')?.value;
+    const code = this.profileForm.get('emailOtpCode')?.value;
+    if (!code) {
+      this.toastr.error('Please enter the verification code first.', 'Error');
+      return;
+    }
+    this.isConfirmingEmailOtp.set(true);
+    this.http.post<any>('/api/auth/verify-otp', { email, code, removeAfterVerification: false }).subscribe({
+      next: () => {
+        this.isConfirmingEmailOtp.set(false);
+        this.emailOtpConfirmed.set(true);
+        this.toastr.success('Email verification code confirmed successfully!', 'Verified');
+      },
+      error: (err) => {
+        this.isConfirmingEmailOtp.set(false);
+        this.toastr.error(err?.error?.message || 'Invalid or expired verification code.', 'Verification Failed');
+      }
+    });
+  }
+
+  confirmPhoneOtp() {
+    const phone = this.profileForm.get('contactNumber')?.value;
+    const code = this.profileForm.get('phoneOtpCode')?.value;
+    if (!code) {
+      this.toastr.error('Please enter the verification code first.', 'Error');
+      return;
+    }
+    this.isConfirmingPhoneOtp.set(true);
+    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: phone, code, removeAfterVerification: false }).subscribe({
+      next: () => {
+        this.isConfirmingPhoneOtp.set(false);
+        this.phoneOtpConfirmed.set(true);
+        this.toastr.success('WhatsApp verification code confirmed successfully!', 'Verified');
+      },
+      error: (err) => {
+        this.isConfirmingPhoneOtp.set(false);
+        this.toastr.error(err?.error?.message || 'Invalid or expired verification code.', 'Verification Failed');
+      }
+    });
+  }
+
   toggleAvailabilityDay(day: string) {
     if (this.selectedAvailabilityDays.includes(day)) {
       this.selectedAvailabilityDays = this.selectedAvailabilityDays.filter(d => d !== day);
@@ -182,13 +230,13 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    if (this.isEmailChanged() && !this.profileForm.get('emailOtpCode')?.value) {
-      this.toastr.error('Please request and enter the email OTP verification code.', 'Verification Required');
+    if (this.isEmailChanged() && !this.emailOtpConfirmed()) {
+      this.toastr.error('Please enter and confirm the email OTP code first.', 'Verification Required');
       return;
     }
 
-    if (this.isContactNumberChanged() && !this.profileForm.get('phoneOtpCode')?.value) {
-      this.toastr.error('Please request and enter the WhatsApp OTP verification code.', 'Verification Required');
+    if (this.isContactNumberChanged() && !this.phoneOtpConfirmed()) {
+      this.toastr.error('Please enter and confirm the WhatsApp OTP code first.', 'Verification Required');
       return;
     }
 
@@ -216,6 +264,8 @@ export class ProfileComponent implements OnInit {
         this.profileForm.get('phoneOtpCode')?.setValue('');
         this.emailOtpSent.set(false);
         this.phoneOtpSent.set(false);
+        this.emailOtpConfirmed.set(false);
+        this.phoneOtpConfirmed.set(false);
 
         // Update current user in AuthService locally
         const currentUser = this.authService.currentUser();
