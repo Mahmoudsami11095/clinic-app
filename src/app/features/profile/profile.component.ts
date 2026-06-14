@@ -27,6 +27,8 @@ export class ProfileComponent implements OnInit {
   originalContactNumber = '';
   isSendingEmailOtp = signal(false);
   isSendingPhoneOtp = signal(false);
+  emailOtpSent = signal(false);
+  phoneOtpSent = signal(false);
 
   selectedAvailabilityDays: string[] = [];
   availableDaysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -76,6 +78,8 @@ export class ProfileComponent implements OnInit {
         const data = res.data;
         this.originalEmail = data.email;
         this.originalContactNumber = data.contactNumber || '';
+        this.emailOtpSent.set(false);
+        this.phoneOtpSent.set(false);
 
         this.profileForm.patchValue({
           name: data.name,
@@ -133,6 +137,7 @@ export class ProfileComponent implements OnInit {
     this.http.post<any>('/api/auth/profile-send-otp', { email }).subscribe({
       next: (res) => {
         this.isSendingEmailOtp.set(false);
+        this.emailOtpSent.set(true);
         this.toastr.success(res.message || 'OTP sent successfully to your new email.', 'Success');
       },
       error: (err) => {
@@ -152,6 +157,7 @@ export class ProfileComponent implements OnInit {
     this.http.post<any>('/api/auth/profile-send-otp', { contactNumber: phone }).subscribe({
       next: (res) => {
         this.isSendingPhoneOtp.set(false);
+        this.phoneOtpSent.set(true);
         this.toastr.success(res.message || 'OTP sent successfully to your new phone number.', 'Success');
       },
       error: (err) => {
@@ -208,6 +214,8 @@ export class ProfileComponent implements OnInit {
         this.originalContactNumber = res.data.contactNumber || '';
         this.profileForm.get('emailOtpCode')?.setValue('');
         this.profileForm.get('phoneOtpCode')?.setValue('');
+        this.emailOtpSent.set(false);
+        this.phoneOtpSent.set(false);
 
         // Update current user in AuthService locally
         const currentUser = this.authService.currentUser();
