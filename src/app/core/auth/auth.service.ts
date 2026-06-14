@@ -139,8 +139,8 @@ export class AuthService {
     );
   }
 
-  sendRegisterOtp(email: string): Observable<{ message: string; otp: string }> {
-    return this.http.post<{ message: string; otp: string }>('/api/auth/register-send-otp', { email });
+  sendRegisterOtp(email: string, phone?: string): Observable<{ message: string; otp: string }> {
+    return this.http.post<{ message: string; otp: string }>('/api/auth/register-send-otp', { email, phone });
   }
 
   register(userData: RegistrationData): Observable<User> {
