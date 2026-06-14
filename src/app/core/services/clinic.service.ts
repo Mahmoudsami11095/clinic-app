@@ -119,6 +119,14 @@ export class ClinicService {
     return this.http.post<{ message: string }>(`/api/clinics/${clinicId}/assign-doctors`, doctorIds);
   }
 
+  assignDoctorsByEmails(clinicId: string, emails: string[]) {
+    return this.http.post<{ message: string; assigned: string[]; notFound?: string[] }>(`/api/clinics/${clinicId}/assign-doctors-by-emails`, emails);
+  }
+
+  assignAssistantByEmail(clinicId: string, email: string) {
+    return this.http.post<{ message: string; assistant: string }>(`/api/clinics/${clinicId}/assign-assistant`, { email });
+  }
+
   respondToAssignment(clinicId: string, status: 'Accepted' | 'Rejected') {
     return this.http.post<{ message: string }>(`/api/clinics/${clinicId}/respond-assignment`, { status }).pipe(
       map(res => {

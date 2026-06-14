@@ -37,6 +37,22 @@ export class ClinicListComponent implements OnInit {
   isAssignModalOpen = signal(false);
   assignClinic = signal<Clinic | undefined>(undefined);
   selectedDoctorIds = signal<string[]>([]);
+  doctorEmailInput = signal('');
+  assignedEmailsList = signal<string[]>([]);
+  assignDoctorError = signal('');
+  assignDoctorSuccess = signal('');
+
+  isAssignAssistantModalOpen = signal(false);
+  assistantEmailInput = signal('');
+  assignAssistantError = signal('');
+  assignAssistantSuccess = signal('');
+
+  pendingInvitations = computed(() => {
+    const clinicsList = this.clinicService.clinics();
+    const user = this.authService.currentUser();
+    if (!user || user.role !== 'doctor') return [];
+    return clinicsList.filter(c => c.status === 'Pending');
+  });
 
   clinicsWithStats = computed(() => {
     const clinicsList = this.clinicService.clinics();
@@ -117,6 +133,10 @@ export class ClinicListComponent implements OnInit {
       .filter(d => d.clinicIds?.includes(clinic.id))
       .map(d => d.id);
     this.selectedDoctorIds.set(assignedIds);
+    this.doctorEmailInput.set('');
+    this.assignedEmailsList.set([]);
+    this.assignDoctorError.set('');
+    this.assignDoctorSuccess.set('');
     this.isAssignModalOpen.set(true);
   }
 
@@ -129,15 +149,87 @@ export class ClinicListComponent implements OnInit {
     }
   }
 
+  addDoctorEmail() {
+    const email = this.doctorEmailInput().trim();
+    if (!email) return;
+    const current = this.assignedEmailsList();
+    if (!current.includes(email)) {
+      this.assignedEmailsList.set([...current, email]);
+    }
+    this.doctorEmailInput.set('');
+  }
+
+  removeDoctorEmail(email: string) {
+    this.assignedEmailsList.update(list => list.filter(e => e !== email));
+  }
+
   saveAssignments() {
     const clinic = this.assignClinic();
     if (!clinic) return;
 
-    this.clinicService.assignDoctors(clinic.id, this.selectedDoctorIds()).subscribe({
-      next: () => {
-        this.isAssignModalOpen.set(false);
+    const typedEmail = this.doctorEmailInput().trim();
+    let emailsList = [...this.assignedEmailsList()];
+    if (typedEmail && !emailsList.includes(typedEmail)) {
+      emailsList.push(typedEmail);
+    }
+
+    if (emailsList.length === 0) {
+      this.assignDoctorError.set('Please enter at least one doctor email.');
+      this.assignDoctorSuccess.set('');
+      return;
+    }
+
+    this.clinicService.assignDoctorsByEmails(clinic.id, emailsList).subscribe({
+      next: (res) => {
+        if (res.notFound && res.notFound.length > 0) {
+          this.assignDoctorError.set(`Failed to invite/find these email(s): ${res.notFound.join(', ')}`);
+          this.assignDoctorSuccess.set(res.message);
+        } else {
+          this.assignDoctorSuccess.set(res.message || 'Doctors assigned successfully.');
+          this.assignDoctorError.set('');
+          setTimeout(() => {
+            this.isAssignModalOpen.set(false);
+            this.assignedEmailsList.set([]);
+            this.doctorEmailInput.set('');
+          }, 1500);
+        }
         this.clinicService.loadClinics();
         this.doctorService.getAll().subscribe(docs => this.doctors.set(docs));
+      },
+      error: (err) => {
+        console.error('Doctor assignment error:', err);
+        const errMsg = err.error?.message || err.message || 'Failed to assign doctors';
+        this.assignDoctorError.set(errMsg);
+        this.assignDoctorSuccess.set('');
+      }
+    });
+  }
+
+  openAssignAssistantModal(clinic: Clinic) {
+    this.assignClinic.set(clinic);
+    this.assistantEmailInput.set('');
+    this.assignAssistantError.set('');
+    this.assignAssistantSuccess.set('');
+    this.isAssignAssistantModalOpen.set(true);
+  }
+
+  saveAssistantAssignment() {
+    const clinic = this.assignClinic();
+    const email = this.assistantEmailInput().trim();
+    if (!clinic || !email) return;
+
+    this.clinicService.assignAssistantByEmail(clinic.id, email).subscribe({
+      next: (res) => {
+        this.assignAssistantSuccess.set(res.message);
+        this.assignAssistantError.set('');
+        this.clinicService.loadClinics(); // Reload to refresh stats if needed
+        setTimeout(() => {
+          this.isAssignAssistantModalOpen.set(false);
+        }, 1500);
+      },
+      error: (err) => {
+        this.assignAssistantError.set(err.error?.message || 'Failed to assign assistant');
+        this.assignAssistantSuccess.set('');
       }
     });
   }

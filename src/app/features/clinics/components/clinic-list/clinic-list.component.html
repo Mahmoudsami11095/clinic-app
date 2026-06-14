@@ -1,5 +1,48 @@
 <div class="space-y-6">
 
+  <!-- Pending Clinic Invitations Notification Banner -->
+  @if (authService.isDoctor() && pendingInvitations().length > 0) {
+    <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/5 dark:to-orange-500/5 border border-amber-500/30 dark:border-amber-500/20 rounded-2xl p-5 shadow-sm space-y-4">
+      <div class="flex items-start gap-4">
+        <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-450 flex-shrink-0">
+          <i class="pi pi-bell text-sm"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">Pending Clinic Invitations</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            You have been invited to join the following clinics. Please accept or reject these invitations:
+          </p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pl-14">
+        @for (inv of pendingInvitations(); track inv.id) {
+          <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-sm">
+            <div>
+              <span class="text-sm font-semibold text-slate-700 dark:text-slate-200 block">{{ inv.name }}</span>
+              <span class="text-xs text-slate-400 dark:text-slate-550 block mt-0.5">{{ inv.address }}</span>
+            </div>
+            <div class="flex gap-2">
+              <button
+                (click)="respondToAssignment(inv.id, 'Accepted')"
+                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors focus:outline-none cursor-pointer flex items-center gap-1"
+              >
+                <i class="pi pi-check text-[10px]"></i>
+                Accept
+              </button>
+              <button
+                (click)="respondToAssignment(inv.id, 'Rejected')"
+                class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold transition-colors focus:outline-none cursor-pointer flex items-center gap-1"
+              >
+                <i class="pi pi-times text-[10px]"></i>
+                Reject
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
@@ -126,6 +169,13 @@
                   Assign Doctors
                 </button>
                 <button
+                  (click)="openAssignAssistantModal(clinic)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors focus:outline-none border border-transparent cursor-pointer"
+                >
+                  <i class="pi pi-user-plus text-[10px]"></i>
+                  Assign Assistant
+                </button>
+                <button
                   (click)="openEditModal(clinic)"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none cursor-pointer"
                 >
@@ -182,27 +232,54 @@
   <app-modal
     [isOpen]="isAssignModalOpen()"
     [title]="'Assign Doctors to ' + assignClinic()?.name"
-    subtitle="Select doctors to assign to this clinic"
+    subtitle="Enter doctor's email to assign them to this clinic"
     (close)="isAssignModalOpen.set(false)"
   >
     <div class="space-y-4 py-2">
-      <div class="max-h-60 overflow-y-auto space-y-2 border border-slate-250 dark:border-slate-800 rounded-xl p-3">
-        <label *ngFor="let doc of doctors()" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+      <!-- Error & Success Alerts -->
+      @if (assignDoctorError()) {
+        <div class="p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-450 text-sm rounded-xl">
+          {{ assignDoctorError() }}
+        </div>
+      }
+      @if (assignDoctorSuccess()) {
+        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-600 dark:text-emerald-450 text-sm rounded-xl">
+          {{ assignDoctorSuccess() }}
+        </div>
+      }
+
+      <!-- Assign by Email Form -->
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Doctor Email</label>
+        <div class="flex gap-2">
           <input
-            type="checkbox"
-            [checked]="selectedDoctorIds().includes(doc.id)"
-            (change)="toggleDoctorSelection(doc.id)"
-            class="w-4 h-4 rounded text-indigo-600 border-slate-350 focus:ring-indigo-500"
+            type="email"
+            placeholder="doctor@example.com"
+            [ngModel]="doctorEmailInput()"
+            (ngModelChange)="doctorEmailInput.set($event)"
+            class="flex-1 bg-slate-50/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-slate-200"
           />
-          <div class="flex-1">
-            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              Dr. {{ doc.firstName }} {{ doc.lastName }}
-            </span>
-            <span class="text-xs text-slate-400 dark:text-slate-550 block mt-0.5">
-              {{ doc.specialization }}
-            </span>
+          <button
+            (click)="addDoctorEmail()"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors"
+          >
+            Add
+          </button>
+        </div>
+        
+        <!-- Pending list of emails to assign -->
+        @if (assignedEmailsList().length > 0) {
+          <div class="flex flex-wrap gap-2 pt-1">
+            @for (email of assignedEmailsList(); track email) {
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-semibold">
+                {{ email }}
+                <button (click)="removeDoctorEmail(email)" class="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200">
+                  <i class="pi pi-times text-[10px]"></i>
+                </button>
+              </span>
+            }
           </div>
-        </label>
+        }
       </div>
       
       <div class="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -217,6 +294,54 @@
           class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-sm"
         >
           Save Changes
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- Assign Assistant Modal -->
+  <app-modal
+    [isOpen]="isAssignAssistantModalOpen()"
+    [title]="'Assign Assistant to ' + assignClinic()?.name"
+    subtitle="Enter assistant's email to assign them to this clinic"
+    (close)="isAssignAssistantModalOpen.set(false)"
+  >
+    <div class="space-y-4 py-2">
+      <!-- Error & Success Alerts -->
+      @if (assignAssistantError()) {
+        <div class="p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-450 text-sm rounded-xl">
+          {{ assignAssistantError() }}
+        </div>
+      }
+      @if (assignAssistantSuccess()) {
+        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-600 dark:text-emerald-450 text-sm rounded-xl">
+          {{ assignAssistantSuccess() }}
+        </div>
+      }
+
+      <div class="space-y-2">
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Assistant Email</label>
+        <input
+          type="email"
+          placeholder="assistant@example.com"
+          [ngModel]="assistantEmailInput()"
+          (ngModelChange)="assistantEmailInput.set($event)"
+          class="w-full bg-slate-50/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-slate-200"
+        />
+      </div>
+
+      <div class="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button
+          (click)="isAssignAssistantModalOpen.set(false)"
+          class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="saveAssistantAssignment()"
+          class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-sm"
+        >
+          Assign Assistant
         </button>
       </div>
     </div>
