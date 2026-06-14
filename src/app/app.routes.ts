@@ -61,6 +61,12 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['admin', 'doctor'] }
       },
+      {
+        path: 'profile',
+        loadChildren: () => import('./features/profile/profile.routes').then(m => m.profileRoutes),
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'doctor', 'assistant', 'patient'] }
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

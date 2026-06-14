@@ -31,6 +31,11 @@ export class Header {
     this.isDropdownOpen.update(v => !v);
   }
 
+  navigateToProfile() {
+    this.router.navigate(['/profile']);
+    this.isDropdownOpen.set(false);
+  }
+
   getAvatarInitials(name: string): string {
     if (!name) return 'U';
     const parts = name.split(' ');

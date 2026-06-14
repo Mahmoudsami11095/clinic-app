@@ -84,6 +84,7 @@ export class LanguageService {
     'sidebar.clinics': { en: 'Clinics', ar: 'العيادات' },
     'sidebar.my_portal': { en: 'My Portal', ar: 'بوابتي الخاصة' },
     'sidebar.my_bills': { en: 'My Bills', ar: 'فواتيري' },
+    'sidebar.profile': { en: 'My Profile', ar: 'الملف الشخصي' },
 
     // Dashboard
     'dashboard.title': { en: 'Dashboard', ar: 'لوحة التحكم' },

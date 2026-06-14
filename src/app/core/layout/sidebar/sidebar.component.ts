@@ -20,6 +20,7 @@ export class Sidebar {
     { labelKey: 'sidebar.doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
     { labelKey: 'sidebar.billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor'] },
+    { labelKey: 'sidebar.profile', route: '/profile', icon: 'pi pi-user', roles: ['admin', 'doctor', 'assistant', 'patient'] },
   ];
 
   menuItems = computed(() => {
