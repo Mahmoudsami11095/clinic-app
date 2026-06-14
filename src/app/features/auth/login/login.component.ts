@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { HttpClient } from '@angular/common/http';
 import { AuthService, User } from '../../../core/auth/auth.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -43,6 +44,7 @@ export class LoginComponent implements OnDestroy {
   private router = inject(Router);
   private toastr = inject(ToastrService);
   private clinicService = inject(ClinicService);
+  private http = inject(HttpClient);
 
   loginForm: FormGroup;
   showPassword = signal(false);
@@ -50,7 +52,12 @@ export class LoginComponent implements OnDestroy {
   errorMessage = signal<string | null>(null);
 
   // Social signup multi stage signals
-  socialSignUpState = signal<'none' | 'role' | 'data' | 'doctor-clinics'>('none');
+  socialSignUpState = signal<'none' | 'role' | 'data' | 'doctor-clinics' | 'social-otp'>('none');
+  socialOtpInputs = signal<string[]>(['', '', '', '', '', '']);
+  socialOtpDemo = signal<string>('');
+  socialOtpNextState = signal<'doctor-clinics' | 'submit'>('submit');
+  socialPhoneVerified = signal<boolean>(false);
+
   socialProvider = signal<string>('');
   socialToken = signal<string>('');
   socialRole = signal<'doctor' | 'patient'>('patient');
@@ -476,14 +483,52 @@ export class LoginComponent implements OnDestroy {
   }
 
   onSubmitSocialExtraData() {
+    // Validate phone number format
+    const phone = this.socialPhone();
+    const cleanedPhone = phone ? phone.replace(/[\s\-\(\)]/g, '') : '';
+    if (!cleanedPhone || !/^\+?[0-9]{8,15}$/.test(cleanedPhone)) {
+      this.toastr.error('Please enter a valid phone number (8-15 digits)', 'Validation Error');
+      return;
+    }
+
+    // Trigger OTP verification if not yet verified
+    if (!this.socialPhoneVerified()) {
+      const target = this.socialRole() === 'doctor' ? 'doctor-clinics' : 'submit';
+      this.socialOtpNextState.set(target);
+      
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+      this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone }).subscribe({
+        next: (res) => {
+          this.isLoading.set(false);
+          this.socialOtpDemo.set(res.otp || '');
+          this.socialSignUpState.set('social-otp');
+          this.socialOtpInputs.set(['', '', '', '', '', '']);
+          this.toastr.success(`Verification code sent to WhatsApp [Demo Code: ${res.otp}]`, 'Success');
+          setTimeout(() => {
+            document.getElementById('social-otp-input-0')?.focus();
+          }, 100);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          const errorMsg = err?.error?.message || 'Failed to send WhatsApp verification code';
+          this.toastr.error(errorMsg, 'Error');
+        }
+      });
+      return;
+    }
+
+    // Already verified! Let's proceed:
     if (this.socialRole() === 'doctor' && this.socialSignUpState() === 'data') {
       this.socialSignUpState.set('doctor-clinics');
       return;
     }
 
-    const payload: any = {};
+    const payload: any = {
+      contactNumber: this.socialPhone()
+    };
+
     if (this.socialRole() === 'doctor') {
-      payload.contactNumber = this.socialPhone();
       payload.specialization = this.socialSpecialization();
       
       if (this.socialClinicName() && this.socialClinicName().trim().length >= 3) {
@@ -494,7 +539,6 @@ export class LoginComponent implements OnDestroy {
         payload.availabilityDays = JSON.stringify(this.socialNewClinicDays());
       }
     } else {
-      payload.contactNumber = this.socialPhone();
       payload.gender = this.socialGender();
       payload.dateOfBirth = this.socialDob();
       payload.bloodGroup = this.socialBloodGroup();
@@ -507,6 +551,7 @@ export class LoginComponent implements OnDestroy {
       next: (res) => {
         this.isLoading.set(false);
         this.socialSignUpState.set('none');
+        this.socialPhoneVerified.set(false);
         const user = res.data;
         this.toastr.success(
           `${this.languageService.translate('auth.login_success')}: ${user.name}`,
@@ -521,6 +566,81 @@ export class LoginComponent implements OnDestroy {
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
     });
+  }
+
+  onVerifySocialOtp() {
+    const code = this.socialOtpInputs().join('');
+    if (code.length < 6) {
+      this.toastr.error('Please enter the 6-digit verification code.', 'Error');
+      return;
+    }
+
+    this.isLoading.set(true);
+    const cleanedPhone = this.socialPhone().replace(/[\s\-\(\)]/g, '');
+
+    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: cleanedPhone, code }).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.socialPhoneVerified.set(true);
+        this.toastr.success('Phone number verified successfully.', 'Verified');
+        
+        // Transition to the next step
+        if (this.socialOtpNextState() === 'doctor-clinics') {
+          this.socialSignUpState.set('doctor-clinics');
+        } else {
+          // Patient - submit final registration
+          this.socialSignUpState.set('data'); // temporarily go back to run submit payload
+          this.onSubmitSocialExtraData();
+        }
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const errorMsg = err?.error?.message || 'Invalid verification code.';
+        this.toastr.error(errorMsg, 'Error');
+      }
+    });
+  }
+
+  goBackToSocialData() {
+    this.socialSignUpState.set('data');
+    this.socialPhoneVerified.set(false);
+    this.socialOtpDemo.set('');
+  }
+
+  onSocialOtpInput(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
+    
+    const arr = [...this.socialOtpInputs()];
+    arr[index] = digit;
+    this.socialOtpInputs.set(arr);
+    
+    input.value = digit;
+
+    if (digit && index < 5) {
+      const nextInput = document.getElementById(`social-otp-input-${index + 1}`) as HTMLInputElement;
+      nextInput?.focus();
+    }
+
+    if (arr.every(d => d !== '') && arr.length === 6) {
+      this.onVerifySocialOtp();
+    }
+  }
+
+  onSocialOtpKeyDown(event: KeyboardEvent, index: number) {
+    if (event.key === 'Backspace') {
+      const arr = [...this.socialOtpInputs()];
+      if (!arr[index] && index > 0) {
+        arr[index - 1] = '';
+        this.socialOtpInputs.set(arr);
+        const prevInput = document.getElementById(`social-otp-input-${index - 1}`) as HTMLInputElement;
+        prevInput?.focus();
+      } else {
+        arr[index] = '';
+        this.socialOtpInputs.set(arr);
+      }
+    }
   }
 
   quickLogin(user: User) {
