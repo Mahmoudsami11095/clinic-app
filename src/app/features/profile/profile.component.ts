@@ -23,6 +23,11 @@ export class ProfileComponent implements OnInit {
   isSaving = signal(false);
   userRole = signal<string>('');
 
+  originalEmail = '';
+  originalContactNumber = '';
+  isSendingEmailOtp = signal(false);
+  isSendingPhoneOtp = signal(false);
+
   selectedAvailabilityDays: string[] = [];
   availableDaysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -41,6 +46,10 @@ export class ProfileComponent implements OnInit {
       password: ['', [Validators.minLength(6)]],
       title: [{ value: '', disabled: true }],
       role: [{ value: '', disabled: true }],
+
+      // OTP Verification Codes
+      emailOtpCode: [''],
+      phoneOtpCode: [''],
 
       // Doctor Specific fields
       specialization: [''],
@@ -65,6 +74,9 @@ export class ProfileComponent implements OnInit {
       next: (res) => {
         this.isLoading.set(false);
         const data = res.data;
+        this.originalEmail = data.email;
+        this.originalContactNumber = data.contactNumber || '';
+
         this.profileForm.patchValue({
           name: data.name,
           email: data.email,
@@ -80,7 +92,9 @@ export class ProfileComponent implements OnInit {
           address: data.address || '',
           allergies: data.allergies || '',
           chronicDiseases: data.chronicDiseases || '',
-          pastIllnesses: data.pastIllnesses || ''
+          pastIllnesses: data.pastIllnesses || '',
+          emailOtpCode: '',
+          phoneOtpCode: ''
         });
 
         if (data.availabilityDays) {
@@ -98,6 +112,55 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  isEmailChanged(): boolean {
+    if (!this.profileForm) return false;
+    return this.profileForm.get('email')?.value !== this.originalEmail;
+  }
+
+  isContactNumberChanged(): boolean {
+    if (!this.profileForm) return false;
+    const currentPhone = this.profileForm.get('contactNumber')?.value || '';
+    return currentPhone !== this.originalContactNumber;
+  }
+
+  sendEmailOtp() {
+    const email = this.profileForm.get('email')?.value;
+    if (!email || this.profileForm.get('email')?.invalid) {
+      this.toastr.error('Please enter a valid email address first.', 'Error');
+      return;
+    }
+    this.isSendingEmailOtp.set(true);
+    this.http.post<any>('/api/auth/profile-send-otp', { email }).subscribe({
+      next: (res) => {
+        this.isSendingEmailOtp.set(false);
+        this.toastr.success(res.message || 'OTP sent successfully to your new email.', 'Success');
+      },
+      error: (err) => {
+        this.isSendingEmailOtp.set(false);
+        this.toastr.error(err?.error?.message || 'Failed to send email OTP.', 'Error');
+      }
+    });
+  }
+
+  sendPhoneOtp() {
+    const phone = this.profileForm.get('contactNumber')?.value;
+    if (!phone || this.profileForm.get('contactNumber')?.invalid) {
+      this.toastr.error('Please enter a valid phone number first.', 'Error');
+      return;
+    }
+    this.isSendingPhoneOtp.set(true);
+    this.http.post<any>('/api/auth/profile-send-otp', { contactNumber: phone }).subscribe({
+      next: (res) => {
+        this.isSendingPhoneOtp.set(false);
+        this.toastr.success(res.message || 'OTP sent successfully to your new phone number.', 'Success');
+      },
+      error: (err) => {
+        this.isSendingPhoneOtp.set(false);
+        this.toastr.error(err?.error?.message || 'Failed to send WhatsApp OTP.', 'Error');
+      }
+    });
+  }
+
   toggleAvailabilityDay(day: string) {
     if (this.selectedAvailabilityDays.includes(day)) {
       this.selectedAvailabilityDays = this.selectedAvailabilityDays.filter(d => d !== day);
@@ -110,6 +173,16 @@ export class ProfileComponent implements OnInit {
     if (this.profileForm.invalid) {
       this.toastr.error('Please fix the validation errors.', 'Validation Error');
       this.profileForm.markAllAsTouched();
+      return;
+    }
+
+    if (this.isEmailChanged() && !this.profileForm.get('emailOtpCode')?.value) {
+      this.toastr.error('Please request and enter the email OTP verification code.', 'Verification Required');
+      return;
+    }
+
+    if (this.isContactNumberChanged() && !this.profileForm.get('phoneOtpCode')?.value) {
+      this.toastr.error('Please request and enter the WhatsApp OTP verification code.', 'Verification Required');
       return;
     }
 
@@ -130,6 +203,12 @@ export class ProfileComponent implements OnInit {
         this.isSaving.set(false);
         this.toastr.success('Profile updated successfully.', 'Success');
         
+        // Update local original values
+        this.originalEmail = res.data.email;
+        this.originalContactNumber = res.data.contactNumber || '';
+        this.profileForm.get('emailOtpCode')?.setValue('');
+        this.profileForm.get('phoneOtpCode')?.setValue('');
+
         // Update current user in AuthService locally
         const currentUser = this.authService.currentUser();
         if (currentUser) {
