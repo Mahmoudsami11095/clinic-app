@@ -27,7 +27,8 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/staticwebapp.config.json"
             ],
             "styles": [
               "src/styles.css"
@@ -85,7 +86,8 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/staticwebapp.config.json"
             ],
             "styles": [
               "src/styles.css"
