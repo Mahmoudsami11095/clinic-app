@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar.component';
 import { Header } from '../header/header.component';
@@ -12,4 +12,13 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class MainLayout {
   protected authService = inject(AuthService);
+  protected isMobileSidebarOpen = signal(false);
+
+  protected openMobileSidebar() {
+    this.isMobileSidebarOpen.set(true);
+  }
+
+  protected closeMobileSidebar() {
+    this.isMobileSidebarOpen.set(false);
+  }
 }

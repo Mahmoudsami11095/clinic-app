@@ -3,12 +3,12 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'patients.title' | translate }}</h1>
+      <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'patients.title' | translate }}</h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ 'patients.subtitle' | translate }}</p>
     </div>
     <button
       (click)="openModal()"
-      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+      class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
     >
       <i class="pi pi-plus text-xs"></i>
       {{ 'patients.add_patient' | translate }}
@@ -17,7 +17,7 @@
 
   <!-- Filters Bar -->
   <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-4 shadow-sm">
-    <div class="flex flex-col sm:flex-row gap-4 items-center">
+    <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
       <!-- Search -->
       <div class="relative flex-1 w-full">
         <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
@@ -30,14 +30,14 @@
       </div>
 
       <!-- Gender Filter -->
-      <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1">
+      <div class="grid grid-cols-3 sm:flex items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1">
         @for (option of ['all', 'male', 'female']; track option) {
           <button
             (click)="onGenderFilter(option)"
             [class]="selectedGender() === option
               ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-            class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all">
+            class="px-3 sm:px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-center">
             {{ 'patients.' + option | translate }}
           </button>
         }
@@ -52,9 +52,9 @@
 
   <!-- Patient Cards Grid -->
   @if (loading()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
       @for (i of [1,2,3,4,5,6]; track i) {
-        <div class="h-48 rounded-2xl bg-white/60 dark:bg-slate-800/60 animate-pulse border border-slate-200/50 dark:border-slate-700/50"></div>
+        <div class="h-44 sm:h-48 rounded-2xl bg-white/60 dark:bg-slate-800/60 animate-pulse border border-slate-200/50 dark:border-slate-700/50"></div>
       }
     </div>
   } @else if (filteredPatients().length === 0) {
@@ -64,9 +64,9 @@
       <p class="text-sm mt-1">{{ 'patients.no_patients_sub' | translate }}</p>
     </div>
   } @else {
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
       @for (patient of filteredPatients(); track patient.id) {
-        <div (click)="viewPatientDetails(patient)" class="group bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer">
+        <div (click)="viewPatientDetails(patient)" class="group bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300 md:hover:-translate-y-0.5 cursor-pointer">
           <!-- Top row: Avatar + Name + Actions -->
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0"

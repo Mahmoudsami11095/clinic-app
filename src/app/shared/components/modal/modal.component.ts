@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       [class.hidden]="!isOpen"
       role="dialog"
       aria-modal="true"
@@ -20,7 +20,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Panel -->
       <div
-        class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/50 flex flex-col max-h-[90vh] overflow-hidden
+        class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/50 flex flex-col max-h-[92dvh] sm:max-h-[90vh] overflow-hidden
           transform transition-all duration-300"
         [class.scale-100]="isOpen"
         [class.opacity-100]="isOpen"
@@ -28,9 +28,9 @@ import { CommonModule } from '@angular/common';
         [class.opacity-0]="!isOpen"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-800">
-          <div>
-            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ title }}</h2>
+        <div class="flex items-start justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-slate-800">
+          <div class="min-w-0">
+            <h2 class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ title }}</h2>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ subtitle }}</p>
           </div>
           <button
@@ -43,7 +43,7 @@ import { CommonModule } from '@angular/common';
         </div>
 
         <!-- Content (scrollable) -->
-        <div class="flex-1 overflow-y-auto px-6 py-5">
+        <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">
           <ng-content></ng-content>
         </div>
       </div>

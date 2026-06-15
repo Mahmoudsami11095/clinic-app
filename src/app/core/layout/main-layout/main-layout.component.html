@@ -1,22 +1,33 @@
 @if (authService.currentUser()) {
-<div class="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 overflow-hidden font-sans selection:bg-indigo-500/30 transition-colors duration-300">
+<div class="flex h-dvh bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 overflow-hidden font-sans selection:bg-indigo-500/30 transition-colors duration-300">
   
-  <!-- Static Sidebar -->
+  <!-- Desktop Sidebar -->
   <app-sidebar class="hidden md:block flex-shrink-0 z-20"></app-sidebar>
+
+  <!-- Mobile Sidebar Drawer -->
+  @if (isMobileSidebarOpen()) {
+    <div class="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
+      <button
+        type="button"
+        class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+        aria-label="Close navigation menu"
+        (click)="closeMobileSidebar()"
+      ></button>
+      <div class="relative h-full w-[min(18rem,85vw)] max-w-full shadow-2xl">
+        <app-sidebar class="block h-full" (click)="closeMobileSidebar()"></app-sidebar>
+      </div>
+    </div>
+  }
   
   <div class="flex-1 flex flex-col min-w-0 relative">
     
     <!-- Header -->
-    <app-header></app-header>
+    <app-header (menuClick)="openMobileSidebar()"></app-header>
     
     <!-- Main Content Area -->
     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 dark:bg-slate-950 relative">
-      <!-- Ambient Background Gradients -->
-      <div class="absolute top-0 start-1/4 w-96 h-96 bg-indigo-400/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-      <div class="absolute bottom-0 end-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-
       <!-- Page Content Container -->
-      <div class="p-6 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-full">
+      <div class="px-4 py-5 sm:px-6 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-full">
         <router-outlet></router-outlet>
       </div>
     </main>

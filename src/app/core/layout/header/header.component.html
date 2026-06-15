@@ -1,5 +1,15 @@
-<header class="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-700/60 sticky top-0 z-10 w-full flex items-center justify-between px-8 shadow-sm dark:shadow-slate-900/50">
+<header class="min-h-16 md:h-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-700/60 sticky top-0 z-10 w-full flex items-center justify-between gap-3 px-4 sm:px-6 md:px-8 py-3 md:py-0 shadow-sm dark:shadow-slate-900/50">
   @if (authService.currentUser(); as user) {
+    <!-- Mobile Menu -->
+    <button
+      type="button"
+      (click)="menuClick.emit()"
+      class="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+      aria-label="Open navigation menu"
+    >
+      <i class="pi pi-bars text-lg"></i>
+    </button>
+
     <!-- Search Bar -->
     <div class="relative w-96 hidden md:block group">
       <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
@@ -8,16 +18,16 @@
     </div>
 
     <!-- Right Actions -->
-    <div class="flex items-center gap-4 ms-auto relative">
+    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 ms-auto min-w-0 relative">
       
       <!-- Clinic Selector -->
-      <div class="flex items-center gap-2 me-2">
-        <i class="pi pi-building text-slate-400 dark:text-slate-500 text-sm"></i>
+      <div class="flex items-center gap-2 me-0 md:me-2 min-w-0">
+        <i class="pi pi-building text-slate-400 dark:text-slate-500 text-sm hidden sm:inline"></i>
         <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 hidden md:inline">{{ 'common.clinic' | translate }}:</span>
         <div *ngIf="clinicService.canSwitchClinics(); else singleClinicLabel">
           <select [value]="clinicService.activeClinicId()" 
                   (change)="onClinicChange($event)"
-                  class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all cursor-pointer">
+                  class="max-w-[9rem] sm:max-w-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all cursor-pointer">
             <option *ngIf="user.role === 'admin' || authService.isDoctor()" value="all">{{ 'common.all_clinics' | translate }}</option>
             <option *ngFor="let clinic of clinicService.allowedClinics()" [value]="clinic.id">
               {{ clinic.name }}
@@ -25,7 +35,7 @@
           </select>
         </div>
         <ng-template #singleClinicLabel>
-          <span class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200/50 dark:ring-slate-700/50">
+          <span class="inline-block max-w-[8rem] sm:max-w-none truncate px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200/50 dark:ring-slate-700/50">
             {{ clinicService.activeClinicName() }}
           </span>
         </ng-template>
@@ -51,17 +61,17 @@
       <button (click)="languageService.setLanguage(languageService.currentLang() === 'en' ? 'ar' : 'en')" 
               class="relative inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 transition-all border border-indigo-200/50 dark:border-indigo-500/20 shadow-sm cursor-pointer">
         <i class="pi pi-globe text-[11px]"></i>
-        <span>{{ languageService.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
+        <span class="hidden sm:inline">{{ languageService.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
       </button>
 
       <!-- Notifications -->
-      <button class="relative p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none">
+      <button class="relative hidden sm:block p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none">
         <i class="pi pi-bell text-xl"></i>
         <span class="absolute top-2 end-2.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
       </button>
 
       <!-- Messages -->
-      <button class="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none">
+      <button class="hidden sm:block p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none">
         <i class="pi pi-envelope text-xl"></i>
       </button>
 
@@ -70,7 +80,7 @@
       <!-- Profile Dropdown (Active User) -->
       <div class="relative">
         <button (click)="toggleDropdown()" 
-                class="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 p-1.5 pe-3 rounded-full transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:outline-none cursor-pointer">
+                class="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 p-1.5 sm:pe-3 rounded-full transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:outline-none cursor-pointer">
           <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
             {{ getAvatarInitials(user.name) }}
           </div>

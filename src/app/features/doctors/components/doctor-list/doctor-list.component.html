@@ -3,12 +3,12 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'doctors.medical_team' | translate }}</h1>
+      <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'doctors.medical_team' | translate }}</h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ 'doctors.subtitle' | translate }}</p>
     </div>
     <button
       (click)="openModal()"
-      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+      class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
     >
       <i class="pi pi-user-plus text-xs"></i>
       {{ 'doctors.add_doctor' | translate }}
@@ -17,7 +17,7 @@
 
   <!-- Filters Bar -->
   <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-4 shadow-sm">
-    <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+    <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
       <!-- Search Input -->
       <div class="relative flex-1 w-full md:max-w-md">
         <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
@@ -47,7 +47,7 @@
 
   <!-- Main Roster Grid -->
   @if (loading()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
       @for (i of [1,2,3,4]; track i) {
         <div class="h-64 rounded-2xl bg-white/60 dark:bg-slate-800/60 animate-pulse border border-slate-200/50 dark:border-slate-700/50"></div>
       }
@@ -59,7 +59,7 @@
       <p class="text-sm mt-1">{{ 'doctors.no_doctors_sub' | translate }}</p>
     </div>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       @for (doctor of filteredDoctors(); track doctor.id) {
         <div class="group bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
           

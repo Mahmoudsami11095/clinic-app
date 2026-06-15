@@ -1,9 +1,9 @@
-<div class="space-y-6">
+<div class="space-y-5 md:space-y-6">
 
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+      <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
         {{ (authService.isPatient() ? 'appointments.my_appointments' : 'appointments.title') | translate }}
       </h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -12,7 +12,7 @@
     </div>
     <button
       (click)="openModal()"
-      class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+      class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
     >
       <i class="pi pi-calendar-plus text-xs"></i>
       {{ (authService.isPatient() ? 'appointments.request_appointment' : 'appointments.book_appointment') | translate }}
@@ -24,7 +24,7 @@
     <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
       
       <!-- Search Input -->
-      <div class="relative flex-1 w-full max-w-md">
+      <div class="relative flex-1 w-full lg:max-w-md">
         <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
         <input
           type="text"
@@ -55,14 +55,14 @@
         </div>
 
         <!-- Status Filter Tabs -->
-        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 w-full sm:w-auto">
+        <div class="grid grid-cols-2 sm:flex items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 w-full sm:w-auto">
           @for (option of ['all', 'scheduled', 'completed', 'cancelled']; track option) {
             <button
               (click)="onStatusFilter(option)"
               [class]="selectedStatus() === option
                 ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-              class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex-1 sm:flex-none text-center cursor-pointer">
+              class="px-3 sm:px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex-1 sm:flex-none text-center cursor-pointer">
               {{ 'appointments.status_' + option | translate }}
             </button>
           }
@@ -72,8 +72,90 @@
     </div>
   </div>
 
+  <!-- Appointments Mobile Cards -->
+  <div class="md:hidden space-y-3">
+    @if (loading()) {
+      @for (i of [1,2,3,4]; track i) {
+        <div class="h-40 rounded-2xl bg-white/60 dark:bg-slate-800/60 animate-pulse border border-slate-200/50 dark:border-slate-700/50"></div>
+      }
+    } @else if (filteredAppointments().length === 0) {
+      <div class="py-16 px-4 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm">
+        <i class="pi pi-calendar text-4xl mb-3 text-slate-300 dark:text-slate-600 block"></i>
+        <p class="font-medium">{{ 'appointments.no_appointments' | translate }}</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ 'appointments.no_appointments_sub' | translate }}</p>
+      </div>
+    } @else {
+      @for (appt of filteredAppointments(); track appt.id) {
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm p-4 space-y-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              @if (!authService.isPatient()) {
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs shadow-sm flex-shrink-0"
+                       [class]="getAvatarColor(appt.patientName)">
+                    {{ appt.patientName.charAt(0) }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ appt.patientName }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ appt.doctorName }}</p>
+                  </div>
+                </div>
+              } @else {
+                <p class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ appt.doctorName }}</p>
+              }
+            </div>
+            <span class="px-3 py-1 text-xs font-bold rounded-full ring-1 ring-inset inline-flex items-center gap-1 flex-shrink-0"
+                  [ngClass]="getStatusClass(appt.status)">
+              {{ 'appointments.status_' + appt.status | translate }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="block font-semibold text-slate-400 dark:text-slate-500">{{ 'appointments.type_select' | translate }}</span>
+              <span class="text-slate-700 dark:text-slate-300">{{ 'appointments.' + appt.type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</span>
+            </div>
+            <div>
+              <span class="block font-semibold text-slate-400 dark:text-slate-500">{{ 'appointments.date_time' | translate }}</span>
+              <span class="text-slate-700 dark:text-slate-300">{{ appt.date | date:'mediumDate' }}</span>
+              <span class="block text-slate-400 dark:text-slate-500">{{ appt.date | date:'shortTime' }}</span>
+            </div>
+          </div>
+
+          @if (appt.notes) {
+            <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{{ appt.notes }}</p>
+          }
+
+          <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+            @if (canManageAppointments()) {
+              <button type="button" (click)="openEditModal(appt)" class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                <i class="pi pi-pencil text-[10px]"></i>
+                {{ 'appointments.edit_appointment' | translate }}
+              </button>
+              <button type="button" (click)="deleteAppointment(appt)" class="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                <i class="pi pi-trash text-[10px]"></i>
+                {{ 'appointments.delete_appointment' | translate }}
+              </button>
+            }
+            @if (getPrescriptionForAppointment(appt.id); as pres) {
+              <button type="button" (click)="openPrescriptionModal(appt, true)" class="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                <i class="pi pi-file text-[10px]"></i>
+                {{ 'appointments.view_rx' | translate }}
+              </button>
+            } @else if (canManagePrescriptions() && appt.status !== 'cancelled') {
+              <button type="button" (click)="viewPrescribePage(appt)" class="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                <i class="pi pi-file-plus text-[10px]"></i>
+                {{ 'appointments.prescribe' | translate }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
   <!-- Appointments Table -->
-  <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm overflow-hidden">
+  <div class="hidden md:block bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-start text-sm whitespace-nowrap">
         <thead class="bg-slate-50/80 dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-700 text-slate-500 dark:text-slate-400">

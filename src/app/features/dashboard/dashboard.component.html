@@ -1,25 +1,25 @@
 <!-- Dashboard Page -->
-<div class="space-y-8">
+<div class="space-y-6 md:space-y-8">
 
   <!-- Page Header -->
   <div class="flex flex-col gap-1">
-    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'dashboard.title' | translate }}</h1>
+    <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'dashboard.title' | translate }}</h1>
     <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'dashboard.welcome' | translate }}</p>
   </div>
 
   <!-- Stat Cards Grid -->
   @if (loading()) {
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
          [ngClass]="statCards.length === 5 ? 'xl:grid-cols-5' : 'lg:grid-cols-4'">
       @for (card of statCards; track card.key) {
-        <div class="h-32 rounded-2xl bg-white/60 dark:bg-slate-850/60 animate-pulse border border-slate-200/50 dark:border-slate-700/50"></div>
+        <div class="h-28 md:h-32 rounded-2xl bg-white/60 dark:bg-slate-850/60 animate-pulse border border-slate-200/50 dark:border-slate-700/50"></div>
       }
     </div>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
          [ngClass]="statCards.length === 5 ? 'xl:grid-cols-5' : 'lg:grid-cols-4'">
       @for (card of statCards; track card.key) {
-        <div class="stat-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]">
+        <div class="stat-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 md:hover:-translate-y-1 md:hover:scale-[1.02]">
           <!-- Ambient Glow -->
           <div class="absolute -top-8 -end-8 w-24 h-24 rounded-full opacity-10 transition-opacity group-hover:opacity-20"
                [class]="'bg-' + card.color + '-500'"></div>
@@ -27,9 +27,9 @@
           <div class="flex items-start justify-between relative z-10">
             <div class="flex flex-col gap-1">
               <span class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ card.labelKey | translate }}</span>
-              <span class="text-3xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">{{ getStatValue(card.key) }}</span>
+              <span class="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">{{ getStatValue(card.key) }}</span>
             </div>
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:rotate-6"
+            <div class="w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:rotate-6"
                  [class]="'bg-' + card.color + '-50 dark:bg-' + card.color + '-950/20 text-' + card.color + '-500 dark:text-' + card.color + '-400'">
               <i [class]="card.icon + ' text-xl transition-transform duration-300 group-hover:scale-110'"></i>
             </div>
@@ -40,10 +40,10 @@
   }
 
   <!-- Revenue Highlight + Recent Appointments -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
 
     <!-- Revenue Card -->
-    <div class="lg:col-span-1 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 p-6 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
+    <div class="lg:col-span-1 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 p-5 md:p-6 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
       <!-- Decorative Circle -->
       <div class="absolute -bottom-6 -end-6 w-32 h-32 rounded-full bg-white/10"></div>
       <div class="absolute top-4 end-4 w-16 h-16 rounded-full bg-white/5"></div>
@@ -56,7 +56,7 @@
           <span class="font-medium text-white/80">{{ 'dashboard.total_revenue' | translate }}</span>
         </div>
         <div class="flex items-baseline gap-1">
-          <span class="text-4xl font-bold tracking-tight">
+          <span class="text-3xl sm:text-4xl font-bold tracking-tight">
             ${{ stats()?.totalRevenue?.toLocaleString() || '0' }}
           </span>
         </div>
@@ -70,8 +70,8 @@
 
     <!-- Recent Appointments Table -->
     <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 shadow-sm overflow-hidden">
-      <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-200">{{ 'dashboard.recent_appointments' | translate }}</h2>
+      <div class="px-4 py-4 sm:px-6 sm:py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3">
+        <h2 class="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200">{{ 'dashboard.recent_appointments' | translate }}</h2>
         <span class="text-xs font-medium text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-1 rounded-full">
           {{ recentAppointments().length }} {{ 'dashboard.latest' | translate }}
         </span>
@@ -84,7 +84,41 @@
           }
         </div>
       } @else {
-        <div class="overflow-x-auto">
+        <div class="md:hidden divide-y divide-slate-100 dark:divide-slate-700/50">
+          @for (appt of recentAppointments(); track appt.id) {
+            <div class="p-4 space-y-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      {{ appt.patientName.charAt(0) }}
+                    </div>
+                    <div class="min-w-0 text-start">
+                      <p class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ appt.patientName }}</p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ appt.doctorName }}</p>
+                    </div>
+                  </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize flex-shrink-0"
+                      [ngClass]="getStatusClass(appt.status)">
+                  {{ 'dashboard.' + appt.status | translate }}
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <div>
+                  <span class="block font-semibold text-slate-400 dark:text-slate-500">{{ 'dashboard.type' | translate }}</span>
+                  <span class="text-slate-700 dark:text-slate-300">{{ appt.type }}</span>
+                </div>
+                <div>
+                  <span class="block font-semibold text-slate-400 dark:text-slate-500">{{ 'dashboard.date' | translate }}</span>
+                  <span class="text-slate-700 dark:text-slate-300">{{ formatDate(appt.date) }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-start text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700">

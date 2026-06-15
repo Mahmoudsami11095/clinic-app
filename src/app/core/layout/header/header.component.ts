@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService, User } from '../../auth/auth.service';
 import { ClinicService } from '../../services/clinic.service';
@@ -19,6 +19,8 @@ export class Header {
   protected languageService = inject(LanguageService);
   protected themeService = inject(ThemeService);
   private router = inject(Router);
+
+  @Output() menuClick = new EventEmitter<void>();
 
   isDropdownOpen = signal(false);
 
