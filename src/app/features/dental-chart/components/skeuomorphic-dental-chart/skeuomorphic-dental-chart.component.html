@@ -15,6 +15,14 @@
       </feMerge>
     </filter>
     
+    <!-- ClipPath to hide half of the tooth by a 45 degree angle for fractured status -->
+    <clipPath id="fractureClip">
+      <polygon points="0,40 40,0 40,40" />
+    </clipPath>
+    <clipPath id="fractureClipInverse">
+      <polygon points="0,0 40,0 0,40" />
+    </clipPath>
+    
     <!-- Translucent Cyan/Blue Radial Gradient for Healthy Teeth -->
     <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
       <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8" />
@@ -62,6 +70,13 @@
       <stop offset="0%" stop-color="#ffedd5" stop-opacity="0.8" />
       <stop offset="65%" stop-color="#ea580c" stop-opacity="0.5" />
       <stop offset="100%" stop-color="#431407" stop-opacity="0.25" />
+    </radialGradient>
+
+    <!-- Translucent Cyan Radial Gradient for Impacted -->
+    <radialGradient id="toothGradImpacted" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+      <stop offset="0%" stop-color="#cffafe" stop-opacity="0.8" />
+      <stop offset="65%" stop-color="#06b6d4" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#083344" stop-opacity="0.3" />
     </radialGradient>
   </defs>
 </svg>
@@ -134,13 +149,27 @@
                 <span class="tooth-svg-wrap">
                   <svg viewBox="0 0 40 40">
                     @if (status.includes('missing')) {
-                      <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="var(--color-missing)" stroke-width="1.5" stroke-dasharray="3 3"/>
+                      <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="var(--color-missing)" stroke-width="1.5" opacity="0.6"/>
+                      <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                      <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                     } @else {
-                      <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
-                      <!-- Mini Pulp -->
-                      <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
-                      <!-- Mini Canals -->
-                      <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                      <g 
+                        [attr.clip-path]="status.includes('fractured') ? 'url(#fractureClip)' : null"
+                        [attr.opacity]="status.includes('impacted') ? '0.4' : null"
+                      >
+                        <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
+                        <!-- Mini Pulp -->
+                        <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
+                        <!-- Mini Canals -->
+                        <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                      </g>
+                      @if (status.includes('fractured')) {
+                        <g clip-path="url(#fractureClipInverse)" opacity="0.3">
+                          <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
+                          <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
+                          <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                        </g>
+                      }
                     }
                   </svg>
                 </span>
@@ -168,15 +197,29 @@
                 [class.selected]="selectedToothNum() === num"
                 (click)="selectTooth(num)">
                 <span class="tooth-svg-wrap">
-                  <svg viewBox="0 0 40 40" class="rotate-180">
+                   <svg viewBox="0 0 40 40" class="rotate-180">
                     @if (status.includes('missing')) {
-                      <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="var(--color-missing)" stroke-width="1.5" stroke-dasharray="3 3"/>
+                      <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="var(--color-missing)" stroke-width="1.5" opacity="0.6"/>
+                      <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                      <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                     } @else {
-                      <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
-                      <!-- Mini Pulp -->
-                      <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
-                      <!-- Mini Canals -->
-                      <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                      <g 
+                        [attr.clip-path]="status.includes('fractured') ? 'url(#fractureClip)' : null"
+                        [attr.opacity]="status.includes('impacted') ? '0.4' : null"
+                      >
+                        <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
+                        <!-- Mini Pulp -->
+                        <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
+                        <!-- Mini Canals -->
+                        <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                      </g>
+                      @if (status.includes('fractured')) {
+                        <g clip-path="url(#fractureClipInverse)" opacity="0.3">
+                          <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1.5" filter="url(#shadow3d)"/>
+                          <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="0.75" filter="url(#neonGlow)"/>
+                          <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="1.5" stroke-linecap="round" filter="url(#neonGlow)"/>
+                        </g>
+                      }
                     }
                   </svg>
                 </span>
@@ -228,21 +271,43 @@
               @if (editStatuses.includes('missing')) {
                 <div class="tooth-3d-layer" style="color: var(--color-missing)">
                   <svg viewBox="0 0 40 40" style="width:120px; height:120px;">
-                    <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="currentColor" stroke-dasharray="3 3" stroke-width="1.5"/>
+                    <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+                    <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                    <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                   </svg>
                 </div>
               } @else {
                 <!-- Back Shell Layer -->
                 <div class="tooth-3d-layer layer-back-shell" [style.display]="showShell() ? 'block' : 'none'">
                   <svg viewBox="0 0 40 40" style="width:120px; height:120px;">
-                    <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" />
+                    <g 
+                      [attr.clip-path]="editStatuses.includes('fractured') ? 'url(#fractureClip)' : null"
+                      [attr.opacity]="editStatuses.includes('impacted') ? '0.4' : null"
+                    >
+                      <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" />
+                    </g>
+                    @if (editStatuses.includes('fractured')) {
+                      <g clip-path="url(#fractureClipInverse)" opacity="0.3">
+                        <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" />
+                      </g>
+                    }
                   </svg>
                 </div>
 
                 <!-- Mid Enamel Shell -->
                 <div class="tooth-3d-layer layer-mid-shell" [style.display]="showShell() ? 'block' : 'none'">
                   <svg viewBox="0 0 40 40" style="width:125px; height:125px;">
-                    <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" opacity="0.65"/>
+                    <g 
+                      [attr.clip-path]="editStatuses.includes('fractured') ? 'url(#fractureClip)' : null"
+                      [attr.opacity]="editStatuses.includes('impacted') ? '0.4' : null"
+                    >
+                      <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" opacity="0.65"/>
+                    </g>
+                    @if (editStatuses.includes('fractured')) {
+                      <g clip-path="url(#fractureClipInverse)" opacity="0.2">
+                        <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="colors.fill" [attr.stroke]="colors.stroke" stroke-width="1" opacity="0.65"/>
+                      </g>
+                    }
                   </svg>
                 </div>
 
@@ -252,17 +317,38 @@
                     viewBox="0 0 40 40" 
                     style="width:120px; height:120px;" 
                     [class.pulse-caries-canal]="animateCanals() && editStatuses.includes('caries')">
-                    <!-- Pulp chamber -->
-                    <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="1.25" filter="url(#neonGlow)"/>
-                    <!-- Canals -->
-                    <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="2.25" stroke-linecap="round" filter="url(#neonGlow)"/>
+                    <g 
+                      [attr.clip-path]="editStatuses.includes('fractured') ? 'url(#fractureClip)' : null"
+                      [attr.opacity]="editStatuses.includes('impacted') ? '0.4' : null"
+                    >
+                      <!-- Pulp chamber -->
+                      <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="1.25" filter="url(#neonGlow)"/>
+                      <!-- Canals -->
+                      <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="2.25" stroke-linecap="round" filter="url(#neonGlow)"/>
+                    </g>
+                    @if (editStatuses.includes('fractured')) {
+                      <g clip-path="url(#fractureClipInverse)" opacity="0.3">
+                        <path [attr.d]="SVG_PULPS[type]" [attr.fill]="colors.pulp" [attr.stroke]="colors.canal" stroke-width="1.25" filter="url(#neonGlow)"/>
+                        <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="colors.canal" stroke-width="2.25" stroke-linecap="round" filter="url(#neonGlow)"/>
+                      </g>
+                    }
                   </svg>
                 </div>
 
                 <!-- Front Shell Layer (Glossy Specular Highlights) -->
                 <div class="tooth-3d-layer layer-front-shell" [style.display]="showShell() ? 'block' : 'none'">
                   <svg viewBox="0 0 40 40" style="width:128px; height:128px;">
-                    <path [attr.d]="SVG_OUTLINES[type]" fill="none" [attr.stroke]="colors.stroke" stroke-width="1.5" opacity="0.8"/>
+                    <g 
+                      [attr.clip-path]="editStatuses.includes('fractured') ? 'url(#fractureClip)' : null"
+                      [attr.opacity]="editStatuses.includes('impacted') ? '0.4' : null"
+                    >
+                      <path [attr.d]="SVG_OUTLINES[type]" fill="none" [attr.stroke]="colors.stroke" stroke-width="1.5" opacity="0.8"/>
+                    </g>
+                    @if (editStatuses.includes('fractured')) {
+                      <g clip-path="url(#fractureClipInverse)" opacity="0.3">
+                        <path [attr.d]="SVG_OUTLINES[type]" fill="none" [attr.stroke]="colors.stroke" stroke-width="1.5" opacity="0.8"/>
+                      </g>
+                    }
                   </svg>
                 </div>
               }

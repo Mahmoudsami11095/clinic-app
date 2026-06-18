@@ -240,7 +240,7 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
         ior: 1.62,
         thickness: 1.0,
         transparent: true,
-        opacity: status === 'missing' ? 0.03 : (status === 'implant' || status === 'crown' ? 1.0 : 0.35),
+        opacity: status === 'missing' ? 0.25 : (status === 'impacted' ? 0.15 : (status === 'implant' || status === 'crown' ? 1.0 : 0.35)),
         clearcoat: status === 'missing' ? 0.0 : 1.0,
         clearcoatRoughness: 0.1
       });
@@ -248,11 +248,11 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
       const pulpMaterial = new THREE.MeshStandardMaterial({
         color: c.pulp,
         emissive: c.emissive,
-        emissiveIntensity: status === 'missing' ? 0.0 : 2.5,
+        emissiveIntensity: status === 'missing' ? 0.0 : (status === 'impacted' ? 1.0 : 2.5),
         roughness: 0.2,
         metalness: 0.1,
-        transparent: status === 'missing',
-        opacity: status === 'missing' ? 0.03 : 1.0
+        transparent: status === 'missing' || status === 'impacted',
+        opacity: status === 'missing' ? 0.25 : (status === 'impacted' ? 0.4 : 1.0)
       });
 
       this.materials[status] = {
