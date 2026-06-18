@@ -518,6 +518,12 @@ import { gsap } from 'gsap';
                           <feMergeNode in="SourceGraphic" />
                         </feMerge>
                       </filter>
+                       <clipPath id="fractureClip">
+                        <polygon points="0,40 40,0 40,40" />
+                      </clipPath>
+                      <clipPath id="fractureClipInverse">
+                        <polygon points="0,0 40,0 0,40" />
+                      </clipPath>
                       <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
                         <stop offset="0%" stop-color="#e0f2fe" />
                         <stop offset="70%" stop-color="#bae6fd" />
@@ -553,6 +559,11 @@ import { gsap } from 'gsap';
                         <stop offset="65%" stop-color="#fed7aa" />
                         <stop offset="100%" stop-color="#fdba74" />
                       </radialGradient>
+                      <radialGradient id="toothGradImpacted" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
+                        <stop offset="0%" stop-color="#cffafe" />
+                        <stop offset="65%" stop-color="#67e8f9" />
+                        <stop offset="100%" stop-color="#06b6d4" />
+                      </radialGradient>
                     </defs>
                   </svg>
 
@@ -581,24 +592,51 @@ import { gsap } from 'gsap';
                                 <svg class="w-8 h-8 mx-auto" viewBox="0 0 40 40">
                                   @if (getToothLatestStatus(toothNum) === 'missing') {
                                     <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                          fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                          fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.6"/>
+                                    <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                                   } @else {
-                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                          [attr.fill]="getToothFillUrl(toothNum)"
-                                          [attr.stroke]="getToothStrokeColor(toothNum)"
-                                          stroke-width="1.5"
-                                          filter="url(#shadow3d)"/>
-                                    <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
-                                          [attr.fill]="getPulpFillColor(toothNum)"
-                                          [attr.stroke]="getCanalStroke(toothNum)"
-                                          stroke-width="1"
-                                          filter="url(#neonGlow)"/>
-                                    <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
-                                          fill="none"
-                                          [attr.stroke]="getCanalStroke(toothNum)"
-                                          stroke-width="1.75"
-                                          stroke-linecap="round"
-                                          filter="url(#neonGlow)"/>
+                                    <g 
+                                      [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
+                                      [attr.opacity]="getToothLatestStatuses(toothNum).includes('impacted') ? '0.4' : null"
+                                    >
+                                      <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                            [attr.fill]="getToothFillUrl(toothNum)"
+                                            [attr.stroke]="getToothStrokeColor(toothNum)"
+                                            stroke-width="1.5"
+                                            filter="url(#shadow3d)"/>
+                                      <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                            [attr.fill]="getPulpFillColor(toothNum)"
+                                            [attr.stroke]="getCanalStroke(toothNum)"
+                                            stroke-width="1"
+                                            filter="url(#neonGlow)"/>
+                                      <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                            fill="none"
+                                            [attr.stroke]="getCanalStroke(toothNum)"
+                                            stroke-width="1.75"
+                                            stroke-linecap="round"
+                                            filter="url(#neonGlow)"/>
+                                    </g>
+                                    @if (getToothLatestStatuses(toothNum).includes('fractured')) {
+                                      <g clip-path="url(#fractureClipInverse)" opacity="0.3">
+                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                              [attr.fill]="getToothFillUrl(toothNum)"
+                                              [attr.stroke]="getToothStrokeColor(toothNum)"
+                                              stroke-width="1.5"
+                                              filter="url(#shadow3d)"/>
+                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                              [attr.fill]="getPulpFillColor(toothNum)"
+                                              [attr.stroke]="getCanalStroke(toothNum)"
+                                              stroke-width="1"
+                                              filter="url(#neonGlow)"/>
+                                        <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                              fill="none"
+                                              [attr.stroke]="getCanalStroke(toothNum)"
+                                              stroke-width="1.75"
+                                              stroke-linecap="round"
+                                              filter="url(#neonGlow)"/>
+                                      </g>
+                                    }
                                   }
                                 </svg>
                               </span>
@@ -628,24 +666,51 @@ import { gsap } from 'gsap';
                                 <svg class="w-8 h-8 mx-auto rotate-180" viewBox="0 0 40 40">
                                   @if (getToothLatestStatus(toothNum) === 'missing') {
                                     <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                          fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                          fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.6"/>
+                                    <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                                   } @else {
-                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
-                                          [attr.fill]="getToothFillUrl(toothNum)"
-                                          [attr.stroke]="getToothStrokeColor(toothNum)"
-                                          stroke-width="1.5"
-                                          filter="url(#shadow3d)"/>
-                                    <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
-                                          [attr.fill]="getPulpFillColor(toothNum)"
-                                          [attr.stroke]="getCanalStroke(toothNum)"
-                                          stroke-width="1"
-                                          filter="url(#neonGlow)"/>
-                                    <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
-                                          fill="none"
-                                          [attr.stroke]="getCanalStroke(toothNum)"
-                                          stroke-width="1.75"
-                                          stroke-linecap="round"
-                                          filter="url(#neonGlow)"/>
+                                    <g 
+                                      [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
+                                      [attr.opacity]="getToothLatestStatuses(toothNum).includes('impacted') ? '0.4' : null"
+                                    >
+                                      <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                            [attr.fill]="getToothFillUrl(toothNum)"
+                                            [attr.stroke]="getToothStrokeColor(toothNum)"
+                                            stroke-width="1.5"
+                                            filter="url(#shadow3d)"/>
+                                      <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                            [attr.fill]="getPulpFillColor(toothNum)"
+                                            [attr.stroke]="getCanalStroke(toothNum)"
+                                            stroke-width="1"
+                                            filter="url(#neonGlow)"/>
+                                      <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                            fill="none"
+                                            [attr.stroke]="getCanalStroke(toothNum)"
+                                            stroke-width="1.75"
+                                            stroke-linecap="round"
+                                            filter="url(#neonGlow)"/>
+                                    </g>
+                                    @if (getToothLatestStatuses(toothNum).includes('fractured')) {
+                                      <g clip-path="url(#fractureClipInverse)" opacity="0.3">
+                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                              [attr.fill]="getToothFillUrl(toothNum)"
+                                              [attr.stroke]="getToothStrokeColor(toothNum)"
+                                              stroke-width="1.5"
+                                              filter="url(#shadow3d)"/>
+                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                              [attr.fill]="getPulpFillColor(toothNum)"
+                                              [attr.stroke]="getCanalStroke(toothNum)"
+                                              stroke-width="1"
+                                              filter="url(#neonGlow)"/>
+                                        <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                              fill="none"
+                                              [attr.stroke]="getCanalStroke(toothNum)"
+                                              stroke-width="1.75"
+                                              stroke-linecap="round"
+                                              filter="url(#neonGlow)"/>
+                                      </g>
+                                    }
                                   }
                                 </svg>
                               </span>
@@ -1121,6 +1186,7 @@ export class PatientHistoryComponent implements OnInit {
     if (statuses.includes('implant')) return 'url(#toothGradImplant)';
     if (statuses.includes('crown')) return 'url(#toothGradCrown)';
     if (statuses.includes('fractured')) return 'url(#toothGradFractured)';
+    if (statuses.includes('impacted')) return 'url(#toothGradImpacted)';
     if (statuses.includes('caries')) return 'url(#toothGradCaries)';
     if (statuses.includes('filled')) return 'url(#toothGradFilled)';
     if (statuses.includes('under_treatment')) return 'url(#toothGradTreatment)';
@@ -1133,6 +1199,7 @@ export class PatientHistoryComponent implements OnInit {
     if (statuses.includes('implant')) return '#818cf8';
     if (statuses.includes('crown')) return '#fbbf24';
     if (statuses.includes('fractured')) return '#ea580c';
+    if (statuses.includes('impacted')) return '#0891b2';
     if (statuses.includes('caries')) return '#ef4444';
     if (statuses.includes('filled')) return '#3b82f6';
     if (statuses.includes('under_treatment')) return '#f59e0b';
@@ -1144,6 +1211,7 @@ export class PatientHistoryComponent implements OnInit {
     if (statuses.includes('missing')) return 'transparent';
     if (statuses.includes('root_canal')) return 'rgba(168, 85, 247, 0.35)';
     if (statuses.includes('caries')) return 'rgba(244, 63, 94, 0.4)';
+    if (statuses.includes('impacted')) return 'rgba(6, 182, 212, 0.4)';
     if (statuses.includes('under_treatment')) return 'rgba(245, 158, 11, 0.4)';
     if (statuses.includes('filled')) return 'rgba(96, 165, 250, 0.35)';
     return 'rgba(34, 211, 238, 0.3)';
@@ -1153,6 +1221,7 @@ export class PatientHistoryComponent implements OnInit {
     const statuses = this.getToothLatestStatuses(num);
     if (statuses.includes('missing')) return 'transparent';
     if (statuses.includes('root_canal')) return '#c084fc';
+    if (statuses.includes('impacted')) return '#0891b2';
     if (statuses.includes('caries')) return '#f43f5e';
     if (statuses.includes('under_treatment')) return '#f59e0b';
     if (statuses.includes('filled')) return '#60a5fa';
@@ -1572,7 +1641,7 @@ export class PatientHistoryComponent implements OnInit {
         ior: 1.62,
         thickness: 1.0,
         transparent: true,
-        opacity: status === 'missing' ? 0.03 : (status === 'implant' || status === 'crown' ? 1.0 : 0.35),
+        opacity: status === 'missing' ? 0.25 : (status === 'impacted' ? 0.15 : (status === 'implant' || status === 'crown' ? 1.0 : 0.35)),
         clearcoat: status === 'missing' ? 0.0 : 1.0,
         clearcoatRoughness: 0.1
       });
@@ -1580,11 +1649,11 @@ export class PatientHistoryComponent implements OnInit {
       const pulpMaterial = new THREE.MeshStandardMaterial({
         color: c.pulp,
         emissive: c.emissive,
-        emissiveIntensity: status === 'missing' ? 0.0 : 2.5,
+        emissiveIntensity: status === 'missing' ? 0.0 : (status === 'impacted' ? 1.0 : 2.5),
         roughness: 0.2,
         metalness: 0.1,
-        transparent: status === 'missing',
-        opacity: status === 'missing' ? 0.03 : 1.0
+        transparent: status === 'missing' || status === 'impacted',
+        opacity: status === 'missing' ? 0.25 : (status === 'impacted' ? 0.4 : 1.0)
       });
 
       this.materials[status] = {

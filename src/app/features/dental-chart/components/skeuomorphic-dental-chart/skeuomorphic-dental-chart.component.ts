@@ -145,6 +145,9 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
     } else if (statuses.includes('fractured')) {
       fill = 'url(#toothGradFractured)';
       stroke = '#ea580c';
+    } else if (statuses.includes('impacted')) {
+      fill = 'url(#toothGradImpacted)';
+      stroke = '#0891b2';
     } else if (statuses.includes('caries')) {
       fill = 'url(#toothGradCaries)';
       stroke = 'var(--color-caries)';
@@ -165,6 +168,9 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
     } else if (statuses.includes('root_canal')) {
       canal = '#c084fc';
       pulp = 'rgba(168, 85, 247, 0.35)';
+    } else if (statuses.includes('impacted')) {
+      canal = '#0891b2';
+      pulp = 'rgba(6, 182, 212, 0.4)';
     } else if (statuses.includes('caries')) {
       canal = '#f43f5e';
       pulp = 'rgba(244, 63, 94, 0.4)';
@@ -311,7 +317,7 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
 
   getDominantStatus(statuses: ToothStatus[] | undefined): ToothStatus {
     if (!statuses || statuses.length === 0) return 'healthy';
-    const priority: ToothStatus[] = ['missing', 'implant', 'fractured', 'caries', 'under_treatment', 'root_canal', 'crown', 'filled', 'healthy'];
+    const priority: ToothStatus[] = ['missing', 'implant', 'fractured', 'impacted', 'caries', 'under_treatment', 'root_canal', 'crown', 'filled', 'healthy'];
     for (const p of priority) {
       if (statuses.includes(p)) return p;
     }
