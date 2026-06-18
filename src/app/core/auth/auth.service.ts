@@ -149,6 +149,14 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string): Observable<{ message: string; otp: string }> {
+    return this.http.post<{ message: string; otp: string }>('/api/auth/forgot-password', { email });
+  }
+
+  resetPassword(email: string, code: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>('/api/auth/reset-password', { email, code, newPassword });
+  }
+
   logout() {
     this.setCurrentUser(null);
     this.router.navigate(['/login']);

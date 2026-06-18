@@ -30,6 +30,7 @@ export class RegisterComponent implements OnDestroy {
 
   registerForm: FormGroup;
   showPassword = signal(false);
+  showConfirmPassword = signal(false);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
@@ -57,6 +58,7 @@ export class RegisterComponent implements OnDestroy {
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]],
       role: ['patient', Validators.required],
       clinicName: [''],
       clinicAddress: [''],
@@ -66,7 +68,7 @@ export class RegisterComponent implements OnDestroy {
       phone: ['', [Validators.pattern(/^\+?[0-9]{8,15}$/)]],
       gender: ['Male'],
       age: [30, [Validators.min(1), Validators.max(120)]]
-    });
+    }, { validators: this.passwordMatchValidator });
 
     this.registerForm.get('role')?.valueChanges.subscribe(role => {
       const clinicNameCtrl = this.registerForm.get('clinicName');
@@ -91,6 +93,20 @@ export class RegisterComponent implements OnDestroy {
     });
   }
 
+  passwordMatchValidator(g: FormGroup) {
+    const password = g.get('password')?.value;
+    const confirmPassword = g.get('confirmPassword')?.value;
+    if (password !== confirmPassword) {
+      g.get('confirmPassword')?.setErrors({ mismatch: true });
+      return { mismatch: true };
+    } else {
+      if (g.get('confirmPassword')?.hasError('mismatch')) {
+        g.get('confirmPassword')?.setErrors(null);
+      }
+      return null;
+    }
+  }
+
   toggleRegisterClinicDay(day: string) {
     const hasDay = this.selectedClinicDays.includes(day);
     if (hasDay) {
@@ -103,6 +119,10 @@ export class RegisterComponent implements OnDestroy {
 
   togglePassword() {
     this.showPassword.update(v => !v);
+  }
+
+  toggleConfirmPassword() {
+    this.showConfirmPassword.update(v => !v);
   }
 
   sendVerificationCode() {

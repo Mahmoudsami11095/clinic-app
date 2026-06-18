@@ -109,7 +109,7 @@
       </div>
 
       <!-- Toggle Login Tabs -->
-      <div class="flex border-b border-slate-100 dark:border-slate-800 mb-6 bg-slate-50/50 dark:bg-slate-950/50 p-1 rounded-xl">
+      <div *ngIf="!forgotPasswordMode()" class="flex border-b border-slate-100 dark:border-slate-800 mb-6 bg-slate-50/50 dark:bg-slate-950/50 p-1 rounded-xl">
         <button type="button" (click)="setLoginMode('password')" 
                 [ngClass]="loginMode() === 'password' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                 class="flex-1 text-center py-2.5 rounded-lg font-bold text-xs transition-all focus:outline-none cursor-pointer flex items-center justify-center gap-1.5">
@@ -132,7 +132,7 @@
       </div>
 
       <!-- Password Login Form -->
-      <form *ngIf="loginMode() === 'password'" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <form *ngIf="!forgotPasswordMode() && loginMode() === 'password'" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
         <!-- Email Input -->
         <div class="relative group">
           <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
@@ -154,9 +154,14 @@
 
         <!-- Password Input -->
         <div class="relative group">
-          <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-            {{ 'auth.password' | translate }}
-          </label>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {{ 'auth.password' | translate }}
+            </label>
+            <button type="button" (click)="startForgotPassword()" class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors focus:outline-none cursor-pointer">
+              {{ 'auth.forgot_password' | translate }}
+            </button>
+          </div>
           <div class="relative">
             <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
             <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" 
@@ -185,7 +190,7 @@
       </form>
 
       <!-- OTP Login Form -->
-      <form *ngIf="loginMode() === 'otp'" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <form *ngIf="!forgotPasswordMode() && loginMode() === 'otp'" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
         
         <!-- STEP 1: Enter Email -->
         <div *ngIf="!otpSent()" class="relative group">
@@ -251,8 +256,141 @@
         </div>
       </form>
 
+      <!-- Forgot Password Form -->
+      <form *ngIf="forgotPasswordMode()" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+        
+        <!-- STEP 1: Enter Email -->
+        <div *ngIf="forgotStep() === 1" class="relative group">
+          <div class="text-center mb-4">
+            <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+              {{ 'auth.forgot_password' | translate }}
+            </h4>
+            <p class="text-xs font-medium text-slate-450 dark:text-slate-400 leading-normal">
+              {{ 'auth.enter_email_for_reset' | translate }}
+            </p>
+          </div>
+          <div class="relative">
+            <i class="pi pi-envelope absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
+            <input type="text" [ngModel]="forgotEmail()" (ngModelChange)="forgotEmail.set($event)" name="forgotEmail"
+                   class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
+                   placeholder="doctor@medclinic.com">
+          </div>
+          <button type="button" (click)="sendForgotOtp()" [disabled]="isLoading()"
+                  class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none">
+            <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
+            <span *ngIf="!isLoading()">{{ 'auth.send_otp' | translate }}</span>
+          </button>
+          <button type="button" (click)="cancelForgotPassword()" [disabled]="isLoading()"
+                  class="w-full mt-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
+            <i class="pi pi-arrow-left text-[10px] rtl-flip"></i>
+            <span>{{ 'auth.change_email' | translate }}</span>
+          </button>
+        </div>
+
+        <!-- STEP 2: Enter Verification Code -->
+        <div *ngIf="forgotStep() === 2" class="space-y-5">
+          <div class="text-center">
+            <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+              {{ 'auth.enter_otp_title' | translate }}
+            </h4>
+            <p class="text-xs font-medium text-slate-450 dark:text-slate-400 leading-normal">
+              {{ 'auth.enter_otp_subtitle' | translate }} <span class="text-indigo-600 dark:text-indigo-400 font-semibold">{{ forgotEmail() }}</span>
+            </p>
+          </div>
+
+          <!-- Passcode digits input grid -->
+          <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
+            @for (val of forgotOtpInputs(); track $index) {
+              <input type="text"
+                     [id]="'forgot-otp-input-' + $index"
+                     [value]="val"
+                     (input)="onForgotOtpInput($event, $index)"
+                     (keydown)="onForgotOtpKeyDown($event, $index)"
+                     class="w-11 h-11 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all"
+                     maxLength="1"
+                     pattern="[0-9]*"
+                     inputmode="numeric">
+            }
+          </div>
+
+          <!-- Resend Code section -->
+          <div class="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span *ngIf="forgotCountdown() > 0" class="text-slate-400 dark:text-slate-500">
+              {{ getForgotCountdownText() }}
+            </span>
+            <button type="button" *ngIf="forgotCountdown() === 0" (click)="sendForgotOtp()"
+                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors cursor-pointer focus:outline-none font-bold">
+              {{ 'auth.resend_code' | translate }}
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="button" (click)="verifyForgotOtpNextStep()" [disabled]="isLoading()"
+                  class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group focus:outline-none">
+            <span>Next</span>
+          </button>
+          <button type="button" (click)="cancelForgotPassword()" [disabled]="isLoading()"
+                  class="w-full mt-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
+            <i class="pi pi-arrow-left text-[10px] rtl-flip"></i>
+            <span>{{ 'auth.change_email' | translate }}</span>
+          </button>
+        </div>
+
+        <!-- STEP 3: New Password -->
+        <div *ngIf="forgotStep() === 3" class="space-y-4">
+          <div class="text-center mb-4">
+            <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+              {{ 'auth.reset_password' | translate }}
+            </h4>
+          </div>
+
+          <div class="relative group">
+            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              {{ 'auth.new_password' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
+              <input [type]="showForgotNewPassword() ? 'text' : 'password'" [ngModel]="forgotNewPassword()" (ngModelChange)="forgotNewPassword.set($event)" name="forgotNewPassword"
+                     class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
+                     placeholder="••••••••">
+              <button type="button" (click)="showForgotNewPassword.set(!showForgotNewPassword())" 
+                      class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
+                <i [class]="showForgotNewPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="relative group">
+            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              {{ 'auth.confirm_password' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
+              <input [type]="showForgotConfirmPassword() ? 'text' : 'password'" [ngModel]="forgotConfirmPassword()" (ngModelChange)="forgotConfirmPassword.set($event)" name="forgotConfirmPassword"
+                     class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
+                     placeholder="••••••••">
+              <button type="button" (click)="showForgotConfirmPassword.set(!showForgotConfirmPassword())" 
+                      class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
+                <i [class]="showForgotConfirmPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" (click)="resetPassword()" [disabled]="isLoading()"
+                  class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none">
+            <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
+            <span *ngIf="!isLoading()">{{ 'auth.reset_password' | translate }}</span>
+          </button>
+          <button type="button" (click)="cancelForgotPassword()" [disabled]="isLoading()"
+                  class="w-full mt-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
+            <i class="pi pi-arrow-left text-[10px] rtl-flip"></i>
+            <span>Cancel</span>
+          </button>
+        </div>
+      </form>
+
       <!-- Social Authentication Section -->
-      <div class="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
+      <div *ngIf="!forgotPasswordMode()" class="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
         <div class="relative flex justify-center text-center mb-5">
           <span class="absolute inset-0 flex items-center" aria-hidden="true">
             <span class="w-full border-t border-slate-100 dark:border-slate-800"></span>
@@ -278,7 +416,7 @@
       </div>
 
       <!-- Quick Login Section -->
-      <div class="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
+      <div *ngIf="!forgotPasswordMode()" class="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
         <h4 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3.5 flex items-center gap-1.5 justify-center lg:justify-start">
           <i class="pi pi-id-card text-[11px] text-indigo-500 dark:text-indigo-400"></i>
           {{ 'auth.demo_accounts' | translate }}
@@ -300,7 +438,7 @@
       </div>
 
       <!-- Registration Redirect -->
-      <div class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
+      <div *ngIf="!forgotPasswordMode()" class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
         {{ 'auth.dont_have_account' | translate }} 
         <a routerLink="/register" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold transition-colors ms-1 cursor-pointer">
           {{ 'auth.register_now' | translate }}
