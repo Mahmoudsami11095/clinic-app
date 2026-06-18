@@ -28,6 +28,8 @@ export class DoctorListComponent implements OnInit {
   selectedSpecialization = signal<string>('all');
   isModalOpen = signal(false);
 
+  readonly allWeekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
   // Derived unique specializations from the fetched list
   specializations = computed(() => {
     const list = this.doctors().map(d => d.specialization);
@@ -103,6 +105,24 @@ export class DoctorListComponent implements OnInit {
 
   getFormattedDays(days: string[]): string {
     return days.map(d => this.langService.translate(this.dayKeyMap[d] || d)).join(', ');
+  }
+
+  getDayAbbr(day: string): string {
+    const abbrMap: { [key: string]: string } = {
+      'Sunday': 'Su', 'Monday': 'Mo', 'Tuesday': 'Tu', 'Wednesday': 'We',
+      'Thursday': 'Th', 'Friday': 'Fr', 'Saturday': 'Sa'
+    };
+    return abbrMap[day] || day.substring(0, 2);
+  }
+
+  isDayActive(days: string[], day: string): boolean {
+    if (!days) return false;
+    return days.some(d => d.toLowerCase() === day.toLowerCase());
+  }
+
+  getClinicName(clinicId: string): string {
+    const clinic = this.clinicService.clinics().find(c => c.id === clinicId);
+    return clinic ? clinic.name : clinicId;
   }
 
   openModal() {
