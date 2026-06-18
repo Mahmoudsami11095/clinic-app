@@ -353,7 +353,7 @@
               <input [type]="showForgotNewPassword() ? 'text' : 'password'" [ngModel]="forgotNewPassword()" (ngModelChange)="forgotNewPassword.set($event)" name="forgotNewPassword"
                      class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
                      placeholder="••••••••">
-              <button type="button" (click)="showForgotNewPassword.update(v => !v)" 
+              <button type="button" (click)="showForgotNewPassword.set(!showForgotNewPassword())" 
                       class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
                 <i [class]="showForgotNewPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
               </button>
@@ -369,7 +369,7 @@
               <input [type]="showForgotConfirmPassword() ? 'text' : 'password'" [ngModel]="forgotConfirmPassword()" (ngModelChange)="forgotConfirmPassword.set($event)" name="forgotConfirmPassword"
                      class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
                      placeholder="••••••••">
-              <button type="button" (click)="showForgotConfirmPassword.update(v => !v)" 
+              <button type="button" (click)="showForgotConfirmPassword.set(!showForgotConfirmPassword())" 
                       class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
                 <i [class]="showForgotConfirmPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
               </button>
