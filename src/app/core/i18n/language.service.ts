@@ -74,6 +74,13 @@ export class LanguageService {
     'auth.register_verify_subtitle': { en: 'We sent a 6-digit verification code to', ar: 'لقد أرسلنا رمز تحقق من 6 أرقام إلى' },
     'auth.change_email': { en: 'Edit Details / Go Back', ar: 'تعديل البيانات / العودة' },
     'auth.verify_and_register': { en: 'Verify & Create Account', ar: 'تحقق وإنشاء الحساب' },
+    'auth.confirm_password': { en: 'Confirm Password', ar: 'تأكيد كلمة المرور' },
+    'auth.passwords_mismatch': { en: 'Passwords do not match', ar: 'كلمتا المرور غير متطابقتين' },
+    'auth.forgot_password': { en: 'Forgot Password?', ar: 'نسيت كلمة المرور؟' },
+    'auth.reset_password': { en: 'Reset Password', ar: 'إعادة تعيين كلمة المرور' },
+    'auth.new_password': { en: 'New Password', ar: 'كلمة المرور الجديدة' },
+    'auth.password_reset_success': { en: 'Password reset successfully! You can now log in.', ar: 'تم إعادة تعيين كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.' },
+    'auth.enter_email_for_reset': { en: 'Enter your email address to receive a password reset code', ar: 'أدخل بريدك الإلكتروني لتلقي رمز إعادة تعيين كلمة المرور' },
 
     // Sidebar
     'sidebar.dashboard': { en: 'Dashboard', ar: 'لوحة التحكم' },

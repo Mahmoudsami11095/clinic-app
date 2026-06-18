@@ -143,7 +143,7 @@
           </div>
         </div>
 
-        <!-- Two Column grid for Password & Phone Number -->
+        <!-- Two Column grid for Password & Confirm Password -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Password -->
           <div class="relative group">
@@ -168,6 +168,32 @@
             </div>
           </div>
 
+          <!-- Confirm Password -->
+          <div class="relative group">
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              {{ 'auth.confirm_password' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
+              <input [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" 
+                     class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
+                     placeholder="••••••••">
+              <button type="button" (click)="toggleConfirmPassword()" 
+                      class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
+                <i [class]="showConfirmPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
+              </button>
+            </div>
+            <div *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.invalid" 
+                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+              <i class="pi pi-exclamation-circle"></i>
+              <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
+              <span *ngIf="registerForm.get('confirmPassword')?.errors?.['mismatch']">{{ 'auth.passwords_mismatch' | translate }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- One Column grid for Phone Number -->
+        <div class="grid grid-cols-1 gap-4">
           <!-- Phone Number -->
           <div class="relative group">
             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">

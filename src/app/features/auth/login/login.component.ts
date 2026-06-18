@@ -85,6 +85,18 @@ export class LoginComponent implements OnDestroy {
   countdown = signal(0);
   private timerInterval: ReturnType<typeof setInterval> | undefined;
 
+  // Forgot Password States
+  forgotPasswordMode = signal(false);
+  forgotStep = signal<1 | 2 | 3>(1);
+  forgotEmail = signal('');
+  forgotOtpInputs = signal<string[]>(['', '', '', '', '', '']);
+  forgotNewPassword = signal('');
+  forgotConfirmPassword = signal('');
+  showForgotNewPassword = signal(false);
+  showForgotConfirmPassword = signal(false);
+  forgotCountdown = signal(0);
+  private forgotTimerInterval: ReturnType<typeof setInterval> | undefined;
+
   constructor() {
     // Check if this window is a popup initialized by an opener window with hash parameters
     if (window.opener && window.location.hash) {
@@ -292,6 +304,136 @@ export class LoginComponent implements OnDestroy {
       } else {
         arr[index] = '';
         this.otpInputs.set(arr);
+      }
+    }
+  }
+
+  // --- Forgot Password Flow ---
+  startForgotPassword() {
+    this.forgotPasswordMode.set(true);
+    this.forgotStep.set(1);
+    this.forgotEmail.set('');
+    this.errorMessage.set(null);
+  }
+
+  cancelForgotPassword() {
+    this.forgotPasswordMode.set(false);
+    this.forgotStep.set(1);
+    this.errorMessage.set(null);
+    if (this.forgotTimerInterval) {
+      clearInterval(this.forgotTimerInterval);
+    }
+  }
+
+  sendForgotOtp() {
+    if (!this.forgotEmail() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.forgotEmail())) {
+      this.errorMessage.set(this.languageService.translate('auth.invalid_email'));
+      return;
+    }
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    this.authService.forgotPassword(this.forgotEmail()).subscribe({
+      next: (res) => {
+        this.isLoading.set(false);
+        this.forgotStep.set(2);
+        this.toastr.success(res.message + ` [Demo: ${res.otp}]`, this.languageService.translate('toast.success'));
+        this.startForgotTimer();
+        setTimeout(() => {
+          document.getElementById('forgot-otp-input-0')?.focus();
+        }, 100);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(err?.error?.message || 'Failed to send reset code');
+      }
+    });
+  }
+
+  verifyForgotOtpNextStep() {
+    const code = this.forgotOtpInputs().join('');
+    if (code.length < 6) {
+      this.errorMessage.set(this.languageService.translate('auth.required_fields'));
+      return;
+    }
+    this.forgotStep.set(3);
+    this.errorMessage.set(null);
+  }
+
+  resetPassword() {
+    if (this.forgotNewPassword() !== this.forgotConfirmPassword()) {
+      this.errorMessage.set(this.languageService.translate('auth.passwords_mismatch'));
+      return;
+    }
+    if (this.forgotNewPassword().length < 6) {
+      this.errorMessage.set(this.languageService.translate('auth.password_min_length'));
+      return;
+    }
+    
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    const code = this.forgotOtpInputs().join('');
+    
+    this.authService.resetPassword(this.forgotEmail(), code, this.forgotNewPassword()).subscribe({
+      next: (res) => {
+        this.isLoading.set(false);
+        this.toastr.success(this.languageService.translate('auth.password_reset_success'), this.languageService.translate('toast.success'));
+        this.cancelForgotPassword();
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(err?.error?.message || 'Failed to reset password');
+      }
+    });
+  }
+
+  startForgotTimer() {
+    this.forgotCountdown.set(60);
+    if (this.forgotTimerInterval) {
+      clearInterval(this.forgotTimerInterval);
+    }
+    this.forgotTimerInterval = setInterval(() => {
+      this.forgotCountdown.update(c => {
+        if (c <= 1) {
+          clearInterval(this.forgotTimerInterval);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  }
+
+  onForgotOtpInput(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
+    
+    const arr = [...this.forgotOtpInputs()];
+    arr[index] = digit;
+    this.forgotOtpInputs.set(arr);
+    
+    input.value = digit;
+
+    if (digit && index < 5) {
+      const nextInput = document.getElementById(`forgot-otp-input-${index + 1}`) as HTMLInputElement;
+      nextInput?.focus();
+    }
+
+    if (arr.every(d => d !== '') && arr.length === 6) {
+      this.verifyForgotOtpNextStep();
+    }
+  }
+
+  onForgotOtpKeyDown(event: KeyboardEvent, index: number) {
+    if (event.key === 'Backspace') {
+      const arr = [...this.forgotOtpInputs()];
+      if (!arr[index] && index > 0) {
+        arr[index - 1] = '';
+        this.forgotOtpInputs.set(arr);
+        const prevInput = document.getElementById(`forgot-otp-input-${index - 1}`) as HTMLInputElement;
+        prevInput?.focus();
+      } else {
+        arr[index] = '';
+        this.forgotOtpInputs.set(arr);
       }
     }
   }
@@ -689,6 +831,11 @@ export class LoginComponent implements OnDestroy {
   getCountdownText(): string {
     const translation = this.languageService.translate('auth.resend_in');
     return translation.replace('{time}', String(this.countdown()));
+  }
+
+  getForgotCountdownText(): string {
+    const translation = this.languageService.translate('auth.resend_in');
+    return translation.replace('{time}', String(this.forgotCountdown()));
   }
 
   ngOnDestroy() {
