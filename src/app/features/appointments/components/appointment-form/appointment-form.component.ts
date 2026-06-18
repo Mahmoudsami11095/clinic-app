@@ -71,6 +71,8 @@ export class AppointmentFormComponent implements OnInit {
   readonly appointmentStatuses = ['scheduled', 'completed', 'cancelled'];
   readonly paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
 
+  availableTimeSlots = signal<string[]>([]);
+
   get isEditMode(): boolean {
     return !!this.appointment;
   }
@@ -151,10 +153,16 @@ export class AppointmentFormComponent implements OnInit {
       if (!this.showClinicSelector()) return;
       this.form.patchValue({ patientId: '' });
       this.applyFilters();
+      this.updateTimeSlots();
     });
 
     this.form.get('doctorId')?.valueChanges.subscribe(() => {
       this.updateAvailableTypes();
+      this.updateTimeSlots();
+    });
+
+    this.form.get('date')?.valueChanges.subscribe(() => {
+      this.updateTimeSlots();
     });
 
     forkJoin({
@@ -242,6 +250,76 @@ export class AppointmentFormComponent implements OnInit {
     if (currentType && !targetTypes.includes(currentType)) {
       this.form.get('type')?.setValue('');
     }
+  }
+
+  private updateTimeSlots() {
+    const docId = this.form.getRawValue().doctorId;
+    const dateStr = this.form.getRawValue().date;
+    const clinicId = this.form.getRawValue().clinicId || this.resolveClinicId();
+
+    if (!docId || !dateStr) {
+      this.availableTimeSlots.set([]);
+      return;
+    }
+
+    const doc = this.allDoctors.find(d => d.id === docId);
+    if (!doc) {
+      this.availableTimeSlots.set([]);
+      return;
+    }
+
+    const dateObj = new Date(dateStr);
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = daysOfWeek[dateObj.getDay()];
+
+    const clinicAvail = doc.clinicAvailabilities?.find(ca => ca.clinicId === clinicId);
+    let hoursStr = '';
+    let days: string[] = [];
+
+    if (clinicAvail && clinicAvail.availabilityHours) {
+      hoursStr = clinicAvail.availabilityHours;
+      days = clinicAvail.availabilityDays || [];
+    } else {
+      hoursStr = doc.availability?.hours || '';
+      days = doc.availability?.days || [];
+    }
+
+    if (!hoursStr || (days.length > 0 && !days.some(d => d.toLowerCase() === dayOfWeek.toLowerCase()))) {
+      this.availableTimeSlots.set([]);
+      this.form.get('time')?.setValue('');
+      this.form.get('time')?.disable();
+      return;
+    }
+
+    const rangeParts = hoursStr.split('-');
+    if (rangeParts.length === 2) {
+      const startParts = rangeParts[0].trim().split(':');
+      const endParts = rangeParts[1].trim().split(':');
+      if (startParts.length >= 2 && endParts.length >= 2) {
+        const startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+        const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+        
+        const slots: string[] = [];
+        for (let m = startMinutes; m <= endMinutes; m += 30) {
+          const hh = Math.floor(m / 60).toString().padStart(2, '0');
+          const mm = (m % 60).toString().padStart(2, '0');
+          slots.push(`${hh}:${mm}`);
+        }
+        
+        this.availableTimeSlots.set(slots);
+        this.form.get('time')?.enable();
+        
+        const currentTime = this.form.get('time')?.value;
+        if (currentTime && !slots.includes(currentTime)) {
+          this.form.get('time')?.setValue('');
+        }
+        return;
+      }
+    }
+    
+    this.availableTimeSlots.set([]);
+    this.form.get('time')?.setValue('');
+    this.form.get('time')?.disable();
   }
 
   applyFilters() {
@@ -374,7 +452,7 @@ export class AppointmentFormComponent implements OnInit {
         ...this.appointment,
         patientId: rawValue.patientId!,
         doctorId: rawValue.doctorId!,
-        date: `${rawValue.date}T${rawValue.time}:00Z`,
+        date: `${rawValue.date}T${rawValue.time}:00`,
         type: rawValue.type!,
         notes: rawValue.notes || '',
         status: rawValue.status!,
@@ -390,10 +468,11 @@ export class AppointmentFormComponent implements OnInit {
           );
           this.saved.emit(updated);
         },
-        error: () => {
+        error: (err) => {
           this.submitting = false;
+          const msg = err?.error?.message || this.langService.translate('toast.appointment_update_error');
           this.toastr.error(
-            this.langService.translate('toast.appointment_update_error'),
+            msg,
             this.langService.translate('toast.error')
           );
         }
@@ -407,7 +486,7 @@ export class AppointmentFormComponent implements OnInit {
       status: 'scheduled',
       patientId: rawValue.patientId!,
       doctorId: rawValue.doctorId!,
-      date: `${rawValue.date}T${rawValue.time}:00Z`,
+      date: `${rawValue.date}T${rawValue.time}:00`,
       type: rawValue.type!,
       notes: rawValue.notes || '',
       clinicId: clinicId !== 'all' ? clinicId : undefined
@@ -451,10 +530,11 @@ export class AppointmentFormComponent implements OnInit {
         this.saved.emit(newAppointment);
         this.form.reset();
       },
-      error: () => {
+      error: (err) => {
         this.submitting = false;
+        const msg = err?.error?.message || this.langService.translate('toast.appointment_book_error');
         this.toastr.error(
-          this.langService.translate('toast.appointment_book_error'),
+          msg,
           this.langService.translate('toast.error')
         );
       }
