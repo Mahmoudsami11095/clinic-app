@@ -142,15 +142,26 @@
         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="time">
           {{ 'appointments.time_label' | translate }} <span class="text-rose-500">*</span>
         </label>
-        <input
+        <select
+          *ngIf="availableTimeSlots().length > 0; else noSlots"
           id="time"
-          type="time"
           formControlName="time"
-          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-850 dark:text-slate-200"
+          class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-850 dark:text-slate-200"
           [ngClass]="isInvalid('time')
             ? 'border-rose-400 bg-rose-50 dark:bg-rose-950/20'
             : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'"
-        />
+        >
+          <option value="" disabled selected>Select a time slot</option>
+          @for (slot of availableTimeSlots(); track slot) {
+            <option [value]="slot" class="dark:bg-slate-800">{{ slot }}</option>
+          }
+        </select>
+        <ng-template #noSlots>
+          <div class="w-full rounded-xl border py-2.5 px-4 text-sm bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 italic flex items-center justify-between">
+            No availability for selected date
+            <i class="pi pi-ban text-slate-400"></i>
+          </div>
+        </ng-template>
       </div>
 
       <!-- Type -->

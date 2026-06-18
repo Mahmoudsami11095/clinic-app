@@ -60,7 +60,7 @@ export class LoginComponent implements OnDestroy {
 
   socialProvider = signal<string>('');
   socialToken = signal<string>('');
-  socialRole = signal<'doctor' | 'patient'>('patient');
+  socialRole = signal<'doctor' | 'patient' | 'assistant'>('patient');
 
   socialPhone = signal<string>('');
   socialGender = signal<'Male' | 'Female'>('Male');
@@ -587,7 +587,7 @@ export class LoginComponent implements OnDestroy {
     });
   }
 
-  onSelectSocialRole(role: 'doctor' | 'patient') {
+  onSelectSocialRole(role: 'doctor' | 'patient' | 'assistant') {
     this.socialRole.set(role);
     this.socialSignUpState.set('data');
     if (role === 'doctor') {

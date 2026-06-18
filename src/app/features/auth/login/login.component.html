@@ -472,7 +472,7 @@
             <p class="text-xs text-slate-500 dark:text-slate-400">Select your registration profile role below to proceed.</p>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Doctor Card -->
             <button type="button" (click)="onSelectSocialRole('doctor')"
                     class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
@@ -491,6 +491,16 @@
               </div>
               <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Patient</h5>
               <p class="text-[10px] text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a patient to schedule visits and view statements.</p>
+            </button>
+            
+            <!-- Assistant Card -->
+            <button type="button" (click)="onSelectSocialRole('assistant')"
+                    class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
+              <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <i class="pi pi-briefcase text-lg"></i>
+              </div>
+              <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Assistant</h5>
+              <p class="text-[10px] text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join to assist doctors and manage appointments.</p>
             </button>
           </div>
         </div>
@@ -511,8 +521,8 @@
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
             </div>
 
-            <!-- Clinic ID selection (Patients only) -->
-            <div *ngIf="socialRole() === 'patient'">
+            <!-- Clinic ID selection (Patients and Assistants) -->
+            <div *ngIf="socialRole() === 'patient' || socialRole() === 'assistant'">
               <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
               <select [ngModel]="socialClinicId()" (ngModelChange)="socialClinicId.set($event)" name="socialClinicId" required
                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
