@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar.component';
 import { Header } from '../header/header.component';
 import { AuthService } from '../../auth/auth.service';
+import { LayoutService } from '../layout.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -12,4 +13,5 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class MainLayout {
   protected authService = inject(AuthService);
+  protected layoutService = inject(LayoutService);
 }

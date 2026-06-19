@@ -7,6 +7,7 @@ import { LanguageService } from '../../i18n/language.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ThemeService } from '../../services/theme.service';
 import { NotificationService } from '../../services/notification.service';
+import { LayoutService } from '../layout.service';
 
 @Component({
   selector: 'app-header',
@@ -20,6 +21,7 @@ export class Header {
   protected languageService = inject(LanguageService);
   protected themeService = inject(ThemeService);
   protected notificationService = inject(NotificationService);
+  protected layoutService = inject(LayoutService);
   private router = inject(Router);
 
   isDropdownOpen = signal(false);

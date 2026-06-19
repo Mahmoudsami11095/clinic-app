@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../auth/auth.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { LayoutService } from '../layout.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -12,6 +13,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 })
 export class Sidebar {
   protected authService = inject(AuthService);
+  protected layoutService = inject(LayoutService);
 
   private allMenuItems = [
     { labelKey: 'sidebar.dashboard', route: '/dashboard', icon: 'pi pi-home', roles: ['admin', 'doctor'] },
