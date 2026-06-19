@@ -6,6 +6,11 @@ import { AuthService } from '../auth/auth.service';
 
 export type ToothStatus = 'healthy' | 'caries' | 'filled' | 'under_treatment' | 'missing' | 'crown' | 'root_canal' | 'impacted' | 'fractured' | 'implant';
 
+export interface ConsumedMaterial {
+  materialId: string;
+  quantity: number;
+}
+
 export interface DentalLog {
   id: string;
   patientId: string;
@@ -19,11 +24,14 @@ export interface DentalLog {
   treatment?: string;
   medication?: string;
   isPlanned?: boolean;
+  consumedMaterials?: ConsumedMaterial[];
+  clinicId?: string;
 }
 
 export interface RawDentalLog extends Omit<DentalLog, 'status'> {
   status: ToothStatus | ToothStatus[];
   isPlanned?: boolean;
+  consumedMaterials?: ConsumedMaterial[];
 }
 
 @Injectable({

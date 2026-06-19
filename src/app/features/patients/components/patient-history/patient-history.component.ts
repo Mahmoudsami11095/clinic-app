@@ -8,10 +8,13 @@ import { AppointmentService } from '../../../appointments/services/appointment.s
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
 import { BillingService } from '../../../billing/services/billing.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { DentalService, DentalLog, ToothStatus } from '../../../../core/services/dental.service';
+import { DentalService, DentalLog, ToothStatus, ConsumedMaterial } from '../../../../core/services/dental.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { MaterialsService } from '../../../inventory/services/materials.service';
+import { Material } from '../../../inventory/models/material.model';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -1058,6 +1061,54 @@ import { gsap } from 'gsap';
                             />
                           </div>
 
+                          <!-- Consumed Materials -->
+                          @if (!isPlannedForm()) {
+                            <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+                              <div class="flex justify-between items-center mb-2">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Consumed Materials</label>
+                                <button type="button" (click)="addConsumedMaterial()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold focus:outline-none bg-transparent border-none cursor-pointer">
+                                  + Add Material
+                                </button>
+                              </div>
+                              
+                              @if (consumedMaterialsForm().length === 0) {
+                                <p class="text-[10px] text-slate-400 italic">No materials used.</p>
+                              } @else {
+                                <div class="space-y-2 max-h-[120px] overflow-y-auto pe-1">
+                                  @for (cm of consumedMaterialsForm(); track $index) {
+                                    <div class="flex items-center gap-2">
+                                      <select
+                                        [ngModel]="cm.materialId"
+                                        (ngModelChange)="onMaterialSelect($index, $event)"
+                                        name="materialId_{{$index}}"
+                                        class="flex-1 text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                      >
+                                        <option value="" disabled>Select Material</option>
+                                        @for (mat of availableMaterials(); track mat.id) {
+                                          <option [value]="mat.id" [disabled]="mat.quantity <= 0">{{ mat.name }} ({{ mat.quantity }} in stock)</option>
+                                        }
+                                      </select>
+                                      
+                                      <input
+                                        type="number"
+                                        [(ngModel)]="cm.quantity"
+                                        name="quantity_{{$index}}"
+                                        min="1"
+                                        [max]="cm.maxQuantity > 0 ? cm.maxQuantity : 1"
+                                        class="w-16 text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-center"
+                                        placeholder="Qty"
+                                      />
+                                      
+                                      <button type="button" (click)="removeConsumedMaterial($index)" class="text-slate-400 hover:text-rose-500 focus:outline-none bg-transparent border-none cursor-pointer p-1">
+                                        <i class="pi pi-times text-[10px]"></i>
+                                      </button>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          }
+
                           <!-- Submit Button -->
                           <button
                             type="submit"
@@ -1095,8 +1146,10 @@ export class PatientHistoryComponent implements OnInit {
   private dentalService = inject(DentalService);
   private patientService = inject(PatientService);
   protected authService = inject(AuthService);
+  public clinicService = inject(ClinicService);
   private toastr = inject(ToastrService);
   private langService = inject(LanguageService);
+  private materialsService = inject(MaterialsService);
 
   activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
   appointments = signal<any[]>([]);
@@ -1123,6 +1176,8 @@ export class PatientHistoryComponent implements OnInit {
   medication = signal<string>('');
   submittingDentalLog = signal<boolean>(false);
   isPlannedForm = signal<boolean>(false);
+  availableMaterials = signal<Material[]>([]);
+  consumedMaterialsForm = signal<{materialId: string, quantity: number, maxQuantity: number}[]>([]);
 
   readonly statusOptions = [
     { value: 'healthy' as ToothStatus, icon: 'pi pi-check-circle', activeClass: 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
@@ -1343,6 +1398,11 @@ export class PatientHistoryComponent implements OnInit {
     effect(() => {
       localStorage.setItem('preferred_dental_chart_view', this.activeDentalView());
     });
+    // Re-run materials load whenever active clinic changes
+    effect(() => {
+      const clinicId = this.clinicService.activeClinicId();
+      this.loadDoctorMaterials();
+    });
   }
 
   isChild = computed(() => {
@@ -1409,6 +1469,45 @@ export class PatientHistoryComponent implements OnInit {
         this.loadDentalModel();
         this.animate();
       }, 100);
+    }
+  }
+
+  loadDoctorMaterials() {
+    const user = this.authService.currentUser();
+    const activeClinicId = this.clinicService.activeClinicId();
+    if (user && (user.role === 'doctor' || user.role === 'assistant')) {
+      const doctorId = user.doctorId || user.id;
+      this.materialsService.getByDoctor(doctorId, activeClinicId).subscribe({
+        next: (res) => {
+          this.availableMaterials.set(res.data);
+        },
+        error: (err) => console.error('Failed to load materials', err)
+      });
+    }
+  }
+
+  addConsumedMaterial() {
+    this.consumedMaterialsForm.update(form => [
+      ...form, 
+      { materialId: '', quantity: 1, maxQuantity: 0 }
+    ]);
+  }
+
+  removeConsumedMaterial(index: number) {
+    this.consumedMaterialsForm.update(form => form.filter((_, i) => i !== index));
+  }
+
+  onMaterialSelect(index: number, materialId: string) {
+    const material = this.availableMaterials().find(m => m.id === materialId);
+    if (material) {
+      this.consumedMaterialsForm.update(form => {
+        const newForm = [...form];
+        newForm[index] = { ...newForm[index], materialId, maxQuantity: material.quantity };
+        if (newForm[index].quantity > material.quantity) {
+          newForm[index].quantity = material.quantity;
+        }
+        return newForm;
+      });
     }
   }
 
@@ -1567,6 +1666,10 @@ export class PatientHistoryComponent implements OnInit {
 
     this.submittingDentalLog.set(true);
     
+    const consumedMaterialsList = this.consumedMaterialsForm()
+      .filter(cm => cm.materialId && cm.quantity > 0)
+      .map(cm => ({ materialId: cm.materialId, quantity: cm.quantity }));
+
     const logData = {
       patientId: this.patient.id,
       toothNumber: toothNum,
@@ -1575,7 +1678,9 @@ export class PatientHistoryComponent implements OnInit {
       painDetails: this.painLevel() > 0 ? this.painDetails().trim() : undefined,
       treatment: this.treatment().trim() || undefined,
       medication: this.medication().trim() || undefined,
-      isPlanned: this.isPlannedForm()
+      isPlanned: this.isPlannedForm(),
+      consumedMaterials: consumedMaterialsList.length > 0 ? consumedMaterialsList : undefined,
+      clinicId: this.clinicService.activeClinicId() === 'all' ? undefined : this.clinicService.activeClinicId()
     };
 
     this.dentalService.addLog(logData).subscribe({
@@ -1587,6 +1692,11 @@ export class PatientHistoryComponent implements OnInit {
           this.langService.translate('toast.success')
         );
         this.selectTooth(toothNum);
+        // Reset consumed materials
+        this.consumedMaterialsForm.set([]);
+        // Reload materials to reflect new stock
+        this.loadDoctorMaterials();
+        
         if (this.activeDentalView() === '3d') {
           this.updateAllTeethAppearances();
         }

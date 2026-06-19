@@ -67,6 +67,12 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['admin', 'doctor', 'assistant', 'patient'] }
       },
+      {
+        path: 'inventory',
+        loadChildren: () => import('./features/inventory/inventory.routes').then(m => m.inventoryRoutes),
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
