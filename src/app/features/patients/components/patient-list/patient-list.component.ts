@@ -7,12 +7,9 @@ import { Patient } from '../../models/patient.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { PatientFormComponent } from '../patient-form/patient-form.component';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
-import { forkJoin } from 'rxjs';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { addDoctorLinkedPatientId, getDoctorLinkedPatientIds } from '../../../../core/services/doctor-patient-links';
 
 @Component({
   selector: 'app-patient-list',
@@ -23,7 +20,6 @@ import { addDoctorLinkedPatientId, getDoctorLinkedPatientIds } from '../../../..
 export class PatientListComponent implements OnInit {
   private patientService = inject(PatientService);
   private authService = inject(AuthService);
-  private appointmentService = inject(AppointmentService);
   private clinicService = inject(ClinicService);
   private router = inject(Router);
 
@@ -33,17 +29,9 @@ export class PatientListComponent implements OnInit {
   selectedGender = signal<string>('all');
   isModalOpen = signal(false);
 
-  allowedPatientIds = signal<Set<string> | null>(null);
-
   filteredPatients = computed(() => {
     let result = this.patients();
     result = this.clinicService.filterByActiveClinic(result);
-
-    const allowed = this.allowedPatientIds();
-    
-    if (allowed) {
-      result = result.filter(p => allowed.has(p.id));
-    }
 
     const query = this.searchQuery().toLowerCase().trim();
     const gender = this.selectedGender();
@@ -64,37 +52,13 @@ export class PatientListComponent implements OnInit {
   });
 
   ngOnInit() {
-    const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
-
-    if (doctorId) {
-      forkJoin({
-        patients: this.patientService.getAll(),
-        appointments: this.appointmentService.getAll()
-      }).subscribe({
-        next: ({ patients, appointments }) => {
-          const matchingPatientIds = new Set(
-            appointments
-              .filter(a => a.doctorId === doctorId)
-              .map(a => a.patientId)
-          );
-          const linkedPatientIds = getDoctorLinkedPatientIds(doctorId);
-          linkedPatientIds.forEach(id => matchingPatientIds.add(id));
-          this.allowedPatientIds.set(matchingPatientIds);
-          this.patients.set(patients);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false)
-      });
-    } else {
-      this.allowedPatientIds.set(null);
-      this.patientService.getAll().subscribe({
-        next: (data) => {
-          this.patients.set(data);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
-    }
+    this.patientService.getAll().subscribe({
+      next: (data) => {
+        this.patients.set(data);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
 
   onSearch(event: Event) {
@@ -146,18 +110,6 @@ export class PatientListComponent implements OnInit {
 
   handlePatientSaved(newPatient: Patient) {
     this.patients.update(list => [newPatient, ...list]);
-    if (this.authService.isDoctor()) {
-      const doctorId = this.authService.currentDoctorId();
-      if (doctorId) {
-        addDoctorLinkedPatientId(doctorId, newPatient.id);
-      }
-    }
-    const allowed = this.allowedPatientIds();
-    if (allowed) {
-      const updated = new Set(allowed);
-      updated.add(newPatient.id);
-      this.allowedPatientIds.set(updated);
-    }
     this.closeModal();
   }
 
