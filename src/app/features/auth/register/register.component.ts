@@ -1,8 +1,9 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicService } from '../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -28,24 +29,23 @@ export class RegisterComponent implements OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
 
   registerForm: FormGroup;
   showPassword = signal(false);
-  showConfirmPassword = signal(false);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
-  // Registration Steps
-  registerStep = signal<'basic' | 'role' | 'data'>('basic');
+  // Stepper / Wizard state
+  currentStage = signal<number>(1);
 
   // OTP Verification States
   otpSent = signal(false);
-  otpStep = signal<'none' | 'email' | 'phone'>('none');
-  emailOtpCode = signal('');
-  phoneOtpCode = signal('');
-  emailOtpDemo = signal('');
-  whatsappOtpDemo = signal('');
+  whatsappOtpSent = signal(false);
   otpInputs = signal<string[]>(['', '', '', '', '', '']);
+  phoneOtpInputs = signal<string[]>(['', '', '', '', '', '']);
+  demoEmailOtp = signal<string>('');
+  demoWhatsappOtp = signal<string>('');
   countdown = signal(0);
   private timerInterval: ReturnType<typeof setInterval> | undefined;
 
@@ -55,6 +55,7 @@ export class RegisterComponent implements OnDestroy {
     { value: 'assistant', labelKey: 'auth.role_assistant' }
   ];
 
+  clinicsList = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
   selectedClinicDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
   constructor() {
@@ -62,38 +63,38 @@ export class RegisterComponent implements OnDestroy {
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]],
       role: ['patient', Validators.required],
+      phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{8,15}$/)]],
+      
+      // Patient / Assistant associated clinic selection
+      clinicId: ['clinic-1'],
+
+      // Patient specific fields
+      gender: ['Male'],
+      dob: ['1996-01-01'],
+      bloodGroup: ['O+'],
+      address: [''],
+
+      // Doctor specific fields
+      specialization: ['General Dentistry'],
       clinicName: [''],
       clinicAddress: [''],
       clinicPhone: [''],
       clinicAvailabilityHours: ['09:00-17:00'],
       clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
-      phone: ['', [Validators.pattern(/^\+?[0-9]{8,15}$/)]],
-      gender: ['Male'],
-      dob: ['']
-    }, { validators: this.passwordMatchValidator });
-
-    this.registerForm.get('role')?.valueChanges.subscribe(role => {
-      const clinicNameCtrl = this.registerForm.get('clinicName');
-      const clinicAddressCtrl = this.registerForm.get('clinicAddress');
-      const clinicPhoneCtrl = this.registerForm.get('clinicPhone');
-      const clinicAvailabilityHoursCtrl = this.registerForm.get('clinicAvailabilityHours');
-      const clinicAvailabilityDaysCtrl = this.registerForm.get('clinicAvailabilityDays');
-
-      if (role !== 'doctor') {
-        clinicNameCtrl?.setValue('');
-        clinicAddressCtrl?.setValue('');
-        clinicPhoneCtrl?.setValue('');
-        clinicAvailabilityHoursCtrl?.setValue('09:00-17:00');
-        clinicAvailabilityDaysCtrl?.setValue(JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']));
-      }
-
-      // Clear dob for non-patient roles
-      if (role !== 'patient') {
-        this.registerForm.get('dob')?.setValue('');
-      }
     });
+
+    // Populate clinicsList reactively from clinicService
+    effect(() => {
+      const clinics = this.clinicService.clinics().map(c => ({
+        id: c.id,
+        name: c.name,
+        hours: '09:00-17:00',
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        selected: false
+      }));
+      this.clinicsList.set(clinics);
+    }, { allowSignalWrites: true });
 
     this.registerForm.valueChanges.subscribe(() => {
       if (this.errorMessage()) {
@@ -102,18 +103,8 @@ export class RegisterComponent implements OnDestroy {
     });
   }
 
-  passwordMatchValidator(g: FormGroup) {
-    const password = g.get('password')?.value;
-    const confirmPassword = g.get('confirmPassword')?.value;
-    if (password !== confirmPassword) {
-      g.get('confirmPassword')?.setErrors({ mismatch: true });
-      return { mismatch: true };
-    } else {
-      if (g.get('confirmPassword')?.hasError('mismatch')) {
-        g.get('confirmPassword')?.setErrors(null);
-      }
-      return null;
-    }
+  setRole(role: 'doctor' | 'patient' | 'assistant') {
+    this.registerForm.get('role')?.setValue(role);
   }
 
   toggleRegisterClinicDay(day: string) {
@@ -126,81 +117,119 @@ export class RegisterComponent implements OnDestroy {
     this.registerForm.get('clinicAvailabilityDays')?.setValue(JSON.stringify(this.selectedClinicDays));
   }
 
+  toggleClinicSelection(clinicId: string) {
+    this.clinicsList.update(list => list.map(c => {
+      if (c.id === clinicId) {
+        return { ...c, selected: !c.selected };
+      }
+      return c;
+    }));
+  }
+
+  toggleClinicDay(clinicId: string, day: string) {
+    this.clinicsList.update(list => list.map(c => {
+      if (c.id === clinicId) {
+        const hasDay = c.days.includes(day);
+        const updatedDays = hasDay ? c.days.filter(d => d !== day) : [...c.days, day];
+        return { ...c, days: updatedDays };
+      }
+      return c;
+    }));
+  }
+
   togglePassword() {
     this.showPassword.update(v => !v);
   }
 
-  toggleConfirmPassword() {
-    this.showConfirmPassword.update(v => !v);
-  }
+  nextStage() {
+    const stage = this.currentStage();
+    if (stage === 1) {
+      const nameCtrl = this.registerForm.get('name');
+      const emailCtrl = this.registerForm.get('email');
+      const passwordCtrl = this.registerForm.get('password');
+      
+      nameCtrl?.markAsTouched();
+      emailCtrl?.markAsTouched();
+      passwordCtrl?.markAsTouched();
 
-  onNextBasic() {
-    const basicControls = ['name', 'email', 'password', 'confirmPassword', 'phone'];
-    let valid = true;
-    basicControls.forEach(ctrlName => {
-      const ctrl = this.registerForm.get(ctrlName);
-      if (ctrl?.invalid) {
-        ctrl.markAsTouched();
-        valid = false;
+      if (nameCtrl?.invalid || emailCtrl?.invalid || passwordCtrl?.invalid) {
+        this.toastr.error('Please enter valid account credentials.', 'Validation Error');
+        return;
       }
-    });
+      this.currentStage.set(2);
+    } else if (stage === 2) {
+      this.currentStage.set(3);
+    } else if (stage === 3) {
+      const phoneCtrl = this.registerForm.get('phone');
+      phoneCtrl?.markAsTouched();
+      if (phoneCtrl?.invalid) {
+        this.toastr.error('Please enter a valid phone number (8-15 digits)', 'Validation Error');
+        return;
+      }
 
-    if (valid) {
-      this.errorMessage.set(null);
-      this.registerStep.set('role');
-    } else {
-      this.toastr.error(this.languageService.translate('auth.required_fields'), this.languageService.translate('toast.error'));
+      const role = this.registerForm.get('role')?.value;
+      if (role === 'doctor') {
+        const specCtrl = this.registerForm.get('specialization');
+        specCtrl?.markAsTouched();
+        if (specCtrl?.invalid) {
+          this.toastr.error('Please enter your specialization', 'Validation Error');
+          return;
+        }
+        this.currentStage.set(4);
+      } else {
+        this.sendVerificationCode();
+      }
+    } else if (stage === 4) {
+      this.sendVerificationCode();
     }
   }
 
-  onSelectRole(role: string) {
-    this.registerForm.get('role')?.setValue(role);
-    this.registerStep.set('data');
-  }
-
-  goBackToBasic() {
-    this.registerStep.set('basic');
-  }
-
-  goBackToRole() {
-    this.registerStep.set('role');
+  prevStage() {
+    const stage = this.currentStage();
+    if (stage === 5) {
+      const role = this.registerForm.get('role')?.value;
+      if (role === 'doctor') {
+        this.currentStage.set(4);
+      } else {
+        this.currentStage.set(3);
+      }
+    } else {
+      this.currentStage.set(stage - 1);
+    }
   }
 
   sendVerificationCode() {
-    if (this.registerForm.invalid) {
-      this.toastr.error(this.languageService.translate('auth.required_fields'), this.languageService.translate('toast.error'));
-      this.registerForm.markAllAsTouched();
-      return;
-    }
-
     this.isLoading.set(true);
     this.errorMessage.set(null);
+
     const email = this.registerForm.get('email')?.value;
     const phone = this.registerForm.get('phone')?.value;
-    this.authService.sendRegisterOtp(email, phone).subscribe({
+
+    this.authService.sendRegisterOtp(email, phone || undefined).subscribe({
       next: (res: any) => {
         this.isLoading.set(false);
         this.otpSent.set(true);
-        this.otpStep.set('email');
-        this.emailOtpDemo.set(res.emailOtp || res.otp || '');
-        this.whatsappOtpDemo.set(res.whatsappOtp || '');
-
-        let toastMsg = `${this.languageService.translate('auth.otp_sent')} [Email Demo Code: ${res.emailOtp || res.otp}]`;
+        this.demoEmailOtp.set(res.emailOtp || res.otp || '');
         if (phone && res.whatsappOtp) {
-          toastMsg += ` [WhatsApp Demo Code: ${res.whatsappOtp}]`;
+          this.whatsappOtpSent.set(true);
+          this.demoWhatsappOtp.set(res.whatsappOtp);
+        } else {
+          this.whatsappOtpSent.set(false);
+          this.demoWhatsappOtp.set('');
         }
 
-        this.toastr.success(toastMsg, this.languageService.translate('toast.success'));
+        this.toastr.success('Verification code(s) sent successfully.', 'Success');
         this.startTimer();
+        this.currentStage.set(5);
         setTimeout(() => {
           document.getElementById('otp-input-0')?.focus();
         }, 100);
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
-        this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
+        this.toastr.error(errorMsg, 'Error');
       }
     });
   }
@@ -221,11 +250,6 @@ export class RegisterComponent implements OnDestroy {
     }, 1000);
   }
 
-  getCountdownText(): string {
-    const translation = this.languageService.translate('auth.resend_in');
-    return translation.replace('{time}', String(this.countdown()));
-  }
-
   onOtpInput(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
     const value = input.value;
@@ -242,7 +266,7 @@ export class RegisterComponent implements OnDestroy {
       nextInput?.focus();
     }
 
-    if (arr.every(d => d !== '') && arr.length === 6) {
+    if (arr.every(d => d !== '') && arr.length === 6 && (!this.whatsappOtpSent() || this.phoneOtpInputs().every(d => d !== ''))) {
       this.onSubmit();
     }
   }
@@ -262,27 +286,53 @@ export class RegisterComponent implements OnDestroy {
     }
   }
 
-  goBackToForm() {
-    if (this.otpStep() === 'phone') {
-      this.otpStep.set('email');
-      this.otpInputs.set(['', '', '', '', '', '']);
-      this.errorMessage.set(null);
-      setTimeout(() => {
-        document.getElementById('otp-input-0')?.focus();
-      }, 100);
-      return;
+  onPhoneOtpInput(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
+    
+    const arr = [...this.phoneOtpInputs()];
+    arr[index] = digit;
+    this.phoneOtpInputs.set(arr);
+    
+    input.value = digit;
+
+    if (digit && index < 5) {
+      const nextInput = document.getElementById(`phone-otp-input-${index + 1}`) as HTMLInputElement;
+      nextInput?.focus();
     }
 
+    if (arr.every(d => d !== '') && arr.length === 6 && this.otpInputs().every(d => d !== '')) {
+      this.onSubmit();
+    }
+  }
+
+  onPhoneOtpKeyDown(event: KeyboardEvent, index: number) {
+    if (event.key === 'Backspace') {
+      const arr = [...this.phoneOtpInputs()];
+      if (!arr[index] && index > 0) {
+        arr[index - 1] = '';
+        this.phoneOtpInputs.set(arr);
+        const prevInput = document.getElementById(`phone-otp-input-${index - 1}`) as HTMLInputElement;
+        prevInput?.focus();
+      } else {
+        arr[index] = '';
+        this.phoneOtpInputs.set(arr);
+      }
+    }
+  }
+
+  goBackToForm() {
     this.otpSent.set(false);
-    this.otpStep.set('none');
-    this.emailOtpCode.set('');
-    this.phoneOtpCode.set('');
+    this.whatsappOtpSent.set(false);
     this.otpInputs.set(['', '', '', '', '', '']);
+    this.phoneOtpInputs.set(['', '', '', '', '', '']);
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
     this.countdown.set(0);
     this.errorMessage.set(null);
+    this.currentStage.set(1);
   }
 
   onSubmit() {
@@ -291,40 +341,65 @@ export class RegisterComponent implements OnDestroy {
       return;
     }
 
-    const code = this.otpInputs().join('');
-    if (code.length < 6 || this.otpInputs().some(d => d === '')) {
+    const emailCode = this.otpInputs().join('');
+    if (emailCode.length < 6 || this.otpInputs().some(d => d === '')) {
       this.errorMessage.set(this.languageService.translate('auth.required_fields'));
       return;
     }
 
-    const phone = this.registerForm.get('phone')?.value;
-
-    if (this.otpStep() === 'email') {
-      this.emailOtpCode.set(code);
-      if (phone) {
-        // Go to Phone verification step
-        this.otpStep.set('phone');
-        this.otpInputs.set(['', '', '', '', '', '']);
-        this.errorMessage.set(null);
-        this.toastr.info('Email verification code accepted. Please enter the OTP sent to your WhatsApp.', 'WhatsApp Verification');
-        setTimeout(() => {
-          document.getElementById('otp-input-0')?.focus();
-        }, 100);
+    let phoneCode = '';
+    if (this.whatsappOtpSent()) {
+      phoneCode = this.phoneOtpInputs().join('');
+      if (phoneCode.length < 6 || this.phoneOtpInputs().some(d => d === '')) {
+        this.errorMessage.set('WhatsApp verification code is required');
         return;
       }
-    } else if (this.otpStep() === 'phone') {
-      this.phoneOtpCode.set(code);
     }
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    const formValues = {
-      ...this.registerForm.value,
-      otpCode: this.emailOtpCode() || code,
-      phoneOtpCode: this.otpStep() === 'phone' ? code : undefined
+
+    const formValues = this.registerForm.value;
+    const payload: any = {
+      name: formValues.name,
+      email: formValues.email,
+      password: formValues.password,
+      role: formValues.role,
+      phone: formValues.phone,
+      otpCode: emailCode,
+      phoneOtpCode: phoneCode || null
     };
 
-    this.authService.register(formValues).subscribe({
+    if (formValues.role === 'doctor') {
+      payload.specialization = formValues.specialization;
+      
+      const selectedClinics = this.clinicsList().filter(c => c.selected);
+      payload.clinicAvailabilities = selectedClinics.map(c => ({
+        clinicId: c.id,
+        availabilityHours: c.hours,
+        availabilityDays: c.days
+      }));
+      if (selectedClinics.length > 0) {
+        payload.clinicId = selectedClinics[0].id;
+        payload.clinicIds = selectedClinics.map(c => c.id);
+      }
+
+      if (formValues.clinicName && formValues.clinicName.trim().length >= 3) {
+        payload.clinicName = formValues.clinicName.trim();
+        payload.clinicAddress = formValues.clinicAddress.trim();
+        payload.clinicPhone = formValues.clinicPhone.trim();
+        payload.clinicAvailabilityHours = formValues.clinicAvailabilityHours;
+        payload.clinicAvailabilityDays = formValues.clinicAvailabilityDays;
+      }
+    } else {
+      payload.clinicId = formValues.clinicId;
+      payload.gender = formValues.gender;
+      payload.dob = formValues.dob;
+      payload.bloodGroup = formValues.bloodGroup;
+      payload.address = formValues.address;
+    }
+
+    this.authService.register(payload).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.toastr.success(
@@ -335,7 +410,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -354,16 +429,6 @@ export class RegisterComponent implements OnDestroy {
         const redirectUri = encodeURIComponent(window.location.origin + '/login');
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
         
-        const listener = (event: MessageEvent) => {
-          if (event.origin !== window.location.origin) return;
-          if (event.data && event.data.type === 'oauth-token') {
-            const idToken = event.data.token;
-            this.executeSocialLogin('google', idToken);
-            window.removeEventListener('message', listener);
-          }
-        };
-        window.addEventListener('message', listener);
-
         const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
         
         if (popup) {
@@ -371,7 +436,6 @@ export class RegisterComponent implements OnDestroy {
             try {
               if (popup.closed) {
                 clearInterval(interval);
-                window.removeEventListener('message', listener);
                 this.isLoading.set(false);
               }
               const hash = popup.location.hash;
@@ -381,7 +445,6 @@ export class RegisterComponent implements OnDestroy {
                 if (idToken) {
                   popup.close();
                   clearInterval(interval);
-                  window.removeEventListener('message', listener);
                   this.executeSocialLogin('google', idToken);
                 }
               }
@@ -398,70 +461,6 @@ export class RegisterComponent implements OnDestroy {
         this.isLoading.set(false);
       }
     }
-    else if (prov === 'apple') {
-      try {
-        if (typeof AppleID !== 'undefined') {
-          AppleID.auth.init({
-            clientId: 'YOUR_APPLE_CLIENT_ID',
-            scope: 'name email',
-            redirectURI: window.location.origin + '/login',
-            usePopup: true
-          });
-          AppleID.auth.signIn()
-            .then((res: any) => {
-              this.executeSocialLogin('apple', res.authorization.id_token);
-            })
-            .catch((err: any) => {
-              this.toastr.error('Apple sign-in failed or was cancelled.', this.languageService.translate('toast.error'));
-              this.isLoading.set(false);
-            });
-        } else {
-          this.toastr.error('Apple Sign-In library is not loaded.', this.languageService.translate('toast.error'));
-          this.isLoading.set(false);
-        }
-      } catch (err) {
-        this.toastr.error('An error occurred during Apple sign-in.', this.languageService.translate('toast.error'));
-        this.isLoading.set(false);
-      }
-    }
-    else if (prov === 'microsoft') {
-      try {
-        const clientId = 'YOUR_MICROSOFT_CLIENT_ID';
-        const redirectUri = encodeURIComponent(window.location.origin + '/login');
-        const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=id_token&redirect_uri=${redirectUri}&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
-        
-        const popup = window.open(authUrl, 'Microsoft Login', 'width=600,height=600');
-        
-        if (popup) {
-          const interval = setInterval(() => {
-            try {
-              if (popup.closed) {
-                clearInterval(interval);
-                this.isLoading.set(false);
-              }
-              const hash = popup.location.hash;
-              if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const idToken = params.get('id_token');
-                if (idToken) {
-                  popup.close();
-                  clearInterval(interval);
-                  this.executeSocialLogin('microsoft', idToken);
-                }
-              }
-            } catch (e) {
-              // Ignore cross-origin access exceptions during redirection
-            }
-          }, 500);
-        } else {
-          this.toastr.error('Microsoft sign-in popup was blocked or failed to open.', this.languageService.translate('toast.error'));
-          this.isLoading.set(false);
-        }
-      } catch (err) {
-        this.toastr.error('An error occurred during Microsoft sign-in.', this.languageService.translate('toast.error'));
-        this.isLoading.set(false);
-      }
-    }
   }
 
   private executeSocialLogin(provider: string, token: string) {
@@ -475,7 +474,6 @@ export class RegisterComponent implements OnDestroy {
           `${this.languageService.translate('auth.login_success')}: ${user.name}`,
           this.languageService.translate('toast.success')
         );
-        // Redirect to dashboard or appointments depending on role
         if (user.role === 'patient' || user.role === 'assistant') {
           this.router.navigate(['/appointments']);
         } else {
@@ -484,7 +482,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
