@@ -9,23 +9,21 @@
     <!-- Theme Toggle Button -->
     <button (click)="themeService.toggle()" 
             [title]="'theme.toggle' | translate"
-            class="flex items-center justify-center w-9 h-9 rounded-2xl bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 border border-slate-200 dark:border-slate-700 shadow-md transition-all cursor-pointer group focus:outline-none">
-      <!-- Sun icon (shown in dark mode → click to go light) -->
+            class="flex items-center justify-center w-9 h-9 rounded-2xl bg-white dark:bg-slate-800 text-slate-550 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 border border-slate-200 dark:border-slate-700 shadow-md transition-all cursor-pointer group focus:outline-none">
       <i class="pi pi-sun text-sm hidden dark:block transition-transform group-hover:rotate-45"></i>
-      <!-- Moon icon (shown in light mode → click to go dark) -->
       <i class="pi pi-moon text-sm block dark:hidden transition-transform group-hover:-rotate-12"></i>
     </button>
 
     <!-- Language Toggle Button -->
     <button (click)="languageService.setLanguage(languageService.currentLang() === 'en' ? 'ar' : 'en')" 
-            class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold border border-slate-200 dark:border-slate-700 shadow-md transition-all cursor-pointer text-xs focus:outline-none">
+            class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-550 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold border border-slate-200 dark:border-slate-700 shadow-md transition-all cursor-pointer text-xs focus:outline-none">
       <i class="pi pi-globe text-indigo-500 dark:text-indigo-400 text-sm"></i>
       <span>{{ languageService.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
     </button>
   </div>
 
   <!-- Main Container Card -->
-  <div class="w-full max-w-6xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 min-h-[680px] animate-fade-in-up">
+  <div class="w-full max-w-6xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 min-h-[700px] animate-fade-in-up">
     
     <!-- Left Pane: Branding & Info Card (visible on large screen) -->
     <div class="hidden lg:flex lg:col-span-5 bg-gradient-to-tr from-slate-950 via-indigo-950 to-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden">
@@ -74,38 +72,95 @@
     </div>
 
     <!-- Right Pane: Register Form -->
-    <div class="lg:col-span-7 p-6 sm:p-10 lg:p-14 flex flex-col justify-between bg-white dark:bg-slate-900 relative">
+    <div class="lg:col-span-7 p-6 sm:p-10 lg:p-14 flex flex-col justify-between bg-white dark:bg-slate-900 relative overflow-y-auto">
       
       <!-- Titles -->
       <div class="mb-6 mt-4 lg:mt-0 text-center lg:text-start">
         <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          <ng-container *ngIf="!otpSent()">{{ 'auth.register_title' | translate }}</ng-container>
-          <ng-container *ngIf="otpSent() && otpStep() === 'email'">Verify Email Address</ng-container>
-          <ng-container *ngIf="otpSent() && otpStep() === 'phone'">Verify WhatsApp Phone Number</ng-container>
+          <span *ngIf="currentStage() === 1">Create Account</span>
+          <span *ngIf="currentStage() === 2">Select Profile Role</span>
+          <span *ngIf="currentStage() === 3">Extra Profile Information</span>
+          <span *ngIf="currentStage() === 4">Clinic Details & Availability</span>
+          <span *ngIf="currentStage() === 5">Verification Codes</span>
         </h2>
-        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">
-          <ng-container *ngIf="!otpSent()">{{ 'auth.register_subtitle' | translate }}</ng-container>
-          <ng-container *ngIf="otpSent() && otpStep() === 'email'">We have sent a verification code to your email:</ng-container>
-          <ng-container *ngIf="otpSent() && otpStep() === 'phone'">We have sent a verification code to your WhatsApp:</ng-container>
-          <span *ngIf="otpSent()" class="text-indigo-600 dark:text-indigo-400 font-bold ml-1">
-            {{ otpStep() === 'email' ? registerForm.get('email')?.value : registerForm.get('phone')?.value }}
-          </span>
+        <p class="text-sm font-medium text-slate-505 dark:text-slate-400 mt-2">
+          <span *ngIf="currentStage() === 1">Start by typing your name, email, and password to setup credentials.</span>
+          <span *ngIf="currentStage() === 2">Tell us who you are so we can direct you to the correct interface.</span>
+          <span *ngIf="currentStage() === 3">Fill in the missing fields to complete your <span class="capitalize font-semibold text-indigo-500">{{ registerForm.get('role')?.value }}</span> account.</span>
+          <span *ngIf="currentStage() === 4">Select the clinics you practice in and set your availability hours for each.</span>
+          <span *ngIf="currentStage() === 5">Enter the verification codes sent to email and WhatsApp to complete signup.</span>
         </p>
+      </div>
+
+      <!-- Stepper Progress Indicator -->
+      <div class="flex items-center justify-between mb-8 max-w-md mx-auto relative px-4 text-start select-none w-full">
+        <!-- Background progress line -->
+        <div class="absolute top-1/2 left-4 right-4 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0"></div>
+        <div class="absolute top-1/2 left-4 h-0.5 bg-indigo-600 -translate-y-1/2 z-0 transition-all duration-300"
+             [style.width.%]="(currentStage() - 1) * 25"></div>
+
+        <!-- Step 1: Basic Info -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div [class]="currentStage() >= 1 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
+               class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+            <i *ngIf="currentStage() > 1" class="pi pi-check text-[10px]"></i>
+            <span *ngIf="currentStage() <= 1">1</span>
+          </div>
+          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Account</span>
+        </div>
+
+        <!-- Step 2: Role Selection -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div [class]="currentStage() >= 2 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
+               class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+            <i *ngIf="currentStage() > 2" class="pi pi-check text-[10px]"></i>
+            <span *ngIf="currentStage() <= 2">2</span>
+          </div>
+          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Role</span>
+        </div>
+
+        <!-- Step 3: Extra Info -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div [class]="currentStage() >= 3 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
+               class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+            <i *ngIf="currentStage() > 3" class="pi pi-check text-[10px]"></i>
+            <span *ngIf="currentStage() <= 3">3</span>
+          </div>
+          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Profile</span>
+        </div>
+
+        <!-- Step 4: Clinics (Only for Doctor) -->
+        <div class="relative z-10 flex flex-col items-center" [ngClass]="{'opacity-40': registerForm.get('role')?.value !== 'doctor'}">
+          <div [class]="currentStage() >= 4 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
+               class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+            <i *ngIf="currentStage() > 4" class="pi pi-check text-[10px]"></i>
+            <span *ngIf="currentStage() <= 4">4</span>
+          </div>
+          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Clinics</span>
+        </div>
+
+        <!-- Step 5: Verification -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div [class]="currentStage() >= 5 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
+               class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
+            <span>5</span>
+          </div>
+          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Verify</span>
+        </div>
       </div>
 
       <!-- Error Alert Banner -->
       <div *ngIf="errorMessage()" 
-           class="bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-2xl p-4 text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2.5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300 mb-4">
+           class="bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-2xl p-4 text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2.5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300 mb-4 animate-pulse">
         <i class="pi pi-exclamation-triangle text-sm"></i>
         <span>{{ errorMessage() }}</span>
       </div>
 
-      <!-- Registration Form -->
-      <form *ngIf="!otpSent()" [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <!-- Single Outer Form -->
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
         
-        <!-- STEP 1: Basic Info -->
-        <div *ngIf="registerStep() === 'basic'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-          <!-- Two Column grid for fields (Name & Email) -->
+        <!-- STAGE 1: Credentials / Basic Info -->
+        <div *ngIf="currentStage() === 1" class="space-y-4 animate-in fade-in duration-200">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Full Name -->
             <div class="relative group">
@@ -115,7 +170,7 @@
               <div class="relative">
                 <i class="pi pi-user absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
                 <input type="text" formControlName="name" 
-                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
+                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-440 dark:placeholder-slate-500 font-semibold"
                        placeholder="e.g. John Doe">
               </div>
               <div *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.invalid" 
@@ -133,7 +188,7 @@
               <div class="relative">
                 <i class="pi pi-envelope absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
                 <input type="email" formControlName="email" 
-                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
+                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-440 dark:placeholder-slate-500 font-semibold"
                        placeholder="john@example.com">
               </div>
               <div *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" 
@@ -145,94 +200,44 @@
             </div>
           </div>
 
-          <!-- Two Column grid for Password & Confirm Password -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Password -->
-            <div class="relative group">
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                {{ 'auth.password' | translate }}
-              </label>
-              <div class="relative">
-                <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" 
-                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
-                       placeholder="••••••••">
-                <button type="button" (click)="togglePassword()" 
-                        class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
-                  <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
-                </button>
-              </div>
-              <div *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid" 
-                   class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-                <i class="pi pi-exclamation-circle"></i>
-                <span *ngIf="registerForm.get('password')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
-                <span *ngIf="registerForm.get('password')?.errors?.['minlength']">{{ 'auth.password_min_length' | translate }}</span>
-              </div>
+          <!-- Password -->
+          <div class="relative group">
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              {{ 'auth.password' | translate }}
+            </label>
+            <div class="relative">
+              <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
+              <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" 
+                     class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-440 dark:placeholder-slate-500 font-semibold"
+                     placeholder="••••••••">
+              <button type="button" (click)="togglePassword()" 
+                      class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
+                <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
+              </button>
             </div>
-
-            <!-- Confirm Password -->
-            <div class="relative group">
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                {{ 'auth.confirm_password' | translate }}
-              </label>
-              <div class="relative">
-                <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" 
-                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
-                       placeholder="••••••••">
-                <button type="button" (click)="toggleConfirmPassword()" 
-                        class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
-                  <i [class]="showConfirmPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
-                </button>
-              </div>
-              <div *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.invalid" 
-                   class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-                <i class="pi pi-exclamation-circle"></i>
-                <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
-                <span *ngIf="registerForm.get('confirmPassword')?.errors?.['mismatch']">{{ 'auth.passwords_mismatch' | translate }}</span>
-              </div>
+            <div *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid" 
+                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+              <i class="pi pi-exclamation-circle"></i>
+              <span *ngIf="registerForm.get('password')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
+              <span *ngIf="registerForm.get('password')?.errors?.['minlength']">{{ 'auth.password_min_length' | translate }}</span>
             </div>
           </div>
 
-          <!-- One Column grid for Phone Number -->
-          <div class="grid grid-cols-1 gap-4">
-            <!-- Phone Number -->
-            <div class="relative group">
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Phone Number (For WhatsApp OTP)
-              </label>
-              <div class="relative">
-                <i class="pi pi-phone absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input type="text" formControlName="phone" 
-                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-450 dark:placeholder-slate-500 font-semibold"
-                       placeholder="e.g. 201275774620">
-              </div>
-              <div *ngIf="registerForm.get('phone')?.touched && registerForm.get('phone')?.invalid" 
-                   class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-                <i class="pi pi-exclamation-circle"></i>
-                <span>Valid phone required (digits only, e.g. 201275774620)</span>
-              </div>
-            </div>
-          </div>
-
-          <button type="button" (click)="onNextBasic()"
+          <!-- Next Button -->
+          <button type="button" (click)="nextStage()"
                   class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none">
             <span>Next</span>
             <i class="pi pi-arrow-right text-[10px] rtl-flip group-hover:translate-x-1 transition-transform"></i>
           </button>
         </div>
 
-        <!-- STEP 2: Role Selection -->
-        <div *ngIf="registerStep() === 'role'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div class="text-center">
-            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1.5">Who are you?</h4>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Select your registration profile role below to proceed.</p>
-          </div>
-
+        <!-- STAGE 2: Role Selection Cards -->
+        <div *ngIf="currentStage() === 2" class="space-y-6 animate-in fade-in duration-200">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Doctor Card -->
-            <button type="button" (click)="onSelectRole('doctor')"
-                    class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
+            <button type="button" (click)="setRole('doctor'); nextStage()"
+                    [class]="registerForm.get('role')?.value === 'doctor' ? 'border-indigo-600 ring-2 ring-indigo-500/25 bg-white dark:bg-slate-800 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40'"
+                    class="p-6 border rounded-2xl text-center transition-all cursor-pointer group focus:outline-none hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md">
               <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <i class="pi pi-heart-fill text-lg"></i>
               </div>
@@ -241,18 +246,20 @@
             </button>
 
             <!-- Patient Card -->
-            <button type="button" (click)="onSelectRole('patient')"
-                    class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
+            <button type="button" (click)="setRole('patient'); nextStage()"
+                    [class]="registerForm.get('role')?.value === 'patient' ? 'border-emerald-600 ring-2 ring-emerald-500/25 bg-white dark:bg-slate-800 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40'"
+                    class="p-6 border rounded-2xl text-center transition-all cursor-pointer group focus:outline-none hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md">
               <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <i class="pi pi-user text-lg"></i>
               </div>
               <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Patient</h5>
               <p class="text-[10px] text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a patient to schedule visits and view statements.</p>
             </button>
-            
+
             <!-- Assistant Card -->
-            <button type="button" (click)="onSelectRole('assistant')"
-                    class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
+            <button type="button" (click)="setRole('assistant'); nextStage()"
+                    [class]="registerForm.get('role')?.value === 'assistant' ? 'border-amber-600 ring-2 ring-amber-500/25 bg-white dark:bg-slate-800 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40'"
+                    class="p-6 border rounded-2xl text-center transition-all cursor-pointer group focus:outline-none hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md">
               <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <i class="pi pi-briefcase text-lg"></i>
               </div>
@@ -261,173 +268,291 @@
             </button>
           </div>
 
-          <button type="button" (click)="goBackToBasic()"
-                  class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5 mt-2">
-            <i class="pi pi-arrow-left text-[10px] rtl-flip"></i>
-            <span>Back</span>
+          <button type="button" (click)="prevStage()"
+                  class="w-full py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
+            Back
           </button>
         </div>
 
-        <!-- STEP 3: Data Completion -->
-        <div *ngIf="registerStep() === 'data'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div class="text-center mb-4">
-            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1.5">Additional Information</h4>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Fill in the missing fields to complete your <span class="capitalize font-semibold text-indigo-500">{{ registerForm.get('role')?.value }}</span> account.</p>
+        <!-- STAGE 3: Profile Details Completion -->
+        <div *ngIf="currentStage() === 3" class="space-y-4 animate-in fade-in duration-200">
+          <!-- Shared field: Phone (Contact Number) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Contact Number</label>
+            <input type="text" formControlName="phone" 
+                   placeholder="+1 (555) 000-0000"
+                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+            <div *ngIf="registerForm.get('phone')?.touched && registerForm.get('phone')?.invalid" 
+                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>Please enter a valid phone number (8-15 digits, e.g. +1234567890)</span>
+            </div>
           </div>
 
-          <!-- Optional Clinic details (displayed if role is Doctor) -->
-          <div *ngIf="registerForm.get('role')?.value === 'doctor'" class="p-5 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800 grid grid-cols-1 gap-4">
+          <!-- Clinic ID selection (Patients and Assistants only) -->
+          <div *ngIf="registerForm.get('role')?.value === 'patient' || registerForm.get('role')?.value === 'assistant'">
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
+            <select formControlName="clinicId" 
+                    class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+              <option *ngFor="let clinic of clinicService.clinics()" [value]="clinic.id">
+                {{ clinic.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Doctor specific fields -->
+          <div *ngIf="registerForm.get('role')?.value === 'doctor'">
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Specialization</label>
+            <input type="text" formControlName="specialization" 
+                   placeholder="e.g. Dentistry, Cardiology"
+                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+            <div *ngIf="registerForm.get('specialization')?.touched && registerForm.get('specialization')?.invalid" 
+                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>Specialization is required</span>
+            </div>
+          </div>
+
+          <!-- Patient specific fields -->
+          <div *ngIf="registerForm.get('role')?.value === 'patient'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Gender</label>
+                <select formControlName="gender" 
+                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Blood Group</label>
+                <input type="text" formControlName="bloodGroup" 
+                       placeholder="e.g. O+, A-"
+                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+              </div>
+            </div>
+
             <div>
-              <h4 class="text-xs font-bold text-slate-850 dark:text-slate-200 uppercase tracking-wider mb-2">Create New Clinic (Optional)</h4>
-              <p class="text-[10px] text-slate-450 dark:text-slate-500 mb-3.5 leading-normal">Register a new physical clinic branch you practice in. You can skip this and create it later.</p>
-   
-              <div class="space-y-3.5">
-                <!-- Clinic Name -->
+              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Date of Birth</label>
+              <input type="date" formControlName="dob" 
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Address</label>
+              <input type="text" formControlName="address" 
+                     placeholder="e.g. 123 Main St, Cityville"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="button" (click)="prevStage()"
+                    class="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
+              Back
+            </button>
+            <button type="button" (click)="nextStage()"
+                    class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
+              <span>Next</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- STAGE 4: Doctor Clinics Details & Availability -->
+        <div *ngIf="currentStage() === 4" class="space-y-4 text-start animate-in fade-in duration-200">
+          <div class="text-center mb-2">
+            <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Select Active Clinic Assignments</h4>
+            <p class="text-[11px] text-slate-450 dark:text-slate-500">Choose physical clinic branch locations you practice in and set your availability hours for each.</p>
+          </div>
+
+          <div class="space-y-4 max-h-[30vh] overflow-y-auto pr-1">
+            <div *ngFor="let clinic of clinicsList()" class="p-4 border border-slate-100 dark:border-slate-850 rounded-2xl bg-slate-50/40 dark:bg-slate-950/20 space-y-3">
+              <label class="flex items-center gap-2.5 cursor-pointer">
+                <input type="checkbox" [checked]="clinic.selected" (change)="toggleClinicSelection(clinic.id)"
+                       class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500/20 border-slate-300 dark:border-slate-700">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ clinic.name }}</span>
+              </label>
+
+              <!-- Show hours/days config only if clinic is selected -->
+              <div *ngIf="clinic.selected" class="pl-6 space-y-3 animate-in slide-in-from-top-1 duration-200">
                 <div>
-                  <label class="block text-[9px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider mb-1">Clinic Name</label>
-                  <div class="relative">
-                    <i class="pi pi-plus-circle absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
-                    <input type="text" formControlName="clinicName" 
-                           class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 ps-9 pe-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/30 transition-all"
-                           placeholder="e.g. My Dental Clinic">
+                  <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
+                  <input type="text" [(ngModel)]="clinic.hours" [ngModelOptions]="{standalone: true}" required
+                         placeholder="e.g. 09:00-17:00"
+                         class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                </div>
+
+                <div>
+                  <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Days</label>
+                  <div class="flex flex-wrap gap-1">
+                    <button *ngFor="let day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']"
+                            type="button"
+                            (click)="toggleClinicDay(clinic.id, day)"
+                            class="px-2 py-0.5 text-[9px] font-bold rounded-lg border transition-all cursor-pointer"
+                            [ngClass]="clinic.days.includes(day)
+                              ? 'bg-indigo-600 text-white border-indigo-600'
+                              : 'bg-white dark:bg-slate-850 text-slate-550 dark:text-slate-400 border-slate-200 dark:border-slate-750 hover:border-indigo-350 hover:text-indigo-600'"
+                    >
+                      {{ day.substring(0, 3) }}
+                    </button>
                   </div>
                 </div>
-   
-                <!-- Show additional fields only if Clinic Name is provided -->
-                <div *ngIf="registerForm.get('clinicName')?.value && registerForm.get('clinicName')?.value.trim().length >= 3" class="space-y-3.5 border-l-2 border-indigo-500 pl-3.5 animate-in slide-in-from-top-1 duration-200">
-                  <!-- Address -->
-                  <div>
-                    <label class="block text-[9px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider mb-1">Address</label>
-                    <input type="text" formControlName="clinicAddress" 
-                           class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/30 transition-all"
-                           placeholder="e.g. 123 Main St, New York, NY">
-                  </div>
-   
-                  <!-- Phone -->
-                  <div>
-                    <label class="block text-[9px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider mb-1">Phone Number</label>
-                    <input type="text" formControlName="clinicPhone" 
-                           class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/30 transition-all"
-                           placeholder="e.g. +1 (555) 123-4567">
-                  </div>
-   
-                  <!-- Availability Hours -->
-                  <div>
-                    <label class="block text-[9px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
-                    <input type="text" formControlName="clinicAvailabilityHours" 
-                           class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/30 transition-all"
-                           placeholder="e.g. 09:00-17:00">
-                  </div>
-   
-                  <!-- Availability Days -->
-                  <div>
-                    <label class="block text-[9px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Days</label>
-                    <div class="flex flex-wrap gap-1">
-                      <button *ngFor="let day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']"
-                              type="button"
-                              (click)="toggleRegisterClinicDay(day)"
-                              class="px-2 py-1 text-[9px] font-bold rounded-lg border transition-all cursor-pointer"
-                              [ngClass]="selectedClinicDays.includes(day)
-                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:text-indigo-600'"
-                      >
-                        {{ day.substring(0, 3) }}
-                      </button>
-                    </div>
-                  </div>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+
+            <h4 class="text-xs font-bold text-slate-850 dark:text-slate-250 uppercase tracking-wider mb-2">Create New Clinic (Optional)</h4>
+            <!-- Clinic Name -->
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Clinic Name</label>
+              <div class="relative">
+                <i class="pi pi-plus-circle absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
+                <input type="text" formControlName="clinicName"
+                       class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl py-2.5 ps-9 pe-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                       placeholder="e.g. My Dental Clinic">
+              </div>
+            </div>
+
+            <!-- Config fields for new clinic if name is filled -->
+            <div *ngIf="registerForm.get('clinicName')?.value && registerForm.get('clinicName')?.value.trim().length >= 3" class="space-y-4 border-l-2 border-indigo-500 pl-3 animate-in slide-in-from-top-1 duration-200">
+              <!-- Address -->
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Address</label>
+                <input type="text" formControlName="clinicAddress"
+                       class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
+                       placeholder="e.g. 123 Main St, New York, NY">
+              </div>
+
+              <!-- Phone -->
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Phone Number</label>
+                <input type="text" formControlName="clinicPhone"
+                       class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
+                       placeholder="e.g. +1 (555) 123-4567">
+              </div>
+
+              <!-- Availability Hours -->
+              <div>
+                <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Hours</label>
+                <input type="text" formControlName="clinicAvailabilityHours"
+                       placeholder="e.g. 09:00-17:00"
+                       class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+              </div>
+
+              <!-- Availability Days -->
+              <div>
+                <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Days</label>
+                <div class="flex flex-wrap gap-1">
+                  <button *ngFor="let day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']"
+                          type="button"
+                          (click)="toggleRegisterClinicDay(day)"
+                          class="px-2 py-0.5 text-[9px] font-bold rounded-lg border transition-all cursor-pointer"
+                          [ngClass]="selectedClinicDays.includes(day)
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'bg-white dark:bg-slate-850 text-slate-550 dark:text-slate-400 border-slate-200 dark:border-slate-750 hover:border-indigo-300 hover:text-indigo-600'"
+                  >
+                    {{ day.substring(0, 3) }}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Optional Patient details (displayed if role is Patient) -->
-          <div *ngIf="registerForm.get('role')?.value === 'patient'" class="p-4 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800 grid grid-cols-1 gap-4">
-            <!-- Date of Birth -->
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Date of Birth</label>
-              <input type="date" formControlName="dob" 
-                     class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/30 transition-all">
+          <!-- Stage 4 buttons -->
+          <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="button" (click)="prevStage()"
+                    class="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
+              Back
+            </button>
+            <button type="button" (click)="nextStage()"
+                    class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
+              <span>Next</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- STAGE 5: OTP Verification Codes -->
+        <div *ngIf="currentStage() === 5" class="space-y-6 animate-in fade-in duration-250">
+          <!-- Email Verification Block -->
+          <div>
+            <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
+              Email Verification Code
+            </h4>
+            <!-- Passcode digits input grid for email -->
+            <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
+              <input *ngFor="let val of otpInputs(); let idx = index"
+                     type="text"
+                     [id]="'otp-input-' + idx"
+                     [value]="val"
+                     (input)="onOtpInput($event, idx)"
+                     (keydown)="onOtpKeyDown($event, idx)"
+                     class="w-10 h-10 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all animate-fade-in"
+                     maxLength="1"
+                     pattern="[0-9]*"
+                     inputmode="numeric">
+            </div>
+            <!-- Demo Email Code -->
+            <div *ngIf="demoEmailOtp()" class="text-[10px] text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
+              Demo Email OTP: <strong class="underline font-bold">{{ demoEmailOtp() }}</strong>
             </div>
           </div>
 
-          <!-- If Assistant, no extra details currently required but we show a generic text -->
-          <div *ngIf="registerForm.get('role')?.value === 'assistant'" class="p-4 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800 grid grid-cols-1 gap-4">
-            <p class="text-xs text-slate-500 dark:text-slate-400 text-center">No additional information is required for Assistant accounts.</p>
+          <!-- WhatsApp Verification Block -->
+          <div *ngIf="whatsappOtpSent()" class="border-t border-slate-100 dark:border-slate-800/80 pt-4">
+            <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
+              WhatsApp Verification Code
+            </h4>
+            <!-- Passcode digits input grid for phone -->
+            <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
+              <input *ngFor="let val of phoneOtpInputs(); let idx = index"
+                     type="text"
+                     [id]="'phone-otp-input-' + idx"
+                     [value]="val"
+                     (input)="onPhoneOtpInput($event, idx)"
+                     (keydown)="onPhoneOtpKeyDown($event, idx)"
+                     class="w-10 h-10 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all animate-fade-in"
+                     maxLength="1"
+                     pattern="[0-9]*"
+                     inputmode="numeric">
+            </div>
+            <!-- Demo WhatsApp Code -->
+            <div *ngIf="demoWhatsappOtp()" class="text-[10px] text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
+              Demo WhatsApp OTP: <strong class="underline font-bold">{{ demoWhatsappOtp() }}</strong>
+            </div>
           </div>
 
-          <!-- Submit Buttons -->
-          <div class="flex gap-3 pt-2">
-            <button type="button" (click)="goBackToRole()"
-                    class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none">
+          <!-- Resend Code countdown -->
+          <div class="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span *ngIf="countdown() > 0" class="text-slate-400 dark:text-slate-550">
+              {{ getCountdownText() }}
+            </span>
+            <button type="button" *ngIf="countdown() === 0" (click)="sendVerificationCode()"
+                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors cursor-pointer focus:outline-none font-bold">
+              {{ 'auth.resend_code' | translate }}
+            </button>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-col gap-3">
+            <button type="submit" [disabled]="isLoading()"
+                    class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group focus:outline-none">
+              <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white"></i>
+              <span *ngIf="!isLoading()">{{ 'auth.verify_and_register' | translate }}</span>
+            </button>
+
+            <button type="button" (click)="prevStage()" [disabled]="isLoading()"
+                    class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
               <i class="pi pi-arrow-left text-[10px] rtl-flip"></i>
               <span>Back</span>
             </button>
-            <button type="submit" [disabled]="isLoading()"
-                    class="flex-[2] bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-sm py-3 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group focus:outline-none">
-              <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white"></i>
-              <span *ngIf="!isLoading()">{{ 'auth.sign_up' | translate }}</span>
-              <i *ngIf="!isLoading()" class="pi pi-arrow-right text-[10px] rtl-flip group-hover:translate-x-1 transition-transform"></i>
-            </button>
           </div>
-        </div>
-      </form>
-
-      <!-- OTP Verification Form -->
-      <form *ngIf="otpSent()" (ngSubmit)="onSubmit()" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-        <!-- Passcode digits input grid -->
-        <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
-          @for (val of otpInputs(); track $index) {
-            <input type="text"
-                   [id]="'otp-input-' + $index"
-                   [value]="val"
-                   (input)="onOtpInput($event, $index)"
-                   (keydown)="onOtpKeyDown($event, $index)"
-                   class="w-11 h-11 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all"
-                   maxLength="1"
-                   pattern="[0-9]*"
-                   inputmode="numeric">
-          }
-        </div>
-
-        <!-- Resend Code section -->
-        <div class="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
-          <span *ngIf="countdown() > 0" class="text-slate-400 dark:text-slate-500">
-            {{ getCountdownText() }}
-          </span>
-          <button type="button" *ngIf="countdown() === 0" (click)="sendVerificationCode()"
-                  class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors cursor-pointer focus:outline-none font-bold">
-            {{ 'auth.resend_code' | translate }}
-          </button>
-          <div *ngIf="otpStep() === 'email' && emailOtpDemo()" class="mt-2 text-indigo-500 dark:text-indigo-400">
-            Demo Email OTP: <strong class="underline">{{ emailOtpDemo() }}</strong>
-          </div>
-          <div *ngIf="otpStep() === 'phone' && whatsappOtpDemo()" class="mt-2 text-indigo-500 dark:text-indigo-400">
-            Demo WhatsApp OTP: <strong class="underline">{{ whatsappOtpDemo() }}</strong>
-          </div>
-        </div>
-
-        <!-- Actions (Verify & Back) -->
-        <div class="flex flex-col gap-3">
-          <!-- Submit/Verify Button -->
-          <button type="submit" [disabled]="isLoading()"
-                  class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group focus:outline-none">
-            <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white"></i>
-            <span *ngIf="!isLoading()">
-              {{ (otpStep() === 'email' && registerForm.get('phone')?.value ? 'Verify & Continue' : ('auth.verify_and_register' | translate)) }}
-            </span>
-          </button>
-
-          <!-- Back to Form Button -->
-          <button type="button" (click)="goBackToForm()" [disabled]="isLoading()"
-                  class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
-            <i class="pi pi-arrow-left text-[10px] rtl-flip"></i>
-            <span>{{ (otpStep() === 'phone' ? 'Back to Email Verification' : ('auth.change_email' | translate)) }}</span>
-          </button>
         </div>
       </form>
 
       <!-- Social Authentication Section -->
-      <div *ngIf="!otpSent()" class="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
+      <div *ngIf="currentStage() === 1" class="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5 w-full">
         <div class="relative flex justify-center text-center mb-5">
           <span class="absolute inset-0 flex items-center" aria-hidden="true">
             <span class="w-full border-t border-slate-100 dark:border-slate-800"></span>
@@ -440,7 +565,7 @@
         <div class="grid grid-cols-1 gap-3">
           <!-- Google -->
           <button type="button" (click)="socialLogin('google')" [disabled]="isLoading()"
-                  class="flex items-center justify-center py-2.5 px-4 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer shadow-sm focus:outline-none">
+                  class="flex items-center justify-center py-2.5 px-4 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer shadow-sm focus:outline-none w-full">
             <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -453,7 +578,7 @@
       </div>
 
       <!-- Back to Login Footer -->
-      <div class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
+      <div *ngIf="currentStage() < 5" class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 font-medium border-t border-slate-100 dark:border-slate-800 pt-4 w-full">
         {{ 'auth.already_have_account' | translate }} 
         <a routerLink="/login" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold transition-colors ms-1 cursor-pointer">
           {{ 'auth.sign_in_now' | translate }}
