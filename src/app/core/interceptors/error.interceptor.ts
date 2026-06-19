@@ -1,5 +1,5 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, throwError } from 'rxjs';
 import { extractErrorMessage } from '../utils/error.utils';
@@ -7,12 +7,21 @@ import { LanguageService } from '../i18n/language.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toastr = inject(ToastrService);
-  const languageService = inject(LanguageService);
+  const injector = inject(Injector);
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      const errorMessage = extractErrorMessage(err, (k) => languageService.translate(k));
+      let errorMessage = err.message || 'Unknown error';
+      let errorTitle = 'Error';
       
+      try {
+        const languageService = injector.get(LanguageService);
+        errorMessage = extractErrorMessage(err, (k) => languageService.translate(k));
+        errorTitle = languageService.translate('toast.error');
+      } catch (e) {
+        errorMessage = extractErrorMessage(err, (k) => k);
+      }
+
       // Extend the error object with the extracted message
       const customError = Object.assign(err, { extractedMessage: errorMessage });
 
@@ -24,7 +33,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       });
 
       if (err.status === 0 || err.status >= 500) {
-        toastr.error(errorMessage, languageService.translate('toast.error'));
+        toastr.error(errorMessage, errorTitle);
       }
 
       return throwError(() => customError);
