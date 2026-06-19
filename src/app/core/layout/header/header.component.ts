@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { LanguageService } from '../../i18n/language.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ThemeService } from '../../services/theme.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-header',
@@ -18,9 +19,11 @@ export class Header {
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
   protected themeService = inject(ThemeService);
+  protected notificationService = inject(NotificationService);
   private router = inject(Router);
 
   isDropdownOpen = signal(false);
+  isNotificationsOpen = signal(false);
 
   onClinicChange(event: Event) {
     const select = event.target as HTMLSelectElement;
@@ -29,6 +32,16 @@ export class Header {
 
   toggleDropdown() {
     this.isDropdownOpen.update(v => !v);
+    if (this.isDropdownOpen()) {
+      this.isNotificationsOpen.set(false);
+    }
+  }
+
+  toggleNotifications() {
+    this.isNotificationsOpen.update(v => !v);
+    if (this.isNotificationsOpen()) {
+      this.isDropdownOpen.set(false);
+    }
   }
 
   navigateToProfile() {
