@@ -198,7 +198,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err);
+        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -335,7 +335,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err);
+        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -484,7 +484,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err);
+        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }

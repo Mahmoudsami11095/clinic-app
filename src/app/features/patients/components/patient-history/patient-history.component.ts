@@ -1470,7 +1470,7 @@ export class PatientHistoryComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error downloading file:', err);
-        this.toastr.error(extractErrorMessage(err), 'Error');
+        this.toastr.error(extractErrorMessage(err, (k) => this.langService.translate(k)), 'Error');
       }
     });
   }
@@ -1486,7 +1486,7 @@ export class PatientHistoryComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error uploading file:', err);
-          this.toastr.error(extractErrorMessage(err), 'Error');
+          this.toastr.error(extractErrorMessage(err, (k) => this.langService.translate(k)), 'Error');
         }
       });
     }
@@ -1501,7 +1501,7 @@ export class PatientHistoryComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error deleting file:', err);
-          this.toastr.error(extractErrorMessage(err), 'Error');
+          this.toastr.error(extractErrorMessage(err, (k) => this.langService.translate(k)), 'Error');
         }
       });
     }
@@ -1595,7 +1595,7 @@ export class PatientHistoryComponent implements OnInit {
         console.error('Error adding dental log:', err);
         this.submittingDentalLog.set(false);
         this.toastr.error(
-          extractErrorMessage(err),
+          extractErrorMessage(err, (k) => this.langService.translate(k)),
           this.langService.translate('toast.error')
         );
       }

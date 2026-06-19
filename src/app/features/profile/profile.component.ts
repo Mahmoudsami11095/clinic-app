@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../core/auth/auth.service';
 import { extractErrorMessage } from '../../core/utils/error.utils';
+import { LanguageService } from '../../core/i18n/language.service';
 
 @Component({
   selector: 'app-profile',
@@ -18,6 +19,7 @@ export class ProfileComponent implements OnInit {
   private http = inject(HttpClient);
   private toastr = inject(ToastrService);
   protected authService = inject(AuthService);
+  protected languageService = inject(LanguageService);
 
   profileForm!: FormGroup;
   isLoading = signal(false);
@@ -118,7 +120,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.toastr.error(extractErrorMessage(err), 'Error');
+        this.toastr.error(extractErrorMessage(err, (k) => this.languageService.translate(k)), 'Error');
       }
     });
   }
@@ -149,7 +151,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isSendingEmailOtp.set(false);
-        this.toastr.error(extractErrorMessage(err), 'Error');
+        this.toastr.error(extractErrorMessage(err, (k) => this.languageService.translate(k)), 'Error');
       }
     });
   }
@@ -169,7 +171,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isSendingPhoneOtp.set(false);
-        this.toastr.error(extractErrorMessage(err), 'Error');
+        this.toastr.error(extractErrorMessage(err, (k) => this.languageService.translate(k)), 'Error');
       }
     });
   }
@@ -190,7 +192,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isConfirmingEmailOtp.set(false);
-        this.toastr.error(extractErrorMessage(err), 'Verification Failed');
+        this.toastr.error(extractErrorMessage(err, (k) => this.languageService.translate(k)), 'Verification Failed');
       }
     });
   }
@@ -211,7 +213,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isConfirmingPhoneOtp.set(false);
-        this.toastr.error(extractErrorMessage(err), 'Verification Failed');
+        this.toastr.error(extractErrorMessage(err, (k) => this.languageService.translate(k)), 'Verification Failed');
       }
     });
   }
@@ -283,7 +285,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isSaving.set(false);
-        const errorMsg = extractErrorMessage(err);
+        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
         this.toastr.error(errorMsg, 'Error');
       }
     });
