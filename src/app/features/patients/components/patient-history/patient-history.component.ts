@@ -277,7 +277,7 @@ import { gsap } from 'gsap';
                       <p>{{ 'billing.no_bills' | translate }}</p>
                     </div>
                   } @else {
-                    <div class="bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden max-h-[50vh] overflow-y-auto">
+                    <div class="bg-white border border-slate-200/60 rounded-2xl shadow-sm max-h-[50vh] overflow-y-auto overflow-x-auto">
                       <table class="w-full text-start text-sm whitespace-nowrap">
                         <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0">
                           <tr>
