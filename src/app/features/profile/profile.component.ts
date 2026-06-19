@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } 
 import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../core/auth/auth.service';
+import { extractErrorMessage } from '../../core/utils/error.utils';
 
 @Component({
   selector: 'app-profile',
@@ -115,9 +116,9 @@ export class ProfileComponent implements OnInit {
           }
         }
       },
-      error: () => {
+      error: (err) => {
         this.isLoading.set(false);
-        this.toastr.error('Failed to load profile details.', 'Error');
+        this.toastr.error(extractErrorMessage(err), 'Error');
       }
     });
   }
@@ -148,7 +149,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isSendingEmailOtp.set(false);
-        this.toastr.error(err?.error?.message || 'Failed to send email OTP.', 'Error');
+        this.toastr.error(extractErrorMessage(err), 'Error');
       }
     });
   }
@@ -168,7 +169,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isSendingPhoneOtp.set(false);
-        this.toastr.error(err?.error?.message || 'Failed to send WhatsApp OTP.', 'Error');
+        this.toastr.error(extractErrorMessage(err), 'Error');
       }
     });
   }
@@ -189,7 +190,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isConfirmingEmailOtp.set(false);
-        this.toastr.error(err?.error?.message || 'Invalid or expired verification code.', 'Verification Failed');
+        this.toastr.error(extractErrorMessage(err), 'Verification Failed');
       }
     });
   }
@@ -210,7 +211,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isConfirmingPhoneOtp.set(false);
-        this.toastr.error(err?.error?.message || 'Invalid or expired verification code.', 'Verification Failed');
+        this.toastr.error(extractErrorMessage(err), 'Verification Failed');
       }
     });
   }
@@ -282,7 +283,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isSaving.set(false);
-        const errorMsg = err?.error?.message || 'Failed to update profile details.';
+        const errorMsg = extractErrorMessage(err);
         this.toastr.error(errorMsg, 'Error');
       }
     });

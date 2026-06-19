@@ -335,80 +335,8 @@
       </label>
 
       <!-- Appointment Form Fields (Visible only if bookAppointment is checked) -->
-      <div *ngIf="form.get('bookAppointment')?.value" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 animate-in slide-in-from-top-2 duration-250">
-        <!-- Choose Doctor -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="apptDoctor">
-            Select Practitioner <span class="text-rose-500">*</span>
-          </label>
-          <select
-            id="apptDoctor"
-            formControlName="appointmentDoctorId"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          >
-            <option value="" disabled>Select Practitioner</option>
-            @for (doc of doctorsList(); track doc.id) {
-              <option [value]="doc.id">Dr. {{ doc.firstName }} {{ doc.lastName }} ({{ doc.specialization }})</option>
-            }
-          </select>
-        </div>
-
-        <!-- Appointment Type -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="apptType">
-            Appointment Type <span class="text-rose-500">*</span>
-          </label>
-          <select
-            id="apptType"
-            formControlName="appointmentType"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none appearance-none bg-no-repeat custom-select text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          >
-            <option value="" disabled>Select Appointment Type</option>
-            @for (t of availableTypes(); track t) {
-              <option [value]="t">{{ t }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- Appointment Date -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="apptDate">
-            Appointment Date <span class="text-rose-500">*</span>
-          </label>
-          <input
-            id="apptDate"
-            type="date"
-            formControlName="appointmentDate"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          />
-        </div>
-
-        <!-- Appointment Time -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="apptTime">
-            Appointment Time <span class="text-rose-500">*</span>
-          </label>
-          <input
-            id="apptTime"
-            type="time"
-            formControlName="appointmentTime"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          />
-        </div>
-
-        <!-- Appointment Notes -->
-        <div class="sm:col-span-2">
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="apptNotes">
-            Appointment Notes
-          </label>
-          <textarea
-            id="apptNotes"
-            formControlName="appointmentNotes"
-            rows="2"
-            placeholder="Provide any additional symptoms or guidelines"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none resize-none placeholder-slate-440 dark:placeholder-slate-500 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          ></textarea>
-        </div>
+      <div *ngIf="form.get('bookAppointment')?.value" class="mt-6 animate-in slide-in-from-top-2 duration-250">
+        <app-appointment-form [embeddedMode]="true"></app-appointment-form>
       </div>
     </div>
   </div>

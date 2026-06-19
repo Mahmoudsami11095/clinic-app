@@ -27,8 +27,10 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 })
 export class AppointmentFormComponent implements OnInit {
   @Input() appointment: Appointment | null = null;
+  @Input() embeddedMode: boolean = false;
   @Output() saved = new EventEmitter<Appointment>();
   @Output() cancelled = new EventEmitter<void>();
+  @Output() formValues = new EventEmitter<any>();
 
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
@@ -164,6 +166,11 @@ export class AppointmentFormComponent implements OnInit {
     this.form.get('date')?.valueChanges.subscribe(() => {
       this.updateTimeSlots();
     });
+
+    if (this.embeddedMode) {
+      this.form.get('patientId')?.clearValidators();
+      this.form.get('patientId')?.updateValueAndValidity();
+    }
 
     forkJoin({
       patients: this.patientService.getAll(),
@@ -417,7 +424,24 @@ export class AppointmentFormComponent implements OnInit {
     return null;
   }
 
+  getFormValue(): any | null {
+    if (this.form.valid) {
+      return this.form.getRawValue();
+    } else {
+      this.form.markAllAsTouched();
+      return null;
+    }
+  }
+
   onSubmit() {
+    if (this.embeddedMode) {
+      const val = this.getFormValue();
+      if (val) {
+        this.formValues.emit(val);
+      }
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

@@ -12,6 +12,14 @@ import { DoctorService } from '../../../doctors/services/doctor.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { Doctor } from '../../../doctors/models/doctor.model';
 import { Appointment } from '../../../appointments/models/appointment.model';
+import { AppointmentFormComponent } from '../../../appointments/components/appointment-form/appointment-form.component';
+import { extractErrorMessage } from '../../../../core/utils/error.utils';
+import { ViewChild } from '@angular/core';
+import { BillingService } from '../../../billing/services/billing.service';
+import { BillingRecord } from '../../../billing/models/billing.model';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Custom validator: date must be in the past
 function pastDateValidator(control: AbstractControl): ValidationErrors | null {
@@ -22,7 +30,7 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-patient-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent],
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css'
 })
@@ -31,11 +39,15 @@ export class PatientFormComponent implements OnInit {
   @Output() saved = new EventEmitter<Patient>();
   @Output() cancelled = new EventEmitter<void>();
 
+  @ViewChild(AppointmentFormComponent) appointmentFormCmp?: AppointmentFormComponent;
+
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
   private clinicService = inject(ClinicService);
   private doctorService = inject(DoctorService);
   private appService = inject(AppointmentService);
+  private billingService = inject(BillingService);
+  protected authService = inject(AuthService);
   private toastr = inject(ToastrService);
   private langService = inject(LanguageService);
 
@@ -62,18 +74,10 @@ export class PatientFormComponent implements OnInit {
     chronicDiseases:  [''],
     pastIllnesses:    [''],
     // Optional appointment booking:
-    bookAppointment:  [false],
-    appointmentDoctorId: [''],
-    appointmentDate:  [''],
-    appointmentTime:  [''],
-    appointmentType:  [''],
-    appointmentNotes: ['']
+    bookAppointment:  [false]
   });
 
   readonly bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  readonly generalTypes = ['General Consultation', 'Follow-up', 'Emergency', 'Surgery', 'Pediatric Checkup', 'Dermatology Review'];
-  readonly dentalTypes = ['Dental Check-up', 'Root Canal', 'Cavity Filling', 'Tooth Extraction', 'Teeth Cleaning', 'Emergency', 'Follow-up'];
-  readonly availableTypes = signal<string[]>(this.generalTypes);
 
   ngOnInit() {
     this.clinicsList.set(this.clinicService.clinics());
@@ -93,13 +97,6 @@ export class PatientFormComponent implements OnInit {
     // Fetch doctors list for appointment stage
     this.doctorService.getAll().subscribe({
       next: (docs) => this.doctorsList.set(docs)
-    });
-
-    // Update appointment types depending on doctor selected
-    this.form.get('appointmentDoctorId')?.valueChanges.subscribe(docId => {
-      if (docId) {
-        this.updateAvailableTypes(docId);
-      }
     });
 
     if (this.patient) {
@@ -122,13 +119,6 @@ export class PatientFormComponent implements OnInit {
         this.showClinicSelector.set(true);
       }
     }
-  }
-
-  updateAvailableTypes(docId: string) {
-    const doc = this.doctorsList().find(d => d.id === docId);
-    const spec = doc?.specialization?.toLowerCase() || '';
-    const isDentist = spec === 'dentistry' || spec === 'dentist';
-    this.availableTypes.set(isDentist ? this.dentalTypes : this.generalTypes);
   }
 
   nextStage() {
@@ -247,28 +237,16 @@ export class PatientFormComponent implements OnInit {
           : rawValue.clinicId!;
 
     // Validate stage 3 fields if booking an appointment is checked
+    let apptValue: any = null;
     if (this.currentStage() === 3 && this.form.get('bookAppointment')?.value) {
-      const apptFields = ['appointmentDoctorId', 'appointmentDate', 'appointmentTime', 'appointmentType'];
-      let valid = true;
-      apptFields.forEach(f => {
-        const ctrl = this.form.get(f);
-        if (ctrl) {
-          ctrl.markAsTouched();
-          if (ctrl.invalid || !ctrl.value) valid = false;
-        }
-      });
-      if (!valid) {
-        this.toastr.error('Please complete all appointment fields.', 'Validation Error');
-        return;
-      }
-
-      const doc = this.doctorsList().find(d => d.id === rawValue.appointmentDoctorId);
-      if (doc) {
-        const error = this.validateDoctorAvailability(doc, clinicId, rawValue.appointmentDate!, rawValue.appointmentTime!);
-        if (error) {
-          this.toastr.error(error, 'Availability Error');
+      if (this.appointmentFormCmp) {
+        apptValue = this.appointmentFormCmp.getFormValue();
+        if (!apptValue) {
+          this.toastr.error('Please complete all appointment fields.', 'Validation Error');
           return;
         }
+      } else {
+        return;
       }
     }
 
@@ -302,10 +280,10 @@ export class PatientFormComponent implements OnInit {
           this.saved.emit(updatedPatient);
           this.form.reset();
         },
-        error: () => {
+        error: (err) => {
           this.submitting = false;
           this.toastr.error(
-            this.langService.translate('toast.patient_update_error'),
+            extractErrorMessage(err),
             this.langService.translate('toast.error')
           );
         }
@@ -331,18 +309,46 @@ export class PatientFormComponent implements OnInit {
 
       this.patientService.create(newPatient).subscribe({
         next: () => {
-          if (rawValue.bookAppointment && rawValue.appointmentDoctorId) {
+          if (rawValue.bookAppointment && apptValue) {
             const newAppt: Appointment = {
               id: crypto.randomUUID(),
               patientId: newPatientId,
-              doctorId: rawValue.appointmentDoctorId,
-              date: `${rawValue.appointmentDate}T${rawValue.appointmentTime}:00Z`,
-              type: rawValue.appointmentType!,
-              notes: rawValue.appointmentNotes || '',
+              doctorId: apptValue.doctorId,
+              date: `${apptValue.date}T${apptValue.time}:00`,
+              type: apptValue.type!,
+              notes: apptValue.notes || '',
               status: 'scheduled',
               clinicId: clinicId
             };
-            this.appService.create(newAppt).subscribe({
+            this.appService.create(newAppt).pipe(
+              switchMap(() => {
+                const bAmount = Number(apptValue.billingAmount);
+                if ((this.authService.isDoctor() || this.authService.isAssistant()) && bAmount > 0) {
+                  const pAmount = Number(apptValue.paidAmount || 0);
+                  const isFullyPaid = pAmount >= bAmount;
+
+                  const newBilling: BillingRecord = {
+                    id: (Math.floor(Math.random() * 90000) + 10000).toString(),
+                    patientId: newPatientId,
+                    appointmentId: newAppt.id,
+                    amount: bAmount,
+                    paidAmount: isFullyPaid ? bAmount : pAmount,
+                    status: isFullyPaid ? 'paid' : (pAmount > 0 ? 'partially_paid' : 'pending'),
+                    dateIssued: new Date().toISOString(),
+                    paymentMethod: (isFullyPaid || pAmount > 0) ? apptValue.paymentMethod || 'Cash' : null,
+                    description: `${apptValue.type} Visit Fee`,
+                    clinicId: clinicId !== 'all' ? clinicId : undefined
+                  };
+
+                  if (pAmount > 0 && !isFullyPaid) {
+                    newBilling.description = `${apptValue.type} Visit Fee (Paid: $${pAmount})`;
+                  }
+
+                  return this.billingService.create(newBilling);
+                }
+                return of(null);
+              })
+            ).subscribe({
               next: () => {
                 this.submitting = false;
                 this.toastr.success('Patient registered & appointment booked successfully!', 'Success');
@@ -352,7 +358,7 @@ export class PatientFormComponent implements OnInit {
               error: (err) => {
                 console.error(err);
                 this.submitting = false;
-                this.toastr.warning('Patient registered, but failed to book appointment.', 'Warning');
+                this.toastr.warning('Patient registered, but failed to book appointment: ' + extractErrorMessage(err), 'Warning');
                 this.saved.emit(newPatient);
                 this.form.reset();
               }
@@ -367,10 +373,10 @@ export class PatientFormComponent implements OnInit {
             this.form.reset();
           }
         },
-        error: () => {
+        error: (err) => {
           this.submitting = false;
           this.toastr.error(
-            this.langService.translate('toast.patient_create_error'),
+            extractErrorMessage(err),
             this.langService.translate('toast.error')
           );
         }

@@ -1,4 +1,4 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
+<div [formGroup]="form" class="space-y-6">
 
   <!-- Section 0: Clinic Selection (Visible to Super Admin only when activeClinicId is 'all') -->
   <div *ngIf="showClinicSelector()" class="pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -40,7 +40,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Patient Select -->
-      <div>
+      <div *ngIf="!embeddedMode">
         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" for="patientId">
           {{ 'appointments.patient_label' | translate }} <span class="text-rose-500">*</span>
         </label>
@@ -275,7 +275,7 @@
   </div>
 
   <!-- Footer Actions -->
-  <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+  <div *ngIf="!embeddedMode" class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
     <button
       type="button"
       (click)="onCancel()"
@@ -284,7 +284,8 @@
       {{ 'common.cancel' | translate }}
     </button>
     <button
-      type="submit"
+      type="button"
+      (click)="onSubmit()"
       [disabled]="submitting"
       class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
     >
@@ -301,4 +302,4 @@
       }
     </button>
   </div>
-</form>
+</div>
