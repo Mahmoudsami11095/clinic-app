@@ -509,5 +509,33 @@
     "dark": "داكن",
     "system": "النظام",
     "toggle": "تبديل المظهر"
+  },
+  "api_errors": {
+    "Missing credentials": "بيانات الدخول مفقودة",
+    "No account found with this email address": "لا يوجد حساب بهذا البريد الإلكتروني",
+    "No account found with this phone number": "لا يوجد حساب برقم الهاتف هذا",
+    "Incorrect password": "كلمة المرور غير صحيحة",
+    "Email or Phone Number required": "البريد الإلكتروني أو رقم الهاتف مطلوب",
+    "Email not registered": "البريد الإلكتروني غير مسجل",
+    "Phone number not registered": "رقم الهاتف غير مسجل",
+    "Phone number is required.": "رقم الهاتف مطلوب.",
+    "Verification code is required": "رمز التحقق مطلوب",
+    "Invalid or expired verification code": "رمز التحقق غير صحيح أو منتهي الصلاحية",
+    "Invalid verification code": "رمز التحقق غير صحيح",
+    "Provider and Token are required": "المزود والرمز مطلوبان",
+    "Social authentication failed: Invalid token": "فشلت المصادقة الاجتماعية: الرمز غير صحيح",
+    "Email required": "البريد الإلكتروني مطلوب",
+    "Email already registered": "البريد الإلكتروني مسجل بالفعل",
+    "Phone number already registered": "رقم الهاتف مسجل بالفعل",
+    "Missing required registration details": "تفاصيل التسجيل المطلوبة مفقودة",
+    "Both Email verification code and WhatsApp verification code are required": "مطلوب كل من رمز تحقق البريد الإلكتروني ورمز تحقق واتساب",
+    "Invalid or expired Email verification code": "رمز تحقق البريد الإلكتروني غير صحيح أو منتهي الصلاحية",
+    "Invalid or expired WhatsApp verification code": "رمز تحقق واتساب غير صحيح أو منتهي الصلاحية",
+    "Email verification code is required": "رمز تحقق البريد الإلكتروني مطلوب",
+    "Email is already in use by another account": "البريد الإلكتروني مستخدم بالفعل في حساب آخر",
+    "Email verification code is required to update email": "رمز تحقق البريد الإلكتروني مطلوب لتحديث البريد الإلكتروني",
+    "Contact number cannot be empty": "لا يمكن أن يكون رقم الاتصال فارغاً",
+    "Phone number is already in use by another account": "رقم الهاتف مستخدم بالفعل في حساب آخر",
+    "WhatsApp verification code is required to update phone number": "رمز تحقق واتساب مطلوب لتحديث رقم الهاتف"
   }
 }

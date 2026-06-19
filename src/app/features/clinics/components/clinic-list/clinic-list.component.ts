@@ -12,6 +12,7 @@ import { AppointmentService } from '../../../appointments/services/appointment.s
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-clinic-list',
@@ -25,6 +26,7 @@ export class ClinicListComponent implements OnInit {
   private patientService = inject(PatientService);
   private appointmentService = inject(AppointmentService);
   protected authService = inject(AuthService);
+  protected languageService = inject(LanguageService);
 
   doctors = signal<any[]>([]);
   patients = signal<any[]>([]);
@@ -199,7 +201,7 @@ export class ClinicListComponent implements OnInit {
       },
       error: (err) => {
         console.error('Doctor assignment error:', err);
-        const errMsg = extractErrorMessage(err);
+        const errMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
         this.assignDoctorError.set(errMsg);
         this.assignDoctorSuccess.set('');
       }
@@ -229,7 +231,7 @@ export class ClinicListComponent implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        const errMsg = extractErrorMessage(err);
+        const errMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
         this.assignAssistantError.set(errMsg);
         this.assignAssistantSuccess.set('');
       }

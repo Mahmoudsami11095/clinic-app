@@ -509,5 +509,33 @@
     "dark": "Dark",
     "system": "System",
     "toggle": "Toggle theme"
+  },
+  "api_errors": {
+    "Missing credentials": "Missing credentials",
+    "No account found with this email address": "No account found with this email address",
+    "No account found with this phone number": "No account found with this phone number",
+    "Incorrect password": "Incorrect password",
+    "Email or Phone Number required": "Email or Phone Number required",
+    "Email not registered": "Email not registered",
+    "Phone number not registered": "Phone number not registered",
+    "Phone number is required.": "Phone number is required.",
+    "Verification code is required": "Verification code is required",
+    "Invalid or expired verification code": "Invalid or expired verification code",
+    "Invalid verification code": "Invalid verification code",
+    "Provider and Token are required": "Provider and Token are required",
+    "Social authentication failed: Invalid token": "Social authentication failed: Invalid token",
+    "Email required": "Email required",
+    "Email already registered": "Email already registered",
+    "Phone number already registered": "Phone number already registered",
+    "Missing required registration details": "Missing required registration details",
+    "Both Email verification code and WhatsApp verification code are required": "Both Email verification code and WhatsApp verification code are required",
+    "Invalid or expired Email verification code": "Invalid or expired Email verification code",
+    "Invalid or expired WhatsApp verification code": "Invalid or expired WhatsApp verification code",
+    "Email verification code is required": "Email verification code is required",
+    "Email is already in use by another account": "Email is already in use by another account",
+    "Email verification code is required to update email": "Email verification code is required to update email",
+    "Contact number cannot be empty": "Contact number cannot be empty",
+    "Phone number is already in use by another account": "Phone number is already in use by another account",
+    "WhatsApp verification code is required to update phone number": "WhatsApp verification code is required to update phone number"
   }
 }

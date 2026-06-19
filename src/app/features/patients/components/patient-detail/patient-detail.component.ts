@@ -8,6 +8,7 @@ import { PatientFormComponent } from '../patient-form/patient-form.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-patient-detail',
@@ -91,6 +92,7 @@ export class PatientDetailComponent implements OnInit {
   private patientService = inject(PatientService);
   private location = inject(Location);
   private toastr = inject(ToastrService);
+  private languageService = inject(LanguageService);
 
   patient = signal<Patient | null>(null);
   loading = signal(true);
@@ -111,7 +113,7 @@ export class PatientDetailComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error fetching patient:', err);
-          this.error.set(extractErrorMessage(err));
+          this.error.set(extractErrorMessage(err, (k) => this.languageService.translate(k)));
           this.loading.set(false);
         }
       });

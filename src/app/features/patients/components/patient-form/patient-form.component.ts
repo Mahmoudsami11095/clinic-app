@@ -283,7 +283,7 @@ export class PatientFormComponent implements OnInit {
         error: (err) => {
           this.submitting = false;
           this.toastr.error(
-            extractErrorMessage(err),
+            extractErrorMessage(err, (k) => this.langService.translate(k)),
             this.langService.translate('toast.error')
           );
         }
@@ -358,7 +358,7 @@ export class PatientFormComponent implements OnInit {
               error: (err) => {
                 console.error(err);
                 this.submitting = false;
-                this.toastr.warning('Patient registered, but failed to book appointment: ' + extractErrorMessage(err), 'Warning');
+                this.toastr.warning('Patient registered, but failed to book appointment: ' + extractErrorMessage(err, (k) => this.langService.translate(k)), 'Warning');
                 this.saved.emit(newPatient);
                 this.form.reset();
               }
@@ -376,7 +376,7 @@ export class PatientFormComponent implements OnInit {
         error: (err) => {
           this.submitting = false;
           this.toastr.error(
-            extractErrorMessage(err),
+            extractErrorMessage(err, (k) => this.langService.translate(k)),
             this.langService.translate('toast.error')
           );
         }
