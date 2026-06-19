@@ -511,6 +511,15 @@ export class LanguageService {
     'toast.prescription_save_error': { en: 'Failed to save prescription.', ar: 'فشل في حفظ الوصفة الطبية.' },
     'toast.prescription_min_med_error': { en: 'Please add at least one medication name.', ar: 'يرجى إضافة اسم دواء واحد على الأقل.' },
 
+    // Errors
+    'errors.network': { en: 'Unable to connect to the server. Please check your connection.', ar: 'تعذر الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت.' },
+    'errors.server': { en: 'An unexpected server error occurred.', ar: 'حدث خطأ غير متوقع في الخادم.' },
+    'errors.unauthorized': { en: 'Your session has expired. Please log in again.', ar: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.' },
+    'errors.forbidden': { en: 'You do not have permission to perform this action.', ar: 'ليس لديك الصلاحية للقيام بهذا الإجراء.' },
+    'errors.not_found': { en: 'The requested resource was not found.', ar: 'المورد المطلوب غير موجود.' },
+    'errors.validation': { en: 'Please check your input for validation errors.', ar: 'يرجى التحقق من صحة البيانات المدخلة.' },
+    'errors.rate_limit': { en: 'Too many requests. Please try again later.', ar: 'عدد كبير جداً من الطلبات. يرجى المحاولة لاحقاً.' },
+
     // Theme
     'theme.light': { en: 'Light', ar: 'فاتح' },
     'theme.dark': { en: 'Dark', ar: 'داكن' },

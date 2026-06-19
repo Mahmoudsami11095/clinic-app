@@ -7,6 +7,7 @@ import { PatientHistoryComponent } from '../patient-history/patient-history.comp
 import { PatientFormComponent } from '../patient-form/patient-form.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ToastrService } from 'ngx-toastr';
+import { extractErrorMessage } from '../../../../core/utils/error.utils';
 
 @Component({
   selector: 'app-patient-detail',
@@ -110,7 +111,7 @@ export class PatientDetailComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error fetching patient:', err);
-          this.error.set('Failed to load patient');
+          this.error.set(extractErrorMessage(err));
           this.loading.set(false);
         }
       });

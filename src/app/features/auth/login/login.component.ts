@@ -8,6 +8,7 @@ import { AuthService, User } from '../../../core/auth/auth.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { extractErrorMessage } from '../../../core/utils/error.utils';
 
 import { ClinicService } from '../../../core/services/clinic.service';
 
@@ -186,9 +187,9 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const translatedMsg = err?.error?.message || this.languageService.translate('auth.login_failed');
-        this.errorMessage.set(translatedMsg);
-        this.toastr.error(translatedMsg, this.languageService.translate('toast.error'));
+        const errorMsg = extractErrorMessage(err);
+        this.errorMessage.set(errorMsg);
+        this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
     });
   }
@@ -220,7 +221,7 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || this.languageService.translate('auth.login_failed');
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -249,7 +250,7 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || this.languageService.translate('auth.otp_invalid');
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -344,7 +345,8 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(err?.error?.message || 'Failed to send reset code');
+        const errorMsg = extractErrorMessage(err);
+        this.errorMessage.set(errorMsg);
       }
     });
   }
@@ -381,7 +383,8 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(err?.error?.message || 'Failed to reset password');
+        const errorMsg = extractErrorMessage(err);
+        this.errorMessage.set(errorMsg);
       }
     });
   }
@@ -580,7 +583,7 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || this.languageService.translate('auth.login_failed');
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -653,7 +656,7 @@ export class LoginComponent implements OnDestroy {
         },
         error: (err) => {
           this.isLoading.set(false);
-          const errorMsg = err?.error?.message || 'Failed to send WhatsApp verification code';
+          const errorMsg = extractErrorMessage(err);
           this.toastr.error(errorMsg, 'Error');
         }
       });
@@ -703,7 +706,7 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || this.languageService.translate('auth.login_failed');
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -737,7 +740,7 @@ export class LoginComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || 'Invalid verification code.';
+        const errorMsg = extractErrorMessage(err);
         this.toastr.error(errorMsg, 'Error');
       }
     });

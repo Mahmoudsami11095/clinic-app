@@ -11,6 +11,7 @@ import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { extractErrorMessage } from '../../../../core/utils/error.utils';
 
 @Component({
   selector: 'app-clinic-list',
@@ -198,7 +199,7 @@ export class ClinicListComponent implements OnInit {
       },
       error: (err) => {
         console.error('Doctor assignment error:', err);
-        const errMsg = err.error?.message || err.message || 'Failed to assign doctors';
+        const errMsg = extractErrorMessage(err);
         this.assignDoctorError.set(errMsg);
         this.assignDoctorSuccess.set('');
       }
@@ -228,7 +229,8 @@ export class ClinicListComponent implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        this.assignAssistantError.set(err.error?.message || 'Failed to assign assistant');
+        const errMsg = extractErrorMessage(err);
+        this.assignAssistantError.set(errMsg);
         this.assignAssistantSuccess.set('');
       }
     });

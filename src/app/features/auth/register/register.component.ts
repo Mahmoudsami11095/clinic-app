@@ -8,6 +8,7 @@ import { ClinicService } from '../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { extractErrorMessage } from '../../../core/utils/error.utils';
 
 declare var google: any;
 declare var AppleID: any;
@@ -197,13 +198,9 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message
-          || err?.error?.title
-          || (err?.error?.errors ? Object.values(err.error.errors).flat().join(', ') : null)
-          || err?.message
-          || this.languageService.translate('toast.error');
-        this.errorMessage.set(errorMsg as string);
-        this.toastr.error(errorMsg as string, this.languageService.translate('toast.error'));
+        const errorMsg = extractErrorMessage(err);
+        this.errorMessage.set(errorMsg);
+        this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
     });
   }
@@ -338,11 +335,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message
-          || err?.error?.title
-          || (err?.error?.errors ? Object.values(err.error.errors).flat().join(', ') : null)
-          || err?.message
-          || this.languageService.translate('toast.error');
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
@@ -491,7 +484,7 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || this.languageService.translate('toast.error');
+        const errorMsg = extractErrorMessage(err);
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }

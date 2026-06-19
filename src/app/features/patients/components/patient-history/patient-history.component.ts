@@ -12,6 +12,7 @@ import { DentalService, DentalLog, ToothStatus } from '../../../../core/services
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -1469,7 +1470,7 @@ export class PatientHistoryComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error downloading file:', err);
-        this.toastr.error('Failed to download file.', 'Error');
+        this.toastr.error(extractErrorMessage(err), 'Error');
       }
     });
   }
@@ -1485,7 +1486,7 @@ export class PatientHistoryComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error uploading file:', err);
-          this.toastr.error('Failed to upload file.', 'Error');
+          this.toastr.error(extractErrorMessage(err), 'Error');
         }
       });
     }
@@ -1500,7 +1501,7 @@ export class PatientHistoryComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error deleting file:', err);
-          this.toastr.error('Failed to delete file.', 'Error');
+          this.toastr.error(extractErrorMessage(err), 'Error');
         }
       });
     }
@@ -1594,7 +1595,7 @@ export class PatientHistoryComponent implements OnInit {
         console.error('Error adding dental log:', err);
         this.submittingDentalLog.set(false);
         this.toastr.error(
-          this.langService.translate('toast.dental_log_save_error'),
+          extractErrorMessage(err),
           this.langService.translate('toast.error')
         );
       }
