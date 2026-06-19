@@ -528,6 +528,9 @@ import { gsap } from 'gsap';
                       <clipPath id="fractureClipInverse">
                         <polygon points="0,0 40,0 0,40" />
                       </clipPath>
+                      <clipPath id="crownClip">
+                        <rect x="-10" y="20" width="60" height="25" />
+                      </clipPath>
                       <radialGradient id="toothGradHealthy" cx="50%" cy="30%" r="55%" fx="45%" fy="25%">
                         <stop offset="0%" stop-color="#e0f2fe" />
                         <stop offset="70%" stop-color="#bae6fd" />
@@ -599,6 +602,21 @@ import { gsap } from 'gsap';
                                           fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.6"/>
                                     <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                                     <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                                  } @else if (getToothLatestStatuses(toothNum).includes('implant')) {
+                                    <g 
+                                      [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
+                                      [attr.opacity]="getToothLatestStatuses(toothNum).includes('impacted') ? '0.4' : null"
+                                    >
+                                      <!-- Implant Screw -->
+                                      <path d="M 16 4 L 24 4 L 24 20 L 16 20 Z" fill="url(#toothGradImplant)" stroke="#475569" stroke-width="1.5" filter="url(#shadow3d)"/>
+                                      <path d="M 14.5 7 L 25.5 9 M 14.5 10 L 25.5 12 M 14.5 13 L 25.5 15 M 14.5 16 L 25.5 18" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round"/>
+                                      <path d="M 17 20 L 23 20 L 24 22 L 16 22 Z" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+                                      <!-- Implant Crown -->
+                                      <g clip-path="url(#crownClip)">
+                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z" fill="url(#toothGradHealthy)" stroke="#0ea5e9" stroke-width="1.5" filter="url(#shadow3d)"/>
+                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z" fill="rgba(34, 211, 238, 0.3)" stroke="#22d3ee" stroke-width="1" filter="url(#neonGlow)"/>
+                                      </g>
+                                    </g>
                                   } @else {
                                     <g 
                                       [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
@@ -673,6 +691,21 @@ import { gsap } from 'gsap';
                                           fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.6"/>
                                     <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                                     <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                                  } @else if (getToothLatestStatuses(toothNum).includes('implant')) {
+                                    <g 
+                                      [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
+                                      [attr.opacity]="getToothLatestStatuses(toothNum).includes('impacted') ? '0.4' : null"
+                                    >
+                                      <!-- Implant Screw -->
+                                      <path d="M 16 4 L 24 4 L 24 20 L 16 20 Z" fill="url(#toothGradImplant)" stroke="#475569" stroke-width="1.5" filter="url(#shadow3d)"/>
+                                      <path d="M 14.5 7 L 25.5 9 M 14.5 10 L 25.5 12 M 14.5 13 L 25.5 15 M 14.5 16 L 25.5 18" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round"/>
+                                      <path d="M 17 20 L 23 20 L 24 22 L 16 22 Z" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+                                      <!-- Implant Crown -->
+                                      <g clip-path="url(#crownClip)">
+                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z" fill="url(#toothGradHealthy)" stroke="#0ea5e9" stroke-width="1.5" filter="url(#shadow3d)"/>
+                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z" fill="rgba(34, 211, 238, 0.3)" stroke="#22d3ee" stroke-width="1" filter="url(#neonGlow)"/>
+                                      </g>
+                                    </g>
                                   } @else {
                                     <g 
                                       [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
