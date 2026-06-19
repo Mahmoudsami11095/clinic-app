@@ -34,6 +34,9 @@ export class RegisterComponent implements OnDestroy {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
+  // Registration Steps
+  registerStep = signal<'basic' | 'role' | 'data'>('basic');
+
   // OTP Verification States
   otpSent = signal(false);
   otpStep = signal<'none' | 'email' | 'phone'>('none');
@@ -67,7 +70,7 @@ export class RegisterComponent implements OnDestroy {
       clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
       phone: ['', [Validators.pattern(/^\+?[0-9]{8,15}$/)]],
       gender: ['Male'],
-      age: [30, [Validators.min(1), Validators.max(120)]]
+      dob: ['']
     }, { validators: this.passwordMatchValidator });
 
     this.registerForm.get('role')?.valueChanges.subscribe(role => {
@@ -83,6 +86,11 @@ export class RegisterComponent implements OnDestroy {
         clinicPhoneCtrl?.setValue('');
         clinicAvailabilityHoursCtrl?.setValue('09:00-17:00');
         clinicAvailabilityDaysCtrl?.setValue(JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']));
+      }
+
+      // Clear dob for non-patient roles
+      if (role !== 'patient') {
+        this.registerForm.get('dob')?.setValue('');
       }
     });
 
@@ -125,6 +133,38 @@ export class RegisterComponent implements OnDestroy {
     this.showConfirmPassword.update(v => !v);
   }
 
+  onNextBasic() {
+    const basicControls = ['name', 'email', 'password', 'confirmPassword', 'phone'];
+    let valid = true;
+    basicControls.forEach(ctrlName => {
+      const ctrl = this.registerForm.get(ctrlName);
+      if (ctrl?.invalid) {
+        ctrl.markAsTouched();
+        valid = false;
+      }
+    });
+
+    if (valid) {
+      this.errorMessage.set(null);
+      this.registerStep.set('role');
+    } else {
+      this.toastr.error(this.languageService.translate('auth.required_fields'), this.languageService.translate('toast.error'));
+    }
+  }
+
+  onSelectRole(role: string) {
+    this.registerForm.get('role')?.setValue(role);
+    this.registerStep.set('data');
+  }
+
+  goBackToBasic() {
+    this.registerStep.set('basic');
+  }
+
+  goBackToRole() {
+    this.registerStep.set('role');
+  }
+
   sendVerificationCode() {
     if (this.registerForm.invalid) {
       this.toastr.error(this.languageService.translate('auth.required_fields'), this.languageService.translate('toast.error'));
@@ -157,9 +197,13 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || this.languageService.translate('toast.error');
-        this.errorMessage.set(errorMsg);
-        this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
+        const errorMsg = err?.error?.message
+          || err?.error?.title
+          || (err?.error?.errors ? Object.values(err.error.errors).flat().join(', ') : null)
+          || err?.message
+          || this.languageService.translate('toast.error');
+        this.errorMessage.set(errorMsg as string);
+        this.toastr.error(errorMsg as string, this.languageService.translate('toast.error'));
       }
     });
   }
@@ -294,7 +338,11 @@ export class RegisterComponent implements OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorMsg = err?.error?.message || this.languageService.translate('toast.error');
+        const errorMsg = err?.error?.message
+          || err?.error?.title
+          || (err?.error?.errors ? Object.values(err.error.errors).flat().join(', ') : null)
+          || err?.message
+          || this.languageService.translate('toast.error');
         this.errorMessage.set(errorMsg);
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
