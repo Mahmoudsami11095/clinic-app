@@ -51,19 +51,22 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Full Name -->
           <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{{ 'profile.full_name' | translate }}</label>
-            <input type="text" formControlName="name" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
-            <span class="text-xs text-red-500 mt-1 block" *ngIf="profileForm.get('name')?.touched && profileForm.get('name')?.invalid">
-              {{ 'profile.name_required' | translate }}
-            </span>
+            <app-input-field
+              [formGroup]="profileForm"
+              controlName="name"
+              label="profile.full_name"
+              [required]="true"
+            ></app-input-field>
           </div>
 
           <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{{ 'profile.email_address' | translate }}</label>
-            <input type="email" formControlName="email" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
-            <span class="text-xs text-red-500 mt-1 block" *ngIf="profileForm.get('email')?.touched && profileForm.get('email')?.invalid">
-              {{ 'profile.invalid_email' | translate }}
-            </span>
+            <app-input-field
+              [formGroup]="profileForm"
+              controlName="email"
+              label="profile.email_address"
+              type="email"
+              [required]="true"
+            ></app-input-field>
             <!-- Email OTP Section for modified email -->
             <div *ngIf="isEmailChanged() && profileForm.get('email')?.valid" class="mt-4 p-5 bg-indigo-50/50 dark:bg-indigo-500/5 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
               <div class="flex items-center gap-3 mb-4 text-indigo-700 dark:text-indigo-400">
@@ -126,20 +129,21 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Specialization -->
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ 'profile.specialization' | translate }}</label>
-            <input type="text" formControlName="specialization" 
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 font-semibold transition-all">
-          </div>
+          <app-input-field
+            [formGroup]="profileForm"
+            controlName="specialization"
+            label="profile.specialization"
+          ></app-input-field>
 
           <!-- Contact Number -->
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ 'profile.contact_number' | translate }}</label>
-            <input type="text" formControlName="contactNumber" 
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 font-semibold transition-all">
-            <div *ngIf="profileForm.get('contactNumber')?.invalid" class="text-rose-500 text-[10px] font-bold mt-1">
-              {{ 'profile.invalid_phone' | translate }}
-            </div>
+            <app-phone-input-field
+              [formGroup]="profileForm"
+              countryCodeName="countryCode"
+              phoneNumberName="phoneNumber"
+              label="profile.contact_number"
+              [required]="true"
+            ></app-phone-input-field>
             <!-- WhatsApp Phone Verification OTP -->
             <div *ngIf="isContactNumberChanged()" class="mt-3 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl space-y-2 animate-in fade-in duration-200">
               <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
@@ -239,19 +243,23 @@
           </div>
 
           <!-- Blood Group -->
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ 'profile.blood_group' | translate }}</label>
-            <input type="text" formControlName="bloodGroup" 
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 font-semibold transition-all">
-          </div>
+          <app-input-field
+            [formGroup]="profileForm"
+            controlName="bloodGroup"
+            label="profile.blood_group"
+            placeholder="e.g. O+, A-"
+          ></app-input-field>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Contact Number -->
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Contact Number</label>
-            <input type="text" formControlName="contactNumber" 
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 font-semibold transition-all">
+            <app-phone-input-field
+              [formGroup]="profileForm"
+              countryCodeName="countryCode"
+              phoneNumberName="phoneNumber"
+              label="Contact Number"
+              [required]="true"
+            ></app-phone-input-field>
             <!-- WhatsApp Phone Verification OTP -->
             <div *ngIf="isContactNumberChanged()" class="mt-3 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl space-y-2 animate-in fade-in duration-200">
               <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
@@ -295,36 +303,39 @@
           </div>
 
           <!-- Address -->
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ 'profile.home_address' | translate }}</label>
-            <input type="text" formControlName="address" 
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 font-semibold transition-all">
-          </div>
+          <app-input-field
+            [formGroup]="profileForm"
+            controlName="address"
+            label="profile.home_address"
+          ></app-input-field>
         </div>
 
         <div class="space-y-4">
           <h4 class="text-[10px] font-bold text-slate-550 dark:text-slate-450 uppercase tracking-wider">{{ 'profile.anamnesis_medical_history' | translate }}</h4>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Allergies -->
-            <div>
-              <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{{ 'profile.allergies' | translate }}</label>
-              <textarea formControlName="allergies" rows="2"
-                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-850 dark:text-slate-200 font-semibold transition-all"></textarea>
-            </div>
+            <app-input-field
+              [formGroup]="profileForm"
+              controlName="allergies"
+              label="profile.allergies"
+              type="textarea"
+            ></app-input-field>
             
             <!-- Chronic Diseases -->
-            <div>
-              <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{{ 'profile.chronic_diseases' | translate }}</label>
-              <textarea formControlName="chronicDiseases" rows="2"
-                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-850 dark:text-slate-200 font-semibold transition-all"></textarea>
-            </div>
+            <app-input-field
+              [formGroup]="profileForm"
+              controlName="chronicDiseases"
+              label="profile.chronic_diseases"
+              type="textarea"
+            ></app-input-field>
 
             <!-- Past Illnesses -->
-            <div>
-              <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{{ 'profile.past_illnesses' | translate }}</label>
-              <textarea formControlName="pastIllnesses" rows="2"
-                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-850 dark:text-slate-200 font-semibold transition-all"></textarea>
-            </div>
+            <app-input-field
+              [formGroup]="profileForm"
+              controlName="pastIllnesses"
+              label="profile.past_illnesses"
+              type="textarea"
+            ></app-input-field>
           </div>
         </div>
       </div>
@@ -337,17 +348,13 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Password -->
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              {{ 'profile.new_password' | translate }} <span class="text-[9px] font-medium text-slate-400 dark:text-slate-500">{{ 'profile.leave_blank_keep_current' | translate }}</span>
-            </label>
-            <input type="password" formControlName="password" 
-                   placeholder="••••••••"
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 font-semibold transition-all">
-            <div *ngIf="profileForm.get('password')?.touched && profileForm.get('password')?.invalid" class="text-rose-500 text-[10px] font-bold mt-1">
-              {{ 'profile.password_min_length' | translate }}
-            </div>
-          </div>
+          <app-input-field
+            [formGroup]="profileForm"
+            controlName="password"
+            label="profile.new_password"
+            type="password"
+            placeholder="••••••••"
+          ></app-input-field>
         </div>
       </div>
 

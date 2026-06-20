@@ -1,0 +1,51 @@
+<div [formGroup]="formGroup" class="relative group text-start">
+  <label class="block text-sm font-semibold text-slate-700 dark:text-slate-350 mb-1.5" [for]="phoneNumberName">
+    {{ label | translate }} <span *ngIf="required" class="text-rose-500">*</span>
+  </label>
+  <div class="flex gap-2">
+    <!-- Country Code Selector -->
+    <div class="w-32">
+      <select [formControlName]="countryCodeName" 
+              class="w-full rounded-xl border py-2.5 px-3 text-sm transition-all outline-none bg-no-repeat custom-select text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+        <option value="+20">🇪🇬 +20</option>
+        <option value="+966">🇸🇦 +966</option>
+        <option value="+971">🇦🇪 +971</option>
+        <option value="+1">🇺🇸 +1</option>
+        <option value="+44">🇬🇧 +44</option>
+        <option value="+49">🇩🇪 +49</option>
+        <option value="+33">🇫🇷 +33</option>
+        <option value="+91">🇮🇳 +91</option>
+      </select>
+    </div>
+    <!-- Actual Phone Number Input -->
+    <div class="flex-1">
+      <input
+        [id]="phoneNumberName"
+        type="text"
+        [formControlName]="phoneNumberName"
+        placeholder="e.g. 1012345678"
+        class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-800 dark:text-slate-200 placeholder-slate-440 dark:placeholder-slate-500 bg-slate-50 dark:bg-slate-800"
+        [ngClass]="{
+          'border-rose-400 bg-rose-50 dark:bg-rose-950/20 focus:ring-2 focus:ring-rose-500/20': isInvalid(),
+          'border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400': !isInvalid()
+        }"
+      />
+    </div>
+  </div>
+  @if (isInvalid()) {
+    <p class="mt-1 text-xs text-rose-600 flex flex-col gap-0.5 mt-1 font-semibold">
+      <span class="flex items-center gap-1" *ngIf="formGroup.get(phoneNumberName)?.errors?.['required']">
+        <i class="pi pi-exclamation-circle text-[10px]"></i> Phone number is required.
+      </span>
+      <span class="flex items-center gap-1" *ngIf="formGroup.get(phoneNumberName)?.errors?.['onlyDigits']">
+        <i class="pi pi-exclamation-circle text-[10px]"></i> Phone number must contain digits only.
+      </span>
+      <span class="flex items-center gap-1" *ngIf="formGroup.get(phoneNumberName)?.errors?.['invalidEgyptPhone']">
+        <i class="pi pi-exclamation-circle text-[10px]"></i> Egyptian mobile must be 10 digits starting with 10, 11, 12, or 15.
+      </span>
+      <span class="flex items-center gap-1" *ngIf="formGroup.get(phoneNumberName)?.errors?.['invalidLength']">
+        <i class="pi pi-exclamation-circle text-[10px]"></i> Phone number must be between 6 and 15 digits.
+      </span>
+    </p>
+  }
+</div>

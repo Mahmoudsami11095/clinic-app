@@ -26,7 +26,7 @@ export class ClinicService {
     const user = this.authService.currentUser();
     if (!user) return false;
     if (user.role === 'admin' && !user.clinicId) return true; // Super Admin
-    if (user.role === 'doctor' && user.clinicIds && user.clinicIds.length > 1) return true;
+    if ((user.role === 'doctor' || user.role === 'assistant') && user.clinicIds && user.clinicIds.length > 1) return true;
     return false;
   });
 
@@ -51,6 +51,9 @@ export class ClinicService {
     if (user.role === 'doctor') {
       return all.filter(c => c.status !== 'Pending');
     }
+    if (user.clinicIds && user.clinicIds.length > 0) {
+      return all.filter(c => user.clinicIds!.includes(c.id));
+    }
     const singleId = user.clinicId;
     return all.filter(c => c.id === singleId);
   });
@@ -71,7 +74,8 @@ export class ClinicService {
       } else if (user.role === 'doctor') {
         this.activeClinicIdSignal.set('all');
       } else if (user.role === 'assistant' || user.role === 'patient') {
-        this.activeClinicIdSignal.set(user.clinicId || 'all');
+        const defaultClinicId = (user.clinicIds && user.clinicIds.length > 0) ? user.clinicIds[0] : user.clinicId;
+        this.activeClinicIdSignal.set(defaultClinicId || 'all');
       } else {
         this.activeClinicIdSignal.set('all');
       }

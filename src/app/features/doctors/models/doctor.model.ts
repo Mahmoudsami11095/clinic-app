@@ -10,6 +10,8 @@ export interface Doctor {
   specialization: string;
   email: string;
   contactNumber: string;
+  countryCode?: string;
+  phoneNumber?: string;
   avatar: string | null;
   availability: DoctorAvailability;
   clinicIds?: string[];

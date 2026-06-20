@@ -28,9 +28,12 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
   return inputDate < new Date() ? null : { futureDate: true };
 }
 
+import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
+import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+
 @Component({
   selector: 'app-patient-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent, InputFieldComponent, PhoneInputFieldComponent],
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css'
 })
@@ -64,7 +67,9 @@ export class PatientFormComponent implements OnInit {
     lastName:         ['', [Validators.required, Validators.minLength(2)]],
     gender:           ['', Validators.required],
     dateOfBirth:      ['', [Validators.required, pastDateValidator]],
-    contactNumber:    ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-()]{7,15}$/)]],
+    countryCode:      ['+20', Validators.required],
+    phoneNumber:      ['', [Validators.required, (control: AbstractControl) => this.phoneFormatValidator(control)]],
+    contactNumber:    [''],
     email:            ['', [Validators.email]],
     bloodGroup:       [''],
     address:          ['', [Validators.required, Validators.minLength(5)]],
@@ -78,6 +83,51 @@ export class PatientFormComponent implements OnInit {
   });
 
   readonly bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  splitContactNumber(contactNumber: string): { countryCode: string; phoneNumber: string } {
+    if (!contactNumber) return { countryCode: '+20', phoneNumber: '' };
+    contactNumber = contactNumber.trim();
+    if (contactNumber.startsWith('+')) {
+      const prefixes = ['+966', '+971', '+380', '+359', '+249', '+212', '+213', '+216', '+218', '+20', '+44', '+49', '+33', '+91', '+86', '+1'];
+      for (const prefix of prefixes) {
+        if (contactNumber.startsWith(prefix)) {
+          return { countryCode: prefix, phoneNumber: contactNumber.substring(prefix.length).trim() };
+        }
+      }
+      if (contactNumber.length >= 4) {
+        return { countryCode: contactNumber.substring(0, 4), phoneNumber: contactNumber.substring(4) };
+      }
+    }
+    return { countryCode: '+20', phoneNumber: contactNumber };
+  }
+
+  phoneFormatValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+    const country = this.form?.get('countryCode')?.value || '+20';
+    const val = control.value.replace(/[\s\-()]/g, '');
+
+    if (!/^\d+$/.test(val)) {
+      return { onlyDigits: true };
+    }
+
+    if (country === '+20') {
+      let clean = val;
+      if (clean.startsWith('0')) {
+        clean = clean.substring(1);
+      }
+      
+      const isMobile = /^(10|11|12|15)\d{8}$/.test(clean);
+      const isLandline = clean.length >= 7 && clean.length <= 9;
+      if (!isMobile && !isLandline) {
+        return { invalidEgyptPhone: true };
+      }
+    } else {
+      if (val.length < 6 || val.length > 15) {
+        return { invalidLength: true };
+      }
+    }
+    return null;
+  }
 
   ngOnInit() {
     this.clinicsList.set(this.clinicService.clinics());
@@ -94,18 +144,24 @@ export class PatientFormComponent implements OnInit {
     }
     this.form.get('clinicId')?.updateValueAndValidity();
 
+    this.form.get('countryCode')?.valueChanges.subscribe(() => {
+      this.form.get('phoneNumber')?.updateValueAndValidity();
+    });
+
     // Fetch doctors list for appointment stage
     this.doctorService.getAll().subscribe({
       next: (docs) => this.doctorsList.set(docs)
     });
 
     if (this.patient) {
+      const phoneData = this.splitContactNumber(this.patient.contactNumber || '');
       this.form.patchValue({
         firstName: this.patient.firstName,
         lastName: this.patient.lastName,
         gender: this.patient.gender,
         dateOfBirth: this.patient.dateOfBirth.substring(0, 10),
-        contactNumber: this.patient.contactNumber,
+        countryCode: phoneData.countryCode,
+        phoneNumber: phoneData.phoneNumber,
         email: this.patient.email,
         bloodGroup: this.patient.bloodGroup,
         address: this.patient.address,
@@ -123,7 +179,7 @@ export class PatientFormComponent implements OnInit {
 
   nextStage() {
     if (this.currentStage() === 1) {
-      const fields = ['firstName', 'lastName', 'gender', 'dateOfBirth', 'contactNumber', 'address', 'clinicId'];
+      const fields = ['firstName', 'lastName', 'gender', 'dateOfBirth', 'countryCode', 'phoneNumber', 'address', 'clinicId'];
       let valid = true;
       fields.forEach(f => {
         const ctrl = this.form.get(f);
@@ -252,6 +308,8 @@ export class PatientFormComponent implements OnInit {
 
     this.submitting = true;
 
+    const contactNum = `${rawValue.countryCode}${rawValue.phoneNumber}`;
+
     if (this.patient) {
       const updatedPatient: Patient = {
         id: this.patient.id,
@@ -260,7 +318,9 @@ export class PatientFormComponent implements OnInit {
         lastName: rawValue.lastName!,
         gender: rawValue.gender!,
         dateOfBirth: rawValue.dateOfBirth!,
-        contactNumber: rawValue.contactNumber!,
+        contactNumber: contactNum,
+        countryCode: rawValue.countryCode!,
+        phoneNumber: rawValue.phoneNumber!,
         email: rawValue.email || '',
         bloodGroup: rawValue.bloodGroup || '',
         address: rawValue.address!,
@@ -297,7 +357,9 @@ export class PatientFormComponent implements OnInit {
         lastName: rawValue.lastName!,
         gender: rawValue.gender!,
         dateOfBirth: rawValue.dateOfBirth!,
-        contactNumber: rawValue.contactNumber!,
+        contactNumber: contactNum,
+        countryCode: rawValue.countryCode!,
+        phoneNumber: rawValue.phoneNumber!,
         email: rawValue.email || '',
         bloodGroup: rawValue.bloodGroup || '',
         address: rawValue.address!,

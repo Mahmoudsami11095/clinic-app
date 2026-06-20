@@ -76,44 +76,22 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- First Name -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="firstName">
-            {{ 'patients.first_name' | translate }} <span class="text-rose-500">*</span>
-          </label>
-          <input
-            id="firstName"
-            type="text"
-            formControlName="firstName"
-            placeholder="e.g. John"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none placeholder-slate-440 dark:placeholder-slate-500 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          />
-          @if (isInvalid('firstName')) {
-            <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle text-[10px]"></i>
-              {{ getError('firstName') }}
-            </p>
-          }
-        </div>
+        <app-input-field
+          [formGroup]="form"
+          controlName="firstName"
+          label="patients.first_name"
+          placeholder="e.g. John"
+          [required]="true"
+        ></app-input-field>
 
         <!-- Last Name -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="lastName">
-            {{ 'patients.last_name' | translate }} <span class="text-rose-500">*</span>
-          </label>
-          <input
-            id="lastName"
-            type="text"
-            formControlName="lastName"
-            placeholder="e.g. Doe"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none placeholder-slate-440 dark:placeholder-slate-500 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          />
-          @if (isInvalid('lastName')) {
-            <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle text-[10px]"></i>
-              {{ getError('lastName') }}
-            </p>
-          }
-        </div>
+        <app-input-field
+          [formGroup]="form"
+          controlName="lastName"
+          label="patients.last_name"
+          placeholder="e.g. Doe"
+          [required]="true"
+        ></app-input-field>
 
         <!-- Gender -->
         <div>
@@ -170,72 +148,35 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- Email -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="email">
-            {{ 'patients.email' | translate }}
-          </label>
-          <div class="relative">
-            <i class="pi pi-envelope absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm"></i>
-            <input
-              id="email"
-              type="email"
-              formControlName="email"
-              placeholder="john@example.com"
-              class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none placeholder-slate-440 dark:placeholder-slate-500 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-            />
-          </div>
-          @if (isInvalid('email')) {
-            <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle text-[10px]"></i>
-              {{ getError('email') }}
-            </p>
-          }
-        </div>
+        <app-input-field
+          [formGroup]="form"
+          controlName="email"
+          label="patients.email"
+          type="email"
+          placeholder="john@example.com"
+          icon="pi pi-envelope"
+        ></app-input-field>
 
         <!-- Phone -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="contactNumber">
-            {{ 'patients.phone' | translate }} <span class="text-rose-500">*</span>
-          </label>
-          <div class="relative">
-            <i class="pi pi-phone absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm"></i>
-            <input
-              id="contactNumber"
-              type="tel"
-              formControlName="contactNumber"
-              placeholder="+1 234 567 890"
-              class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none placeholder-slate-440 dark:placeholder-slate-500 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-            />
-          </div>
-          @if (isInvalid('contactNumber')) {
-            <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle text-[10px]"></i>
-              {{ getError('contactNumber') }}
-            </p>
-          }
-        </div>
+        <app-phone-input-field
+          [formGroup]="form"
+          countryCodeName="countryCode"
+          phoneNumberName="phoneNumber"
+          label="patients.phone"
+          [required]="true"
+        ></app-phone-input-field>
 
         <!-- Address -->
         <div class="sm:col-span-2">
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="address">
-            {{ 'patients.address' | translate }} <span class="text-rose-500">*</span>
-          </label>
-          <div class="relative">
-            <i class="pi pi-map-marker absolute start-3.5 top-3.5 text-slate-400 dark:text-slate-500 text-sm"></i>
-            <textarea
-              id="address"
-              formControlName="address"
-              rows="2"
-              placeholder="123 Main St, City, Country"
-              class="w-full rounded-xl border py-2.5 ps-10 pe-4 text-sm transition-all outline-none resize-none placeholder-slate-445 dark:placeholder-slate-500 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-            ></textarea>
-          </div>
-          @if (isInvalid('address')) {
-            <p class="mt-1 text-xs text-rose-600 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle text-[10px]"></i>
-              {{ getError('address') }}
-            </p>
-          }
+          <app-input-field
+            [formGroup]="form"
+            controlName="address"
+            label="patients.address"
+            type="textarea"
+            placeholder="123 Main St, City, Country"
+            icon="pi pi-map-marker"
+            [required]="true"
+          ></app-input-field>
         </div>
       </div>
     </div>
@@ -272,46 +213,31 @@
         </div>
 
         <!-- Allergies input -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="allergies">
-            Allergies (e.g. Nuts, Pollen, Penicillin)
-          </label>
-          <input
-            id="allergies"
-            type="text"
-            formControlName="allergies"
-            placeholder="e.g. Peanut allergy, dust mites"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          />
-        </div>
+        <app-input-field
+          [formGroup]="form"
+          controlName="allergies"
+          label="patients.allergies"
+          type="textarea"
+          placeholder="e.g. Peanut allergy, dust mites"
+        ></app-input-field>
 
         <!-- Chronic Diseases input -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="chronicDiseases">
-            Chronic Diseases
-          </label>
-          <input
-            id="chronicDiseases"
-            type="text"
-            formControlName="chronicDiseases"
-            placeholder="e.g. Asthma, Diabetes, Hypertension"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          />
-        </div>
+        <app-input-field
+          [formGroup]="form"
+          controlName="chronicDiseases"
+          label="patients.chronic_diseases"
+          type="textarea"
+          placeholder="e.g. Asthma, Diabetes, Hypertension"
+        ></app-input-field>
 
         <!-- Past Illnesses input -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5" for="pastIllnesses">
-            Past Illnesses
-          </label>
-          <input
-            id="pastIllnesses"
-            type="text"
-            formControlName="pastIllnesses"
-            placeholder="e.g. COVID-19, Chickenpox"
-            class="w-full rounded-xl border py-2.5 px-4 text-sm transition-all outline-none text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-          />
-        </div>
+        <app-input-field
+          [formGroup]="form"
+          controlName="pastIllnesses"
+          label="patients.past_illnesses"
+          type="textarea"
+          placeholder="e.g. COVID-19, Chickenpox"
+        ></app-input-field>
       </div>
     </div>
   </div>

@@ -163,65 +163,37 @@
         <div *ngIf="currentStage() === 1" class="space-y-4 animate-in fade-in duration-200">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Full Name -->
-            <div class="relative group">
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                {{ 'auth.full_name' | translate }}
-              </label>
-              <div class="relative">
-                <i class="pi pi-user absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input type="text" formControlName="name" 
-                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-440 dark:placeholder-slate-500 font-semibold"
-                       placeholder="e.g. John Doe">
-              </div>
-              <div *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.invalid" 
-                   class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-                <i class="pi pi-exclamation-circle"></i>
-                <span>{{ 'auth.required_fields' | translate }}</span>
-              </div>
-            </div>
+            <app-input-field
+              [formGroup]="registerForm"
+              controlName="name"
+              label="auth.full_name"
+              placeholder="e.g. John Doe"
+              icon="pi pi-user"
+              [required]="true"
+            ></app-input-field>
 
             <!-- Email -->
-            <div class="relative group">
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                {{ 'auth.email' | translate }}
-              </label>
-              <div class="relative">
-                <i class="pi pi-envelope absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input type="email" formControlName="email" 
-                       class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-440 dark:placeholder-slate-500 font-semibold"
-                       placeholder="john@example.com">
-              </div>
-              <div *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" 
-                   class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-                <i class="pi pi-exclamation-circle"></i>
-                <span *ngIf="registerForm.get('email')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
-                <span *ngIf="registerForm.get('email')?.errors?.['email']">{{ 'auth.invalid_email' | translate }}</span>
-              </div>
-            </div>
+            <app-input-field
+              [formGroup]="registerForm"
+              controlName="email"
+              label="auth.email"
+              type="email"
+              placeholder="john@example.com"
+              icon="pi pi-envelope"
+              [required]="true"
+            ></app-input-field>
           </div>
 
           <!-- Password -->
-          <div class="relative group">
-            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              {{ 'auth.password' | translate }}
-            </label>
-            <div class="relative">
-              <i class="pi pi-lock absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-              <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" 
-                     class="w-full bg-slate-50/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 ps-12 pe-12 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-440 dark:placeholder-slate-500 font-semibold"
-                     placeholder="••••••••">
-              <button type="button" (click)="togglePassword()" 
-                      class="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors cursor-pointer focus:outline-none">
-                <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
-              </button>
-            </div>
-            <div *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid" 
-                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle"></i>
-              <span *ngIf="registerForm.get('password')?.errors?.['required']">{{ 'auth.required_fields' | translate }}</span>
-              <span *ngIf="registerForm.get('password')?.errors?.['minlength']">{{ 'auth.password_min_length' | translate }}</span>
-            </div>
-          </div>
+          <app-input-field
+            [formGroup]="registerForm"
+            controlName="password"
+            label="auth.password"
+            type="password"
+            placeholder="••••••••"
+            icon="pi pi-lock"
+            [required]="true"
+          ></app-input-field>
 
           <!-- Next Button -->
           <button type="button" (click)="nextStage()"
@@ -277,20 +249,16 @@
         <!-- STAGE 3: Profile Details Completion -->
         <div *ngIf="currentStage() === 3" class="space-y-4 animate-in fade-in duration-200">
           <!-- Shared field: Phone (Contact Number) -->
-          <div>
-            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Contact Number</label>
-            <input type="text" formControlName="phone" 
-                   placeholder="+1 (555) 000-0000"
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-            <div *ngIf="registerForm.get('phone')?.touched && registerForm.get('phone')?.invalid" 
-                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle"></i>
-              <span>Please enter a valid phone number (8-15 digits, e.g. +1234567890)</span>
-            </div>
-          </div>
+          <app-phone-input-field
+            [formGroup]="registerForm"
+            countryCodeName="countryCode"
+            phoneNumberName="phoneNumber"
+            label="Contact Number"
+            [required]="true"
+          ></app-phone-input-field>
 
-          <!-- Clinic ID selection (Patients and Assistants only) -->
-          <div *ngIf="registerForm.get('role')?.value === 'patient' || registerForm.get('role')?.value === 'assistant'">
+          <!-- Clinic ID selection (Patients only) -->
+          <div *ngIf="registerForm.get('role')?.value === 'patient'">
             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
             <select formControlName="clinicId" 
                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
@@ -302,15 +270,13 @@
 
           <!-- Doctor specific fields -->
           <div *ngIf="registerForm.get('role')?.value === 'doctor'">
-            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Specialization</label>
-            <input type="text" formControlName="specialization" 
-                   placeholder="e.g. Dentistry, Cardiology"
-                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-            <div *ngIf="registerForm.get('specialization')?.touched && registerForm.get('specialization')?.invalid" 
-                 class="text-rose-500 text-[11px] font-bold mt-1 flex items-center gap-1">
-              <i class="pi pi-exclamation-circle"></i>
-              <span>Specialization is required</span>
-            </div>
+            <app-input-field
+              [formGroup]="registerForm"
+              controlName="specialization"
+              label="Specialization"
+              placeholder="e.g. Dentistry, Cardiology"
+              [required]="true"
+            ></app-input-field>
           </div>
 
           <!-- Patient specific fields -->
@@ -325,12 +291,12 @@
                 </select>
               </div>
 
-              <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Blood Group</label>
-                <input type="text" formControlName="bloodGroup" 
-                       placeholder="e.g. O+, A-"
-                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-              </div>
+              <app-input-field
+                [formGroup]="registerForm"
+                controlName="bloodGroup"
+                label="Blood Group"
+                placeholder="e.g. O+, A-"
+              ></app-input-field>
             </div>
 
             <div>
@@ -339,12 +305,12 @@
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
             </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Address</label>
-              <input type="text" formControlName="address" 
-                     placeholder="e.g. 123 Main St, Cityville"
-                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-            </div>
+            <app-input-field
+              [formGroup]="registerForm"
+              controlName="address"
+              label="Address"
+              placeholder="e.g. 123 Main St, Cityville"
+            ></app-input-field>
           </div>
 
           <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -374,8 +340,8 @@
                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ clinic.name }}</span>
               </label>
 
-              <!-- Show hours/days config only if clinic is selected -->
-              <div *ngIf="clinic.selected" class="pl-6 space-y-3 animate-in slide-in-from-top-1 duration-200">
+              <!-- Show hours/days config only if clinic is selected and role is doctor -->
+              <div *ngIf="clinic.selected && registerForm.get('role')?.value === 'doctor'" class="pl-6 space-y-3 animate-in slide-in-from-top-1 duration-200">
                 <div>
                   <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
                   <input type="text" [(ngModel)]="clinic.hours" [ngModelOptions]="{standalone: true}" required
@@ -401,10 +367,11 @@
               </div>
             </div>
 
-            <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+            <div *ngIf="registerForm.get('role')?.value === 'doctor'">
+              <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
 
-            <h4 class="text-xs font-bold text-slate-850 dark:text-slate-250 uppercase tracking-wider mb-2">Create New Clinic (Optional)</h4>
-            <!-- Clinic Name -->
+              <h4 class="text-xs font-bold text-slate-850 dark:text-slate-250 uppercase tracking-wider mb-2">Create New Clinic (Optional)</h4>
+              <!-- Clinic Name -->
             <div>
               <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Clinic Name</label>
               <div class="relative">
@@ -472,6 +439,7 @@
             </button>
           </div>
         </div>
+        </div>
 
         <!-- STAGE 5: OTP Verification Codes -->
         <div *ngIf="currentStage() === 5" class="space-y-6 animate-in fade-in duration-250">
@@ -480,19 +448,7 @@
             <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
               Email Verification Code
             </h4>
-            <!-- Passcode digits input grid for email -->
-            <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
-              <input *ngFor="let val of otpInputs(); let idx = index"
-                     type="text"
-                     [id]="'otp-input-' + idx"
-                     [value]="val"
-                     (input)="onOtpInput($event, idx)"
-                     (keydown)="onOtpKeyDown($event, idx)"
-                     class="w-10 h-10 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all animate-fade-in"
-                     maxLength="1"
-                     pattern="[0-9]*"
-                     inputmode="numeric">
-            </div>
+            <app-otp-input-field [code]="otpCode()" (codeChange)="otpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
             <!-- Demo Email Code -->
             <div *ngIf="demoEmailOtp()" class="text-[10px] text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
               Demo Email OTP: <strong class="underline font-bold">{{ demoEmailOtp() }}</strong>
@@ -505,18 +461,7 @@
               WhatsApp Verification Code
             </h4>
             <!-- Passcode digits input grid for phone -->
-            <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
-              <input *ngFor="let val of phoneOtpInputs(); let idx = index"
-                     type="text"
-                     [id]="'phone-otp-input-' + idx"
-                     [value]="val"
-                     (input)="onPhoneOtpInput($event, idx)"
-                     (keydown)="onPhoneOtpKeyDown($event, idx)"
-                     class="w-10 h-10 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all animate-fade-in"
-                     maxLength="1"
-                     pattern="[0-9]*"
-                     inputmode="numeric">
-            </div>
+            <app-otp-input-field [code]="phoneOtpCode()" (codeChange)="phoneOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
             <!-- Demo WhatsApp Code -->
             <div *ngIf="demoWhatsappOtp()" class="text-[10px] text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
               Demo WhatsApp OTP: <strong class="underline font-bold">{{ demoWhatsappOtp() }}</strong>

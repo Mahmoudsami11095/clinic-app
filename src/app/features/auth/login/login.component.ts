@@ -9,7 +9,9 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { extractErrorMessage } from '../../../core/utils/error.utils';
-
+import { InputFieldComponent } from '../../../shared/components/input-field/input-field.component';
+import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
+import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
 import { ClinicService } from '../../../core/services/clinic.service';
 
 declare var google: any;
@@ -20,7 +22,6 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
   if (!value) return null;
 
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  // Allow phone numbers of length 6 to 15 digits (with optional leading +)
   const phoneRegex = /^\+?[0-9]{6,15}$/;
   const cleaned = value.replace(/[\s\-]/g, '');
 
@@ -33,7 +34,7 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -52,9 +53,8 @@ export class LoginComponent implements OnDestroy {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
-  // Social signup multi stage signals
   socialSignUpState = signal<'none' | 'role' | 'data' | 'doctor-clinics' | 'social-otp'>('none');
-  socialOtpInputs = signal<string[]>(['', '', '', '', '', '']);
+  socialOtpCode = signal<string>('');
   socialOtpDemo = signal<string>('');
   socialOtpNextState = signal<'doctor-clinics' | 'submit'>('submit');
   socialPhoneVerified = signal<boolean>(false);
@@ -79,18 +79,16 @@ export class LoginComponent implements OnDestroy {
   socialNewClinicHours = signal<string>('09:00-17:00');
   socialNewClinicDays = signal<string[]>([ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ]);
 
-  // OTP Login States
   loginMode = signal<'password' | 'otp'>('password');
   otpSent = signal(false);
-  otpInputs = signal<string[]>(['', '', '', '', '', '']);
+  otpCode = signal<string>('');
   countdown = signal(0);
   private timerInterval: ReturnType<typeof setInterval> | undefined;
 
-  // Forgot Password States
   forgotPasswordMode = signal(false);
-  forgotStep = signal<1 | 2 | 3>(1);
+  forgotStep = signal(1);
   forgotEmail = signal('');
-  forgotOtpInputs = signal<string[]>(['', '', '', '', '', '']);
+  forgotOtpCode = signal<string>('');
   forgotNewPassword = signal('');
   forgotConfirmPassword = signal('');
   showForgotNewPassword = signal(false);
@@ -99,7 +97,6 @@ export class LoginComponent implements OnDestroy {
   private forgotTimerInterval: ReturnType<typeof setInterval> | undefined;
 
   constructor() {
-    // Check if this window is a popup initialized by an opener window with hash parameters
     if (window.opener && window.location.hash) {
       const hash = window.location.hash;
       const params = new URLSearchParams(hash.substring(1));
@@ -108,9 +105,7 @@ export class LoginComponent implements OnDestroy {
         try {
           window.opener.postMessage({ type: 'oauth-token', token: idToken }, window.location.origin);
           window.close();
-        } catch (e) {
-          // Fallback if cross-origin or other issues
-        }
+        } catch (e) {}
       }
     }
 
@@ -130,13 +125,12 @@ export class LoginComponent implements OnDestroy {
     this.loginMode.set(mode);
     this.errorMessage.set(null);
     this.otpSent.set(false);
-    this.otpInputs.set(['', '', '', '', '', '']);
+    this.otpCode.set('');
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
     this.countdown.set(0);
 
-    // Dynamic validation updates
     const passwordControl = this.loginForm.get('password');
     if (mode === 'otp') {
       passwordControl?.clearValidators();
@@ -152,10 +146,30 @@ export class LoginComponent implements OnDestroy {
 
   onSubmit() {
     if (this.loginMode() === 'otp') {
-      if (this.otpSent()) {
-        this.verifyVerificationCode();
-      } else {
+      if (!this.otpSent()) {
         this.sendVerificationCode();
+      } else {
+        const emailCode = this.otpCode();
+        if (emailCode.length < 6) {
+          this.errorMessage.set(this.languageService.translate('auth.required_fields'));
+          return;
+        }
+        this.isLoading.set(true);
+        this.errorMessage.set(null);
+        
+        this.authService.verifyOtp(this.loginForm.get('email')?.value, emailCode).subscribe({
+          next: (user) => {
+            this.isLoading.set(false);
+            this.toastr.success(`${this.languageService.translate('auth.login_success')}: ${user.name}`, this.languageService.translate('toast.success'));
+            this.redirectToDefaultPage(user);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
+            this.errorMessage.set(errorMsg);
+            this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
+          }
+        });
       }
       return;
     }
@@ -173,11 +187,7 @@ export class LoginComponent implements OnDestroy {
     this.authService.login({ email, password }).subscribe({
       next: (user) => {
         this.isLoading.set(false);
-        this.toastr.success(
-          `${this.languageService.translate('auth.login_success')}: ${user.name}`,
-          this.languageService.translate('toast.success')
-        );
-        
+        this.toastr.success(`${this.languageService.translate('auth.login_success')}: ${user.name}`, this.languageService.translate('toast.success'));
         const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'] || '/';
         if (returnUrl && returnUrl !== '/' && returnUrl !== '/login' && returnUrl !== '/register') {
           this.router.navigateByUrl(returnUrl);
@@ -210,43 +220,8 @@ export class LoginComponent implements OnDestroy {
       next: (res) => {
         this.isLoading.set(false);
         this.otpSent.set(true);
-        this.toastr.success(
-          `${this.languageService.translate('auth.otp_sent')} [Demo Code: ${res.otp}]`,
-          this.languageService.translate('toast.success')
-        );
+        this.toastr.success(`${this.languageService.translate('auth.otp_sent')} [Demo Code: ${res.otp}]`, this.languageService.translate('toast.success'));
         this.startTimer();
-        setTimeout(() => {
-          document.getElementById('otp-input-0')?.focus();
-        }, 100);
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
-        this.errorMessage.set(errorMsg);
-        this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
-      }
-    });
-  }
-
-  verifyVerificationCode() {
-    const code = this.otpInputs().join('');
-    if (code.length < 6 || this.otpInputs().some(d => d === '')) {
-      this.errorMessage.set(this.languageService.translate('auth.required_fields'));
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    const email = this.loginForm.get('email')?.value;
-
-    this.authService.verifyOtp(email, code).subscribe({
-      next: (user) => {
-        this.isLoading.set(false);
-        this.toastr.success(
-          `${this.languageService.translate('auth.login_success')}: ${user.name}`,
-          this.languageService.translate('toast.success')
-        );
-        this.redirectToDefaultPage(user);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -273,43 +248,6 @@ export class LoginComponent implements OnDestroy {
     }, 1000);
   }
 
-  onOtpInput(event: Event, index: number) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
-    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
-    
-    const arr = [...this.otpInputs()];
-    arr[index] = digit;
-    this.otpInputs.set(arr);
-    
-    input.value = digit;
-
-    if (digit && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`) as HTMLInputElement;
-      nextInput?.focus();
-    }
-
-    if (arr.every(d => d !== '') && arr.length === 6) {
-      this.verifyVerificationCode();
-    }
-  }
-
-  onOtpKeyDown(event: KeyboardEvent, index: number) {
-    if (event.key === 'Backspace') {
-      const arr = [...this.otpInputs()];
-      if (!arr[index] && index > 0) {
-        arr[index - 1] = '';
-        this.otpInputs.set(arr);
-        const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
-        prevInput?.focus();
-      } else {
-        arr[index] = '';
-        this.otpInputs.set(arr);
-      }
-    }
-  }
-
-  // --- Forgot Password Flow ---
   startForgotPassword() {
     this.forgotPasswordMode.set(true);
     this.forgotStep.set(1);
@@ -339,9 +277,6 @@ export class LoginComponent implements OnDestroy {
         this.forgotStep.set(2);
         this.toastr.success(res.message + ` [Demo: ${res.otp}]`, this.languageService.translate('toast.success'));
         this.startForgotTimer();
-        setTimeout(() => {
-          document.getElementById('forgot-otp-input-0')?.focus();
-        }, 100);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -352,7 +287,7 @@ export class LoginComponent implements OnDestroy {
   }
 
   verifyForgotOtpNextStep() {
-    const code = this.forgotOtpInputs().join('');
+    const code = this.forgotOtpCode();
     if (code.length < 6) {
       this.errorMessage.set(this.languageService.translate('auth.required_fields'));
       return;
@@ -373,7 +308,7 @@ export class LoginComponent implements OnDestroy {
     
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    const code = this.forgotOtpInputs().join('');
+    const code = this.forgotOtpCode();
     
     this.authService.resetPassword(this.forgotEmail(), code, this.forgotNewPassword()).subscribe({
       next: (res) => {
@@ -405,160 +340,48 @@ export class LoginComponent implements OnDestroy {
     }, 1000);
   }
 
-  onForgotOtpInput(event: Event, index: number) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
-    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
-    
-    const arr = [...this.forgotOtpInputs()];
-    arr[index] = digit;
-    this.forgotOtpInputs.set(arr);
-    
-    input.value = digit;
-
-    if (digit && index < 5) {
-      const nextInput = document.getElementById(`forgot-otp-input-${index + 1}`) as HTMLInputElement;
-      nextInput?.focus();
-    }
-
-    if (arr.every(d => d !== '') && arr.length === 6) {
-      this.verifyForgotOtpNextStep();
-    }
-  }
-
-  onForgotOtpKeyDown(event: KeyboardEvent, index: number) {
-    if (event.key === 'Backspace') {
-      const arr = [...this.forgotOtpInputs()];
-      if (!arr[index] && index > 0) {
-        arr[index - 1] = '';
-        this.forgotOtpInputs.set(arr);
-        const prevInput = document.getElementById(`forgot-otp-input-${index - 1}`) as HTMLInputElement;
-        prevInput?.focus();
-      } else {
-        arr[index] = '';
-        this.forgotOtpInputs.set(arr);
-      }
-    }
-  }
-
   socialLogin(provider: string) {
     this.isLoading.set(true);
     this.errorMessage.set(null);
-
     const prov = provider.toLowerCase();
 
     if (prov === 'google') {
-      try {
-        const clientId = '933605871994-nnoslt62mt5lkq4uck948akdmtluogd3.apps.googleusercontent.com';
-        const redirectUri = encodeURIComponent(window.location.origin + '/login');
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
-        
-        const listener = (event: MessageEvent) => {
-          if (event.origin !== window.location.origin) return;
-          if (event.data && event.data.type === 'oauth-token') {
-            const idToken = event.data.token;
-            this.executeSocialLogin('google', idToken);
-            window.removeEventListener('message', listener);
-          }
-        };
-        window.addEventListener('message', listener);
+      const clientId = '933605871994-nnoslt62mt5lkq4uck948akdmtluogd3.apps.googleusercontent.com';
+      const redirectUri = encodeURIComponent(window.location.origin + '/login');
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
+      
+      const messageListener = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type === 'oauth-token' && event.data?.token) {
+          window.removeEventListener('message', messageListener);
+          this.executeSocialLogin('google', event.data.token);
+        }
+      };
+      window.addEventListener('message', messageListener);
 
-        const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
-        
-        if (popup) {
-          const interval = setInterval(() => {
-            try {
-              if (popup.closed) {
-                clearInterval(interval);
-                window.removeEventListener('message', listener);
-                this.isLoading.set(false);
+      const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
+      if (popup) {
+        const interval = setInterval(() => {
+          try {
+            const hash = popup.location.hash;
+            if (hash) {
+              const params = new URLSearchParams(hash.substring(1));
+              const idToken = params.get('id_token');
+              if (idToken) {
+                popup.close(); clearInterval(interval); 
+                window.removeEventListener('message', messageListener);
+                this.executeSocialLogin('google', idToken);
               }
-              const hash = popup.location.hash;
-              if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const idToken = params.get('id_token');
-                if (idToken) {
-                  popup.close();
-                  clearInterval(interval);
-                  window.removeEventListener('message', listener);
-                  this.executeSocialLogin('google', idToken);
-                }
-              }
-            } catch (e) {
-              // Ignore cross-origin access exceptions during redirection
             }
-          }, 500);
-        } else {
-          this.toastr.error('Google sign-in popup was blocked or failed to open.', this.languageService.translate('toast.error'));
-          this.isLoading.set(false);
-        }
-      } catch (err) {
-        this.toastr.error('An error occurred during Google sign-in.', this.languageService.translate('toast.error'));
-        this.isLoading.set(false);
-      }
-    }
-    else if (prov === 'apple') {
-      try {
-        if (typeof AppleID !== 'undefined') {
-          AppleID.auth.init({
-            clientId: 'YOUR_APPLE_CLIENT_ID',
-            scope: 'name email',
-            redirectURI: window.location.origin + '/login',
-            usePopup: true
-          });
-          AppleID.auth.signIn()
-            .then((res: any) => {
-              this.executeSocialLogin('apple', res.authorization.id_token);
-            })
-            .catch((err: any) => {
-              this.toastr.error('Apple sign-in failed or was cancelled.', this.languageService.translate('toast.error'));
+          } catch (e) {}
+          if (popup.closed) { 
+            clearInterval(interval); 
+            setTimeout(() => {
+              window.removeEventListener('message', messageListener);
               this.isLoading.set(false);
-            });
-        } else {
-          this.toastr.error('Apple Sign-In library is not loaded.', this.languageService.translate('toast.error'));
-          this.isLoading.set(false);
-        }
-      } catch (err) {
-        this.toastr.error('An error occurred during Apple sign-in.', this.languageService.translate('toast.error'));
-        this.isLoading.set(false);
-      }
-    }
-    else if (prov === 'microsoft') {
-      try {
-        const clientId = 'YOUR_MICROSOFT_CLIENT_ID';
-        const redirectUri = encodeURIComponent(window.location.origin + '/login');
-        const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=id_token&redirect_uri=${redirectUri}&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
-        
-        const popup = window.open(authUrl, 'Microsoft Login', 'width=600,height=600');
-        
-        if (popup) {
-          const interval = setInterval(() => {
-            try {
-              if (popup.closed) {
-                clearInterval(interval);
-                this.isLoading.set(false);
-              }
-              const hash = popup.location.hash;
-              if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const idToken = params.get('id_token');
-                if (idToken) {
-                  popup.close();
-                  clearInterval(interval);
-                  this.executeSocialLogin('microsoft', idToken);
-                }
-              }
-            } catch (e) {
-              // Cross-origin access warnings are expected until redirect completes
-            }
-          }, 500);
-        } else {
-          this.toastr.error('Microsoft sign-in popup was blocked or failed to open.', this.languageService.translate('toast.error'));
-          this.isLoading.set(false);
-        }
-      } catch (err) {
-        this.toastr.error('An error occurred during Microsoft sign-in.', this.languageService.translate('toast.error'));
-        this.isLoading.set(false);
+            }, 500); // give time for the message event to process
+          }
+        }, 500);
       }
     }
   }
@@ -573,12 +396,7 @@ export class LoginComponent implements OnDestroy {
           this.socialToken.set(token);
           this.socialSignUpState.set('role');
         } else {
-          const user = res.data;
-          this.toastr.success(
-            `${this.languageService.translate('auth.login_success')}: ${user.name}`,
-            this.languageService.translate('toast.success')
-          );
-          this.redirectToDefaultPage(user);
+          this.redirectToDefaultPage(res.data);
         }
       },
       error: (err) => {
@@ -628,164 +446,65 @@ export class LoginComponent implements OnDestroy {
   }
 
   onSubmitSocialExtraData() {
-    // Validate phone number format
     const phone = this.socialPhone();
     const cleanedPhone = phone ? phone.replace(/[\s\-\(\)]/g, '') : '';
     if (!cleanedPhone || !/^\+?[0-9]{8,15}$/.test(cleanedPhone)) {
-      this.toastr.error('Please enter a valid phone number (8-15 digits)', 'Validation Error');
+      this.toastr.error('Please enter a valid phone number', 'Validation Error');
       return;
     }
 
-    // Trigger OTP verification if not yet verified
     if (!this.socialPhoneVerified()) {
-      const target = this.socialRole() === 'doctor' ? 'doctor-clinics' : 'submit';
-      this.socialOtpNextState.set(target);
-      
       this.isLoading.set(true);
-      this.errorMessage.set(null);
       this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone }).subscribe({
         next: (res) => {
           this.isLoading.set(false);
           this.socialOtpDemo.set(res.otp || '');
           this.socialSignUpState.set('social-otp');
-          this.socialOtpInputs.set(['', '', '', '', '', '']);
-          this.toastr.success(`Verification code sent to WhatsApp [Demo Code: ${res.otp}]`, 'Success');
-          setTimeout(() => {
-            document.getElementById('social-otp-input-0')?.focus();
-          }, 100);
+          this.socialOtpCode.set('');
+          this.toastr.success(`Code sent [Demo: ${res.otp}]`, 'Success');
         },
-        error: (err) => {
-          this.isLoading.set(false);
-          const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
-          this.toastr.error(errorMsg, 'Error');
-        }
+        error: (err) => { this.isLoading.set(false); this.toastr.error('Error', 'Error'); }
       });
       return;
     }
 
-    // Already verified! Let's proceed:
-    if (this.socialRole() === 'doctor' && this.socialSignUpState() === 'data') {
-      this.socialSignUpState.set('doctor-clinics');
-      return;
-    }
-
-    const payload: any = {
-      contactNumber: this.socialPhone()
-    };
-
+    const payload: any = { contactNumber: this.socialPhone() };
     if (this.socialRole() === 'doctor') {
       payload.specialization = this.socialSpecialization();
-      
-      if (this.socialClinicName() && this.socialClinicName().trim().length >= 3) {
-        payload.clinicName = this.socialClinicName().trim();
-        payload.clinicAddress = this.socialClinicAddress().trim();
-        payload.clinicPhone = this.socialClinicPhone().trim();
-        payload.availabilityHours = this.socialNewClinicHours();
-        payload.availabilityDays = JSON.stringify(this.socialNewClinicDays());
-      }
     } else {
       payload.gender = this.socialGender();
       payload.dateOfBirth = this.socialDob();
-      payload.bloodGroup = this.socialBloodGroup();
-      payload.address = this.socialAddress();
-      payload.clinicId = this.socialClinicId();
     }
 
-    this.isLoading.set(true);
     this.authService.loginWithSocial(this.socialProvider(), this.socialToken(), this.socialRole(), payload).subscribe({
       next: (res) => {
-        this.isLoading.set(false);
         this.socialSignUpState.set('none');
-        this.socialPhoneVerified.set(false);
-        const user = res.data;
-        this.toastr.success(
-          `${this.languageService.translate('auth.login_success')}: ${user.name}`,
-          this.languageService.translate('toast.success')
-        );
-        this.redirectToDefaultPage(user);
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
-        this.errorMessage.set(errorMsg);
-        this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
+        this.redirectToDefaultPage(res.data);
       }
     });
   }
 
-  onVerifySocialOtp() {
-    const code = this.socialOtpInputs().join('');
+  submitSocialOtp() {
+    const code = this.socialOtpCode();
     if (code.length < 6) {
-      this.toastr.error('Please enter the 6-digit verification code.', 'Error');
+      this.errorMessage.set('Invalid OTP');
       return;
     }
-
     this.isLoading.set(true);
     const cleanedPhone = this.socialPhone().replace(/[\s\-\(\)]/g, '');
-
     this.http.post<any>('/api/auth/verify-otp', { phoneNumber: cleanedPhone, code }).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.socialPhoneVerified.set(true);
-        this.toastr.success('Phone number verified successfully.', 'Verified');
-        
-        // Transition to the next step
-        if (this.socialOtpNextState() === 'doctor-clinics') {
-          this.socialSignUpState.set('doctor-clinics');
-        } else {
-          // Patient - submit final registration
-          this.socialSignUpState.set('data'); // temporarily go back to run submit payload
-          this.onSubmitSocialExtraData();
-        }
+        this.onSubmitSocialExtraData();
       },
-      error: (err) => {
-        this.isLoading.set(false);
-        const errorMsg = extractErrorMessage(err, (k) => this.languageService.translate(k));
-        this.toastr.error(errorMsg, 'Error');
-      }
+      error: () => this.isLoading.set(false)
     });
   }
 
   goBackToSocialData() {
     this.socialSignUpState.set('data');
     this.socialPhoneVerified.set(false);
-    this.socialOtpDemo.set('');
-  }
-
-  onSocialOtpInput(event: Event, index: number) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
-    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
-    
-    const arr = [...this.socialOtpInputs()];
-    arr[index] = digit;
-    this.socialOtpInputs.set(arr);
-    
-    input.value = digit;
-
-    if (digit && index < 5) {
-      const nextInput = document.getElementById(`social-otp-input-${index + 1}`) as HTMLInputElement;
-      nextInput?.focus();
-    }
-
-    if (arr.every(d => d !== '') && arr.length === 6) {
-      this.onVerifySocialOtp();
-    }
-  }
-
-  onSocialOtpKeyDown(event: KeyboardEvent, index: number) {
-    if (event.key === 'Backspace') {
-      const arr = [...this.socialOtpInputs()];
-      if (!arr[index] && index > 0) {
-        arr[index - 1] = '';
-        this.socialOtpInputs.set(arr);
-        const prevInput = document.getElementById(`social-otp-input-${index - 1}`) as HTMLInputElement;
-        prevInput?.focus();
-      } else {
-        arr[index] = '';
-        this.socialOtpInputs.set(arr);
-      }
-    }
   }
 
   quickLogin(user: User) {

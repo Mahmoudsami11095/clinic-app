@@ -7,4 +7,5 @@ export interface Clinic {
   status?: string;
   availabilityHours?: string;
   availabilityDays?: string;
+  assistantCount?: number;
 }

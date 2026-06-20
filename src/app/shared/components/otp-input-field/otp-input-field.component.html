@@ -1,0 +1,25 @@
+<div class="relative flex justify-center gap-2.5 direction-ltr" dir="ltr">
+  <!-- Hidden real input -->
+  <input type="tel"
+         [value]="value()"
+         (input)="onInput($event)"
+         (focus)="onFocus()"
+         (blur)="onBlur()"
+         [disabled]="disabled"
+         [maxLength]="length"
+         class="absolute inset-0 w-full h-full opacity-0 cursor-text z-10"
+         autocomplete="one-time-code"
+         inputmode="numeric"
+         pattern="[0-9]*">
+  
+  <!-- Visual boxes underneath -->
+  @for (i of lengthArray; track i) {
+    <div class="w-11 h-11 flex items-center justify-center text-center bg-slate-50 dark:bg-slate-800 border rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all"
+         [ngClass]="{
+           'border-indigo-500 ring-2 ring-indigo-500/20': isFocused() && (value().length === i || (value().length === length && i === length - 1)),
+           'border-slate-200 dark:border-slate-700': !isFocused() || (value().length !== i && !(value().length === length && i === length - 1))
+         }">
+      {{ value()[i] || '' }}
+    </div>
+  }
+</div>

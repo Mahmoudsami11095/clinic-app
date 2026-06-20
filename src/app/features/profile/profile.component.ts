@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../core/auth/auth.service';
@@ -8,11 +8,13 @@ import { extractErrorMessage } from '../../core/utils/error.utils';
 import { LanguageService } from '../../core/i18n/language.service';
 
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { InputFieldComponent } from '../../shared/components/input-field/input-field.component';
+import { PhoneInputFieldComponent } from '../../shared/components/phone-input-field/phone-input-field.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
@@ -62,9 +64,13 @@ export class ProfileComponent implements OnInit {
       emailOtpCode: [''],
       phoneOtpCode: [''],
 
+      // Split Phone fields
+      countryCode: ['+20', Validators.required],
+      phoneNumber: ['', [Validators.required, (control: AbstractControl) => this.phoneFormatValidator(control)]],
+
       // Doctor Specific fields
       specialization: [''],
-      contactNumber: ['', [Validators.pattern(/^\+?[0-9]{6,15}$/)]],
+      contactNumber: [''],
       avatar: [''],
       availabilityHours: ['09:00-17:00'],
 
@@ -77,6 +83,55 @@ export class ProfileComponent implements OnInit {
       chronicDiseases: [''],
       pastIllnesses: ['']
     });
+
+    this.profileForm.get('countryCode')?.valueChanges.subscribe(() => {
+      this.profileForm.get('phoneNumber')?.updateValueAndValidity();
+    });
+  }
+
+  splitContactNumber(contactNumber: string): { countryCode: string; phoneNumber: string } {
+    if (!contactNumber) return { countryCode: '+20', phoneNumber: '' };
+    contactNumber = contactNumber.trim();
+    if (contactNumber.startsWith('+')) {
+      const prefixes = ['+966', '+971', '+380', '+359', '+249', '+212', '+213', '+216', '+218', '+20', '+44', '+49', '+33', '+91', '+86', '+1'];
+      for (const prefix of prefixes) {
+        if (contactNumber.startsWith(prefix)) {
+          return { countryCode: prefix, phoneNumber: contactNumber.substring(prefix.length).trim() };
+        }
+      }
+      if (contactNumber.length >= 4) {
+        return { countryCode: contactNumber.substring(0, 4), phoneNumber: contactNumber.substring(4) };
+      }
+    }
+    return { countryCode: '+20', phoneNumber: contactNumber };
+  }
+
+  phoneFormatValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+    const country = this.profileForm?.get('countryCode')?.value || '+20';
+    const val = control.value.replace(/[\s\-()]/g, '');
+
+    if (!/^\d+$/.test(val)) {
+      return { onlyDigits: true };
+    }
+
+    if (country === '+20') {
+      let clean = val;
+      if (clean.startsWith('0')) {
+        clean = clean.substring(1);
+      }
+      
+      const isMobile = /^(10|11|12|15)\d{8}$/.test(clean);
+      const isLandline = clean.length >= 7 && clean.length <= 9;
+      if (!isMobile && !isLandline) {
+        return { invalidEgyptPhone: true };
+      }
+    } else {
+      if (val.length < 6 || val.length > 15) {
+        return { invalidLength: true };
+      }
+    }
+    return null;
   }
 
   loadProfile() {
@@ -92,12 +147,16 @@ export class ProfileComponent implements OnInit {
         this.emailOtpConfirmed.set(false);
         this.phoneOtpConfirmed.set(false);
 
+        const phoneData = this.splitContactNumber(data.contactNumber || '');
+
         this.profileForm.patchValue({
           name: data.name,
           email: data.email,
           title: data.title,
           role: data.role,
           specialization: data.specialization || '',
+          countryCode: phoneData.countryCode,
+          phoneNumber: phoneData.phoneNumber,
           contactNumber: data.contactNumber || '',
           avatar: data.avatar || '',
           availabilityHours: data.availabilityHours || '09:00-17:00',
@@ -134,7 +193,9 @@ export class ProfileComponent implements OnInit {
 
   isContactNumberChanged(): boolean {
     if (!this.profileForm) return false;
-    const currentPhone = this.profileForm.get('contactNumber')?.value || '';
+    const currentCode = this.profileForm.get('countryCode')?.value || '';
+    const currentNumber = this.profileForm.get('phoneNumber')?.value || '';
+    const currentPhone = `${currentCode}${currentNumber}`;
     return currentPhone !== this.originalContactNumber;
   }
 
@@ -159,13 +220,14 @@ export class ProfileComponent implements OnInit {
   }
 
   sendPhoneOtp() {
-    const phone = this.profileForm.get('contactNumber')?.value;
-    if (!phone || this.profileForm.get('contactNumber')?.invalid) {
+    const code = this.profileForm.get('countryCode')?.value || '';
+    const num = this.profileForm.get('phoneNumber')?.value || '';
+    if (!num || this.profileForm.get('phoneNumber')?.invalid) {
       this.toastr.error('Please enter a valid phone number first.', 'Error');
       return;
     }
     this.isSendingPhoneOtp.set(true);
-    this.http.post<any>('/api/auth/profile-send-otp', { contactNumber: phone }).subscribe({
+    this.http.post<any>('/api/auth/profile-send-otp', { countryCode: code, phoneNumber: num, contactNumber: `${code}${num}` }).subscribe({
       next: (res) => {
         this.isSendingPhoneOtp.set(false);
         this.phoneOtpSent.set(true);
@@ -200,14 +262,15 @@ export class ProfileComponent implements OnInit {
   }
 
   confirmPhoneOtp() {
-    const phone = this.profileForm.get('contactNumber')?.value;
-    const code = this.profileForm.get('phoneOtpCode')?.value;
-    if (!code) {
+    const code = this.profileForm.get('countryCode')?.value || '';
+    const num = this.profileForm.get('phoneNumber')?.value || '';
+    const codeOtp = this.profileForm.get('phoneOtpCode')?.value;
+    if (!codeOtp) {
       this.toastr.error('Please enter the verification code first.', 'Error');
       return;
     }
     this.isConfirmingPhoneOtp.set(true);
-    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: phone, code, removeAfterVerification: false }).subscribe({
+    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: `${code}${num}`, code: codeOtp, removeAfterVerification: false }).subscribe({
       next: () => {
         this.isConfirmingPhoneOtp.set(false);
         this.phoneOtpConfirmed.set(true);
@@ -248,7 +311,9 @@ export class ProfileComponent implements OnInit {
     this.isSaving.set(true);
     const formValue = { ...this.profileForm.getRawValue() };
     
-    // Remove password if empty to prevent updating it
+    // Set combined fields for backend
+    formValue.contactNumber = `${formValue.countryCode}${formValue.phoneNumber}`;
+
     if (!formValue.password) {
       delete formValue.password;
     }
@@ -262,7 +327,6 @@ export class ProfileComponent implements OnInit {
         this.isSaving.set(false);
         this.toastr.success('Profile updated successfully.', 'Success');
         
-        // Update local original values
         this.originalEmail = res.data.email;
         this.originalContactNumber = res.data.contactNumber || '';
         this.profileForm.get('emailOtpCode')?.setValue('');
@@ -272,7 +336,6 @@ export class ProfileComponent implements OnInit {
         this.emailOtpConfirmed.set(false);
         this.phoneOtpConfirmed.set(false);
 
-        // Update current user in AuthService locally
         const currentUser = this.authService.currentUser();
         if (currentUser) {
           this.authService.setCurrentUser({
@@ -282,7 +345,6 @@ export class ProfileComponent implements OnInit {
           });
         }
         
-        // Clear password input
         this.profileForm.get('password')?.setValue('');
       },
       error: (err) => {
