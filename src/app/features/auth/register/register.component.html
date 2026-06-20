@@ -257,8 +257,8 @@
             [required]="true"
           ></app-phone-input-field>
 
-          <!-- Clinic ID selection (Patients and Assistants only) -->
-          <div *ngIf="registerForm.get('role')?.value === 'patient' || registerForm.get('role')?.value === 'assistant'">
+          <!-- Clinic ID selection (Patients only) -->
+          <div *ngIf="registerForm.get('role')?.value === 'patient'">
             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
             <select formControlName="clinicId" 
                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
@@ -340,8 +340,8 @@
                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ clinic.name }}</span>
               </label>
 
-              <!-- Show hours/days config only if clinic is selected -->
-              <div *ngIf="clinic.selected" class="pl-6 space-y-3 animate-in slide-in-from-top-1 duration-200">
+              <!-- Show hours/days config only if clinic is selected and role is doctor -->
+              <div *ngIf="clinic.selected && registerForm.get('role')?.value === 'doctor'" class="pl-6 space-y-3 animate-in slide-in-from-top-1 duration-200">
                 <div>
                   <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
                   <input type="text" [(ngModel)]="clinic.hours" [ngModelOptions]="{standalone: true}" required
@@ -367,10 +367,11 @@
               </div>
             </div>
 
-            <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+            <div *ngIf="registerForm.get('role')?.value === 'doctor'">
+              <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
 
-            <h4 class="text-xs font-bold text-slate-850 dark:text-slate-250 uppercase tracking-wider mb-2">Create New Clinic (Optional)</h4>
-            <!-- Clinic Name -->
+              <h4 class="text-xs font-bold text-slate-850 dark:text-slate-250 uppercase tracking-wider mb-2">Create New Clinic (Optional)</h4>
+              <!-- Clinic Name -->
             <div>
               <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Clinic Name</label>
               <div class="relative">
@@ -437,6 +438,7 @@
               <span>Next</span>
             </button>
           </div>
+        </div>
         </div>
 
         <!-- STAGE 5: OTP Verification Codes -->
