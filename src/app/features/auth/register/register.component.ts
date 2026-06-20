@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
@@ -10,6 +10,9 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { extractErrorMessage } from '../../../core/utils/error.utils';
+import { InputFieldComponent } from '../../../shared/components/input-field/input-field.component';
+import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
+import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
 
 declare var google: any;
 declare var AppleID: any;
@@ -17,7 +20,7 @@ declare var AppleID: any;
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
@@ -42,8 +45,8 @@ export class RegisterComponent implements OnDestroy {
   // OTP Verification States
   otpSent = signal(false);
   whatsappOtpSent = signal(false);
-  otpInputs = signal<string[]>(['', '', '', '', '', '']);
-  phoneOtpInputs = signal<string[]>(['', '', '', '', '', '']);
+  otpCode = signal<string>('');
+  phoneOtpCode = signal<string>('');
   demoEmailOtp = signal<string>('');
   demoWhatsappOtp = signal<string>('');
   countdown = signal(0);
@@ -64,17 +67,19 @@ export class RegisterComponent implements OnDestroy {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       role: ['patient', Validators.required],
-      phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{8,15}$/)]],
+      countryCode: ['+20', Validators.required],
+      phoneNumber: ['', [Validators.required, (control: AbstractControl) => this.phoneFormatValidator(control)]],
+      phone: [''], // Hidden field for backward compatibility
       
       // Patient / Assistant associated clinic selection
-      clinicId: ['clinic-1'],
-
+      clinicId: [''],
+ 
       // Patient specific fields
       gender: ['Male'],
       dob: ['1996-01-01'],
       bloodGroup: ['O+'],
       address: [''],
-
+ 
       // Doctor specific fields
       specialization: ['General Dentistry'],
       clinicName: [''],
@@ -82,6 +87,10 @@ export class RegisterComponent implements OnDestroy {
       clinicPhone: [''],
       clinicAvailabilityHours: ['09:00-17:00'],
       clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
+    });
+
+    this.registerForm.get('countryCode')?.valueChanges.subscribe(() => {
+      this.registerForm.get('phoneNumber')?.updateValueAndValidity();
     });
 
     // Populate clinicsList reactively from clinicService
@@ -160,10 +169,10 @@ export class RegisterComponent implements OnDestroy {
     } else if (stage === 2) {
       this.currentStage.set(3);
     } else if (stage === 3) {
-      const phoneCtrl = this.registerForm.get('phone');
+      const phoneCtrl = this.registerForm.get('phoneNumber');
       phoneCtrl?.markAsTouched();
       if (phoneCtrl?.invalid) {
-        this.toastr.error('Please enter a valid phone number (8-15 digits)', 'Validation Error');
+        this.toastr.error('Please enter a valid phone number.', 'Validation Error');
         return;
       }
 
@@ -203,7 +212,9 @@ export class RegisterComponent implements OnDestroy {
     this.errorMessage.set(null);
 
     const email = this.registerForm.get('email')?.value;
-    const phone = this.registerForm.get('phone')?.value;
+    const countryCode = this.registerForm.get('countryCode')?.value;
+    const phoneNumber = this.registerForm.get('phoneNumber')?.value;
+    const phone = phoneNumber ? `${countryCode}${phoneNumber}` : '';
 
     this.authService.sendRegisterOtp(email, phone || undefined).subscribe({
       next: (res: any) => {
@@ -250,83 +261,13 @@ export class RegisterComponent implements OnDestroy {
     }, 1000);
   }
 
-  onOtpInput(event: Event, index: number) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
-    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
-    
-    const arr = [...this.otpInputs()];
-    arr[index] = digit;
-    this.otpInputs.set(arr);
-    
-    input.value = digit;
-
-    if (digit && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`) as HTMLInputElement;
-      nextInput?.focus();
-    }
-
-    if (arr.every(d => d !== '') && arr.length === 6 && (!this.whatsappOtpSent() || this.phoneOtpInputs().every(d => d !== ''))) {
-      this.onSubmit();
-    }
-  }
-
-  onOtpKeyDown(event: KeyboardEvent, index: number) {
-    if (event.key === 'Backspace') {
-      const arr = [...this.otpInputs()];
-      if (!arr[index] && index > 0) {
-        arr[index - 1] = '';
-        this.otpInputs.set(arr);
-        const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
-        prevInput?.focus();
-      } else {
-        arr[index] = '';
-        this.otpInputs.set(arr);
-      }
-    }
-  }
-
-  onPhoneOtpInput(event: Event, index: number) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
-    const digit = value.replace(/[^0-9]/g, '').substring(value.length - 1);
-    
-    const arr = [...this.phoneOtpInputs()];
-    arr[index] = digit;
-    this.phoneOtpInputs.set(arr);
-    
-    input.value = digit;
-
-    if (digit && index < 5) {
-      const nextInput = document.getElementById(`phone-otp-input-${index + 1}`) as HTMLInputElement;
-      nextInput?.focus();
-    }
-
-    if (arr.every(d => d !== '') && arr.length === 6 && this.otpInputs().every(d => d !== '')) {
-      this.onSubmit();
-    }
-  }
-
-  onPhoneOtpKeyDown(event: KeyboardEvent, index: number) {
-    if (event.key === 'Backspace') {
-      const arr = [...this.phoneOtpInputs()];
-      if (!arr[index] && index > 0) {
-        arr[index - 1] = '';
-        this.phoneOtpInputs.set(arr);
-        const prevInput = document.getElementById(`phone-otp-input-${index - 1}`) as HTMLInputElement;
-        prevInput?.focus();
-      } else {
-        arr[index] = '';
-        this.phoneOtpInputs.set(arr);
-      }
-    }
-  }
+  // OTP Input events have been replaced by OtpInputFieldComponent
 
   goBackToForm() {
     this.otpSent.set(false);
     this.whatsappOtpSent.set(false);
-    this.otpInputs.set(['', '', '', '', '', '']);
-    this.phoneOtpInputs.set(['', '', '', '', '', '']);
+    this.otpCode.set('');
+    this.phoneOtpCode.set('');
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
@@ -341,16 +282,16 @@ export class RegisterComponent implements OnDestroy {
       return;
     }
 
-    const emailCode = this.otpInputs().join('');
-    if (emailCode.length < 6 || this.otpInputs().some(d => d === '')) {
+    const emailCode = this.otpCode();
+    if (emailCode.length < 6) {
       this.errorMessage.set(this.languageService.translate('auth.required_fields'));
       return;
     }
 
     let phoneCode = '';
     if (this.whatsappOtpSent()) {
-      phoneCode = this.phoneOtpInputs().join('');
-      if (phoneCode.length < 6 || this.phoneOtpInputs().some(d => d === '')) {
+      phoneCode = this.phoneOtpCode();
+      if (phoneCode.length < 6) {
         this.errorMessage.set('WhatsApp verification code is required');
         return;
       }
@@ -365,7 +306,9 @@ export class RegisterComponent implements OnDestroy {
       email: formValues.email,
       password: formValues.password,
       role: formValues.role,
-      phone: formValues.phone,
+      countryCode: formValues.countryCode,
+      phoneNumber: formValues.phoneNumber,
+      phone: `${formValues.countryCode}${formValues.phoneNumber}`,
       otpCode: emailCode,
       phoneOtpCode: phoneCode || null
     };
@@ -429,15 +372,20 @@ export class RegisterComponent implements OnDestroy {
         const redirectUri = encodeURIComponent(window.location.origin + '/login');
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=openid%20profile%20email&response_mode=fragment&nonce=12345`;
         
+        const messageListener = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+          if (event.data?.type === 'oauth-token' && event.data?.token) {
+            window.removeEventListener('message', messageListener);
+            this.executeSocialLogin('google', event.data.token);
+          }
+        };
+        window.addEventListener('message', messageListener);
+
         const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
         
         if (popup) {
           const interval = setInterval(() => {
             try {
-              if (popup.closed) {
-                clearInterval(interval);
-                this.isLoading.set(false);
-              }
               const hash = popup.location.hash;
               if (hash) {
                 const params = new URLSearchParams(hash.substring(1));
@@ -445,11 +393,19 @@ export class RegisterComponent implements OnDestroy {
                 if (idToken) {
                   popup.close();
                   clearInterval(interval);
+                  window.removeEventListener('message', messageListener);
                   this.executeSocialLogin('google', idToken);
                 }
               }
             } catch (e) {
               // Ignore cross-origin access exceptions during redirection
+            }
+            if (popup.closed) {
+              clearInterval(interval);
+              setTimeout(() => {
+                window.removeEventListener('message', messageListener);
+                this.isLoading.set(false);
+              }, 500);
             }
           }, 500);
         } else {
@@ -487,6 +443,34 @@ export class RegisterComponent implements OnDestroy {
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
     });
+  }
+
+  phoneFormatValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+    const country = this.registerForm?.get('countryCode')?.value || '+20';
+    const val = control.value.replace(/[\s\-()]/g, '');
+
+    if (!/^\d+$/.test(val)) {
+      return { onlyDigits: true };
+    }
+
+    if (country === '+20') {
+      let clean = val;
+      if (clean.startsWith('0')) {
+        clean = clean.substring(1);
+      }
+      
+      const isMobile = /^(10|11|12|15)\d{8}$/.test(clean);
+      const isLandline = clean.length >= 7 && clean.length <= 9;
+      if (!isMobile && !isLandline) {
+        return { invalidEgyptPhone: true };
+      }
+    } else {
+      if (val.length < 6 || val.length > 15) {
+        return { invalidLength: true };
+      }
+    }
+    return null;
   }
 
   ngOnDestroy() {

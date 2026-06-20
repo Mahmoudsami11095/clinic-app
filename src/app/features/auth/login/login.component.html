@@ -222,19 +222,7 @@
           </div>
 
           <!-- Passcode digits input grid -->
-          <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
-            @for (val of otpInputs(); track $index) {
-              <input type="text"
-                     [id]="'otp-input-' + $index"
-                     [value]="val"
-                     (input)="onOtpInput($event, $index)"
-                     (keydown)="onOtpKeyDown($event, $index)"
-                     class="w-11 h-11 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all"
-                     maxLength="1"
-                     pattern="[0-9]*"
-                     inputmode="numeric">
-            }
-          </div>
+          <app-otp-input-field [code]="otpCode()" (codeChange)="otpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
 
           <!-- Resend Code section -->
           <div class="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -299,19 +287,7 @@
           </div>
 
           <!-- Passcode digits input grid -->
-          <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
-            @for (val of forgotOtpInputs(); track $index) {
-              <input type="text"
-                     [id]="'forgot-otp-input-' + $index"
-                     [value]="val"
-                     (input)="onForgotOtpInput($event, $index)"
-                     (keydown)="onForgotOtpKeyDown($event, $index)"
-                     class="w-11 h-11 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all"
-                     maxLength="1"
-                     pattern="[0-9]*"
-                     inputmode="numeric">
-            }
-          </div>
+          <app-otp-input-field [code]="forgotOtpCode()" (codeChange)="forgotOtpCode.set($event)" (otpComplete)="verifyForgotOtpNextStep()"></app-otp-input-field>
 
           <!-- Resend Code section -->
           <div class="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -325,7 +301,7 @@
           </div>
 
           <!-- Submit Button -->
-          <button type="button" (click)="verifyForgotOtpNextStep()" [disabled]="isLoading()"
+          <button type="button" (click)="submitSocialOtp()" [disabled]="isLoading()"
                   class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group focus:outline-none">
             <span>Next</span>
           </button>
@@ -602,19 +578,7 @@
           </div>
 
           <!-- Passcode digits input grid -->
-          <div class="flex justify-center gap-2.5 direction-ltr" dir="ltr">
-            @for (val of socialOtpInputs(); track $index) {
-              <input type="text"
-                     [id]="'social-otp-input-' + $index"
-                     [value]="val"
-                     (input)="onSocialOtpInput($event, $index)"
-                     (keydown)="onSocialOtpKeyDown($event, $index)"
-                     class="w-11 h-11 text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base font-bold text-slate-800 dark:text-slate-200 transition-all"
-                     maxLength="1"
-                     pattern="[0-9]*"
-                     inputmode="numeric">
-            }
-          </div>
+          <app-otp-input-field [code]="socialOtpCode()" (codeChange)="socialOtpCode.set($event)" (otpComplete)="submitSocialOtp()"></app-otp-input-field>
 
           <!-- Demo Code display helper -->
           <div *ngIf="socialOtpDemo()" class="text-xs font-semibold text-indigo-500 dark:text-indigo-400">
@@ -623,7 +587,7 @@
 
           <!-- Action buttons -->
           <div class="flex flex-col gap-3 pt-2">
-            <button type="button" (click)="onVerifySocialOtp()" [disabled]="isLoading()"
+            <button type="button" (click)="submitSocialOtp()" [disabled]="isLoading()"
                     class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer focus:outline-none">
               <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-[10px]"></i>
               <span>Verify OTP Code</span>
