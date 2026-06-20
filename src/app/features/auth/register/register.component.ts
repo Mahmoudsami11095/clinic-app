@@ -177,14 +177,12 @@ export class RegisterComponent implements OnDestroy {
       }
 
       const role = this.registerForm.get('role')?.value;
-      if (role === 'doctor' || role === 'assistant') {
-        if (role === 'doctor') {
-          const specCtrl = this.registerForm.get('specialization');
-          specCtrl?.markAsTouched();
-          if (specCtrl?.invalid) {
-            this.toastr.error('Please enter your specialization', 'Validation Error');
-            return;
-          }
+      if (role === 'doctor') {
+        const specCtrl = this.registerForm.get('specialization');
+        specCtrl?.markAsTouched();
+        if (specCtrl?.invalid) {
+          this.toastr.error('Please enter your specialization', 'Validation Error');
+          return;
         }
         this.currentStage.set(4);
       } else {
@@ -199,7 +197,7 @@ export class RegisterComponent implements OnDestroy {
     const stage = this.currentStage();
     if (stage === 5) {
       const role = this.registerForm.get('role')?.value;
-      if (role === 'doctor' || role === 'assistant') {
+      if (role === 'doctor') {
         this.currentStage.set(4);
       } else {
         this.currentStage.set(3);
@@ -315,15 +313,14 @@ export class RegisterComponent implements OnDestroy {
       phoneOtpCode: phoneCode || null
     };
 
-    if (formValues.role === 'doctor' || formValues.role === 'assistant') {
-      const selectedClinics = this.clinicsList().filter(c => c.selected);
+    if (formValues.role === 'doctor') {
+        const selectedClinics = this.clinicsList().filter(c => c.selected);
       
-      if (selectedClinics.length > 0) {
-        payload.clinicId = selectedClinics[0].id;
-        payload.clinicIds = selectedClinics.map(c => c.id);
-      }
+        if (selectedClinics.length > 0) {
+            payload.clinicId = selectedClinics[0].id;
+            payload.clinicIds = selectedClinics.map(c => c.id);
+        }
 
-      if (formValues.role === 'doctor') {
         payload.specialization = formValues.specialization;
         payload.clinicAvailabilities = selectedClinics.map(c => ({
           clinicId: c.id,
@@ -338,8 +335,9 @@ export class RegisterComponent implements OnDestroy {
           payload.clinicAvailabilityHours = formValues.clinicAvailabilityHours;
           payload.clinicAvailabilityDays = formValues.clinicAvailabilityDays;
         }
-      }
-    } else {
+    } else if (formValues.role === 'assistant') {
+        // Assistants do not select clinics during registration.
+    } else if (formValues.role === 'patient') {
       payload.clinicId = formValues.clinicId;
       payload.gender = formValues.gender;
       payload.dob = formValues.dob;

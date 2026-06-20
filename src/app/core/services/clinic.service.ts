@@ -17,7 +17,11 @@ export class ClinicService {
 
   activeClinicName = computed(() => {
     const id = this.activeClinicIdSignal();
-    if (id === 'all') return 'All Clinics';
+    if (id === 'all') {
+      const allowed = this.allowedClinics();
+      if (allowed.length === 0) return 'No Clinics Assigned';
+      return 'All Clinics';
+    }
     const match = this.clinicsSignal().find(c => c.id === id);
     return match ? match.name : 'Unknown Clinic';
   });

@@ -196,10 +196,11 @@
           ></app-input-field>
 
           <!-- Next Button -->
-          <button type="button" (click)="nextStage()"
-                  class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none">
-            <span>Next</span>
-            <i class="pi pi-arrow-right text-[10px] rtl-flip group-hover:translate-x-1 transition-transform"></i>
+          <button type="button" (click)="nextStage()" [disabled]="isLoading()"
+                  class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed">
+            <i *ngIf="isLoading()" class="pi pi-spin pi-spinner"></i>
+            <span *ngIf="!isLoading()">Next</span>
+            <i *ngIf="!isLoading()" class="pi pi-arrow-right text-[10px] rtl-flip group-hover:translate-x-1 transition-transform"></i>
           </button>
         </div>
 
@@ -257,16 +258,7 @@
             [required]="true"
           ></app-phone-input-field>
 
-          <!-- Clinic ID selection (Patients only) -->
-          <div *ngIf="registerForm.get('role')?.value === 'patient'">
-            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
-            <select formControlName="clinicId" 
-                    class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-              <option *ngFor="let clinic of clinicService.clinics()" [value]="clinic.id">
-                {{ clinic.name }}
-              </option>
-            </select>
-          </div>
+
 
           <!-- Doctor specific fields -->
           <div *ngIf="registerForm.get('role')?.value === 'doctor'">
@@ -318,9 +310,10 @@
                     class="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
               Back
             </button>
-            <button type="button" (click)="nextStage()"
-                    class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
-              <span>Next</span>
+            <button type="button" (click)="nextStage()" [disabled]="isLoading()"
+                    class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed">
+              <i *ngIf="isLoading()" class="pi pi-spin pi-spinner"></i>
+              <span *ngIf="!isLoading()">Next</span>
             </button>
           </div>
         </div>
@@ -433,9 +426,10 @@
                     class="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
               Back
             </button>
-            <button type="button" (click)="nextStage()"
-                    class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
-              <span>Next</span>
+            <button type="button" (click)="nextStage()" [disabled]="isLoading()"
+                    class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed">
+              <i *ngIf="isLoading()" class="pi pi-spin pi-spinner"></i>
+              <span *ngIf="!isLoading()">Next</span>
             </button>
           </div>
         </div>
