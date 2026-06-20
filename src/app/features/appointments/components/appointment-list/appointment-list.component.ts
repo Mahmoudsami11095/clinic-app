@@ -57,11 +57,6 @@ export class AppointmentListComponent implements OnInit {
 
     if (doctorId) {
       result = result.filter(a => a.doctorId === doctorId);
-    } else if (this.authService.isAssistant()) {
-      const assistantClinicId = this.authService.currentUser()?.clinicId;
-      if (assistantClinicId && activeClinicId === 'all') {
-        result = result.filter(a => a.clinicId === assistantClinicId);
-      }
     } else if (patientId) {
       result = result.filter(a => a.patientId === patientId);
     }
