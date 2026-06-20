@@ -598,7 +598,7 @@ import { gsap } from 'gsap';
                               <span class="w-8 h-8 flex items-center justify-center">
                                 <svg class="w-8 h-8 mx-auto" viewBox="0 0 40 40">
                                   @if (getToothLatestStatus(toothNum) === 'missing') {
-                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                    <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]"
                                           fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.6"/>
                                     <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                                     <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
@@ -613,8 +613,8 @@ import { gsap } from 'gsap';
                                       <path d="M 17 20 L 23 20 L 24 22 L 16 22 Z" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
                                       <!-- Implant Crown -->
                                       <g clip-path="url(#crownClip)">
-                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z" fill="url(#toothGradHealthy)" stroke="#0ea5e9" stroke-width="1.5" filter="url(#shadow3d)"/>
-                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z" fill="rgba(34, 211, 238, 0.3)" stroke="#22d3ee" stroke-width="1" filter="url(#neonGlow)"/>
+                                        <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]" fill="url(#toothGradHealthy)" stroke="#0ea5e9" stroke-width="1.5" filter="url(#shadow3d)"/>
+                                        <path [attr.d]="SVG_PULPS[getToothType(toothNum)]" fill="rgba(34, 211, 238, 0.3)" stroke="#22d3ee" stroke-width="1" filter="url(#neonGlow)"/>
                                       </g>
                                     </g>
                                   } @else {
@@ -622,17 +622,17 @@ import { gsap } from 'gsap';
                                       [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
                                       [attr.opacity]="getToothLatestStatuses(toothNum).includes('impacted') ? '0.4' : null"
                                     >
-                                      <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                      <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]"
                                             [attr.fill]="getToothFillUrl(toothNum)"
                                             [attr.stroke]="getToothStrokeColor(toothNum)"
                                             stroke-width="1.5"
                                             filter="url(#shadow3d)"/>
-                                      <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                      <path [attr.d]="SVG_PULPS[getToothType(toothNum)]"
                                             [attr.fill]="getPulpFillColor(toothNum)"
                                             [attr.stroke]="getCanalStroke(toothNum)"
                                             stroke-width="1"
                                             filter="url(#neonGlow)"/>
-                                      <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                      <path [attr.d]="SVG_CANALS[getToothType(toothNum)]"
                                             fill="none"
                                             [attr.stroke]="getCanalStroke(toothNum)"
                                             stroke-width="1.75"
@@ -641,17 +641,17 @@ import { gsap } from 'gsap';
                                     </g>
                                     @if (getToothLatestStatuses(toothNum).includes('fractured')) {
                                       <g clip-path="url(#fractureClipInverse)" opacity="0.3">
-                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                        <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]"
                                               [attr.fill]="getToothFillUrl(toothNum)"
                                               [attr.stroke]="getToothStrokeColor(toothNum)"
                                               stroke-width="1.5"
                                               filter="url(#shadow3d)"/>
-                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                        <path [attr.d]="SVG_PULPS[getToothType(toothNum)]"
                                               [attr.fill]="getPulpFillColor(toothNum)"
                                               [attr.stroke]="getCanalStroke(toothNum)"
                                               stroke-width="1"
                                               filter="url(#neonGlow)"/>
-                                        <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                        <path [attr.d]="SVG_CANALS[getToothType(toothNum)]"
                                               fill="none"
                                               [attr.stroke]="getCanalStroke(toothNum)"
                                               stroke-width="1.75"
@@ -687,7 +687,7 @@ import { gsap } from 'gsap';
                               <span class="w-8 h-8 flex items-center justify-center">
                                 <svg class="w-8 h-8 mx-auto rotate-180" viewBox="0 0 40 40">
                                   @if (getToothLatestStatus(toothNum) === 'missing') {
-                                    <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                    <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]"
                                           fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.6"/>
                                     <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
                                     <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
@@ -702,8 +702,8 @@ import { gsap } from 'gsap';
                                       <path d="M 17 20 L 23 20 L 24 22 L 16 22 Z" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
                                       <!-- Implant Crown -->
                                       <g clip-path="url(#crownClip)">
-                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z" fill="url(#toothGradHealthy)" stroke="#0ea5e9" stroke-width="1.5" filter="url(#shadow3d)"/>
-                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z" fill="rgba(34, 211, 238, 0.3)" stroke="#22d3ee" stroke-width="1" filter="url(#neonGlow)"/>
+                                        <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]" fill="url(#toothGradHealthy)" stroke="#0ea5e9" stroke-width="1.5" filter="url(#shadow3d)"/>
+                                        <path [attr.d]="SVG_PULPS[getToothType(toothNum)]" fill="rgba(34, 211, 238, 0.3)" stroke="#22d3ee" stroke-width="1" filter="url(#neonGlow)"/>
                                       </g>
                                     </g>
                                   } @else {
@@ -711,17 +711,17 @@ import { gsap } from 'gsap';
                                       [attr.clip-path]="getToothLatestStatuses(toothNum).includes('fractured') ? 'url(#fractureClip)' : null"
                                       [attr.opacity]="getToothLatestStatuses(toothNum).includes('impacted') ? '0.4' : null"
                                     >
-                                      <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                      <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]"
                                             [attr.fill]="getToothFillUrl(toothNum)"
                                             [attr.stroke]="getToothStrokeColor(toothNum)"
                                             stroke-width="1.5"
                                             filter="url(#shadow3d)"/>
-                                      <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                      <path [attr.d]="SVG_PULPS[getToothType(toothNum)]"
                                             [attr.fill]="getPulpFillColor(toothNum)"
                                             [attr.stroke]="getCanalStroke(toothNum)"
                                             stroke-width="1"
                                             filter="url(#neonGlow)"/>
-                                      <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                      <path [attr.d]="SVG_CANALS[getToothType(toothNum)]"
                                             fill="none"
                                             [attr.stroke]="getCanalStroke(toothNum)"
                                             stroke-width="1.75"
@@ -730,17 +730,17 @@ import { gsap } from 'gsap';
                                     </g>
                                     @if (getToothLatestStatuses(toothNum).includes('fractured')) {
                                       <g clip-path="url(#fractureClipInverse)" opacity="0.3">
-                                        <path d="M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z"
+                                        <path [attr.d]="SVG_OUTLINES[getToothType(toothNum)]"
                                               [attr.fill]="getToothFillUrl(toothNum)"
                                               [attr.stroke]="getToothStrokeColor(toothNum)"
                                               stroke-width="1.5"
                                               filter="url(#shadow3d)"/>
-                                        <path d="M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z"
+                                        <path [attr.d]="SVG_PULPS[getToothType(toothNum)]"
                                               [attr.fill]="getPulpFillColor(toothNum)"
                                               [attr.stroke]="getCanalStroke(toothNum)"
                                               stroke-width="1"
                                               filter="url(#neonGlow)"/>
-                                        <path d="M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8"
+                                        <path [attr.d]="SVG_CANALS[getToothType(toothNum)]"
                                               fill="none"
                                               [attr.stroke]="getCanalStroke(toothNum)"
                                               stroke-width="1.75"
@@ -1187,6 +1187,40 @@ export class PatientHistoryComponent implements OnInit {
   activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
   appointments = signal<any[]>([]);
   
+  // Constants for Tooth SVGs (Crown/Enamel Outlines, Pulps, Canals)
+  readonly SVG_OUTLINES: Record<string, string> = {
+    molar: "M 9 22 C 6 27, 8 35, 12 36 C 15 34, 17 32.5, 20 32.5 C 23 32.5, 25 34, 28 36 C 32 35, 34 27, 31 22 C 29.5 18, 30.5 11, 28.5 5 C 27.5 2, 24.5 3, 24 7 C 23.5 12, 22.5 18, 20 20 C 17.5 18, 16.5 12, 16 7 C 15.5 3, 12.5 2, 11.5 5 C 9.5 11, 10.5 18, 9 22 Z",
+    premolar: "M 11 21 C 8 26, 10 33, 14 35 C 17 34, 18.5 31, 20 31 C 21.5 31, 23 34, 26 35 C 30 33, 32 26, 29 21 C 27.5 17, 28 11, 25.5 5 C 24.5 3, 21.5 4, 20 7 C 18.5 4, 15.5 3, 14.5 5 C 12 11, 12.5 17, 11 21 Z",
+    canine: "M 13.5 20 C 10.5 25, 11.5 36, 16.5 38 C 17.5 38, 21.5 38, 22.5 38 C 27.5 36, 28.5 25, 25.5 20 C 24 17, 25.5 12, 19.5 4 C 13.5 12, 15 17, 13.5 20 Z",
+    incisor: "M 14 20 C 11 25, 13 35, 17 37 C 19 37, 23 37, 23 37 C 27 35, 29 25, 26 20 C 24.5 17, 25 11, 23 5 C 22.5 3, 17.5 3, 17 5 C 15 11, 15.5 17, 14 20 Z"
+  };
+
+  readonly SVG_PULPS: Record<string, string> = {
+    molar: "M 16 26 C 16 29, 24 29, 24 26 C 24 24, 22 23, 20 23 C 18 23, 16 24, 16 26 Z",
+    premolar: "M 17 25 C 17 28, 23 28, 23 25 C 23 23, 22 22, 20 22 C 18 22, 17 23, 17 25 Z",
+    canine: "M 18 25 C 18 27, 22 27, 22 25 C 22 24, 21 23, 20 23 C 19 23, 18 24, 18 25 Z",
+    incisor: "M 18 25 C 18 27, 22 27, 22 25 C 22 24, 21 23, 20 23 C 19 23, 18 24, 18 25 Z"
+  };
+
+  readonly SVG_CANALS: Record<string, string> = {
+    molar: "M 18 25 C 17 21, 15 15, 13.5 8 M 22 25 C 23 21, 25 15, 26.5 8",
+    premolar: "M 18 24 C 18.5 20, 17 15, 15 9 M 22 24 C 21.5 20, 23 15, 25 9",
+    canine: "M 20 24 C 20 18, 20 12, 20 7",
+    incisor: "M 20 24 C 20 18, 20 12, 20 8"
+  };
+
+  getToothType(num: number | string): string {
+    const incisors = ['12','11','21','22','32','31','41','42','52','51','61','62','72','71','81','82'];
+    const canines = ['13','23','33','43','53','63','73','83'];
+    const molars = ['18','17','16','26','27','28','38','37','36','46','47','48','55','54','64','65','74','75','84','85'];
+    
+    const numStr = String(num).toUpperCase();
+    if (incisors.includes(numStr)) return 'incisor';
+    if (canines.includes(numStr)) return 'canine';
+    if (molars.includes(numStr)) return 'molar';
+    return 'premolar';
+  }
+
   futureAppointments = computed(() => {
     return this.appointments().filter(a => a.status === 'scheduled');
   });
