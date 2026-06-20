@@ -3,8 +3,8 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Radiology Management</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your Radiology Centers and log external expenses.</p>
+      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'radiology.title' | translate }}</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ 'radiology.subtitle' | translate }}</p>
     </div>
   </div>
 
@@ -30,7 +30,7 @@
             class="px-4 py-3 font-semibold text-sm border-b-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
             [class.border-transparent]="activeTab() !== 'centers'"
             [class.text-slate-500]="activeTab() !== 'centers'">
-      <i class="pi pi-building text-xs me-1"></i> Centers
+      <i class="pi pi-building text-xs me-1"></i> {{ 'radiology.centers' | translate }}
     </button>
     <button (click)="activeTab.set('records')" 
             [class.border-indigo-600]="activeTab() === 'records'" 
@@ -40,7 +40,7 @@
             class="px-4 py-3 font-semibold text-sm border-b-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
             [class.border-transparent]="activeTab() !== 'records'"
             [class.text-slate-500]="activeTab() !== 'records'">
-      <i class="pi pi-list text-xs me-1"></i> Logs & Expenses
+      <i class="pi pi-list text-xs me-1"></i> {{ 'radiology.logs_expenses' | translate }}
     </button>
   </div>
 
@@ -48,9 +48,9 @@
   @if (activeTab() === 'centers') {
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Centers List</h2>
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ 'radiology.centers_list' | translate }}</h2>
         <button (click)="openCenterDialog()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm inline-flex items-center gap-2">
-          <i class="pi pi-plus text-xs"></i> Add Center
+          <i class="pi pi-plus text-xs"></i> {{ 'radiology.add_center' | translate }}
         </button>
       </div>
 
@@ -58,10 +58,10 @@
         <table class="w-full text-sm text-left">
           <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50">
             <tr>
-              <th class="px-4 py-3">Name</th>
-              <th class="px-4 py-3">Contact</th>
-              <th class="px-4 py-3">Address</th>
-              <th class="px-4 py-3 text-center">Actions</th>
+              <th class="px-4 py-3">{{ 'radiology.name' | translate }}</th>
+              <th class="px-4 py-3">{{ 'radiology.contact' | translate }}</th>
+              <th class="px-4 py-3">{{ 'radiology.address' | translate }}</th>
+              <th class="px-4 py-3 text-center">{{ 'radiology.actions' | translate }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -77,7 +77,7 @@
               </tr>
             }
             @if (centers().length === 0) {
-              <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No centers found.</td></tr>
+              <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">{{ 'radiology.no_centers' | translate }}</td></tr>
             }
           </tbody>
         </table>
@@ -93,7 +93,7 @@
           <i class="pi pi-wallet text-2xl"></i>
         </div>
         <div class="ml-4">
-          <p class="text-indigo-100 text-sm font-medium">Total Expenses Paid</p>
+          <p class="text-indigo-100 text-sm font-medium">{{ 'radiology.total_expenses_paid' | translate }}</p>
           <h3 class="text-3xl font-bold">${{ totalAmountPaid() | number:'1.2-2' }}</h3>
         </div>
       </div>
@@ -101,9 +101,9 @@
 
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Records Log</h2>
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ 'radiology.records_log' | translate }}</h2>
         <button (click)="openRecordDialog()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm inline-flex items-center gap-2">
-          <i class="pi pi-plus text-xs"></i> Log Expense
+          <i class="pi pi-plus text-xs"></i> {{ 'radiology.log_expense' | translate }}
         </button>
       </div>
 
@@ -111,12 +111,12 @@
         <table class="w-full text-sm text-left">
           <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50">
             <tr>
-              <th class="px-4 py-3">Date</th>
-              <th class="px-4 py-3">Patient</th>
-              <th class="px-4 py-3">Center</th>
-              <th class="px-4 py-3">Procedure</th>
-              <th class="px-4 py-3">Amount</th>
-              <th class="px-4 py-3 text-center">Actions</th>
+              <th class="px-4 py-3">{{ 'radiology.date' | translate }}</th>
+              <th class="px-4 py-3">{{ 'radiology.patient' | translate }}</th>
+              <th class="px-4 py-3">{{ 'radiology.center' | translate }}</th>
+              <th class="px-4 py-3">{{ 'radiology.procedure' | translate }}</th>
+              <th class="px-4 py-3">{{ 'radiology.amount' | translate }}</th>
+              <th class="px-4 py-3 text-center">{{ 'radiology.actions' | translate }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -134,7 +134,7 @@
               </tr>
             }
             @if (records().length === 0) {
-              <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No records found.</td></tr>
+              <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">{{ 'radiology.no_records' | translate }}</td></tr>
             }
           </tbody>
         </table>
@@ -145,35 +145,35 @@
 </div>
 
 <!-- Center Dialog -->
-<app-modal [isOpen]="centerDialogVisible()" [title]="centerForm.value.id ? 'Edit Center' : 'Add Center'" (close)="centerDialogVisible.set(false)">
+<app-modal [isOpen]="centerDialogVisible()" [title]="centerForm.value.id ? ('radiology.edit_center' | translate) : ('radiology.add_center' | translate)" (close)="centerDialogVisible.set(false)">
   <form [formGroup]="centerForm" (ngSubmit)="saveCenter()" class="space-y-4">
     <div>
-      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Center Name *</label>
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.center_name' | translate }}</label>
       <input type="text" formControlName="name" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
     </div>
     <div>
-      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Number</label>
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.contact_number' | translate }}</label>
       <input type="text" formControlName="contactNumber" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
     </div>
     <div>
-      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Address</label>
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.address' | translate }}</label>
       <input type="text" formControlName="address" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
     </div>
     <div class="flex justify-end gap-2 pt-4">
-      <button type="button" (click)="centerDialogVisible.set(false)" class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
-      <button type="submit" [disabled]="centerForm.invalid" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">Save</button>
+      <button type="button" (click)="centerDialogVisible.set(false)" class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">{{ 'common.cancel' | translate }}</button>
+      <button type="submit" [disabled]="centerForm.invalid" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">{{ 'common.save' | translate }}</button>
     </div>
   </form>
 </app-modal>
 
 <!-- Record Dialog -->
-<app-modal [isOpen]="recordDialogVisible()" [title]="recordForm.value.id ? 'Edit Log' : 'Add Log'" (close)="recordDialogVisible.set(false)">
+<app-modal [isOpen]="recordDialogVisible()" [title]="recordForm.value.id ? ('radiology.edit_log' | translate) : ('radiology.add_log' | translate)" (close)="recordDialogVisible.set(false)">
   <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div class="col-span-2">
-        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Patient *</label>
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.patient_req' | translate }}</label>
         <select formControlName="patientId" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
-          <option value="" disabled>Select Patient</option>
+          <option value="" disabled>{{ 'radiology.select_patient' | translate }}</option>
           @for (p of patients(); track p.id) {
             <option [value]="p.id">{{ p.name }}</option>
           }
@@ -181,9 +181,9 @@
       </div>
       
       <div class="col-span-2">
-        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Radiology Center *</label>
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.radiology_center_req' | translate }}</label>
         <select formControlName="radiologyCenterId" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
-          <option value="" disabled>Select Center</option>
+          <option value="" disabled>{{ 'radiology.select_center' | translate }}</option>
           @for (c of centers(); track c.id) {
             <option [value]="c.id">{{ c.name }}</option>
           }
@@ -191,29 +191,29 @@
       </div>
 
       <div class="col-span-2">
-        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Procedure / Request *</label>
-        <input type="text" formControlName="procedureName" placeholder="e.g. Panoramic X-Ray" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.procedure_req' | translate }}</label>
+        <input type="text" formControlName="procedureName" [placeholder]="'radiology.procedure_placeholder' | translate" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount Paid ($) *</label>
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.amount_paid_req' | translate }}</label>
         <input type="number" formControlName="amountPaid" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Date *</label>
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.date_req' | translate }}</label>
         <input type="date" formControlName="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
       </div>
       
       <div class="col-span-2">
-        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ 'radiology.notes' | translate }}</label>
         <input type="text" formControlName="notes" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
       </div>
     </div>
 
     <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6">
-      <button type="button" (click)="recordDialogVisible.set(false)" class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
-      <button type="submit" [disabled]="recordForm.invalid" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">Save Log</button>
+      <button type="button" (click)="recordDialogVisible.set(false)" class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">{{ 'common.cancel' | translate }}</button>
+      <button type="submit" [disabled]="recordForm.invalid" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">{{ 'radiology.save_log' | translate }}</button>
     </div>
   </form>
 </app-modal>

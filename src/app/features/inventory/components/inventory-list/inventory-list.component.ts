@@ -5,12 +5,13 @@ import { MaterialsService } from '../../services/materials.service';
 import { Material } from '../../models/material.model';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { InventoryFormComponent } from '../inventory-form/inventory-form.component';
 
 @Component({
   selector: 'app-inventory-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventoryFormComponent],
+  imports: [CommonModule, FormsModule, InventoryFormComponent, TranslatePipe],
   templateUrl: './inventory-list.component.html',
   styleUrls: ['./inventory-list.component.scss']
 })

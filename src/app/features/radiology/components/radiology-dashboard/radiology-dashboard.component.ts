@@ -5,12 +5,13 @@ import { RadiologyService, RadiologyCenter, RadiologyRecord } from '../../servic
 import { PatientService } from '../../../patients/services/patient.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-radiology-dashboard',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, ModalComponent
+    CommonModule, ReactiveFormsModule, ModalComponent, TranslatePipe
   ],
   templateUrl: './radiology-dashboard.component.html'
 })
