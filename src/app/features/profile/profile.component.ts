@@ -7,10 +7,12 @@ import { AuthService } from '../../core/auth/auth.service';
 import { extractErrorMessage } from '../../core/utils/error.utils';
 import { LanguageService } from '../../core/i18n/language.service';
 
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
