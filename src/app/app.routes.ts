@@ -73,6 +73,12 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['admin', 'doctor', 'assistant'] }
       },
+      {
+        path: 'radiology',
+        loadChildren: () => import('./features/radiology/radiology.routes').then(m => m.radiologyRoutes),
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

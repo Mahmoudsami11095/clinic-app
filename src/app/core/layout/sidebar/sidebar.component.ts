@@ -23,6 +23,7 @@ export class Sidebar {
     { labelKey: 'sidebar.billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor'] },
     { labelKey: 'sidebar.inventory', route: '/inventory', icon: 'pi pi-box', roles: ['admin', 'doctor', 'assistant'] },
+    { labelKey: 'sidebar.radiology', route: '/radiology', icon: 'pi pi-camera', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.profile', route: '/profile', icon: 'pi pi-user', roles: ['admin', 'doctor', 'assistant', 'patient'] },
   ];
 

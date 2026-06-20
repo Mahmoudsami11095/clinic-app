@@ -87,7 +87,8 @@
     "my_bills": "فواتيري",
     "profile": "الملف الشخصي",
     "dental_history": "سجل الأسنان",
-    "dental_chart": "مخطط الأسنان ثلاثي الأبعاد"
+    "dental_chart": "مخطط الأسنان ثلاثي الأبعاد",
+    "radiology": "الأشعة"
   },
   "dashboard": {
     "title": "لوحة التحكم",
