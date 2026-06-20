@@ -88,7 +88,8 @@
     "profile": "My Profile",
     "dental_history": "Dental History",
     "dental_chart": "3D Teeth Chart",
-    "inventory": "Inventory"
+    "inventory": "Inventory",
+    "radiology": "Radiology"
   },
   "dashboard": {
     "title": "Dashboard",
