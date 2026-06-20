@@ -386,7 +386,8 @@ import { gsap } from 'gsap';
               </div>
             </div>
 
-            <!-- Notes Card -->
+            <!-- Notes Card - Hidden for now -->
+            @if (false) {
             <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-start animate-fade-in">
               <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                 <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -425,6 +426,7 @@ import { gsap } from 'gsap';
                 </div>
               </div>
             </div>
+            }
           </div>
         </div>
 
@@ -465,10 +467,10 @@ import { gsap } from 'gsap';
             </div>
           </div>
 
-          <!-- Dental Chart Content Grid (Two columns) -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start text-start">
-            <!-- Left 2 Cols: Teeth Chart & All Teeth Summary -->
-            <div class="lg:col-span-2 space-y-6">
+          <!-- Dental Chart Content -->
+          <div class="flex flex-col gap-6 items-start text-start">
+            <!-- Teeth Chart & All Teeth Summary -->
+            <div class="w-full space-y-6">
               <!-- Teeth Chart Card -->
               <div class="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm space-y-6">
                 <!-- Inner Header: Title, Adult/Child buttons, Status Legend -->
@@ -838,23 +840,119 @@ import { gsap } from 'gsap';
               </div>
             </div>
 
-            <!-- Right 1 Col: 3D TOOTH INSPECTOR (Selected Tooth Details, History & Form) -->
-            <div class="space-y-6">
-              <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
-                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <i class="pi pi-info-circle text-slate-500"></i>
-                  <span>3D TOOTH INSPECTOR</span>
-                </h4>
-
-                @if (selectedTooth() === null) {
-                  <div class="text-center text-slate-400 flex flex-col items-center justify-center py-12">
-                    <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
-                      <i class="pi pi-info-circle text-2xl"></i>
-                    </div>
-                    <p class="text-sm font-bold text-slate-650">No Selection</p>
-                    <p class="text-xs text-slate-400 mt-1 max-w-[200px] mx-auto">Select a tooth from the 3D model or grid to view details</p>
+            <!-- Modal for 3D TOOTH INSPECTOR -->
+            @if (isInspectorModalOpen()) {
+              <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-fade-in text-start flex flex-col max-h-[90vh]">
+                  <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <i class="pi pi-info-circle text-slate-500"></i>
+                      <span>3D TOOTH INSPECTOR</span>
+                    </h4>
+                    <button type="button" (click)="closeInspectorModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none bg-transparent border-none cursor-pointer">
+                      <i class="pi pi-times text-sm"></i>
+                    </button>
                   </div>
-                } @else {
+                  
+                  <div class="p-6 overflow-y-auto grow space-y-6">
+                    @if (selectedTooth() !== null) {
+                      <!-- 3D Tooth Viewer Card -->
+                      <div class="bg-slate-50/50 border border-slate-200/60 rounded-xl p-4 space-y-4">
+                        <div class="relative w-full h-[200px] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyMHYyMEgwem0xMCAxMGgxMHYxMEgxMHptLTEwIDBoMTB2MTBIMHoiIGZpbGw9IiNlN2U1ZTQiIGZpbGwtb3BhY2l0eT0iMC4yIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=')] rounded-lg border border-slate-200 shadow-inner flex items-center justify-center overflow-hidden" style="perspective: 1000px;">
+                          <!-- Centered Halos/Glows based on status -->
+                          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-32 h-32 rounded-full blur-2xl opacity-40 transition-colors"
+                              [style.background]="dentalStatus().includes('caries') ? '#ef4444' : dentalStatus().includes('filled') ? '#3b82f6' : dentalStatus().includes('under_treatment') ? '#f59e0b' : '#06b6d4'">
+                            </div>
+                          </div>
+                          
+                          <!-- Parallax Tooth Container -->
+                          <div class="relative w-32 h-32 transition-transform duration-75" style="transform-style: preserve-3d;" [style.transform]="'rotateY(' + rotationAngle() + 'deg) rotateX(10deg)'">
+                            @let type = getToothType(selectedTooth()!);
+                            @let statuses = dentalStatus();
+                            @let fillUrl = getToothFillUrl(selectedTooth()!);
+                            @let strokeColor = getToothStrokeColor(selectedTooth()!);
+                            @let pulpColor = getPulpFillColor(selectedTooth()!);
+                            @let canalStroke = getCanalStroke(selectedTooth()!);
+
+                            @if (statuses.includes('missing')) {
+                              <!-- Missing tooth representation -->
+                              <div class="absolute inset-0 flex items-center justify-center text-slate-400">
+                                <svg viewBox="0 0 40 40" class="w-full h-full">
+                                  <path [attr.d]="SVG_OUTLINES[type]" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+                                  <line x1="8" y1="8" x2="32" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                                  <line x1="32" y1="8" x2="8" y2="32" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                                </svg>
+                              </div>
+                            } @else if (statuses.includes('implant')) {
+                              <div class="absolute inset-0 flex items-center justify-center" style="transform: translateZ(-5px);">
+                                <svg viewBox="0 0 40 40" class="w-full h-full">
+                                  <path d="M 16 4 L 24 4 L 24 20 L 16 20 Z" fill="url(#toothGradImplant)" stroke="#475569" stroke-width="1.5" />
+                                  <path d="M 14.5 7 L 25.5 9 M 14.5 10 L 25.5 12 M 14.5 13 L 25.5 15 M 14.5 16 L 25.5 18" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round"/>
+                                  <path d="M 17 20 L 23 20 L 24 22 L 16 22 Z" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+                                </svg>
+                              </div>
+                              <div class="absolute inset-0 flex items-center justify-center" [style.opacity]="showOuterEnamel() ? 1 : 0" style="transform: translateZ(5px); transition: opacity 0.3s;">
+                                <svg viewBox="0 0 40 40" class="w-full h-full">
+                                  <g clip-path="url(#crownClip)">
+                                    <path [attr.d]="SVG_OUTLINES[type]" fill="url(#toothGradHealthy)" stroke="#0ea5e9" stroke-width="1.5" opacity="0.9" />
+                                    <path [attr.d]="SVG_PULPS[type]" fill="rgba(34, 211, 238, 0.3)" stroke="#22d3ee" stroke-width="0.75" filter="url(#neonGlow)"/>
+                                  </g>
+                                </svg>
+                              </div>
+                            } @else {
+                              <!-- Back shell -->
+                              <div class="absolute inset-0 flex items-center justify-center" [style.opacity]="showOuterEnamel() ? 1 : 0" style="transform: translateZ(-8px); transition: opacity 0.3s;">
+                                <svg viewBox="0 0 40 40" class="w-full h-full">
+                                  <g [attr.clip-path]="statuses.includes('fractured') ? 'url(#fractureClip)' : null">
+                                    <path [attr.d]="SVG_OUTLINES[type]" [attr.fill]="fillUrl" [attr.stroke]="strokeColor" stroke-width="1" />
+                                  </g>
+                                </svg>
+                              </div>
+                              
+                              <!-- Inner Canals (always glowing) -->
+                              <div class="absolute inset-0 flex items-center justify-center" style="transform: translateZ(0);">
+                                <svg viewBox="0 0 40 40" class="w-full h-full drop-shadow-md" [class.animate-pulse]="animateCanals() && statuses.includes('caries')">
+                                  <g [attr.clip-path]="statuses.includes('fractured') ? 'url(#fractureClip)' : null">
+                                    <path [attr.d]="SVG_PULPS[type]" [attr.fill]="pulpColor" [attr.stroke]="canalStroke" stroke-width="1.25" filter="url(#neonGlow)"/>
+                                    <path [attr.d]="SVG_CANALS[type]" fill="none" [attr.stroke]="canalStroke" stroke-width="2.25" stroke-linecap="round" filter="url(#neonGlow)"/>
+                                  </g>
+                                </svg>
+                              </div>
+
+                              <!-- Front shell -->
+                              <div class="absolute inset-0 flex items-center justify-center" [style.opacity]="showOuterEnamel() ? 1 : 0" style="transform: translateZ(8px); transition: opacity 0.3s;">
+                                <svg viewBox="0 0 40 40" class="w-full h-full">
+                                  <g [attr.clip-path]="statuses.includes('fractured') ? 'url(#fractureClip)' : null">
+                                    <path [attr.d]="SVG_OUTLINES[type]" fill="none" [attr.stroke]="strokeColor" stroke-width="1.5" opacity="0.8"/>
+                                  </g>
+                                </svg>
+                              </div>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Viewer Controls -->
+                        <div class="space-y-3">
+                          <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                            <span>Orbit Rotation (Y-Axis)</span>
+                            <span>{{ rotationAngle() }}°</span>
+                          </div>
+                          <input type="range" min="-180" max="180" [ngModel]="rotationAngle()" (ngModelChange)="rotationAngle.set(+$event)" class="w-full h-1.5 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                          
+                          <div class="flex gap-3">
+                            <button type="button" (click)="showOuterEnamel.set(!showOuterEnamel())" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold border transition-colors focus:outline-none"
+                              [class]="!showOuterEnamel() ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'">
+                              {{ !showOuterEnamel() ? 'Show Outer Enamel' : 'Hide Outer Enamel' }}
+                            </button>
+                            <button type="button" (click)="animateCanals.set(!animateCanals())" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold border transition-colors focus:outline-none"
+                              [class]="!animateCanals() ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'">
+                              {{ !animateCanals() ? 'Animate Canals' : 'Static Canals' }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
                   <!-- Tooth History & Info -->
                   <div class="space-y-4">
                     <div>
@@ -1160,9 +1258,11 @@ import { gsap } from 'gsap';
                       </div>
                     }
                   </div>
-                }
+                    }
+                  </div>
+                </div>
               </div>
-            </div>
+            }
           </div>
         </div>
       }
@@ -1247,16 +1347,16 @@ export class PatientHistoryComponent implements OnInit {
   consumedMaterialsForm = signal<{materialId: string, quantity: number, maxQuantity: number}[]>([]);
 
   readonly statusOptions = [
-    { value: 'healthy' as ToothStatus, icon: 'pi pi-check-circle', activeClass: 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'caries' as ToothStatus, icon: 'pi pi-exclamation-triangle', activeClass: 'bg-rose-600 border-rose-500 text-white shadow-[0_0_10px_rgba(244,63,94,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'filled' as ToothStatus, icon: 'pi pi-shield', activeClass: 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'under_treatment' as ToothStatus, icon: 'pi pi-spin pi-sync', activeClass: 'bg-amber-600 border-amber-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'missing' as ToothStatus, icon: 'pi pi-times-circle', activeClass: 'bg-slate-600 border-slate-500 text-white shadow-[0_0_10px_rgba(100,116,139,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'crown' as ToothStatus, icon: 'pi pi-bookmark', activeClass: 'bg-yellow-600 border-yellow-500 text-white shadow-[0_0_10px_rgba(234,179,8,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'root_canal' as ToothStatus, icon: 'pi pi-sliders-h', activeClass: 'bg-purple-600 border-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'impacted' as ToothStatus, icon: 'pi pi-arrow-down-right', activeClass: 'bg-cyan-600 border-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'fractured' as ToothStatus, icon: 'pi pi-bolt', activeClass: 'bg-orange-600 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' },
-    { value: 'implant' as ToothStatus, icon: 'pi pi-database', activeClass: 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]', inactiveClass: 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-200' }
+    { value: 'healthy' as ToothStatus, icon: 'pi pi-check-circle', activeClass: 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'caries' as ToothStatus, icon: 'pi pi-exclamation-triangle', activeClass: 'bg-rose-600 border-rose-500 text-white shadow-[0_0_10px_rgba(244,63,94,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'filled' as ToothStatus, icon: 'pi pi-shield', activeClass: 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'under_treatment' as ToothStatus, icon: 'pi pi-spin pi-sync', activeClass: 'bg-amber-600 border-amber-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'missing' as ToothStatus, icon: 'pi pi-times-circle', activeClass: 'bg-slate-600 border-slate-500 text-white shadow-[0_0_10px_rgba(100,116,139,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'crown' as ToothStatus, icon: 'pi pi-bookmark', activeClass: 'bg-yellow-600 border-yellow-500 text-white shadow-[0_0_10px_rgba(234,179,8,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'root_canal' as ToothStatus, icon: 'pi pi-sliders-h', activeClass: 'bg-purple-600 border-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'impacted' as ToothStatus, icon: 'pi pi-arrow-down-right', activeClass: 'bg-cyan-600 border-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'fractured' as ToothStatus, icon: 'pi pi-bolt', activeClass: 'bg-orange-600 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
+    { value: 'implant' as ToothStatus, icon: 'pi pi-database', activeClass: 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' }
   ];
 
   toggleStatus(status: ToothStatus) {
@@ -1391,10 +1491,21 @@ export class PatientHistoryComponent implements OnInit {
     }
   }
 
+  isInspectorModalOpen = signal<boolean>(false);
+  rotationAngle = signal<number>(0);
+  showOuterEnamel = signal<boolean>(true);
+  animateCanals = signal<boolean>(false);
+
+  closeInspectorModal() {
+    this.isInspectorModalOpen.set(false);
+    this.selectedTooth.set(null);
+  }
+
   selectTooth(num: number | string | null) {
     this.selectedTooth.set(num);
     this.isPlannedForm.set(false);
     if (num !== null) {
+      this.isInspectorModalOpen.set(true);
       const latestStatuses = this.getToothLatestStatuses(num);
       this.dentalStatus.set(latestStatuses);
 
