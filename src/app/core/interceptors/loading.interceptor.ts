@@ -9,13 +9,13 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   const spinner = inject(NgxSpinnerService);
 
   totalRequests++;
-  spinner.show();
+  setTimeout(() => spinner.show(), 0);
 
   return next(req).pipe(
     finalize(() => {
       totalRequests--;
       if (totalRequests === 0) {
-        spinner.hide();
+        setTimeout(() => spinner.hide(), 50);
       }
     })
   );
