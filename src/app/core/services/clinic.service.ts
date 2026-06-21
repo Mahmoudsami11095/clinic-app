@@ -63,16 +63,20 @@ export class ClinicService {
   });
 
   constructor() {
-    this.loadClinics();
+    if (this.authService.isAuthenticated()) {
+      this.loadClinics();
+    }
 
     // Automatically react to user switching to set default active clinic
     effect(() => {
       const user = this.authService.currentUser();
-      this.loadClinics();
       if (!user) {
+        this.clinicsSignal.set([]);
         this.activeClinicIdSignal.set('all');
         return;
       }
+      this.loadClinics();
+      
       if (user.role === 'admin') {
         this.activeClinicIdSignal.set(user.clinicId || 'all');
       } else if (user.role === 'doctor') {
