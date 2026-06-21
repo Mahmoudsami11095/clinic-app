@@ -538,7 +538,8 @@
     "Email verification code is required to update email": "رمز تحقق البريد الإلكتروني مطلوب لتحديث البريد الإلكتروني",
     "Contact number cannot be empty": "لا يمكن أن يكون رقم الاتصال فارغاً",
     "Phone number is already in use by another account": "رقم الهاتف مستخدم بالفعل في حساب آخر",
-    "WhatsApp verification code is required to update phone number": "رمز تحقق واتساب مطلوب لتحديث رقم الهاتف"
+    "WhatsApp verification code is required to update phone number": "رمز تحقق واتساب مطلوب لتحديث رقم الهاتف",
+    "An unexpected server error occurred.": "حدث خطأ غير متوقع في الخادم."
   },
   "inventory": {
     "title": "مخزون المواد",
