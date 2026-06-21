@@ -1,11 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NgxSpinnerComponent } from 'ngx-spinner';
-import { TranslatePipe } from './core/i18n/translate.pipe';
+import { TopProgressBarComponent } from './core/components/top-progress-bar/top-progress-bar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgxSpinnerComponent, TranslatePipe],
+  imports: [RouterOutlet, TopProgressBarComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
