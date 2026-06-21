@@ -58,12 +58,10 @@ export class BillingFormComponent implements OnInit {
 
     forkJoin({
       patients: this.patientService.getAll(),
-      appointments: this.appointmentService.getAll(),
-      billingRecords: this.billingService.getAll()
+      appointments: this.appointmentService.getAll()
     }).subscribe({
-      next: ({ patients, appointments, billingRecords }) => {
-        const billedApptIds = new Set(billingRecords.map(b => b.appointmentId).filter(id => !!id));
-        this.allAppointments = appointments.filter(a => !billedApptIds.has(a.id));
+      next: ({ patients, appointments }) => {
+        this.allAppointments = appointments;
 
         let filteredPatients = this.clinicService.filterByActiveClinic(patients);
 
