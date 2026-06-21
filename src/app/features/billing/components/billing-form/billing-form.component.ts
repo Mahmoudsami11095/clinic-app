@@ -39,7 +39,7 @@ export class BillingFormComponent implements OnInit {
   filteredAppointments: Appointment[] = [];
   submitting = false;
 
-  readonly statusOptions = ['paid', 'pending', 'overdue'];
+  readonly statusOptions = ['paid', 'partially_paid', 'pending', 'overdue'];
   readonly paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
 
   form = this.fb.group({
@@ -48,6 +48,7 @@ export class BillingFormComponent implements OnInit {
     amount: ['', [Validators.required, Validators.min(0.1)]],
     dateIssued: [new Date().toISOString().split('T')[0], Validators.required],
     status: ['pending', Validators.required],
+    paidAmount: [{ value: '', disabled: true }],
     paymentMethod: ['Cash', Validators.required],
     description: ['', [Validators.required, Validators.minLength(5)]]
   });
@@ -97,6 +98,19 @@ export class BillingFormComponent implements OnInit {
         this.form.get('appointmentId')?.setValue('');
       }
     });
+
+    this.form.get('status')?.valueChanges.subscribe(status => {
+      const paidAmtCtrl = this.form.get('paidAmount');
+      if (status === 'partially_paid') {
+        paidAmtCtrl?.setValidators([Validators.required, Validators.min(0.1)]);
+        paidAmtCtrl?.enable();
+      } else {
+        paidAmtCtrl?.clearValidators();
+        paidAmtCtrl?.setValue('');
+        paidAmtCtrl?.disable();
+      }
+      paidAmtCtrl?.updateValueAndValidity();
+    });
   }
 
   isInvalid(field: string): boolean {
@@ -114,6 +128,13 @@ export class BillingFormComponent implements OnInit {
     const formValue = this.form.getRawValue();
     const amount = Number(formValue.amount);
     const status = formValue.status!;
+    
+    let paidAmount = 0;
+    if (status === 'paid') {
+      paidAmount = amount;
+    } else if (status === 'partially_paid') {
+      paidAmount = Number(formValue.paidAmount);
+    }
 
     const patient = this.patients.find(p => p.id === formValue.patientId);
     let clinicId = patient?.clinicId || this.clinicService.activeClinicId();
@@ -134,7 +155,7 @@ export class BillingFormComponent implements OnInit {
       patientId: formValue.patientId!,
       appointmentId: formValue.appointmentId || undefined,
       amount: amount,
-      paidAmount: status === 'paid' ? amount : 0,
+      paidAmount: paidAmount,
       dateIssued: isoDate,
       status: status,
       paymentMethod: formValue.paymentMethod || null,
@@ -174,6 +195,7 @@ export class BillingFormComponent implements OnInit {
       amount: '',
       dateIssued: new Date().toISOString().split('T')[0],
       status: 'pending',
+      paidAmount: '',
       paymentMethod: 'Cash',
       description: ''
     });
