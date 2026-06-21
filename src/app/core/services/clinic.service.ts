@@ -83,7 +83,7 @@ export class ClinicService {
       } else {
         this.activeClinicIdSignal.set('all');
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   loadClinics() {

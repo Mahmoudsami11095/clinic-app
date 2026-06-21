@@ -46,7 +46,7 @@ export class NotificationService {
     }
 
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(`${environment.apiUrl}/hubs/notifications`, {
+      .withUrl(`${environment.apiUrl.replace(/\/api$/, '')}/hubs/notifications`, {
         accessTokenFactory: () => token
       })
       .withAutomaticReconnect()
@@ -72,7 +72,7 @@ export class NotificationService {
   }
 
   private fetchInitialNotifications() {
-    this.http.get<Notification[]>(`${environment.apiUrl}/api/notifications`)
+    this.http.get<Notification[]>(`${environment.apiUrl}/notifications`)
       .subscribe({
         next: (data) => {
           this.notifications.set(data);
@@ -90,7 +90,7 @@ export class NotificationService {
   public markAsRead(id: string) {
     const notif = this.notifications().find(n => n.id === id);
     if (notif && !notif.isRead) {
-      this.http.patch(`${environment.apiUrl}/api/notifications/${id}/read`, {}).subscribe({
+      this.http.patch(`${environment.apiUrl}/notifications/${id}/read`, {}).subscribe({
         next: () => {
           this.notifications.update(n => {
             const index = n.findIndex(x => x.id === id);
@@ -108,7 +108,7 @@ export class NotificationService {
   }
 
   public markAllAsRead() {
-    this.http.patch(`${environment.apiUrl}/api/notifications/read-all`, {}).subscribe({
+    this.http.patch(`${environment.apiUrl}/notifications/read-all`, {}).subscribe({
       next: () => {
         this.notifications.update(n => n.map(x => ({ ...x, isRead: true })));
         this.unreadCount.set(0);

@@ -1,11 +1,11 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { catchError, throwError } from 'rxjs';
 
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const token = authService.getToken();
+  const injector = inject(Injector);
+  const token = localStorage.getItem('clinic_token');
 
   let clonedReq = req;
   if (token) {
@@ -17,7 +17,7 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   return next(clonedReq).pipe(
     catchError((err: HttpErrorResponse) => {
       if (err.status === 401) {
-        authService.logout();
+        injector.get(AuthService).logout();
       }
       return throwError(() => err);
     })
