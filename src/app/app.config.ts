@@ -5,6 +5,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
 import { apiUrlInterceptor } from './core/interceptors/api-url.interceptor';
 import { authTokenInterceptor } from './core/interceptors/auth-token.interceptor';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { routes } from './app.routes';
 
@@ -16,7 +17,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([apiUrlInterceptor, authTokenInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([apiUrlInterceptor, authTokenInterceptor, loadingInterceptor, errorInterceptor])),
     provideAnimations(),
     provideToastr({
       timeOut: 3000,
