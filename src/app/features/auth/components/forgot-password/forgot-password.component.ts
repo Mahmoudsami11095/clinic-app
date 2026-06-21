@@ -12,8 +12,7 @@ import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-
   selector: 'app-forgot-password',
   standalone: true,
   imports: [CommonModule, FormsModule, TranslatePipe, OtpInputFieldComponent],
-  templateUrl: './forgot-password.component.html',
-  styleUrl: './forgot-password.component.css'
+  templateUrl: './forgot-password.component.html'
 })
 export class ForgotPasswordComponent implements OnDestroy {
   protected authService = inject(AuthService);

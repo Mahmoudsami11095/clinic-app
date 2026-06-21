@@ -22,8 +22,7 @@ function emailOrPhoneValidator(control: any) {
   selector: 'app-otp-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe, OtpInputFieldComponent],
-  templateUrl: './otp-login.component.html',
-  styleUrl: './otp-login.component.css'
+  templateUrl: './otp-login.component.html'
 })
 export class OtpLoginComponent implements OnDestroy {
   protected authService = inject(AuthService);

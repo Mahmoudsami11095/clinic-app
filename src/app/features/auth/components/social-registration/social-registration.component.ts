@@ -7,14 +7,12 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-field/otp-input-field.component';
-import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-social-registration',
   standalone: true,
-  imports: [CommonModule, FormsModule, OtpInputFieldComponent, TranslatePipe],
-  templateUrl: './social-registration.component.html',
-  styleUrl: './social-registration.component.css'
+  imports: [CommonModule, FormsModule, OtpInputFieldComponent],
+  templateUrl: './social-registration.component.html'
 })
 export class SocialRegistrationComponent {
   protected authService = inject(AuthService);
@@ -30,7 +28,7 @@ export class SocialRegistrationComponent {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
-  socialSignUpState = signal<'role' | 'data' | 'doctor-clinics' | 'social-otp'>('role');
+  socialSignUpState = signal<'none' | 'role' | 'data' | 'doctor-clinics' | 'social-otp'>('role');
   socialOtpCode = signal<string>('');
   socialOtpDemo = signal<string>('');
   socialOtpNextState = signal<'doctor-clinics' | 'submit'>('submit');
