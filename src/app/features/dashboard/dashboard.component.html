@@ -68,7 +68,7 @@
       </div>
     </div>
 
-    <!-- Recent Appointments Table -->
+    <!-- Recent Appointments -->
     <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 shadow-sm overflow-hidden">
       <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
         <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-200">{{ 'dashboard.recent_appointments' | translate }}</h2>
@@ -84,7 +84,8 @@
           }
         </div>
       } @else {
-        <div class="overflow-x-auto">
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-start text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700">
@@ -121,6 +122,40 @@
               }
             </tbody>
           </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-700/50">
+          @for (appt of recentAppointments(); track appt.id) {
+            <div class="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white text-xs font-bold">
+                    {{ appt.patientName.charAt(0) }}
+                  </div>
+                  <span class="font-medium text-slate-700 dark:text-slate-200">{{ appt.patientName }}</span>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold capitalize"
+                      [ngClass]="getStatusClass(appt.status)">
+                  {{ 'dashboard.' + appt.status | translate }}
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{{ 'dashboard.doctor' | translate }}</span>
+                  <span class="text-slate-600 dark:text-slate-350 truncate">{{ appt.doctorName }}</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{{ 'dashboard.type' | translate }}</span>
+                  <span class="text-slate-600 dark:text-slate-350 truncate">{{ appt.type }}</span>
+                </div>
+                <div class="col-span-2 flex flex-col gap-1 mt-1">
+                  <span class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{{ 'dashboard.date' | translate }}</span>
+                  <span class="text-slate-500 dark:text-slate-400">{{ formatDate(appt.date) }}</span>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       }
     </div>
