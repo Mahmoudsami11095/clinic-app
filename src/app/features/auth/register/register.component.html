@@ -65,7 +65,7 @@
       </div>
 
       <!-- Footer details -->
-      <div class="text-slate-500 text-[11px] font-semibold relative z-10 flex justify-between">
+      <div class="text-slate-500 text-xs font-semibold relative z-10 flex justify-between">
         <span>© 2026 MedClinic Group</span>
         <span class="hover:text-indigo-400 cursor-pointer transition-colors">Privacy Policy</span>
       </div>
@@ -103,40 +103,40 @@
         <div class="relative z-10 flex flex-col items-center">
           <div [class]="currentStage() >= 1 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
-            <i *ngIf="currentStage() > 1" class="pi pi-check text-[10px]"></i>
+            <i *ngIf="currentStage() > 1" class="pi pi-check text-xs"></i>
             <span *ngIf="currentStage() <= 1">1</span>
           </div>
-          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Account</span>
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Account</span>
         </div>
 
         <!-- Step 2: Role Selection -->
         <div class="relative z-10 flex flex-col items-center">
           <div [class]="currentStage() >= 2 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
-            <i *ngIf="currentStage() > 2" class="pi pi-check text-[10px]"></i>
+            <i *ngIf="currentStage() > 2" class="pi pi-check text-xs"></i>
             <span *ngIf="currentStage() <= 2">2</span>
           </div>
-          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Role</span>
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Role</span>
         </div>
 
         <!-- Step 3: Extra Info -->
         <div class="relative z-10 flex flex-col items-center">
           <div [class]="currentStage() >= 3 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
-            <i *ngIf="currentStage() > 3" class="pi pi-check text-[10px]"></i>
+            <i *ngIf="currentStage() > 3" class="pi pi-check text-xs"></i>
             <span *ngIf="currentStage() <= 3">3</span>
           </div>
-          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Profile</span>
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Profile</span>
         </div>
 
         <!-- Step 4: Clinics (Only for Doctor) -->
         <div class="relative z-10 flex flex-col items-center" [ngClass]="{'opacity-40': registerForm.get('role')?.value !== 'doctor'}">
           <div [class]="currentStage() >= 4 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
-            <i *ngIf="currentStage() > 4" class="pi pi-check text-[10px]"></i>
+            <i *ngIf="currentStage() > 4" class="pi pi-check text-xs"></i>
             <span *ngIf="currentStage() <= 4">4</span>
           </div>
-          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Clinics</span>
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Clinics</span>
         </div>
 
         <!-- Step 5: Verification -->
@@ -145,7 +145,7 @@
                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
             <span>5</span>
           </div>
-          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Verify</span>
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Verify</span>
         </div>
       </div>
 
@@ -157,7 +157,7 @@
       </div>
 
       <!-- Single Outer Form -->
-      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4 transition-opacity duration-300" [class.pointer-events-none]="isLoading()" [class.opacity-60]="isLoading()">
         
         <!-- STAGE 1: Credentials / Basic Info -->
         <div *ngIf="currentStage() === 1" class="space-y-4 animate-in fade-in duration-200">
@@ -200,7 +200,7 @@
                   class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-4 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed">
             <i *ngIf="isLoading()" class="pi pi-spin pi-spinner"></i>
             <span *ngIf="!isLoading()">Next</span>
-            <i *ngIf="!isLoading()" class="pi pi-arrow-right text-[10px] rtl-flip group-hover:translate-x-1 transition-transform"></i>
+            <i *ngIf="!isLoading()" class="pi pi-arrow-right text-xs rtl-flip group-hover:translate-x-1 transition-transform"></i>
           </button>
         </div>
 
@@ -215,7 +215,7 @@
                 <i class="pi pi-heart-fill text-lg"></i>
               </div>
               <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Doctor</h5>
-              <p class="text-[10px] text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a practitioner to manage charts and patients.</p>
+              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a practitioner to manage charts and patients.</p>
             </button>
 
             <!-- Patient Card -->
@@ -226,7 +226,7 @@
                 <i class="pi pi-user text-lg"></i>
               </div>
               <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Patient</h5>
-              <p class="text-[10px] text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a patient to schedule visits and view statements.</p>
+              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a patient to schedule visits and view statements.</p>
             </button>
 
             <!-- Assistant Card -->
@@ -237,7 +237,7 @@
                 <i class="pi pi-briefcase text-lg"></i>
               </div>
               <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Assistant</h5>
-              <p class="text-[10px] text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join to assist doctors and manage appointments.</p>
+              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join to assist doctors and manage appointments.</p>
             </button>
           </div>
 
@@ -322,7 +322,7 @@
         <div *ngIf="currentStage() === 4" class="space-y-4 text-start animate-in fade-in duration-200">
           <div class="text-center mb-2">
             <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Select Active Clinic Assignments</h4>
-            <p class="text-[11px] text-slate-450 dark:text-slate-500">Choose physical clinic branch locations you practice in and set your availability hours for each.</p>
+            <p class="text-xs text-slate-450 dark:text-slate-500">Choose physical clinic branch locations you practice in and set your availability hours for each.</p>
           </div>
 
           <div class="space-y-4 max-h-[30vh] overflow-y-auto pr-1">
@@ -336,19 +336,19 @@
               <!-- Show hours/days config only if clinic is selected and role is doctor -->
               <div *ngIf="clinic.selected && registerForm.get('role')?.value === 'doctor'" class="pl-6 space-y-3 animate-in slide-in-from-top-1 duration-200">
                 <div>
-                  <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
                   <input type="text" [(ngModel)]="clinic.hours" [ngModelOptions]="{standalone: true}" required
                          placeholder="e.g. 09:00-17:00"
                          class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
                 </div>
 
                 <div>
-                  <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Days</label>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Days</label>
                   <div class="flex flex-wrap gap-1">
                     <button *ngFor="let day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']"
                             type="button"
                             (click)="toggleClinicDay(clinic.id, day)"
-                            class="px-2 py-0.5 text-[9px] font-bold rounded-lg border transition-all cursor-pointer"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg min-h-[36px] border transition-all cursor-pointer"
                             [ngClass]="clinic.days.includes(day)
                               ? 'bg-indigo-600 text-white border-indigo-600'
                               : 'bg-white dark:bg-slate-850 text-slate-550 dark:text-slate-400 border-slate-200 dark:border-slate-750 hover:border-indigo-350 hover:text-indigo-600'"
@@ -360,13 +360,11 @@
               </div>
             </div>
 
-            <div *ngIf="registerForm.get('role')?.value === 'doctor'">
-              <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
-
-              <h4 class="text-xs font-bold text-slate-850 dark:text-slate-250 uppercase tracking-wider mb-2">Create New Clinic (Optional)</h4>
+            <div *ngIf="registerForm.get('role')?.value === 'doctor'" class="mt-6 p-4 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl bg-indigo-50/30 dark:bg-indigo-900/10">
+              <h4 class="text-xs font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="pi pi-plus-circle"></i> Create New Clinic (Optional)</h4>
               <!-- Clinic Name -->
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Clinic Name</label>
+              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Clinic Name</label>
               <div class="relative">
                 <i class="pi pi-plus-circle absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
                 <input type="text" formControlName="clinicName"
@@ -379,7 +377,7 @@
             <div *ngIf="registerForm.get('clinicName')?.value && registerForm.get('clinicName')?.value.trim().length >= 3" class="space-y-4 border-l-2 border-indigo-500 pl-3 animate-in slide-in-from-top-1 duration-200">
               <!-- Address -->
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Address</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Address</label>
                 <input type="text" formControlName="clinicAddress"
                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
                        placeholder="e.g. 123 Main St, New York, NY">
@@ -387,7 +385,7 @@
 
               <!-- Phone -->
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Phone Number</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Phone Number</label>
                 <input type="text" formControlName="clinicPhone"
                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
                        placeholder="e.g. +1 (555) 123-4567">
@@ -395,7 +393,7 @@
 
               <!-- Availability Hours -->
               <div>
-                <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Hours</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Hours</label>
                 <input type="text" formControlName="clinicAvailabilityHours"
                        placeholder="e.g. 09:00-17:00"
                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
@@ -403,12 +401,12 @@
 
               <!-- Availability Days -->
               <div>
-                <label class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Days</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Days</label>
                 <div class="flex flex-wrap gap-1">
                   <button *ngFor="let day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']"
                           type="button"
                           (click)="toggleRegisterClinicDay(day)"
-                          class="px-2 py-0.5 text-[9px] font-bold rounded-lg border transition-all cursor-pointer"
+                          class="px-3 py-1.5 text-xs font-bold rounded-lg min-h-[36px] border transition-all cursor-pointer"
                           [ngClass]="selectedClinicDays.includes(day)
                             ? 'bg-indigo-600 text-white border-indigo-600'
                             : 'bg-white dark:bg-slate-850 text-slate-550 dark:text-slate-400 border-slate-200 dark:border-slate-750 hover:border-indigo-300 hover:text-indigo-600'"
@@ -444,7 +442,7 @@
             </h4>
             <app-otp-input-field [code]="otpCode()" (codeChange)="otpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
             <!-- Demo Email Code -->
-            <div *ngIf="demoEmailOtp()" class="text-[10px] text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
+            <div *ngIf="demoEmailOtp()" class="text-xs text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
               Demo Email OTP: <strong class="underline font-bold">{{ demoEmailOtp() }}</strong>
             </div>
           </div>
@@ -457,7 +455,7 @@
             <!-- Passcode digits input grid for phone -->
             <app-otp-input-field [code]="phoneOtpCode()" (codeChange)="phoneOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
             <!-- Demo WhatsApp Code -->
-            <div *ngIf="demoWhatsappOtp()" class="text-[10px] text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
+            <div *ngIf="demoWhatsappOtp()" class="text-xs text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
               Demo WhatsApp OTP: <strong class="underline font-bold">{{ demoWhatsappOtp() }}</strong>
             </div>
           </div>
@@ -483,7 +481,7 @@
 
             <button type="button" (click)="prevStage()" [disabled]="isLoading()"
                     class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
-              <i class="pi pi-arrow-left text-[10px] rtl-flip"></i>
+              <i class="pi pi-arrow-left text-xs rtl-flip"></i>
               <span>Back</span>
             </button>
           </div>
@@ -496,7 +494,7 @@
           <span class="absolute inset-0 flex items-center" aria-hidden="true">
             <span class="w-full border-t border-slate-100 dark:border-slate-800"></span>
           </span>
-          <span class="relative bg-white dark:bg-slate-900 px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+          <span class="relative bg-white dark:bg-slate-900 px-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             {{ 'auth.or_continue_with' | translate }}
           </span>
         </div>

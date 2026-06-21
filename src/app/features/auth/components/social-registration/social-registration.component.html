@@ -1,0 +1,260 @@
+<!-- Multi-Stage Social Sign Up Modal Overlay -->
+  <div *ngIf="socialSignUpState() !== 'none'" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-250">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <h3 class="font-extrabold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="pi pi-user-plus text-indigo-500"></i>
+          <span>Complete Social Sign Up</span>
+        </h3>
+        <button type="button" (click)="onCancel()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none cursor-pointer">
+          <i class="pi pi-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 max-h-[75vh] overflow-y-auto">
+
+        <!-- STAGE 1: Role Selection -->
+        <div *ngIf="socialSignUpState() === 'role'" class="space-y-6">
+          <div class="text-center">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1.5">Who are you?</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Select your registration profile role below to proceed.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Doctor Card -->
+            <button type="button" (click)="onSelectSocialRole('doctor')"
+                    class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
+              <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <i class="pi pi-heart-fill text-lg"></i>
+              </div>
+              <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Doctor</h5>
+              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a practitioner to manage charts and patients.</p>
+            </button>
+
+            <!-- Patient Card -->
+            <button type="button" (click)="onSelectSocialRole('patient')"
+                    class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <i class="pi pi-user text-lg"></i>
+              </div>
+              <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Patient</h5>
+              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a patient to schedule visits and view statements.</p>
+            </button>
+            
+            <!-- Assistant Card -->
+            <button type="button" (click)="onSelectSocialRole('assistant')"
+                    class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 text-center transition-all cursor-pointer group focus:outline-none shadow-sm hover:shadow-md">
+              <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <i class="pi pi-briefcase text-lg"></i>
+              </div>
+              <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Assistant</h5>
+              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join to assist doctors and manage appointments.</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- STAGE 2: Data Completion -->
+        <div *ngIf="socialSignUpState() === 'data'" class="space-y-4 text-start">
+          <div class="text-center mb-2">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1">Additional Information</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Fill in the missing fields to complete your <span class="capitalize font-semibold text-indigo-500">{{ socialRole() }}</span> account.</p>
+          </div>
+
+          <form (ngSubmit)="onSubmitSocialExtraData()" class="space-y-4 transition-opacity duration-300" [class.pointer-events-none]="isLoading()" [class.opacity-60]="isLoading()">
+            <!-- Shared field: Phone (Contact Number) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Contact Number</label>
+              <input type="text" [ngModel]="socialPhone()" (ngModelChange)="socialPhone.set($event)" name="socialPhone" required
+                     placeholder="+1 (555) 000-0000"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+            </div>
+
+            <!-- Clinic ID selection (Patients and Assistants) -->
+            <div *ngIf="socialRole() === 'patient' || socialRole() === 'assistant'">
+              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
+              <select [ngModel]="socialClinicId()" (ngModelChange)="socialClinicId.set($event)" name="socialClinicId" required
+                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                <option value="clinic-1">City Health Clinic (clinic-1)</option>
+                <option value="clinic-2">Metro Dental & Cardiac (clinic-2)</option>
+                <option value="clinic-3">Westside Family Care (clinic-3)</option>
+              </select>
+            </div>
+
+            <!-- Doctor specific fields -->
+            <div *ngIf="socialRole() === 'doctor'" class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Specialization</label>
+                <input type="text" [ngModel]="socialSpecialization()" (ngModelChange)="socialSpecialization.set($event)" name="socialSpecialization" required
+                       placeholder="e.g. Dentistry, Cardiology"
+                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+              </div>
+            </div>
+
+            <!-- Patient specific fields -->
+            <div *ngIf="socialRole() === 'patient'" class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Gender</label>
+                  <select [ngModel]="socialGender()" (ngModelChange)="socialGender.set($event)" name="socialGender" required
+                          class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Blood Group</label>
+                  <input type="text" [ngModel]="socialBloodGroup()" (ngModelChange)="socialBloodGroup.set($event)" name="socialBloodGroup" required
+                         placeholder="e.g. O+, A-"
+                         class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Date of Birth</label>
+                <input type="date" [ngModel]="socialDob()" (ngModelChange)="socialDob.set($event)" name="socialDob" required
+                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Address</label>
+                <input type="text" [ngModel]="socialAddress()" (ngModelChange)="socialAddress.set($event)" name="socialAddress"
+                       placeholder="e.g. 123 Main St, Cityville"
+                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+              </div>
+            </div>
+
+            <!-- Submit buttons -->
+            <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" (click)="socialSignUpState.set('role')"
+                      class="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                Back
+              </button>
+              <button type="submit" [disabled]="isLoading()"
+                      class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
+                <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-xs"></i>
+                <span>{{ socialRole() === 'doctor' ? 'Next' : 'Register & Log In' }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- STAGE: Social Phone OTP Verification -->
+        <div *ngIf="socialSignUpState() === 'social-otp'" class="space-y-6 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+          <div>
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1">Verify WhatsApp Number</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              We have sent a verification code to WhatsApp number:
+              <span class="text-indigo-600 dark:text-indigo-400 font-bold block mt-1">{{ socialPhone() }}</span>
+            </p>
+          </div>
+
+          <!-- Passcode digits input grid -->
+          <app-otp-input-field [code]="socialOtpCode()" (codeChange)="socialOtpCode.set($event)" (otpComplete)="submitSocialOtp()"></app-otp-input-field>
+
+          <!-- Demo Code display helper -->
+          <div *ngIf="socialOtpDemo()" class="text-xs font-semibold text-indigo-500 dark:text-indigo-400">
+            Demo WhatsApp OTP: <strong class="underline">{{ socialOtpDemo() }}</strong>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="flex flex-col gap-3 pt-2">
+            <button type="button" (click)="submitSocialOtp()" [disabled]="isLoading()"
+                    class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer focus:outline-none">
+              <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-xs"></i>
+              <span>Verify OTP Code</span>
+            </button>
+            <button type="button" (click)="goBackToSocialData()" [disabled]="isLoading()"
+                    class="w-full py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs rounded-xl transition-all cursor-pointer focus:outline-none">
+              Change Contact Number
+            </button>
+          </div>
+        </div>
+
+        <!-- STAGE 3: Doctor Clinic Details & Availability (Doctor only) -->
+        <div *ngIf="socialSignUpState() === 'doctor-clinics'" class="space-y-4 text-start">
+          <div class="text-center mb-2">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1">Create New Clinic (Optional)</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Register a new physical clinic branch you practice in. You can skip this and create it later.</p>
+          </div>
+ 
+          <form (ngSubmit)="onSubmitSocialExtraData()" class="space-y-4 transition-opacity duration-300" [class.pointer-events-none]="isLoading()" [class.opacity-60]="isLoading()">
+            <div class="space-y-4 max-h-[45vh] overflow-y-auto pr-1">
+              <!-- Clinic Name -->
+              <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Clinic Name</label>
+                <div class="relative">
+                  <i class="pi pi-plus-circle absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
+                  <input type="text" [ngModel]="socialClinicName()" (ngModelChange)="socialClinicName.set($event)" name="socialClinicName"
+                         class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 ps-9 pe-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                         placeholder="e.g. My Dental Clinic">
+                </div>
+              </div>
+ 
+              <!-- Config fields for new clinic if name is filled -->
+              <div *ngIf="socialClinicName() && socialClinicName().trim().length >= 3" class="space-y-4 border-l-2 border-indigo-500 pl-3 animate-in slide-in-from-top-1 duration-200">
+                <!-- Address -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Address</label>
+                  <input type="text" [ngModel]="socialClinicAddress()" (ngModelChange)="socialClinicAddress.set($event)" name="socialClinicAddress"
+                         class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
+                         placeholder="e.g. 123 Main St, New York, NY">
+                </div>
+ 
+                <!-- Phone -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Phone Number</label>
+                  <input type="text" [ngModel]="socialClinicPhone()" (ngModelChange)="socialClinicPhone.set($event)" name="socialClinicPhone"
+                         class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
+                         placeholder="e.g. +1 (555) 123-4567">
+                </div>
+ 
+                <!-- Availability Hours -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Hours</label>
+                  <input type="text" [ngModel]="socialNewClinicHours()" (ngModelChange)="socialNewClinicHours.set($event)" name="socialNewClinicHours" required
+                         placeholder="e.g. 09:00-17:00"
+                         class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                </div>
+ 
+                <!-- Availability Days -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New Clinic Availability Days</label>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button *ngFor="let day of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']"
+                            type="button"
+                            (click)="toggleSocialNewClinicDay(day)"
+                            class="px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer"
+                            [ngClass]="socialNewClinicDays().includes(day)
+                              ? 'bg-indigo-600 text-white border-indigo-600'
+                              : 'bg-white dark:bg-slate-800 text-slate-550 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:text-indigo-600'"
+                    >
+                      {{ day.substring(0, 3) }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+ 
+            <!-- Stage 3 Buttons -->
+            <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" (click)="socialSignUpState.set('data')"
+                      class="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                Back
+              </button>
+              <button type="submit" [disabled]="isLoading()"
+                      class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer">
+                <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-xs"></i>
+                <span>Register & Log In</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
