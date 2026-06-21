@@ -46,6 +46,15 @@
         <i class="pi pi-power-off"></i>
         {{ 'common.sign_out' | translate }}
       </button>
+
+      <!-- Install App Button -->
+      @if (pwaInstallService.deferredPrompt()) {
+        <button (click)="pwaInstallService.installPwa()" 
+                class="w-full flex items-center justify-center gap-2 px-4 py-2 mt-1 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 rounded-xl transition-colors duration-200 cursor-pointer shadow-sm border border-indigo-100 dark:border-indigo-500/20">
+          <i class="pi pi-download"></i>
+          Install App
+        </button>
+      }
     </div>
   }
 </aside>
