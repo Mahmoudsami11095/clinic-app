@@ -72,23 +72,24 @@
     </div>
   </div>
 
-  <!-- Appointments Table -->
+  <!-- Appointments List -->
   <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-start text-sm whitespace-nowrap">
-        <thead class="bg-slate-50/80 dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-          <tr>
-            <th *ngIf="!authService.isPatient()" class="py-4 px-6 font-semibold">{{ 'appointments.patient_label' | translate }}</th>
-            <th class="py-4 px-6 font-semibold">{{ 'appointments.doctor_label' | translate }}</th>
-            <th class="py-4 px-6 font-semibold">{{ 'appointments.type_select' | translate }}</th>
-            <th class="py-4 px-6 font-semibold">{{ 'appointments.date_time' | translate }}</th>
-            <th class="py-4 px-6 font-semibold">{{ 'dashboard.status' | translate }}</th>
-            <th class="py-4 px-6 font-semibold">{{ 'common.notes' | translate }}</th>
-            <th class="py-4 px-6 font-semibold text-end">{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300">
-          @if (loading()) {
+    @if (loading()) {
+      <!-- Desktop Skeleton -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-start text-sm whitespace-nowrap">
+          <thead class="bg-slate-50/80 dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+            <tr>
+              <th *ngIf="!authService.isPatient()" class="py-4 px-6 font-semibold">{{ 'appointments.patient_label' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'appointments.doctor_label' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'appointments.type_select' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'appointments.date_time' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'dashboard.status' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'common.notes' | translate }}</th>
+              <th class="py-4 px-6 font-semibold text-end">{{ 'common.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
             @for (i of [1,2,3,4]; track i) {
               <tr class="animate-pulse">
                 <td *ngIf="!authService.isPatient()" class="py-4 px-6"><div class="h-8 w-32 bg-slate-200 dark:bg-slate-700 rounded-lg"></div></td>
@@ -100,15 +101,49 @@
                 <td class="py-4 px-6"><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded-lg w-20 ms-auto"></div></td>
               </tr>
             }
-          } @else if (filteredAppointments().length === 0) {
+          </tbody>
+        </table>
+      </div>
+      <!-- Mobile Skeleton -->
+      <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-700">
+        @for (i of [1,2,3]; track i) {
+          <div class="p-4 space-y-4 animate-pulse">
+            <div class="flex justify-between items-start">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                <div class="space-y-2">
+                  <div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                  <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+              </div>
+              <div class="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+            </div>
+            <div class="h-16 w-full bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+          </div>
+        }
+      </div>
+    } @else if (filteredAppointments().length === 0) {
+      <div class="py-16 text-center text-slate-500 dark:text-slate-400">
+        <i class="pi pi-calendar text-4xl mb-3 text-slate-300 dark:text-slate-600 block"></i>
+        <p class="font-medium">{{ 'appointments.no_appointments' | translate }}</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ 'appointments.no_appointments_sub' | translate }}</p>
+      </div>
+    } @else {
+      <!-- Desktop Table View -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-start text-sm whitespace-nowrap">
+          <thead class="bg-slate-50/80 dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-700 text-slate-500 dark:text-slate-400">
             <tr>
-              <td [attr.colspan]="authService.isPatient() ? 6 : 7" class="py-16 text-center text-slate-500 dark:text-slate-400">
-                <i class="pi pi-calendar text-4xl mb-3 text-slate-300 dark:text-slate-600 block"></i>
-                <p class="font-medium">{{ 'appointments.no_appointments' | translate }}</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ 'appointments.no_appointments_sub' | translate }}</p>
-              </td>
+              <th *ngIf="!authService.isPatient()" class="py-4 px-6 font-semibold">{{ 'appointments.patient_label' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'appointments.doctor_label' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'appointments.type_select' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'appointments.date_time' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'dashboard.status' | translate }}</th>
+              <th class="py-4 px-6 font-semibold">{{ 'common.notes' | translate }}</th>
+              <th class="py-4 px-6 font-semibold text-end">{{ 'common.actions' | translate }}</th>
             </tr>
-          } @else {
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300">
             @for (appt of filteredAppointments(); track appt.id) {
               <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                 <!-- Patient Name (hidden for patient role) -->
@@ -149,106 +184,166 @@
                   {{ appt.notes || '—' }}
                 </td>
 
-                <!-- Actions (Prescribe, View Rx) -->
+                <!-- Actions -->
                 <td class="py-4 px-6 text-end">
-                  <div class="flex items-center justify-end gap-2">
-                    <!-- For Doctor and Assistant -->
-                    @if (canManageAppointments()) {
-                      <button
-                        type="button"
-                        (click)="openEditModal(appt)"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                        [title]="'appointments.edit_appointment' | translate"
-                      >
-                        <i class="pi pi-pencil text-[10px]"></i>
-                        {{ 'appointments.edit_appointment' | translate }}
-                      </button>
-                      <button
-                        type="button"
-                        (click)="deleteAppointment(appt)"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                        [title]="'appointments.delete_appointment' | translate"
-                      >
-                        <i class="pi pi-trash text-[10px]"></i>
-                        {{ 'appointments.delete_appointment' | translate }}
-                      </button>
-                      @if (canManagePrescriptions()) {
-                        @if (getPrescriptionForAppointment(appt.id); as pres) {
-                          <button
-                            type="button"
-                            (click)="viewPrescribePage(appt)"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                            [title]="'appointments.edit_rx' | translate"
-                          >
-                            <i class="pi pi-file-edit text-[10px]"></i>
-                            {{ 'appointments.edit_rx' | translate }}
-                          </button>
-                        } @else {
-                          @if (appt.status !== 'cancelled') {
-                            <button
-                              type="button"
-                              (click)="viewPrescribePage(appt)"
-                              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                              [title]="'appointments.prescribe' | translate"
-                            >
-                              <i class="pi pi-file-plus text-[10px]"></i>
-                              {{ 'appointments.prescribe' | translate }}
-                            </button>
-                          }
-                        }
-                      } @else if (authService.isAssistant()) {
-                        @if (getPrescriptionForAppointment(appt.id); as pres) {
-                          <button
-                            type="button"
-                            (click)="openPrescriptionModal(appt, true)"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                            [title]="'appointments.view_rx' | translate"
-                          >
-                            <i class="pi pi-file text-[10px]"></i>
-                            {{ 'appointments.view_rx' | translate }}
-                          </button>
-                        }
-                      }
-                    }
-                    
-                    <!-- For Patient (view only if exists) -->
-                    @if (authService.isPatient()) {
-                      @if (getPrescriptionForAppointment(appt.id); as pres) {
-                        <button
-                          type="button"
-                          (click)="openPrescriptionModal(appt, true)"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                          [title]="'appointments.view_rx' | translate"
-                        >
-                          <i class="pi pi-file text-[10px]"></i>
-                          {{ 'appointments.view_rx' | translate }}
-                        </button>
-                      }
-                    }
-
-                    <!-- For Admin (read-only view) -->
-                    @if (authService.isAdmin()) {
-                      @if (getPrescriptionForAppointment(appt.id); as pres) {
-                        <button
-                          type="button"
-                          (click)="openPrescriptionModal(appt, true)"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                          [title]="'appointments.view_rx' | translate"
-                        >
-                          <i class="pi pi-file text-[10px]"></i>
-                          {{ 'appointments.view_rx' | translate }}
-                        </button>
-                      }
-                    }
-                  </div>
+                  <ng-container *ngTemplateOutlet="actionButtons; context: { appt: appt }"></ng-container>
                 </td>
               </tr>
             }
-          }
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Card View -->
+      <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-700">
+        @for (appt of filteredAppointments(); track appt.id) {
+          <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors flex flex-col gap-4">
+            <!-- Header: Patient/Doctor info & Status -->
+            <div class="flex justify-between items-start gap-2">
+              <div class="flex items-center gap-3">
+                <div *ngIf="!authService.isPatient()" class="w-10 h-10 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0"
+                     [class]="getAvatarColor(appt.patientName)">
+                  {{ appt.patientName.charAt(0) }}
+                </div>
+                <div *ngIf="authService.isPatient()" class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm shadow-sm shrink-0">
+                  <i class="pi pi-user text-lg"></i>
+                </div>
+                <div>
+                  <div class="font-semibold text-slate-800 dark:text-slate-100 text-base">
+                    {{ !authService.isPatient() ? appt.patientName : appt.doctorName }}
+                  </div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {{ !authService.isPatient() ? ('appointments.doctor_label' | translate) + ': ' + appt.doctorName : ('appointments.doctor_label' | translate) }}
+                  </div>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 text-[10px] font-bold rounded-full ring-1 ring-inset shrink-0"
+                    [ngClass]="getStatusClass(appt.status)">
+                {{ 'appointments.status_' + appt.status | translate }}
+              </span>
+            </div>
+
+            <!-- Details: Date, Time, Type -->
+            <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div>
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">{{ 'appointments.date_time' | translate }}</div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ appt.date | date:'MMM d, y' }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">{{ appt.date | date:'shortTime' }}</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">{{ 'appointments.type_select' | translate }}</div>
+                <div class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ 'appointments.' + appt.type.toLowerCase().replace(' ', '_').replace('-', '_') | translate }}</div>
+              </div>
+            </div>
+            
+            <div *ngIf="appt.notes" class="text-sm text-slate-600 dark:text-slate-400 bg-amber-50/50 dark:bg-amber-900/10 p-3 rounded-xl border border-amber-100 dark:border-amber-900/30">
+              <span class="font-medium text-amber-800 dark:text-amber-500 text-xs uppercase">{{ 'common.notes' | translate }}:</span>
+              <p class="mt-0.5">{{ appt.notes }}</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+               <ng-container *ngTemplateOutlet="actionButtons; context: { appt: appt }"></ng-container>
+            </div>
+          </div>
+        }
+      </div>
+    }
   </div>
+
+  <!-- Shared Action Buttons Template -->
+  <ng-template #actionButtons let-appt="appt">
+    <div class="flex items-center justify-end gap-2">
+      <!-- For Doctor and Assistant -->
+      @if (canManageAppointments()) {
+        <button
+          type="button"
+          (click)="openEditModal(appt)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+          [title]="'appointments.edit_appointment' | translate"
+        >
+          <i class="pi pi-pencil text-[10px]"></i>
+          <span class="hidden sm:inline">{{ 'appointments.edit_appointment' | translate }}</span>
+        </button>
+        <button
+          type="button"
+          (click)="deleteAppointment(appt)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+          [title]="'appointments.delete_appointment' | translate"
+        >
+          <i class="pi pi-trash text-[10px]"></i>
+          <span class="hidden sm:inline">{{ 'appointments.delete_appointment' | translate }}</span>
+        </button>
+        @if (canManagePrescriptions()) {
+          @if (getPrescriptionForAppointment(appt.id); as pres) {
+            <button
+              type="button"
+              (click)="viewPrescribePage(appt)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              [title]="'appointments.edit_rx' | translate"
+            >
+              <i class="pi pi-file-edit text-[10px]"></i>
+              <span class="hidden sm:inline">{{ 'appointments.edit_rx' | translate }}</span>
+            </button>
+          } @else {
+            @if (appt.status !== 'cancelled') {
+              <button
+                type="button"
+                (click)="viewPrescribePage(appt)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                [title]="'appointments.prescribe' | translate"
+              >
+                <i class="pi pi-file-plus text-[10px]"></i>
+                <span class="hidden sm:inline">{{ 'appointments.prescribe' | translate }}</span>
+              </button>
+            }
+          }
+        } @else if (authService.isAssistant()) {
+          @if (getPrescriptionForAppointment(appt.id); as pres) {
+            <button
+              type="button"
+              (click)="openPrescriptionModal(appt, true)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              [title]="'appointments.view_rx' | translate"
+            >
+              <i class="pi pi-file text-[10px]"></i>
+              <span class="hidden sm:inline">{{ 'appointments.view_rx' | translate }}</span>
+            </button>
+          }
+        }
+      }
+      
+      <!-- For Patient (view only if exists) -->
+      @if (authService.isPatient()) {
+        @if (getPrescriptionForAppointment(appt.id); as pres) {
+          <button
+            type="button"
+            (click)="openPrescriptionModal(appt, true)"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            [title]="'appointments.view_rx' | translate"
+          >
+            <i class="pi pi-file text-[10px]"></i>
+            <span class="hidden sm:inline">{{ 'appointments.view_rx' | translate }}</span>
+          </button>
+        }
+      }
+
+      <!-- For Admin (read-only view) -->
+      @if (authService.isAdmin()) {
+        @if (getPrescriptionForAppointment(appt.id); as pres) {
+          <button
+            type="button"
+            (click)="openPrescriptionModal(appt, true)"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            [title]="'appointments.view_rx' | translate"
+          >
+            <i class="pi pi-file text-[10px]"></i>
+            <span class="hidden sm:inline">{{ 'appointments.view_rx' | translate }}</span>
+          </button>
+        }
+      }
+    </div>
+  </ng-template>
 
   <!-- Book / Edit Appointment Modal -->
   <app-modal
