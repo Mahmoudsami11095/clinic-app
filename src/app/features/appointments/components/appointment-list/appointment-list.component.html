@@ -55,14 +55,14 @@
         </div>
 
         <!-- Status Filter Tabs -->
-        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 w-full sm:w-auto">
+        <div class="flex overflow-x-auto hide-scrollbar whitespace-nowrap items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 w-full sm:w-auto">
           @for (option of ['all', 'scheduled', 'completed', 'cancelled']; track option) {
             <button
               (click)="onStatusFilter(option)"
               [class]="selectedStatus() === option
                 ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-              class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex-1 sm:flex-none text-center cursor-pointer">
+              class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-center cursor-pointer flex-shrink-0">
               {{ 'appointments.status_' + option | translate }}
             </button>
           }

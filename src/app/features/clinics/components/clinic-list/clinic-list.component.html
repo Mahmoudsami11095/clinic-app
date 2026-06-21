@@ -148,7 +148,7 @@
           </div>
 
           <!-- Actions Footer -->
-          <div class="p-4 bg-slate-50/20 dark:bg-slate-950/10 flex justify-end gap-2">
+          <div class="p-4 bg-slate-50/20 dark:bg-slate-950/10 flex flex-wrap justify-end gap-2">
             @if (clinic.status === 'Pending') {
               <button
                 (click)="respondToAssignment(clinic.id, 'Accepted')"
