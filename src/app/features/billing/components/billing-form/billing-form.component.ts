@@ -118,20 +118,22 @@ export class BillingFormComponent implements OnInit {
     const patient = this.patients.find(p => p.id === formValue.patientId);
     const clinicId = patient?.clinicId || this.clinicService.activeClinicId();
 
+    const isoDate = new Date(formValue.dateIssued!).toISOString();
+
     const newRecord: BillingRecord = {
       id: (Math.floor(Math.random() * 90000) + 10000).toString(),
       patientId: formValue.patientId!,
       appointmentId: formValue.appointmentId || undefined,
       amount: amount,
       paidAmount: status === 'paid' ? amount : 0,
-      dateIssued: formValue.dateIssued!,
+      dateIssued: isoDate,
       status: status,
       paymentMethod: formValue.paymentMethod || null,
       description: formValue.description || undefined,
-      clinicId: clinicId,
+      clinicId: clinicId !== 'all' ? clinicId : undefined,
       payments: status === 'paid' ? [{
         amount: amount,
-        date: formValue.dateIssued!,
+        date: isoDate,
         paymentMethod: formValue.paymentMethod || 'Cash'
       }] : []
     };
