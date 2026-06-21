@@ -116,7 +116,16 @@ export class BillingFormComponent implements OnInit {
     const status = formValue.status!;
 
     const patient = this.patients.find(p => p.id === formValue.patientId);
-    const clinicId = patient?.clinicId || this.clinicService.activeClinicId();
+    let clinicId = patient?.clinicId || this.clinicService.activeClinicId();
+    if (clinicId === 'all' || !clinicId) {
+      clinicId = patient?.clinicId ?? this.authService.currentUser()?.clinicIds?.[0] ?? this.authService.currentUser()?.clinicId ?? '';
+    }
+    if (clinicId === 'all' || !clinicId) {
+      const firstClinic = this.clinicService.allowedClinics()?.[0]?.id;
+      if (firstClinic) {
+        clinicId = firstClinic;
+      }
+    }
 
     const isoDate = new Date(formValue.dateIssued!).toISOString();
 
