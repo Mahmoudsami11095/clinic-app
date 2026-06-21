@@ -32,7 +32,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         originalError: err
       });
 
-      if (err.status === 0 || err.status >= 500) {
+      if (err.status === 0 || err.status === 401 || err.status === 403 || err.status >= 500) {
         toastr.error(errorMessage, errorTitle);
       }
 
