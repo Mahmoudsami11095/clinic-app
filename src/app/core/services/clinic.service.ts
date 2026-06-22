@@ -63,7 +63,7 @@ export class ClinicService {
   });
 
   constructor() {
-    if (this.authService.isAuthenticated()) {
+    if (this.authService.isAuthenticated() && !this.authService.isUnassigned()) {
       this.loadClinics();
     }
 
@@ -75,7 +75,12 @@ export class ClinicService {
         this.activeClinicIdSignal.set('all');
         return;
       }
-      this.loadClinics();
+      
+      if (!this.authService.isUnassigned()) {
+        this.loadClinics();
+      } else {
+        this.clinicsSignal.set([]);
+      }
       
       if (user.role === 'admin') {
         this.activeClinicIdSignal.set(user.clinicId || 'all');

@@ -86,6 +86,11 @@ export class AppointmentListComponent implements OnInit {
   });
 
   ngOnInit() {
+    if (this.authService.isUnassigned()) {
+      this.loading.set(false);
+      return;
+    }
+
     this.appointmentService.getAllWithDetails().subscribe({
       next: (data) => {
         this.appointments.set(data);
