@@ -16,7 +16,8 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(clonedReq).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401) {
+      // Don't intercept 401s from the auth endpoints themselves (e.g., wrong password)
+      if (err.status === 401 && !req.url.includes('/auth/')) {
         injector.get(AuthService).logout();
       }
       return throwError(() => err);
