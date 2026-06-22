@@ -18,7 +18,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 export class RadiologyDashboardComponent implements OnInit {
   private radiologyService = inject(RadiologyService);
   private patientService = inject(PatientService);
-  private authService = inject(AuthService);
+  protected authService = inject(AuthService);
   private fb = inject(FormBuilder);
 
   centers = signal<RadiologyCenter[]>([]);
@@ -58,6 +58,9 @@ export class RadiologyDashboardComponent implements OnInit {
   });
 
   ngOnInit() {
+    if (this.authService.isUnassigned()) {
+      return;
+    }
     this.loadCenters();
     this.loadRecords();
     this.loadPatients();

@@ -19,7 +19,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 })
 export class PatientListComponent implements OnInit {
   private patientService = inject(PatientService);
-  private authService = inject(AuthService);
+  protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
   private router = inject(Router);
 
@@ -52,6 +52,11 @@ export class PatientListComponent implements OnInit {
   });
 
   ngOnInit() {
+    if (this.authService.isUnassigned()) {
+      this.loading.set(false);
+      return;
+    }
+
     this.patientService.getAll().subscribe({
       next: (data) => {
         this.patients.set(data);

@@ -121,6 +121,12 @@
           </div>
         }
       </div>
+    } @else if (authService.isUnassigned()) {
+      <div class="py-16 text-center text-slate-500 dark:text-slate-400">
+        <i class="pi pi-lock text-4xl mb-3 text-slate-300 dark:text-slate-600 block"></i>
+        <p class="font-medium">Unassigned Account</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">You must be assigned to at least one clinic to access this data.</p>
+      </div>
     } @else if (filteredRecords().length === 0) {
       <div class="py-16 text-center text-slate-500 dark:text-slate-400">
         <i class="pi pi-receipt text-4xl mb-3 text-slate-300 dark:text-slate-600 block"></i>

@@ -67,6 +67,16 @@ export class AuthService {
   isAssistant = computed(() => this.currentUserSignal()?.role === 'assistant');
   isPatient = computed(() => this.currentUserSignal()?.role === 'patient');
 
+  isUnassigned = computed(() => {
+    const user = this.currentUserSignal();
+    if (!user) return false; // not logged in
+    if (user.role === 'admin' && !user.clinicId) return false; // Super Admin is not unassigned
+    if (user.role === 'doctor') {
+      return !user.clinicIds || user.clinicIds.length === 0;
+    }
+    return !user.clinicId;
+  });
+
   /** Only set for users with role `doctor` (assistants store supervising doctor on `doctorId` separately). */
   currentDoctorId = computed(() => {
     const user = this.currentUserSignal();

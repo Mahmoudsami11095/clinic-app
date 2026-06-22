@@ -33,7 +33,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       });
 
       if (err.status === 0 || err.status === 401 || err.status === 403 || err.status >= 500) {
-        toastr.error(errorMessage, errorTitle);
+        const isUnassignedClinicError = err.status === 403 && req.method === 'GET' && errorMessage.toLowerCase().includes('assigned to at least one clinic');
+        if (!isUnassignedClinicError) {
+          toastr.error(errorMessage, errorTitle);
+        }
       }
 
       return throwError(() => customError);
