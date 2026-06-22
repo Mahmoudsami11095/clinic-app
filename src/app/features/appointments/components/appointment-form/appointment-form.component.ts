@@ -86,7 +86,7 @@ export class AppointmentFormComponent implements OnInit {
       if (this.allPatients.length) {
         this.applyFilters();
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   private defaultClinicForUser(): string {

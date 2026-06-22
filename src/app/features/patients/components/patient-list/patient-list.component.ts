@@ -19,7 +19,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 })
 export class PatientListComponent implements OnInit {
   private patientService = inject(PatientService);
-  private authService = inject(AuthService);
+  protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
   private router = inject(Router);
 

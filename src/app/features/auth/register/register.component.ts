@@ -103,7 +103,7 @@ export class RegisterComponent implements OnDestroy {
         selected: false
       }));
       this.clinicsList.set(clinics);
-    }, { allowSignalWrites: true });
+    });
 
     this.registerForm.valueChanges.subscribe(() => {
       if (this.errorMessage()) {
