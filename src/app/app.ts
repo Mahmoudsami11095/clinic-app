@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NgxSpinnerComponent } from 'ngx-spinner';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from './core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgxSpinnerComponent, TranslateModule],
+  imports: [RouterOutlet, NgxSpinnerComponent, TranslatePipe],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
