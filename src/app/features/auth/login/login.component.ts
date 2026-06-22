@@ -161,17 +161,15 @@ export class LoginComponent {
       window.addEventListener('message', messageListener);
 
       const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
-      if (popup) {
-        const interval = setInterval(() => {
-          if (popup.closed) { 
-            clearInterval(interval); 
-            setTimeout(() => {
-              window.removeEventListener('message', messageListener);
-              this.isLoading.set(false);
-            }, 500);
-          }
-        }, 500);
-      }
+      
+      // We removed the popup.closed interval to prevent Cross-Origin-Opener-Policy browser console warnings.
+      // If the user manually closes the popup, the spinner will time out after 2 minutes.
+      setTimeout(() => {
+        if (this.isLoading()) {
+          this.isLoading.set(false);
+          window.removeEventListener('message', messageListener);
+        }
+      }, 120000);
     }
   }
 
