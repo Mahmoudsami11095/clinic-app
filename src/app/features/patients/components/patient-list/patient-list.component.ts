@@ -52,6 +52,11 @@ export class PatientListComponent implements OnInit {
   });
 
   ngOnInit() {
+    if (this.authService.isUnassigned()) {
+      this.loading.set(false);
+      return;
+    }
+
     this.patientService.getAll().subscribe({
       next: (data) => {
         this.patients.set(data);

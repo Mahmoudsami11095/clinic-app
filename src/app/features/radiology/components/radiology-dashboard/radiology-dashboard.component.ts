@@ -58,6 +58,9 @@ export class RadiologyDashboardComponent implements OnInit {
   });
 
   ngOnInit() {
+    if (this.authService.isUnassigned()) {
+      return;
+    }
     this.loadCenters();
     this.loadRecords();
     this.loadPatients();

@@ -53,6 +53,12 @@ export class InventoryListComponent implements OnInit {
       }
     }
 
+    if (this.authService.isUnassigned()) {
+      this.error = 'Unassigned Account. You must be assigned to at least one clinic to access this data.';
+      this.loading = false;
+      return;
+    }
+
     if (this.doctorId) {
       this.loadMaterials();
     } else {

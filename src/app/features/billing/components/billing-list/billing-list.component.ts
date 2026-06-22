@@ -89,6 +89,11 @@ export class BillingListComponent implements OnInit {
   });
 
   ngOnInit() {
+    if (this.authService.isUnassigned()) {
+      this.loading.set(false);
+      return;
+    }
+
     const doctorId = this.authService.currentDoctorId();
     const patientId = this.authService.currentPatientId();
 
