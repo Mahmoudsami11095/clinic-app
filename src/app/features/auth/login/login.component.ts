@@ -163,18 +163,6 @@ export class LoginComponent {
       const popup = window.open(authUrl, 'Google Login', 'width=500,height=600');
       if (popup) {
         const interval = setInterval(() => {
-          try {
-            const hash = popup.location.hash;
-            if (hash) {
-              const params = new URLSearchParams(hash.substring(1));
-              const idToken = params.get('id_token');
-              if (idToken) {
-                popup.close(); clearInterval(interval); 
-                window.removeEventListener('message', messageListener);
-                this.executeSocialLogin('google', idToken);
-              }
-            }
-          } catch (e) {}
           if (popup.closed) { 
             clearInterval(interval); 
             setTimeout(() => {

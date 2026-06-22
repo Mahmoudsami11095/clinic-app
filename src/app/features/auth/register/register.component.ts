@@ -388,21 +388,6 @@ export class RegisterComponent implements OnDestroy {
         
         if (popup) {
           const interval = setInterval(() => {
-            try {
-              const hash = popup.location.hash;
-              if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const idToken = params.get('id_token');
-                if (idToken) {
-                  popup.close();
-                  clearInterval(interval);
-                  window.removeEventListener('message', messageListener);
-                  this.executeSocialLogin('google', idToken);
-                }
-              }
-            } catch (e) {
-              // Ignore cross-origin access exceptions during redirection
-            }
             if (popup.closed) {
               clearInterval(interval);
               setTimeout(() => {
