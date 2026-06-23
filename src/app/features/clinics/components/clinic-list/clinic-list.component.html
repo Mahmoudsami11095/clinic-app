@@ -90,7 +90,8 @@
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       @for (clinic of filteredClinics(); track clinic.id) {
-        <div class="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-xl dark:hover:shadow-none transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
+        <div class="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-xl dark:hover:shadow-none transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col cursor-pointer"
+             (click)="viewClinicDetails(clinic.id)">
           
           <!-- Top Accent & Profile Header -->
           <div class="h-20 w-full bg-gradient-to-r opacity-90 absolute top-0 start-0 end-0 z-0"
@@ -148,7 +149,8 @@
           </div>
 
           <!-- Actions Footer -->
-          <div class="p-4 bg-slate-50/20 dark:bg-slate-950/10 flex flex-wrap justify-end gap-2">
+          <div class="p-4 bg-slate-50/20 dark:bg-slate-950/10 flex flex-wrap justify-end gap-2"
+               (click)="$event.stopPropagation()">
             @if (clinic.status === 'Pending') {
               <button
                 (click)="respondToAssignment(clinic.id, 'Accepted')"

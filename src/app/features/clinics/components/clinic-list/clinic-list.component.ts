@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -22,6 +23,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 })
 export class ClinicListComponent implements OnInit {
   protected clinicService = inject(ClinicService);
+  private router = inject(Router);
   private doctorService = inject(DoctorService);
   private patientService = inject(PatientService);
   private appointmentService = inject(AppointmentService);
@@ -277,5 +279,9 @@ export class ClinicListComponent implements OnInit {
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
+  }
+
+  viewClinicDetails(id: string) {
+    this.router.navigate(['/clinics', id]);
   }
 }
