@@ -12,6 +12,7 @@ import { InputFieldComponent } from '../../shared/components/input-field/input-f
 import { PhoneInputFieldComponent } from '../../shared/components/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../core/utils/phone.utils';
+import { ClinicService } from '../../core/services/clinic.service';
 
 @Component({
   selector: 'app-profile',
@@ -25,12 +26,17 @@ export class ProfileComponent implements OnInit {
   private http = inject(HttpClient);
   private toastr = inject(ToastrService);
   protected authService = inject(AuthService);
+  protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
 
   profileForm!: FormGroup;
   isLoading = signal(false);
   isSaving = signal(false);
   userRole = signal<string>('');
+  
+  linkedClinics = signal<any[]>([]);
+  newClinicCountryCode = signal('+20');
+  newClinicPhoneNumber = signal('');
 
   originalEmail = '';
   originalContactNumber = '';
@@ -105,6 +111,17 @@ export class ProfileComponent implements OnInit {
         this.phoneOtpSent.set(false);
         this.emailOtpConfirmed.set(false);
         this.phoneOtpConfirmed.set(false);
+
+        const allClinics = this.clinicService.clinics();
+        if (data.clinicIds) {
+          const linked = allClinics.filter(c => data.clinicIds.includes(c.id));
+          this.linkedClinics.set(linked);
+        } else if (data.clinicId) {
+          const linked = allClinics.filter(c => c.id === data.clinicId);
+          this.linkedClinics.set(linked);
+        } else {
+          this.linkedClinics.set([]);
+        }
 
         const phoneData = splitPhoneNumber(data.contactNumber || '');
 
@@ -250,6 +267,31 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  addClinicByPhone() {
+    if (!this.newClinicPhoneNumber()) {
+      this.toastr.error('Please enter a phone number', 'Error');
+      return;
+    }
+    const fullPhone = `${this.newClinicCountryCode()}${this.newClinicPhoneNumber()}`;
+    const matched = this.clinicService.clinics().find(c => c.phone === fullPhone);
+    if (!matched) {
+      this.toastr.error('No clinic found with the provided phone number.', 'Error');
+      return;
+    }
+    const current = this.linkedClinics();
+    if (current.find(c => c.id === matched.id)) {
+      this.toastr.warning('Clinic is already linked to your profile.', 'Warning');
+      return;
+    }
+    this.linkedClinics.set([...current, matched]);
+    this.newClinicPhoneNumber.set('');
+    this.toastr.success('Clinic added! Save changes to apply.', 'Success');
+  }
+
+  removeClinic(id: string) {
+    this.linkedClinics.update(list => list.filter(c => c.id !== id));
+  }
+
   onSubmit() {
     if (this.profileForm.invalid) {
       this.toastr.error('Please fix the validation errors.', 'Validation Error');
@@ -279,6 +321,8 @@ export class ProfileComponent implements OnInit {
 
     if (this.userRole() === 'doctor') {
       formValue.availabilityDays = JSON.stringify(this.selectedAvailabilityDays);
+    } else if (this.userRole() === 'patient') {
+      formValue.clinicIds = this.linkedClinics().map(c => c.id);
     }
 
     this.http.put<{ message: string; data: any }>('/api/auth/profile', formValue).subscribe({

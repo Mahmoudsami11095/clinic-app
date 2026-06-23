@@ -80,6 +80,8 @@ export class RegisterComponent implements OnDestroy {
       dob: ['1996-01-01'],
       bloodGroup: ['O+'],
       address: [''],
+      clinicCountryCode: ['+20'],
+      clinicPhoneNumber: [''],
  
       // Doctor specific fields
       specialization: ['General Dentistry'],
@@ -339,7 +341,19 @@ export class RegisterComponent implements OnDestroy {
     } else if (formValues.role === 'assistant') {
         // Assistants do not select clinics during registration.
     } else if (formValues.role === 'patient') {
-      payload.clinicId = formValues.clinicId;
+      let clinicId = formValues.clinicId;
+      if (formValues.clinicPhoneNumber) {
+        const fullPhone = `${formValues.clinicCountryCode}${formValues.clinicPhoneNumber}`;
+        const matched = this.clinicService.clinics().find(c => c.phone === fullPhone);
+        if (matched) {
+          clinicId = matched.id;
+        } else {
+          // If a phone was entered but not found, we could show an error, but it's optional, so let's just proceed
+          // Alternatively, we can show an error
+          this.toastr.warning('Clinic with the provided phone number was not found. Proceeding without clinic link.', 'Warning');
+        }
+      }
+      payload.clinicId = clinicId;
       payload.gender = formValues.gender;
       payload.dob = formValues.dob;
       payload.bloodGroup = formValues.bloodGroup;
