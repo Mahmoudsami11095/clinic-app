@@ -13,11 +13,12 @@ import { PhoneInputFieldComponent } from '../../shared/components/phone-input-fi
 import { phoneValidator } from '../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../core/utils/phone.utils';
 import { ClinicService } from '../../core/services/clinic.service';
+import { GooglePlacesDirective } from '../../shared/directives/google-places.directive';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, GooglePlacesDirective],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })

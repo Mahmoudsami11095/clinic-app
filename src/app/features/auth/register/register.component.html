@@ -298,6 +298,7 @@
             </div>
 
             <app-input-field
+              appGooglePlaces
               [formGroup]="registerForm"
               controlName="address"
               label="Address"
@@ -386,7 +387,7 @@
               <!-- Address -->
               <div>
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Address</label>
-                <input type="text" formControlName="clinicAddress"
+                <input type="text" formControlName="clinicAddress" appGooglePlaces
                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
                        placeholder="e.g. 123 Main St, New York, NY">
               </div>

@@ -32,10 +32,11 @@ import { InputFieldComponent } from '../../../../shared/components/input-field/i
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../../../core/utils/phone.utils';
+import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
 
 @Component({
   selector: 'app-patient-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent, InputFieldComponent, PhoneInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent, InputFieldComponent, PhoneInputFieldComponent, GooglePlacesDirective],
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css'
 })

@@ -8,12 +8,12 @@ import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { splitPhoneNumber, combinePhoneNumber } from '../../../../core/utils/phone.utils';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
-
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
 
 @Component({
   selector: 'app-clinic-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, PhoneInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, PhoneInputFieldComponent, GooglePlacesDirective],
   templateUrl: './clinic-form.component.html',
   styleUrl: './clinic-form.component.css'
 })

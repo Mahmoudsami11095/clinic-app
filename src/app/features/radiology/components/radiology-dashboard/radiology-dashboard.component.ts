@@ -6,12 +6,13 @@ import { PatientService } from '../../../patients/services/patient.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
 
 @Component({
   selector: 'app-radiology-dashboard',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, ModalComponent, TranslatePipe
+    CommonModule, ReactiveFormsModule, ModalComponent, TranslatePipe, GooglePlacesDirective
   ],
   templateUrl: './radiology-dashboard.component.html'
 })

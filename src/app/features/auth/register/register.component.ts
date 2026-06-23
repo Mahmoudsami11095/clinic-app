@@ -14,6 +14,7 @@ import { InputFieldComponent } from '../../../shared/components/input-field/inpu
 import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../core/validators/phone.validator';
 import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
+import { GooglePlacesDirective } from '../../../shared/directives/google-places.directive';
 
 declare var google: any;
 declare var AppleID: any;
@@ -21,7 +22,7 @@ declare var AppleID: any;
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, GooglePlacesDirective],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
