@@ -6,10 +6,11 @@ import { Clinic } from '../../../../core/models/clinic.model';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { AddressAutocompleteComponent } from '../../../../shared/components/address-autocomplete/address-autocomplete.component';
 
 @Component({
   selector: 'app-clinic-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AddressAutocompleteComponent],
   templateUrl: './clinic-form.component.html',
   styleUrl: './clinic-form.component.css'
 })

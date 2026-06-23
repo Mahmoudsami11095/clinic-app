@@ -13,6 +13,7 @@ import { extractErrorMessage } from '../../../core/utils/error.utils';
 import { InputFieldComponent } from '../../../shared/components/input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
 import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
 
 declare var google: any;
 declare var AppleID: any;
@@ -20,7 +21,7 @@ declare var AppleID: any;
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, AddressAutocompleteComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
