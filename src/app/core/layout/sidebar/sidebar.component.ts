@@ -19,13 +19,13 @@ export class Sidebar {
 
   private allMenuItems = [
     { labelKey: 'sidebar.dashboard', route: '/dashboard', icon: 'pi pi-home', roles: ['admin', 'doctor'] },
+    { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor'] },
     { labelKey: 'sidebar.patients', route: '/patients', icon: 'pi pi-users', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.appointments', route: '/appointments', icon: 'pi pi-calendar', roles: ['admin', 'doctor', 'assistant', 'patient'] },
-    { labelKey: 'sidebar.doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
-    { labelKey: 'sidebar.billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
-    { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor'] },
-    { labelKey: 'sidebar.inventory', route: '/inventory', icon: 'pi pi-box', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.radiology', route: '/radiology', icon: 'pi pi-camera', roles: ['admin', 'doctor', 'assistant'] },
+    { labelKey: 'sidebar.billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },
+    { labelKey: 'sidebar.inventory', route: '/inventory', icon: 'pi pi-box', roles: ['admin', 'doctor', 'assistant'] },
+    { labelKey: 'sidebar.doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
     { labelKey: 'sidebar.profile', route: '/profile', icon: 'pi pi-user', roles: ['admin', 'doctor', 'assistant', 'patient'] },
   ];
 
