@@ -9,6 +9,7 @@ import { ToastrService } from 'ngx-toastr';
 
 import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+import { phoneValidator } from '../../../../core/validators/phone.validator';
 
 @Component({
   selector: 'app-doctor-form',
@@ -36,7 +37,7 @@ export class DoctorFormComponent {
     specialization: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     countryCode: ['+20', Validators.required],
-    phoneNumber: ['', [Validators.required, (control: AbstractControl) => this.phoneFormatValidator(control)]],
+    phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]],
     availability: this.fb.group({
       days: this.fb.array([], Validators.required),
       hours: ['09:00 - 17:00', Validators.required]
@@ -74,50 +75,7 @@ export class DoctorFormComponent {
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
   }
 
-  splitContactNumber(contactNumber: string): { countryCode: string; phoneNumber: string } {
-    if (!contactNumber) return { countryCode: '+20', phoneNumber: '' };
-    contactNumber = contactNumber.trim();
-    if (contactNumber.startsWith('+')) {
-      const prefixes = ['+966', '+971', '+380', '+359', '+249', '+212', '+213', '+216', '+218', '+20', '+44', '+49', '+33', '+91', '+86', '+1'];
-      for (const prefix of prefixes) {
-        if (contactNumber.startsWith(prefix)) {
-          return { countryCode: prefix, phoneNumber: contactNumber.substring(prefix.length).trim() };
-        }
-      }
-      if (contactNumber.length >= 4) {
-        return { countryCode: contactNumber.substring(0, 4), phoneNumber: contactNumber.substring(4) };
-      }
-    }
-    return { countryCode: '+20', phoneNumber: contactNumber };
-  }
 
-  phoneFormatValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
-    const country = this.form?.get('countryCode')?.value || '+20';
-    const val = control.value.replace(/[\s\-()]/g, '');
-
-    if (!/^\d+$/.test(val)) {
-      return { onlyDigits: true };
-    }
-
-    if (country === '+20') {
-      let clean = val;
-      if (clean.startsWith('0')) {
-        clean = clean.substring(1);
-      }
-      
-      const isMobile = /^(10|11|12|15)\d{8}$/.test(clean);
-      const isLandline = clean.length >= 7 && clean.length <= 9;
-      if (!isMobile && !isLandline) {
-        return { invalidEgyptPhone: true };
-      }
-    } else {
-      if (val.length < 6 || val.length > 15) {
-        return { invalidLength: true };
-      }
-    }
-    return null;
-  }
 
   onSubmit() {
     if (this.form.invalid) {

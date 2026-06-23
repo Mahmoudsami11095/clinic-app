@@ -36,22 +36,13 @@
   </div>
 
   <!-- Phone -->
-  <div>
-    <label for="phone" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'clinics.phone' | translate }}</label>
-    <div class="relative">
-      <input
-        type="text"
-        id="phone"
-        formControlName="phone"
-        [placeholder]="'clinics.phone_placeholder' | translate"
-        [class]="isInvalid('phone') ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500 dark:border-rose-500/50 dark:focus:ring-rose-500/30' : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500 dark:border-slate-700 dark:focus:ring-indigo-500/30 dark:focus:border-indigo-500'"
-        class="w-full bg-slate-50 border rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 transition-all text-slate-700 placeholder-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-500"
-      />
-    </div>
-    @if (isInvalid('phone')) {
-      <p class="text-xs text-red-500 mt-1">{{ 'clinics.phone_error' | translate }}</p>
-    }
-  </div>
+  <app-phone-input-field
+    [formGroup]="form"
+    countryCodeName="countryCode"
+    phoneNumberName="phoneNumber"
+    label="clinics.phone"
+    [required]="true"
+  ></app-phone-input-field>
 
   <!-- Availability Hours -->
   <div>
