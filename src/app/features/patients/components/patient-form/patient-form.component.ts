@@ -30,10 +30,11 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
 
 import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+import { AddressAutocompleteComponent } from '../../../../shared/components/address-autocomplete/address-autocomplete.component';
 
 @Component({
   selector: 'app-patient-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent, InputFieldComponent, PhoneInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent, InputFieldComponent, PhoneInputFieldComponent, AddressAutocompleteComponent],
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css'
 })

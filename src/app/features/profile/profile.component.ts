@@ -10,11 +10,12 @@ import { LanguageService } from '../../core/i18n/language.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { InputFieldComponent } from '../../shared/components/input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../../shared/components/phone-input-field/phone-input-field.component';
+import { AddressAutocompleteComponent } from '../../shared/components/address-autocomplete/address-autocomplete.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, AddressAutocompleteComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })

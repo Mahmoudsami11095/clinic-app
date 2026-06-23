@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
   // TODO: Replace YOUR_BACKEND_APP_NAME with your actual Azure App Service URL from Step 2
-  apiUrl: 'https://clinic-api-123-a0ghf9aeb5ccawha.swedencentral-01.azurewebsites.net/api'
+  apiUrl: 'https://clinic-api-123-a0ghf9aeb5ccawha.swedencentral-01.azurewebsites.net/api',
+  googleMapsApiKey: 'YOUR_GOOGLE_MAPS_API_KEY'
 };

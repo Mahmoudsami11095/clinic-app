@@ -303,11 +303,11 @@
           </div>
 
           <!-- Address -->
-          <app-input-field
-            [formGroup]="profileForm"
-            controlName="address"
-            label="profile.home_address"
-          ></app-input-field>
+          <app-address-autocomplete
+            formControlName="address"
+            [label]="'profile.home_address'"
+            [isInvalid]="!!profileForm.get('address')?.invalid && !!profileForm.get('address')?.touched"
+          ></app-address-autocomplete>
         </div>
 
         <div class="space-y-4">

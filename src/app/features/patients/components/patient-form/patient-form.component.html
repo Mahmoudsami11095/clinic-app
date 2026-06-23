@@ -168,15 +168,13 @@
 
         <!-- Address -->
         <div class="sm:col-span-2">
-          <app-input-field
-            [formGroup]="form"
-            controlName="address"
-            label="patients.address"
-            type="textarea"
-            placeholder="123 Main St, City, Country"
-            icon="pi pi-map-marker"
+          <app-address-autocomplete
+            formControlName="address"
+            [label]="'patients.address'"
+            [placeholder]="'123 Main St, City, Country'"
             [required]="true"
-          ></app-input-field>
+            [isInvalid]="!!form.get('address')?.invalid && !!form.get('address')?.touched"
+          ></app-address-autocomplete>
         </div>
       </div>
     </div>
