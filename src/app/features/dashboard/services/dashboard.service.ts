@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, catchError, of } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicService } from '../../../core/services/clinic.service';
 import { Patient } from '../../patients/models/patient.model';
 import { Doctor } from '../../doctors/models/doctor.model';
 import { Appointment } from '../../appointments/models/appointment.model';
 import { BillingRecord } from '../../billing/models/billing.model';
+import { RadiologyRecord } from '../../radiology/services/radiology.service';
 
 export interface DashboardStats {
   totalPatients: number;
@@ -16,6 +17,8 @@ export interface DashboardStats {
   pendingBills: number;
   totalCollected: number;
   totalOutstanding: number;
+  totalExpenses?: number;
+  netProfit?: number;
 }
 
 export interface RecentAppointment {
@@ -25,6 +28,18 @@ export interface RecentAppointment {
   date: string;
   type: string;
   status: string;
+}
+
+export interface DashboardAnalytics {
+  appointmentsByType: { labels: string[], data: number[] };
+  appointmentsOverTime: { labels: string[], data: number[] };
+  revenueOverTime?: { labels: string[], data: number[] };
+  profitTrend?: {
+    labels: string[];
+    revenue: number[];
+    expenses: number[];
+    profit: number[];
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,14 +56,18 @@ export class DashboardService {
       appointments: this.http.get<{ data: Appointment[] }>('/api/appointments'),
       doctors: this.http.get<{ data: Doctor[] }>('/api/doctors'),
       billing: this.http.get<{ data: BillingRecord[] }>('/api/billing'),
+      radiology: this.http.get<{ data: RadiologyRecord[] }>('/api/Radiology/records').pipe(
+        catchError(() => of({ data: [] }))
+      ),
     }).pipe(
-      map(({ patients, appointments, doctors, billing }) => {
+      map(({ patients, appointments, doctors, billing, radiology }) => {
         const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
         
         let patientsList = patients.data;
         let doctorsList = doctors.data;
         let apptsList = appointments.data;
         let billsList = billing.data;
+        let radList = radiology.data || [];
 
         // 1. Filter by Active Clinic (skipped for doctors — they see all assigned clinics)
         if (this.clinicService.shouldFilterByActiveClinic() && activeClinicId !== 'all') {
@@ -69,6 +88,7 @@ export class DashboardService {
             // Fallback: if patient has any appointment with this doctor
             return appointments.data.some(a => a.patientId === b.patientId && a.doctorId === doctorId);
           });
+          radList = radList.filter(r => r.doctorId === doctorId);
         }
 
         const uniquePatientIds = new Set(apptsList.map(a => a.patientId));
@@ -92,7 +112,9 @@ export class DashboardService {
             const paid = b.paidAmount !== undefined ? b.paidAmount : 0;
             return sum + (b.amount - paid);
           }, 0),
+          totalExpenses: radList.reduce((sum: number, r: RadiologyRecord) => sum + (r.amountPaid || 0), 0),
         };
+        stats.netProfit = stats.totalCollected - (stats.totalExpenses || 0);
 
         const recentAppointments: RecentAppointment[] = apptsList
           .sort((a: Appointment, b: Appointment) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -110,7 +132,67 @@ export class DashboardService {
             };
           });
 
-        return { stats, recentAppointments };
+        const analytics: DashboardAnalytics = {
+          appointmentsByType: { labels: [], data: [] },
+          appointmentsOverTime: { labels: [], data: [] }
+        };
+
+        const typeCounts: Record<string, number> = {};
+        apptsList.forEach(a => {
+          typeCounts[a.type] = (typeCounts[a.type] || 0) + 1;
+        });
+        analytics.appointmentsByType.labels = Object.keys(typeCounts);
+        analytics.appointmentsByType.data = Object.values(typeCounts);
+
+        const monthsLabels: string[] = [];
+        const apptsData: number[] = [0, 0, 0, 0, 0, 0];
+        const revenueData: number[] = [0, 0, 0, 0, 0, 0];
+        const expensesData: number[] = [0, 0, 0, 0, 0, 0];
+        
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          monthsLabels.push(d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+        }
+
+        apptsList.forEach(a => {
+          const d = new Date(a.date);
+          const diffMonths = (now.getFullYear() - d.getFullYear()) * 12 + now.getMonth() - d.getMonth();
+          if (diffMonths >= 0 && diffMonths < 6) {
+            apptsData[5 - diffMonths]++;
+          }
+        });
+        analytics.appointmentsOverTime.labels = monthsLabels;
+        analytics.appointmentsOverTime.data = apptsData;
+
+        billsList.forEach(b => {
+          if (b.status === 'paid') {
+            const d = new Date(b.dateIssued || now.toISOString());
+            const diffMonths = (now.getFullYear() - d.getFullYear()) * 12 + now.getMonth() - d.getMonth();
+            if (diffMonths >= 0 && diffMonths < 6) {
+              revenueData[5 - diffMonths] += (b.paidAmount !== undefined ? b.paidAmount : b.amount);
+            }
+          }
+        });
+        radList.forEach(r => {
+          const d = new Date(r.date || now.toISOString());
+          const diffMonths = (now.getFullYear() - d.getFullYear()) * 12 + now.getMonth() - d.getMonth();
+          if (diffMonths >= 0 && diffMonths < 6) {
+            expensesData[5 - diffMonths] += (r.amountPaid || 0);
+          }
+        });
+        
+        const profitData = revenueData.map((rev, i) => rev - expensesData[i]);
+
+        analytics.revenueOverTime = { labels: monthsLabels, data: revenueData };
+        analytics.profitTrend = {
+          labels: monthsLabels,
+          revenue: revenueData,
+          expenses: expensesData,
+          profit: profitData
+        };
+
+        return { stats, recentAppointments, analytics };
       })
     );
   }

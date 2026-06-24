@@ -39,6 +39,35 @@
     </div>
   }
 
+  <!-- Charts Section -->
+  @if (!loading() && analytics()) {
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Appointments Trend -->
+      <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{{ 'dashboard.appointments_trend' | translate }}</h2>
+        <div class="relative w-full">
+          <p-chart type="line" [data]="appointmentsChartData" [options]="lineChartOptions" height="300px"></p-chart>
+        </div>
+      </div>
+
+      <!-- Appointments By Type -->
+      <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{{ 'dashboard.appointments_by_type' | translate }}</h2>
+        <div class="relative w-full flex items-center justify-center">
+          <p-chart type="doughnut" [data]="typeChartData" [options]="pieChartOptions" height="300px"></p-chart>
+        </div>
+      </div>
+
+      <!-- Profit Trend -->
+      <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{{ 'dashboard.profit_trend' | translate }}</h2>
+        <div class="relative w-full">
+          <p-chart type="bar" [data]="profitChartData" [options]="mixedChartOptions" height="350px"></p-chart>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Revenue Highlight + Recent Appointments -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
