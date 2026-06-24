@@ -6,10 +6,14 @@ import { Clinic } from '../../../../core/models/clinic.model';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { splitPhoneNumber, combinePhoneNumber } from '../../../../core/utils/phone.utils';
+import { phoneValidator } from '../../../../core/validators/phone.validator';
+
+import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
 
 @Component({
   selector: 'app-clinic-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, PhoneInputFieldComponent],
   templateUrl: './clinic-form.component.html',
   styleUrl: './clinic-form.component.css'
 })
@@ -30,17 +34,26 @@ export class ClinicFormComponent implements OnInit {
   form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3)]],
     address: ['', [Validators.required, Validators.minLength(5)]],
-    phone: ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-()]{7,15}$/)]],
+    countryCode: ['+20', Validators.required],
+    phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]],
     availabilityHours: ['09:00-17:00', [Validators.required]],
     availabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']), [Validators.required]]
   });
 
+  constructor() {
+    this.form.get('countryCode')?.valueChanges.subscribe(() => {
+      this.form.get('phoneNumber')?.updateValueAndValidity();
+    });
+  }
+
   ngOnInit() {
     if (this.clinic) {
+      const phoneData = splitPhoneNumber(this.clinic.phone);
       this.form.patchValue({
         name: this.clinic.name,
         address: this.clinic.address,
-        phone: this.clinic.phone,
+        countryCode: phoneData.countryCode,
+        phoneNumber: phoneData.phoneNumber,
         availabilityHours: this.clinic.availabilityHours || '09:00-17:00',
         availabilityDays: this.clinic.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       });
@@ -77,13 +90,14 @@ export class ClinicFormComponent implements OnInit {
 
     this.submitting = true;
     const formValue = this.form.value;
+    const combinedPhone = combinePhoneNumber(formValue.countryCode, formValue.phoneNumber);
 
     if (this.clinic) {
       const updatedClinic: Clinic = {
         ...this.clinic,
         name: formValue.name || '',
         address: formValue.address || '',
-        phone: formValue.phone || '',
+        phone: combinedPhone,
         availabilityHours: formValue.availabilityHours || '09:00-17:00',
         availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       };
@@ -111,7 +125,7 @@ export class ClinicFormComponent implements OnInit {
         id: crypto.randomUUID(),
         name: formValue.name || '',
         address: formValue.address || '',
-        phone: formValue.phone || '',
+        phone: combinedPhone,
         availabilityHours: formValue.availabilityHours || '09:00-17:00',
         availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       };

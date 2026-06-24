@@ -12,6 +12,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 import { extractErrorMessage } from '../../../core/utils/error.utils';
 import { InputFieldComponent } from '../../../shared/components/input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
+import { phoneValidator } from '../../../core/validators/phone.validator';
 import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
 
 declare var google: any;
@@ -68,7 +69,7 @@ export class RegisterComponent implements OnDestroy {
       password: ['', [Validators.required, Validators.minLength(6)]],
       role: ['patient', Validators.required],
       countryCode: ['+20', Validators.required],
-      phoneNumber: ['', [Validators.required, (control: AbstractControl) => this.phoneFormatValidator(control)]],
+      phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]],
       phone: [''], // Hidden field for backward compatibility
       
       // Patient / Assistant associated clinic selection
@@ -432,33 +433,7 @@ export class RegisterComponent implements OnDestroy {
     });
   }
 
-  phoneFormatValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
-    const country = this.registerForm?.get('countryCode')?.value || '+20';
-    const val = control.value.replace(/[\s\-()]/g, '');
 
-    if (!/^\d+$/.test(val)) {
-      return { onlyDigits: true };
-    }
-
-    if (country === '+20') {
-      let clean = val;
-      if (clean.startsWith('0')) {
-        clean = clean.substring(1);
-      }
-      
-      const isMobile = /^(10|11|12|15)\d{8}$/.test(clean);
-      const isLandline = clean.length >= 7 && clean.length <= 9;
-      if (!isMobile && !isLandline) {
-        return { invalidEgyptPhone: true };
-      }
-    } else {
-      if (val.length < 6 || val.length > 15) {
-        return { invalidLength: true };
-      }
-    }
-    return null;
-  }
 
   ngOnDestroy() {
     if (this.timerInterval) {
