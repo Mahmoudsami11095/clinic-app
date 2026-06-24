@@ -19,7 +19,7 @@ export class Sidebar {
 
   private allMenuItems = [
     { labelKey: 'sidebar.dashboard', route: '/dashboard', icon: 'pi pi-home', roles: ['admin', 'doctor'] },
-    { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor'] },
+    { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.patients', route: '/patients', icon: 'pi pi-users', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.appointments', route: '/appointments', icon: 'pi pi-calendar', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { labelKey: 'sidebar.radiology', route: '/radiology', icon: 'pi pi-camera', roles: ['admin', 'doctor', 'assistant'] },
@@ -36,7 +36,7 @@ export class Sidebar {
     return this.allMenuItems
       .filter(item => {
         if (item.route === '/clinics') {
-          return (role === 'admin' && !user.clinicId) || role === 'doctor';
+          return (role === 'admin' && !user.clinicId) || role === 'doctor' || role === 'assistant';
         }
         return item.roles.includes(role);
       })
