@@ -6,11 +6,10 @@ import { DoctorService } from '../../../doctors/services/doctor.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { Clinic } from '../../../../core/models/clinic.model';
-import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-clinic-details',
-  imports: [CommonModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, RouterModule],
   templateUrl: './clinic-details.component.html',
   styleUrl: './clinic-details.component.css'
 })
