@@ -89,7 +89,7 @@ export class PatientFormComponent implements OnInit {
 
 
   ngOnInit() {
-    this.clinicsList.set(this.clinicService.clinics());
+    this.clinicsList.set(this.clinicService.allowedClinics());
     const activeId = this.clinicService.activeClinicId();
 
     if (activeId === 'all') {
