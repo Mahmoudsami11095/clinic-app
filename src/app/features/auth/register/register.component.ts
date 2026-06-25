@@ -119,6 +119,16 @@ export class RegisterComponent implements OnDestroy {
       this.registerForm.get('newClinicPhoneNumber')?.updateValueAndValidity();
     });
 
+    this.registerForm.get('clinicName')?.valueChanges.subscribe((val) => {
+      const phoneCtrl = this.registerForm.get('newClinicPhoneNumber');
+      if (val && val.trim().length >= 3) {
+        phoneCtrl?.setValidators([Validators.required, phoneValidator('newClinicCountryCode')]);
+      } else {
+        phoneCtrl?.setValidators([phoneValidator('newClinicCountryCode')]);
+      }
+      phoneCtrl?.updateValueAndValidity();
+    });
+
     // Populate clinicsList reactively from clinicService
     effect(() => {
       const clinics = this.clinicService.clinics().map(c => ({
