@@ -61,6 +61,7 @@ export class RegisterComponent implements OnDestroy {
 
   clinicsList = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
   selectedClinicDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  showCreateClinic = signal(false);
 
   patientLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
   clinicLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };

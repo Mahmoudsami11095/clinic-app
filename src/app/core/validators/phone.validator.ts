@@ -18,19 +18,13 @@ export function phoneValidator(countryCodeControlName: string): ValidatorFn {
         clean = clean.substring(1);
       }
       
-      // Check if it looks like a mobile number (starts with 1)
-      const mobilePrefix = /^(10|11|12|15)/.test(clean);
-      if (mobilePrefix) {
-        // Must be exactly 10 digits after removing leading 0 (e.g. 1012345678)
-        if (!/^(10|11|12|15)\d{8}$/.test(clean)) {
-          return { invalidEgyptPhone: true };
-        }
-      } else {
-        // Landline: 7-9 digits (area code + number)
-        if (clean.length < 7 || clean.length > 9) {
-          return { invalidEgyptPhone: true };
-        }
+      // Egyptian Mobile: 10 digits starting with 10, 11, 12, or 15
+      if (/^(10|11|12|15)\d{8}$/.test(clean)) {
+        return null;
       }
+      
+      // If it doesn't match mobile format
+      return { invalidEgyptPhone: true };
     } else {
       if (val.length < 6 || val.length > 15) {
         return { invalidLength: true };
