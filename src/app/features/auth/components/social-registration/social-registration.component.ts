@@ -8,13 +8,14 @@ import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-field/otp-input-field.component';
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+import { ClinicSelectionComponent } from '../../../../shared/components/clinic-selection/clinic-selection.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { combinePhoneNumber } from '../../../../core/utils/phone.utils';
 
 @Component({
   selector: 'app-social-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, OtpInputFieldComponent, PhoneInputFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, OtpInputFieldComponent, PhoneInputFieldComponent, ClinicSelectionComponent],
   templateUrl: './social-registration.component.html'
 })
 export class SocialRegistrationComponent {
@@ -48,23 +49,32 @@ export class SocialRegistrationComponent {
     dob: ['1996-01-01'],
     bloodGroup: ['O+'],
     address: [''],
-    clinicName: [''],
-    clinicAddress: [''],
-    clinicPhoneCountryCode: ['+20'],
-    clinicPhoneNumber: ['', phoneValidator('clinicPhoneCountryCode')],
-    newClinicHours: ['09:00-17:00']
+    clinicDetails: this.fb.group({
+      clinicName: [''],
+      clinicAddress: [''],
+      latitude: [null],
+      longitude: [null],
+      city: [''],
+      state: [''],
+      country: [''],
+      newClinicCountryCode: ['+20'],
+      newClinicPhoneNumber: ['', [phoneValidator('newClinicCountryCode')]],
+      clinicAvailabilityStart: ['09:00'],
+      clinicAvailabilityEnd: ['17:00'],
+      clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
+    })
   });
+
+  get clinicDetailsGroup(): FormGroup {
+    return this.socialForm.get('clinicDetails') as FormGroup;
+  }
 
   socialRole = signal<'doctor' | 'patient' | 'assistant'>('patient');
   socialClinics = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
-  socialNewClinicDays = signal<string[]>([ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ]);
 
   constructor() {
     this.socialForm.get('phoneCountryCode')?.valueChanges.subscribe(() => {
       this.socialForm.get('phoneNumber')?.updateValueAndValidity();
-    });
-    this.socialForm.get('clinicPhoneCountryCode')?.valueChanges.subscribe(() => {
-      this.socialForm.get('clinicPhoneNumber')?.updateValueAndValidity();
     });
   }
 
@@ -127,8 +137,35 @@ export class SocialRegistrationComponent {
 
     const payload: any = { contactNumber: combinedPhone };
     if (this.socialRole() === 'doctor') {
+      const selectedClinics = this.socialClinics().filter(c => c.selected);
+      
+      if (selectedClinics.length > 0) {
+          payload.clinicId = selectedClinics[0].id;
+          payload.clinicIds = selectedClinics.map(c => c.id);
+      }
+
       payload.specialization = formVal.specialization;
-      // add clinics logic here in a real app
+      payload.clinicAvailabilities = selectedClinics.map(c => ({
+        clinicId: c.id,
+        availabilityHours: c.hours,
+        availabilityDays: c.days
+      }));
+
+      if (formVal.clinicDetails.clinicName && formVal.clinicDetails.clinicName.trim().length >= 3) {
+        payload.clinicName = formVal.clinicDetails.clinicName.trim();
+        payload.clinicAddress = formVal.clinicDetails.clinicAddress.trim();
+        payload.clinicPhone = formVal.clinicDetails.newClinicPhoneNumber ? `${formVal.clinicDetails.newClinicCountryCode}${formVal.clinicDetails.newClinicPhoneNumber}` : '';
+        payload.clinicAvailabilityHours = `${formVal.clinicDetails.clinicAvailabilityStart}-${formVal.clinicDetails.clinicAvailabilityEnd}`;
+        payload.clinicAvailabilityDays = formVal.clinicDetails.clinicAvailabilityDays;
+        
+        if (formVal.clinicDetails.latitude !== null) {
+          payload.latitude = formVal.clinicDetails.latitude;
+          payload.longitude = formVal.clinicDetails.longitude;
+          payload.city = formVal.clinicDetails.city;
+          payload.state = formVal.clinicDetails.state;
+          payload.country = formVal.clinicDetails.country;
+        }
+      }
     } else {
       payload.gender = formVal.gender;
       payload.dateOfBirth = formVal.dob;
@@ -161,7 +198,11 @@ export class SocialRegistrationComponent {
       next: () => {
         this.isLoading.set(false);
         this.socialPhoneVerified.set(true);
-        this.onSubmitSocialExtraData();
+        if (this.socialRole() === 'doctor') {
+            this.socialSignUpState.set('doctor-clinics');
+        } else {
+            this.onSubmitSocialExtraData();
+        }
       },
       error: () => this.isLoading.set(false)
     });
