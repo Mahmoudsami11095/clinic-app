@@ -30,6 +30,21 @@ export class ClinicDetailsComponent implements OnInit {
     return this.clinicService.clinics().find(c => c.id === id);
   });
 
+  formattedAvailabilityDays = computed(() => {
+    const clinic = this.clinic();
+    if (!clinic || !clinic.availabilityDays) return 'Not specified';
+    try {
+      const daysArray = JSON.parse(clinic.availabilityDays);
+      if (Array.isArray(daysArray)) {
+        return daysArray.join(', ');
+      }
+    } catch (e) {
+      // If it's not valid JSON, just return the string as is
+      return clinic.availabilityDays;
+    }
+    return clinic.availabilityDays;
+  });
+
 
   doctors = signal<any[]>([]);
   patients = signal<any[]>([]);
