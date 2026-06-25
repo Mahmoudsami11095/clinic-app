@@ -72,8 +72,8 @@
               [required]="true"
             ></app-phone-input-field>
 
-            <!-- Clinic ID selection (Patients and Assistants) -->
-            <div *ngIf="socialRole() === 'patient' || socialRole() === 'assistant'">
+            <!-- Clinic ID selection (Patients only) -->
+            <div *ngIf="socialRole() === 'patient'">
               <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Associated Clinic</label>
               <select formControlName="clinicId"
                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">

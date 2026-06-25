@@ -91,7 +91,7 @@ export class RegisterComponent implements OnDestroy {
       phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]],
       phone: [''], // Hidden field for backward compatibility
       
-      // Patient / Assistant associated clinic selection
+      // Patient associated clinic selection
       clinicId: [''],
  
       // Patient specific fields
