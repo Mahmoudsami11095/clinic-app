@@ -398,12 +398,13 @@
               </div>
 
               <!-- Phone -->
-              <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 font-sans">Phone Number</label>
-                <input type="text" formControlName="clinicPhone"
-                       class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold"
-                       placeholder="e.g. +1 (555) 123-4567">
-              </div>
+              <app-phone-input-field
+                [formGroup]="registerForm"
+                countryCodeName="newClinicCountryCode"
+                phoneNumberName="newClinicPhoneNumber"
+                label="Phone Number"
+                [required]="false"
+              ></app-phone-input-field>
 
               <!-- Availability Hours -->
               <div>
@@ -455,23 +456,20 @@
               Email Verification Code
             </h4>
             <app-otp-input-field [code]="otpCode()" (codeChange)="otpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
-            <!-- Demo Email Code -->
-            <div *ngIf="demoEmailOtp()" class="text-xs text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
-              Demo Email OTP: <strong class="underline font-bold">{{ demoEmailOtp() }}</strong>
-            </div>
+
           </div>
 
-          <!-- WhatsApp Verification Block -->
+          <!-- WhatsApp Verification Block (Optional) -->
           <div *ngIf="whatsappOtpSent()" class="border-t border-slate-100 dark:border-slate-800/80 pt-4">
             <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
               WhatsApp Verification Code
+              <span class="text-slate-400 dark:text-slate-500 normal-case tracking-normal font-medium ms-1">(Optional)</span>
             </h4>
             <!-- Passcode digits input grid for phone -->
             <app-otp-input-field [code]="phoneOtpCode()" (codeChange)="phoneOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
-            <!-- Demo WhatsApp Code -->
-            <div *ngIf="demoWhatsappOtp()" class="text-xs text-center text-indigo-500 dark:text-indigo-400 font-semibold mt-2.5">
-              Demo WhatsApp OTP: <strong class="underline font-bold">{{ demoWhatsappOtp() }}</strong>
-            </div>
+            <p class="text-xs text-center text-slate-400 dark:text-slate-500 mt-2">
+              You can skip this step and verify your phone later.
+            </p>
           </div>
 
           <!-- Resend Code countdown -->

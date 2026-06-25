@@ -18,10 +18,18 @@ export function phoneValidator(countryCodeControlName: string): ValidatorFn {
         clean = clean.substring(1);
       }
       
-      const isMobile = /^(10|11|12|15)\d{8}$/.test(clean);
-      const isLandline = clean.length >= 7 && clean.length <= 9;
-      if (!isMobile && !isLandline) {
-        return { invalidEgyptPhone: true };
+      // Check if it looks like a mobile number (starts with 1)
+      const mobilePrefix = /^(10|11|12|15)/.test(clean);
+      if (mobilePrefix) {
+        // Must be exactly 10 digits after removing leading 0 (e.g. 1012345678)
+        if (!/^(10|11|12|15)\d{8}$/.test(clean)) {
+          return { invalidEgyptPhone: true };
+        }
+      } else {
+        // Landline: 7-9 digits (area code + number)
+        if (clean.length < 7 || clean.length > 9) {
+          return { invalidEgyptPhone: true };
+        }
       }
     } else {
       if (val.length < 6 || val.length > 15) {
