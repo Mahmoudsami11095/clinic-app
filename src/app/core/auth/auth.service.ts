@@ -32,6 +32,12 @@ export interface RegistrationData {
   patientId?: string;
   dob?: string;
   bloodGroup?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 @Injectable({

@@ -10,6 +10,11 @@ export interface Patient {
   email: string;
   bloodGroup: string;
   address: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  state?: string;
+  country?: string;
   registrationDate: string;
   clinicId?: string;
   allergies?: string;

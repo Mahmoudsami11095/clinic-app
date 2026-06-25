@@ -168,16 +168,13 @@
 
         <!-- Address -->
         <div class="sm:col-span-2">
-          <app-input-field
-            appGooglePlaces
-            [formGroup]="form"
-            controlName="address"
-            label="patients.address"
-            type="textarea"
-            placeholder="123 Main St, City, Country"
-            icon="pi pi-map-marker"
-            [required]="true"
-          ></app-input-field>
+          <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'patients.address' | translate }} <span class="text-rose-500">*</span></label>
+          <app-location-map 
+            (locationPicked)="onLocationPicked($event)"
+            [initialAddress]="form.get('address')?.value"
+            [readOnly]="false"
+            [height]="'250px'">
+          </app-location-map>
         </div>
       </div>
     </div>

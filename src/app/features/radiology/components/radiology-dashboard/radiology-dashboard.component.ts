@@ -6,13 +6,13 @@ import { PatientService } from '../../../patients/services/patient.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
+import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
 
 @Component({
   selector: 'app-radiology-dashboard',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, ModalComponent, TranslatePipe, GooglePlacesDirective
+    CommonModule, ReactiveFormsModule, ModalComponent, TranslatePipe, LocationMapComponent
   ],
   templateUrl: './radiology-dashboard.component.html'
 })
@@ -37,6 +37,13 @@ export class RadiologyDashboardComponent implements OnInit {
   errorMsg = signal('');
 
   // Forms
+  centerLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
+
+  onCenterLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
+    this.centerLocationData = data;
+    this.centerForm.patchValue({ address: data.address });
+  }
+
   centerForm = this.fb.group({
     id: [''],
     name: ['', [Validators.required, Validators.minLength(3)]],
@@ -111,6 +118,14 @@ export class RadiologyDashboardComponent implements OnInit {
     if (this.centerForm.invalid) return;
     const value = this.centerForm.value as any;
     
+    if (this.centerLocationData) {
+      value.latitude = this.centerLocationData.lat;
+      value.longitude = this.centerLocationData.lng;
+      value.city = this.centerLocationData.city;
+      value.state = this.centerLocationData.state;
+      value.country = this.centerLocationData.country;
+    }
+
     if (value.id) {
       this.radiologyService.updateCenter(value.id, value).subscribe({
         next: () => {

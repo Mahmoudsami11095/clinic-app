@@ -32,11 +32,11 @@ import { InputFieldComponent } from '../../../../shared/components/input-field/i
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../../../core/utils/phone.utils';
-import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
+import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
 
 @Component({
   selector: 'app-patient-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent, InputFieldComponent, PhoneInputFieldComponent, GooglePlacesDirective],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, AppointmentFormComponent, InputFieldComponent, PhoneInputFieldComponent, LocationMapComponent],
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css'
 })
@@ -64,6 +64,13 @@ export class PatientFormComponent implements OnInit {
   // Wizard state signals
   currentStage = signal<number>(1);
   doctorsList = signal<Doctor[]>([]);
+
+  locationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
+
+  onLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
+    this.locationData = data;
+    this.form.patchValue({ address: data.address });
+  }
 
   form = this.fb.group({
     firstName:        ['', [Validators.required, Validators.minLength(2)]],
@@ -290,6 +297,14 @@ export class PatientFormComponent implements OnInit {
         pastIllnesses: rawValue.pastIllnesses || ''
       };
 
+      if (this.locationData) {
+        updatedPatient.latitude = this.locationData.lat;
+        updatedPatient.longitude = this.locationData.lng;
+        updatedPatient.city = this.locationData.city;
+        updatedPatient.state = this.locationData.state;
+        updatedPatient.country = this.locationData.country;
+      }
+
       this.patientService.update(this.patient.id, updatedPatient).subscribe({
         next: () => {
           this.submitting = false;
@@ -328,6 +343,14 @@ export class PatientFormComponent implements OnInit {
         chronicDiseases: rawValue.chronicDiseases || '',
         pastIllnesses: rawValue.pastIllnesses || ''
       };
+
+      if (this.locationData) {
+        newPatient.latitude = this.locationData.lat;
+        newPatient.longitude = this.locationData.lng;
+        newPatient.city = this.locationData.city;
+        newPatient.state = this.locationData.state;
+        newPatient.country = this.locationData.country;
+      }
 
       this.patientService.create(newPatient).subscribe({
         next: () => {

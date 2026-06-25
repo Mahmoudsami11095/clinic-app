@@ -14,7 +14,7 @@ import { InputFieldComponent } from '../../../shared/components/input-field/inpu
 import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../core/validators/phone.validator';
 import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
-import { GooglePlacesDirective } from '../../../shared/directives/google-places.directive';
+import { LocationMapComponent } from '../../../shared/components/location-map/location-map.component';
 
 declare var google: any;
 declare var AppleID: any;
@@ -22,7 +22,7 @@ declare var AppleID: any;
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, GooglePlacesDirective],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, LocationMapComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
@@ -62,6 +62,19 @@ export class RegisterComponent implements OnDestroy {
 
   clinicsList = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
   selectedClinicDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+  patientLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
+  clinicLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
+
+  onPatientLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
+    this.patientLocationData = data;
+    this.registerForm.patchValue({ address: data.address });
+  }
+
+  onClinicLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
+    this.clinicLocationData = data;
+    this.registerForm.patchValue({ clinicAddress: data.address });
+  }
 
   constructor() {
     this.registerForm = this.fb.group({
@@ -338,6 +351,13 @@ export class RegisterComponent implements OnDestroy {
           payload.clinicPhone = formValues.clinicPhone.trim();
           payload.clinicAvailabilityHours = formValues.clinicAvailabilityHours;
           payload.clinicAvailabilityDays = formValues.clinicAvailabilityDays;
+          if (this.clinicLocationData) {
+            payload.latitude = this.clinicLocationData.lat;
+            payload.longitude = this.clinicLocationData.lng;
+            payload.city = this.clinicLocationData.city;
+            payload.state = this.clinicLocationData.state;
+            payload.country = this.clinicLocationData.country;
+          }
         }
     } else if (formValues.role === 'assistant') {
         // Assistants do not select clinics during registration.
@@ -359,6 +379,13 @@ export class RegisterComponent implements OnDestroy {
       payload.dob = formValues.dob;
       payload.bloodGroup = formValues.bloodGroup;
       payload.address = formValues.address;
+      if (this.patientLocationData) {
+        payload.latitude = this.patientLocationData.lat;
+        payload.longitude = this.patientLocationData.lng;
+        payload.city = this.patientLocationData.city;
+        payload.state = this.patientLocationData.state;
+        payload.country = this.patientLocationData.country;
+      }
     }
 
     this.authService.register(payload).subscribe({

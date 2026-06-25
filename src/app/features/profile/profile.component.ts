@@ -13,12 +13,12 @@ import { PhoneInputFieldComponent } from '../../shared/components/phone-input-fi
 import { phoneValidator } from '../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../core/utils/phone.utils';
 import { ClinicService } from '../../core/services/clinic.service';
-import { GooglePlacesDirective } from '../../shared/directives/google-places.directive';
+import { LocationMapComponent } from '../../shared/components/location-map/location-map.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, GooglePlacesDirective],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, LocationMapComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
@@ -52,6 +52,13 @@ export class ProfileComponent implements OnInit {
 
   selectedAvailabilityDays: string[] = [];
   availableDaysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  patientLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
+
+  onPatientLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
+    this.patientLocationData = data;
+    this.profileForm.patchValue({ address: data.address });
+  }
 
   ngOnInit() {
     const user = this.authService.currentUser();
@@ -324,6 +331,13 @@ export class ProfileComponent implements OnInit {
       formValue.availabilityDays = JSON.stringify(this.selectedAvailabilityDays);
     } else if (this.userRole() === 'patient') {
       formValue.clinicIds = this.linkedClinics().map(c => c.id);
+      if (this.patientLocationData) {
+        formValue.latitude = this.patientLocationData.lat;
+        formValue.longitude = this.patientLocationData.lng;
+        formValue.city = this.patientLocationData.city;
+        formValue.state = this.patientLocationData.state;
+        formValue.country = this.patientLocationData.country;
+      }
     }
 
     this.http.put<{ message: string; data: any }>('/api/auth/profile', formValue).subscribe({

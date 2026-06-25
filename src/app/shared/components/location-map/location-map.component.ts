@@ -14,6 +14,8 @@ export class LocationMapComponent implements OnInit, OnChanges {
   @Input() place: google.maps.places.PlaceResult | null = null;
   @Input() lat?: number;
   @Input() lng?: number;
+  @Input() initialAddress?: string | null;
+  @Input() height: string = '400px';
   @Input() readOnly: boolean = false;
   @Output() locationPicked = new EventEmitter<{address: string, lat: number, lng: number, city?: string, state?: string, country?: string}>();
   
