@@ -57,20 +57,22 @@
       }
 
       <!-- Developer Info -->
-      <div class="mt-2 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-center">
-        <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-1">Developed by <span class="font-semibold text-slate-700 dark:text-slate-300">Mahmoud Samy</span></p>
-        <div class="flex justify-center gap-3">
-          <a href="mailto:mahmoudsami11095@gmail.com" title="mahmoudsami11095@gmail.com" class="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
-            <i class="pi pi-envelope text-xs"></i>
-          </a>
-          <a href="tel:01555102395" title="01555102395" class="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
-            <i class="pi pi-phone text-xs"></i>
-          </a>
-          <a href="https://wa.me/201555102395" target="_blank" title="WhatsApp" class="text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">
-            <i class="pi pi-whatsapp text-xs"></i>
-          </a>
+      @if (env.developerContact; as dev) {
+        <div class="mt-2 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-center">
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-1">{{ 'common.developed_by' | translate }} <span class="font-semibold text-slate-700 dark:text-slate-300">{{ dev.name }}</span></p>
+          <div class="flex justify-center gap-3">
+            <a [href]="'mailto:' + dev.email" [title]="dev.email" aria-label="Email the developer" class="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+              <i class="pi pi-envelope text-xs"></i>
+            </a>
+            <a [href]="'tel:' + dev.phone" [title]="dev.phone" aria-label="Call the developer" class="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+              <i class="pi pi-phone text-xs"></i>
+            </a>
+            <a [href]="dev.whatsappUrl" target="_blank" title="WhatsApp" aria-label="Message developer on WhatsApp" class="text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">
+              <i class="pi pi-whatsapp text-xs"></i>
+            </a>
+          </div>
         </div>
-      </div>
+      }
     </div>
   }
 </aside>

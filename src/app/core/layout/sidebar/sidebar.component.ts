@@ -5,6 +5,7 @@ import { AuthService } from '../../auth/auth.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { LayoutService } from '../layout.service';
 import { PwaInstallService } from '../../services/pwa-install.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-sidebar',
@@ -16,6 +17,7 @@ export class Sidebar {
   protected authService = inject(AuthService);
   protected layoutService = inject(LayoutService);
   protected pwaInstallService = inject(PwaInstallService);
+  protected env = environment;
 
   private allMenuItems = [
     { labelKey: 'sidebar.dashboard', route: '/dashboard', icon: 'pi pi-home', roles: ['admin', 'doctor'] },
