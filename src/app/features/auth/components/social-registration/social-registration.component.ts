@@ -93,22 +93,6 @@ export class SocialRegistrationComponent {
     }
   }
 
-  toggleSocialClinicDay(clinicId: string, day: string) {
-    this.socialClinics.update(list => list.map(c => {
-      if (c.id === clinicId) {
-        const hasDay = c.days.includes(day);
-        return { ...c, days: hasDay ? c.days.filter(d => d !== day) : [...c.days, day] };
-      }
-      return c;
-    }));
-  }
-
-  toggleSocialNewClinicDay(day: string) {
-    this.socialNewClinicDays.update(days => {
-      return days.includes(day) ? days.filter(d => d !== day) : [...days, day];
-    });
-  }
-
   onSubmitSocialExtraData() {
     this.socialForm.markAllAsTouched();
     if (this.socialForm.invalid) {

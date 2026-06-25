@@ -176,11 +176,6 @@
 
         <!-- STAGE 3: Doctor Clinic Details & Availability (Doctor only) -->
         <div *ngIf="socialSignUpState() === 'doctor-clinics'" class="space-y-4 text-start">
-          <div class="text-center mb-2">
-            <h4 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-1">Create New Clinic (Optional)</h4>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Register a new physical clinic branch you practice in. You can skip this and create it later.</p>
-          </div>
- 
           <form [formGroup]="socialForm" (ngSubmit)="onSubmitSocialExtraData()" class="space-y-4 transition-opacity duration-300" [class.pointer-events-none]="isLoading()" [class.opacity-60]="isLoading()">
             <div class="max-h-[50vh] overflow-y-auto pr-1">
               <app-clinic-selection

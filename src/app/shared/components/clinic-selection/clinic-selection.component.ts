@@ -22,6 +22,10 @@ export class ClinicSelectionComponent implements OnInit {
   selectedClinicDays = signal<string[]>(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
 
   ngOnInit() {
+    if (this.clinics.length === 0) {
+      this.showCreateClinic.set(true);
+    }
+
     this.formGroup.get('clinicName')?.valueChanges.subscribe((val) => {
       const phoneCtrl = this.formGroup.get('newClinicPhoneNumber');
       const addressCtrl = this.formGroup.get('clinicAddress');
