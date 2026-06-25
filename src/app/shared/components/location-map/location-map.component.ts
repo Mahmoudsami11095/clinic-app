@@ -12,7 +12,10 @@ export class LocationMapComponent implements OnInit, OnChanges {
   private ngZone = inject(NgZone);
   private googleMapsService = inject(GoogleMapsService);
   @Input() place: google.maps.places.PlaceResult | null = null;
-  @Output() locationPicked = new EventEmitter<{address: string, lat: number, lng: number}>();
+  @Input() lat?: number;
+  @Input() lng?: number;
+  @Input() readOnly: boolean = false;
+  @Output() locationPicked = new EventEmitter<{address: string, lat: number, lng: number, city?: string, state?: string, country?: string}>();
   
   @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef;
 
@@ -31,8 +34,10 @@ export class LocationMapComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['place'] && !changes['place'].firstChange) {
-      this.updateMap();
+    if (changes['place'] || changes['lat'] || changes['lng']) {
+      if (!changes['place']?.firstChange && !changes['lat']?.firstChange) {
+        this.updateMap();
+      }
     }
   }
 
@@ -44,6 +49,9 @@ export class LocationMapComponent implements OnInit, OnChanges {
       if (this.place?.geometry?.location) {
         loc = this.place.geometry.location;
         hasPlace = true;
+      } else if (this.lat && this.lng) {
+        loc = { lat: this.lat, lng: this.lng };
+        hasPlace = true;
       }
       
       this.map = new google.maps.Map(this.mapContainer.nativeElement, {
@@ -52,7 +60,11 @@ export class LocationMapComponent implements OnInit, OnChanges {
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
-        zoomControl: true,
+        zoomControl: !this.readOnly,
+        draggable: !this.readOnly,
+        disableDoubleClickZoom: this.readOnly,
+        keyboardShortcuts: !this.readOnly,
+        scrollwheel: !this.readOnly,
         styles: [
           {
             featureType: "poi",
@@ -68,7 +80,7 @@ export class LocationMapComponent implements OnInit, OnChanges {
           map: this.map,
           animation: google.maps.Animation.DROP
         });
-      } else if (navigator.geolocation) {
+      } else if (navigator.geolocation && !this.readOnly) {
         // Try HTML5 geolocation if no place is selected yet
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -87,11 +99,13 @@ export class LocationMapComponent implements OnInit, OnChanges {
         );
       }
 
-      this.map.addListener('click', (event: google.maps.MapMouseEvent) => {
-        if (event.latLng) {
-          this.handleMapClick(event.latLng);
-        }
-      });
+      if (!this.readOnly) {
+        this.map.addListener('click', (event: google.maps.MapMouseEvent) => {
+          if (event.latLng) {
+            this.handleMapClick(event.latLng);
+          }
+        });
+      }
     });
   }
 
@@ -112,10 +126,28 @@ export class LocationMapComponent implements OnInit, OnChanges {
       this.geocoder.geocode({ location: latLng }, (results, status) => {
         if (status === 'OK' && results && results.length > 0) {
           this.ngZone.run(() => {
+            const result = results[0];
+            let city, state, country;
+            
+            for (const component of result.address_components) {
+              if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+                city = component.long_name;
+              }
+              if (component.types.includes('administrative_area_level_1')) {
+                state = component.long_name;
+              }
+              if (component.types.includes('country')) {
+                country = component.long_name;
+              }
+            }
+
             this.locationPicked.emit({
-              address: results[0].formatted_address,
+              address: result.formatted_address,
               lat: latLng.lat(),
-              lng: latLng.lng()
+              lng: latLng.lng(),
+              city,
+              state,
+              country
             });
           });
         } else {
@@ -132,11 +164,15 @@ export class LocationMapComponent implements OnInit, OnChanges {
         return;
       }
 
-      if (!this.place?.geometry?.location) {
-        return;
+      let loc: any = null;
+      if (this.place?.geometry?.location) {
+        loc = this.place.geometry.location;
+      } else if (this.lat && this.lng) {
+        loc = { lat: this.lat, lng: this.lng };
       }
 
-      const loc = this.place.geometry.location;
+      if (!loc) return;
+
       this.map.panTo(loc);
       this.map.setZoom(15);
       

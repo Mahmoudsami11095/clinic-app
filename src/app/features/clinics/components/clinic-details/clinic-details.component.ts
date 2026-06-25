@@ -7,9 +7,11 @@ import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { Clinic } from '../../../../core/models/clinic.model';
 
+import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+
 @Component({
   selector: 'app-clinic-details',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LocationMapComponent],
   templateUrl: './clinic-details.component.html',
   styleUrl: './clinic-details.component.css'
 })

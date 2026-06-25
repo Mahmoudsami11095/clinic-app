@@ -30,8 +30,12 @@
           <div>
             <span class="block font-semibold text-slate-700 dark:text-slate-200">Address</span>
             <span class="leading-relaxed">{{ clinic()?.address }}</span>
-            @if (clinic()?.mapUrl || clinic()?.address) {
-              <a [href]="clinic()?.mapUrl || 'https://www.google.com/maps/search/?api=1&query=' + clinic()?.address" target="_blank" class="block mt-1 text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors flex items-center gap-1">
+            @if (clinic()?.latitude && clinic()?.longitude) {
+              <a [href]="'https://www.google.com/maps/search/?api=1&query=' + clinic()?.latitude + ',' + clinic()?.longitude" target="_blank" class="block mt-1 text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors flex items-center gap-1">
+                <i class="pi pi-external-link text-[10px]"></i> View on Google Maps
+              </a>
+            } @else if (clinic()?.address) {
+              <a [href]="'https://www.google.com/maps/search/?api=1&query=' + clinic()?.address" target="_blank" class="block mt-1 text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors flex items-center gap-1">
                 <i class="pi pi-external-link text-[10px]"></i> View on Google Maps
               </a>
             }
@@ -54,6 +58,15 @@
             <span>{{ clinic()?.availabilityHours || '' }}</span>
           </div>
         </div>
+
+        @if (clinic()?.latitude && clinic()?.longitude) {
+          <div class="mt-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+            <span class="block font-semibold text-slate-700 dark:text-slate-200 mb-2 text-sm">Map View</span>
+            <div class="h-48 rounded-xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700">
+              <app-location-map [lat]="clinic()!.latitude" [lng]="clinic()!.longitude" [readOnly]="true"></app-location-map>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Stats -->

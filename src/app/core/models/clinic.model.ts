@@ -8,5 +8,9 @@ export interface Clinic {
   availabilityHours?: string;
   availabilityDays?: string;
   assistantCount?: number;
-  mapUrl?: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  state?: string;
+  country?: string;
 }

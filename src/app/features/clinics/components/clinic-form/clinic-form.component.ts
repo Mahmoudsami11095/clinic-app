@@ -30,7 +30,7 @@ export class ClinicFormComponent implements OnInit {
 
   submitting = false;
   selectedPlace: google.maps.places.PlaceResult | null = null;
-  mapUrl?: string;
+  locationData?: {address: string, lat: number, lng: number, city?: string, state?: string, country?: string};
 
   selectedDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -60,7 +60,6 @@ export class ClinicFormComponent implements OnInit {
         availabilityHours: this.clinic.availabilityHours || '09:00-17:00',
         availabilityDays: this.clinic.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       });
-      this.mapUrl = this.clinic.mapUrl;
       if (this.clinic.availabilityDays) {
         try {
           this.selectedDays = JSON.parse(this.clinic.availabilityDays);
@@ -86,18 +85,41 @@ export class ClinicFormComponent implements OnInit {
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
   }
 
-  onPlaceSelect(place: any) {
-    this.selectedPlace = place;
-    if (place.geometry?.location) {
-      this.mapUrl = `https://www.google.com/maps/search/?api=1&query=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
-    }
+  onMapLocationPicked(locationData: {address: string, lat: number, lng: number, city?: string, state?: string, country?: string}) {
+    this.form.patchValue({
+      address: locationData.address
+    });
+    this.locationData = locationData;
   }
 
-  onMapLocationPicked(data: {address: string, lat: number, lng: number}) {
-    this.form.get('address')?.setValue(data.address);
-    this.form.get('address')?.markAsDirty();
-    this.form.get('address')?.updateValueAndValidity();
-    this.mapUrl = `https://www.google.com/maps/search/?api=1&query=${data.lat},${data.lng}`;
+  onPlaceSelect(place: google.maps.places.PlaceResult) {
+    this.selectedPlace = place;
+    this.form.patchValue({
+      address: place.formatted_address || (place.name as string)
+    });
+
+    if (place.geometry?.location) {
+      let city, state, country;
+      if (place.address_components) {
+        for (const component of place.address_components) {
+          if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+            city = component.long_name;
+          }
+          if (component.types.includes('administrative_area_level_1')) {
+            state = component.long_name;
+          }
+          if (component.types.includes('country')) {
+            country = component.long_name;
+          }
+        }
+      }
+      this.locationData = {
+        address: place.formatted_address || '',
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+        city, state, country
+      };
+    }
   }
 
   onSubmit() {
@@ -118,7 +140,11 @@ export class ClinicFormComponent implements OnInit {
         phone: combinedPhone,
         availabilityHours: formValue.availabilityHours || '09:00-17:00',
         availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']),
-        mapUrl: this.mapUrl
+        latitude: this.locationData?.lat ?? this.clinic.latitude,
+        longitude: this.locationData?.lng ?? this.clinic.longitude,
+        city: this.locationData?.city ?? this.clinic.city,
+        state: this.locationData?.state ?? this.clinic.state,
+        country: this.locationData?.country ?? this.clinic.country
       };
 
       this.clinicService.update(updatedClinic).subscribe({
@@ -147,7 +173,11 @@ export class ClinicFormComponent implements OnInit {
         phone: combinedPhone,
         availabilityHours: formValue.availabilityHours || '09:00-17:00',
         availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']),
-        mapUrl: this.mapUrl
+        latitude: this.locationData?.lat,
+        longitude: this.locationData?.lng,
+        city: this.locationData?.city,
+        state: this.locationData?.state,
+        country: this.locationData?.country
       };
 
       this.clinicService.create(newClinic).subscribe({
