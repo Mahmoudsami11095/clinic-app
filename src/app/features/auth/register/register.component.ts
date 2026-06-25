@@ -121,12 +121,16 @@ export class RegisterComponent implements OnDestroy {
 
     this.registerForm.get('clinicName')?.valueChanges.subscribe((val) => {
       const phoneCtrl = this.registerForm.get('newClinicPhoneNumber');
+      const addressCtrl = this.registerForm.get('clinicAddress');
       if (val && val.trim().length >= 3) {
         phoneCtrl?.setValidators([Validators.required, phoneValidator('newClinicCountryCode')]);
+        addressCtrl?.setValidators([Validators.required]);
       } else {
         phoneCtrl?.setValidators([phoneValidator('newClinicCountryCode')]);
+        addressCtrl?.clearValidators();
       }
       phoneCtrl?.updateValueAndValidity();
+      addressCtrl?.updateValueAndValidity();
     });
 
     // Populate clinicsList reactively from clinicService
@@ -273,6 +277,13 @@ export class RegisterComponent implements OnDestroy {
         cPhoneCtrl?.markAsTouched();
         if (cPhoneCtrl?.invalid) {
           this.toastr.error('Please enter a valid clinic phone number.', 'Validation Error');
+          return;
+        }
+
+        const cAddrCtrl = this.registerForm.get('clinicAddress');
+        cAddrCtrl?.markAsTouched();
+        if (cAddrCtrl?.invalid) {
+          this.toastr.error('Please select the clinic location on the map.', 'Validation Error');
           return;
         }
       }

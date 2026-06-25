@@ -437,7 +437,7 @@
                 
                 <!-- Address Map -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Clinic Location</label>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Clinic Location <span class="text-red-500">*</span></label>
                   <app-location-map 
                     (locationPicked)="onClinicLocationPicked($event)"
                     [initialAddress]="registerForm.get('clinicAddress')?.value"
