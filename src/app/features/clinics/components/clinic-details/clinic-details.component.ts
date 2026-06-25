@@ -7,9 +7,11 @@ import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { Clinic } from '../../../../core/models/clinic.model';
 
+import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+
 @Component({
   selector: 'app-clinic-details',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LocationMapComponent],
   templateUrl: './clinic-details.component.html',
   styleUrl: './clinic-details.component.css'
 })
@@ -27,6 +29,22 @@ export class ClinicDetailsComponent implements OnInit {
     if (!id) return undefined;
     return this.clinicService.clinics().find(c => c.id === id);
   });
+
+  formattedAvailabilityDays = computed(() => {
+    const clinic = this.clinic();
+    if (!clinic || !clinic.availabilityDays) return 'Not specified';
+    try {
+      const daysArray = JSON.parse(clinic.availabilityDays);
+      if (Array.isArray(daysArray)) {
+        return daysArray.join(', ');
+      }
+    } catch (e) {
+      // If it's not valid JSON, just return the string as is
+      return clinic.availabilityDays;
+    }
+    return clinic.availabilityDays;
+  });
+
 
   doctors = signal<any[]>([]);
   patients = signal<any[]>([]);

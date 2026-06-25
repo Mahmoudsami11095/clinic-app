@@ -53,3 +53,8 @@ html.dark .toast-container .toast-error {
   background-color: #7f1d1d !important;
   border-color: #991b1b !important;
 }
+
+/* Fix Google Maps Autocomplete dropdown z-index to appear above modals */
+.pac-container {
+  z-index: 999999 !important;
+}

@@ -8,12 +8,22 @@ export interface RadiologyCenter {
   name: string;
   contactNumber?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 export interface CreateRadiologyCenter {
   name: string;
   contactNumber?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 export interface RadiologyRecord {

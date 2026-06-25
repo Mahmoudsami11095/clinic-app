@@ -57,7 +57,13 @@ import { gsap } from 'gsap';
             </div>
             <div class="col-span-2">
               <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.address' | translate }}</p>
-              <p class="font-semibold text-slate-700 mt-0.5 truncate">{{ patient.address }}</p>
+              <a *ngIf="patient.latitude && patient.longitude"
+                 [href]="'https://www.google.com/maps/search/?api=1&query=' + patient.latitude + ',' + patient.longitude"
+                 target="_blank"
+                 class="font-semibold text-indigo-600 hover:underline mt-0.5 truncate flex items-center gap-1">
+                 <i class="pi pi-map-marker text-[10px]"></i> {{ patient.address || 'View Map' }}
+              </a>
+              <p *ngIf="!patient.latitude || !patient.longitude" class="font-semibold text-slate-700 mt-0.5 truncate">{{ patient.address }}</p>
             </div>
             <div class="col-span-2">
               <p class="text-[10px] text-slate-400 font-medium">{{ 'patients.registered_on' | translate }}</p>
