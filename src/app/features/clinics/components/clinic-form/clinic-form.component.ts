@@ -10,10 +10,11 @@ import { splitPhoneNumber, combinePhoneNumber } from '../../../../core/utils/pho
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
 import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
+import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
 
 @Component({
   selector: 'app-clinic-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, PhoneInputFieldComponent, GooglePlacesDirective],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, PhoneInputFieldComponent, GooglePlacesDirective, LocationMapComponent],
   templateUrl: './clinic-form.component.html',
   styleUrl: './clinic-form.component.css'
 })
@@ -28,6 +29,8 @@ export class ClinicFormComponent implements OnInit {
   private langService = inject(LanguageService);
 
   submitting = false;
+  selectedPlace: google.maps.places.PlaceResult | null = null;
+  mapUrl?: string;
 
   selectedDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -57,6 +60,7 @@ export class ClinicFormComponent implements OnInit {
         availabilityHours: this.clinic.availabilityHours || '09:00-17:00',
         availabilityDays: this.clinic.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       });
+      this.mapUrl = this.clinic.mapUrl;
       if (this.clinic.availabilityDays) {
         try {
           this.selectedDays = JSON.parse(this.clinic.availabilityDays);
@@ -82,6 +86,20 @@ export class ClinicFormComponent implements OnInit {
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
   }
 
+  onPlaceSelect(place: any) {
+    this.selectedPlace = place;
+    if (place.geometry?.location) {
+      this.mapUrl = `https://www.google.com/maps/search/?api=1&query=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
+    }
+  }
+
+  onMapLocationPicked(data: {address: string, lat: number, lng: number}) {
+    this.form.get('address')?.setValue(data.address);
+    this.form.get('address')?.markAsDirty();
+    this.form.get('address')?.updateValueAndValidity();
+    this.mapUrl = `https://www.google.com/maps/search/?api=1&query=${data.lat},${data.lng}`;
+  }
+
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -99,7 +117,8 @@ export class ClinicFormComponent implements OnInit {
         address: formValue.address || '',
         phone: combinedPhone,
         availabilityHours: formValue.availabilityHours || '09:00-17:00',
-        availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
+        availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']),
+        mapUrl: this.mapUrl
       };
 
       this.clinicService.update(updatedClinic).subscribe({
@@ -127,7 +146,8 @@ export class ClinicFormComponent implements OnInit {
         address: formValue.address || '',
         phone: combinedPhone,
         availabilityHours: formValue.availabilityHours || '09:00-17:00',
-        availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
+        availabilityDays: formValue.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']),
+        mapUrl: this.mapUrl
       };
 
       this.clinicService.create(newClinic).subscribe({

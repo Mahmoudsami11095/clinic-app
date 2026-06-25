@@ -28,6 +28,7 @@ export class ClinicDetailsComponent implements OnInit {
     return this.clinicService.clinics().find(c => c.id === id);
   });
 
+
   doctors = signal<any[]>([]);
   patients = signal<any[]>([]);
   appointments = signal<any[]>([]);
