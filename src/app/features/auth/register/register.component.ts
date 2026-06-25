@@ -95,20 +95,28 @@ export class RegisterComponent implements OnDestroy {
       bloodGroup: ['O+'],
       address: [''],
       clinicCountryCode: ['+20'],
-      clinicPhoneNumber: [''],
+      clinicPhoneNumber: ['', [phoneValidator('clinicCountryCode')]],
  
       // Doctor specific fields
       specialization: ['General Dentistry'],
       clinicName: [''],
       clinicAddress: [''],
       newClinicCountryCode: ['+20'],
-      newClinicPhoneNumber: [''],
+      newClinicPhoneNumber: ['', [phoneValidator('newClinicCountryCode')]],
       clinicAvailabilityHours: ['09:00-17:00'],
       clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
     });
 
     this.registerForm.get('countryCode')?.valueChanges.subscribe(() => {
       this.registerForm.get('phoneNumber')?.updateValueAndValidity();
+    });
+
+    this.registerForm.get('clinicCountryCode')?.valueChanges.subscribe(() => {
+      this.registerForm.get('clinicPhoneNumber')?.updateValueAndValidity();
+    });
+
+    this.registerForm.get('newClinicCountryCode')?.valueChanges.subscribe(() => {
+      this.registerForm.get('newClinicPhoneNumber')?.updateValueAndValidity();
     });
 
     // Populate clinicsList reactively from clinicService
@@ -218,6 +226,13 @@ export class RegisterComponent implements OnDestroy {
           this.toastr.error('Please enter your specialization', 'Validation Error');
           return;
         }
+      } else if (role === 'patient') {
+        const cpCtrl = this.registerForm.get('clinicPhoneNumber');
+        cpCtrl?.markAsTouched();
+        if (cpCtrl?.invalid) {
+          this.toastr.error('Please enter a valid clinic phone number.', 'Validation Error');
+          return;
+        }
       }
 
       // Check if phone number is already registered
@@ -243,6 +258,14 @@ export class RegisterComponent implements OnDestroy {
         }
       });
     } else if (stage === 4) {
+      if (this.showCreateClinic() || this.clinicsList().length === 0) {
+        const cPhoneCtrl = this.registerForm.get('newClinicPhoneNumber');
+        cPhoneCtrl?.markAsTouched();
+        if (cPhoneCtrl?.invalid) {
+          this.toastr.error('Please enter a valid clinic phone number.', 'Validation Error');
+          return;
+        }
+      }
       this.sendVerificationCode();
     }
   }
