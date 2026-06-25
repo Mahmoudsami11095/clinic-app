@@ -103,7 +103,8 @@ export class RegisterComponent implements OnDestroy {
       clinicAddress: [''],
       newClinicCountryCode: ['+20'],
       newClinicPhoneNumber: ['', [phoneValidator('newClinicCountryCode')]],
-      clinicAvailabilityHours: ['09:00-17:00'],
+      clinicAvailabilityStart: ['09:00'],
+      clinicAvailabilityEnd: ['17:00'],
       clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
     });
 
@@ -122,15 +123,27 @@ export class RegisterComponent implements OnDestroy {
     this.registerForm.get('clinicName')?.valueChanges.subscribe((val) => {
       const phoneCtrl = this.registerForm.get('newClinicPhoneNumber');
       const addressCtrl = this.registerForm.get('clinicAddress');
+      const startCtrl = this.registerForm.get('clinicAvailabilityStart');
+      const endCtrl = this.registerForm.get('clinicAvailabilityEnd');
+      const daysCtrl = this.registerForm.get('clinicAvailabilityDays');
       if (val && val.trim().length >= 3) {
         phoneCtrl?.setValidators([Validators.required, phoneValidator('newClinicCountryCode')]);
         addressCtrl?.setValidators([Validators.required]);
+        startCtrl?.setValidators([Validators.required]);
+        endCtrl?.setValidators([Validators.required]);
+        daysCtrl?.setValidators([Validators.required]);
       } else {
         phoneCtrl?.setValidators([phoneValidator('newClinicCountryCode')]);
         addressCtrl?.clearValidators();
+        startCtrl?.clearValidators();
+        endCtrl?.clearValidators();
+        daysCtrl?.clearValidators();
       }
       phoneCtrl?.updateValueAndValidity();
       addressCtrl?.updateValueAndValidity();
+      startCtrl?.updateValueAndValidity();
+      endCtrl?.updateValueAndValidity();
+      daysCtrl?.updateValueAndValidity();
     });
 
     // Populate clinicsList reactively from clinicService
@@ -286,6 +299,23 @@ export class RegisterComponent implements OnDestroy {
           this.toastr.error('Please select the clinic location on the map.', 'Validation Error');
           return;
         }
+
+        const startCtrl = this.registerForm.get('clinicAvailabilityStart');
+        const endCtrl = this.registerForm.get('clinicAvailabilityEnd');
+        const daysCtrl = this.registerForm.get('clinicAvailabilityDays');
+        
+        startCtrl?.markAsTouched();
+        endCtrl?.markAsTouched();
+        if (startCtrl?.invalid || endCtrl?.invalid) {
+          this.toastr.error('Please enter valid availability hours.', 'Validation Error');
+          return;
+        }
+
+        const days = JSON.parse(daysCtrl?.value || '[]');
+        if (days.length === 0) {
+          this.toastr.error('Please select at least one availability day.', 'Validation Error');
+          return;
+        }
       }
       this.sendVerificationCode();
     }
@@ -423,7 +453,7 @@ export class RegisterComponent implements OnDestroy {
           payload.clinicName = formValues.clinicName.trim();
           payload.clinicAddress = formValues.clinicAddress.trim();
           payload.clinicPhone = formValues.newClinicPhoneNumber ? `${formValues.newClinicCountryCode}${formValues.newClinicPhoneNumber}` : '';
-          payload.clinicAvailabilityHours = formValues.clinicAvailabilityHours;
+          payload.clinicAvailabilityHours = `${formValues.clinicAvailabilityStart}-${formValues.clinicAvailabilityEnd}`;
           payload.clinicAvailabilityDays = formValues.clinicAvailabilityDays;
           if (this.clinicLocationData) {
             payload.latitude = this.clinicLocationData.lat;

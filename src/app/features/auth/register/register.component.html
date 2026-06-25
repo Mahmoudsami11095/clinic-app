@@ -458,13 +458,21 @@
                 <!-- Hours & Days in grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours</label>
-                    <input type="text" formControlName="clinicAvailabilityHours"
-                           placeholder="e.g. 09:00-17:00"
-                           class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Hours <span class="text-red-500">*</span></label>
+                    <div class="flex items-center gap-2">
+                      <div class="relative flex-1">
+                        <input type="time" formControlName="clinicAvailabilityStart"
+                               class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold cursor-pointer">
+                      </div>
+                      <span class="text-slate-400 font-bold text-xs">to</span>
+                      <div class="relative flex-1">
+                        <input type="time" formControlName="clinicAvailabilityEnd"
+                               class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold cursor-pointer">
+                      </div>
+                    </div>
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Days</label>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Availability Days <span class="text-red-500">*</span></label>
                     <div class="flex flex-wrap gap-1">
                       <button *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; let i = index"
                               type="button"
