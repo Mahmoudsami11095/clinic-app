@@ -49,8 +49,7 @@ export class RegisterComponent implements OnDestroy {
   whatsappOtpSent = signal(false);
   otpCode = signal<string>('');
   phoneOtpCode = signal<string>('');
-  demoEmailOtp = signal<string>('');
-  demoWhatsappOtp = signal<string>('');
+
   countdown = signal(0);
   private timerInterval: ReturnType<typeof setInterval> | undefined;
 
@@ -101,7 +100,8 @@ export class RegisterComponent implements OnDestroy {
       specialization: ['General Dentistry'],
       clinicName: [''],
       clinicAddress: [''],
-      clinicPhone: [''],
+      newClinicCountryCode: ['+20'],
+      newClinicPhoneNumber: [''],
       clinicAvailabilityHours: ['09:00-17:00'],
       clinicAvailabilityDays: [JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])],
     });
@@ -182,7 +182,23 @@ export class RegisterComponent implements OnDestroy {
         this.toastr.error('Please enter valid account credentials.', 'Validation Error');
         return;
       }
-      this.currentStage.set(2);
+
+      // Check if email is already registered
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+      const email = emailCtrl?.value;
+      this.authService.checkAvailability(email).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          this.currentStage.set(2);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          const errorMsg = extractErrorMessage(err);
+          this.errorMessage.set(errorMsg);
+          this.toastr.error(errorMsg, 'Registration Error');
+        }
+      });
     } else if (stage === 2) {
       this.currentStage.set(3);
     } else if (stage === 3) {
@@ -201,10 +217,30 @@ export class RegisterComponent implements OnDestroy {
           this.toastr.error('Please enter your specialization', 'Validation Error');
           return;
         }
-        this.currentStage.set(4);
-      } else {
-        this.sendVerificationCode();
       }
+
+      // Check if phone number is already registered
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+      const countryCode = this.registerForm.get('countryCode')?.value;
+      const phoneNumber = this.registerForm.get('phoneNumber')?.value;
+      const phone = phoneNumber ? `${countryCode}${phoneNumber}` : '';
+      this.authService.checkAvailability(undefined, phone || undefined).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          if (role === 'doctor') {
+            this.currentStage.set(4);
+          } else {
+            this.sendVerificationCode();
+          }
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          const errorMsg = extractErrorMessage(err);
+          this.errorMessage.set(errorMsg);
+          this.toastr.error(errorMsg, 'Registration Error');
+        }
+      });
     } else if (stage === 4) {
       this.sendVerificationCode();
     }
@@ -237,13 +273,10 @@ export class RegisterComponent implements OnDestroy {
       next: (res: any) => {
         this.isLoading.set(false);
         this.otpSent.set(true);
-        this.demoEmailOtp.set(res.emailOtp || res.otp || '');
-        if (phone && res.whatsappOtp) {
+        if (phone) {
           this.whatsappOtpSent.set(true);
-          this.demoWhatsappOtp.set(res.whatsappOtp);
         } else {
           this.whatsappOtpSent.set(false);
-          this.demoWhatsappOtp.set('');
         }
 
         this.toastr.success('Verification code(s) sent successfully.', 'Success');
@@ -308,10 +341,6 @@ export class RegisterComponent implements OnDestroy {
     let phoneCode = '';
     if (this.whatsappOtpSent()) {
       phoneCode = this.phoneOtpCode();
-      if (phoneCode.length < 6) {
-        this.errorMessage.set('WhatsApp verification code is required');
-        return;
-      }
     }
 
     this.isLoading.set(true);
@@ -348,7 +377,7 @@ export class RegisterComponent implements OnDestroy {
         if (formValues.clinicName && formValues.clinicName.trim().length >= 3) {
           payload.clinicName = formValues.clinicName.trim();
           payload.clinicAddress = formValues.clinicAddress.trim();
-          payload.clinicPhone = formValues.clinicPhone.trim();
+          payload.clinicPhone = formValues.newClinicPhoneNumber ? `${formValues.newClinicCountryCode}${formValues.newClinicPhoneNumber}` : '';
           payload.clinicAvailabilityHours = formValues.clinicAvailabilityHours;
           payload.clinicAvailabilityDays = formValues.clinicAvailabilityDays;
           if (this.clinicLocationData) {

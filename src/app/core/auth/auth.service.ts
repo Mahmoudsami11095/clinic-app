@@ -155,6 +155,10 @@ export class AuthService {
     );
   }
 
+  checkAvailability(email?: string, phone?: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>('/api/auth/check-availability', { email, phone });
+  }
+
   sendRegisterOtp(email: string, phone?: string): Observable<{ message: string; otp: string }> {
     return this.http.post<{ message: string; otp: string }>('/api/auth/register-send-otp', { email, phone });
   }
