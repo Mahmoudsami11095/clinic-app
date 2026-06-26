@@ -156,6 +156,9 @@
         <span>{{ errorMessage() }}</span>
       </div>
 
+      <!-- Invisible reCAPTCHA container for Firebase Phone Auth -->
+      <div id="firebase-recaptcha-container"></div>
+
       <!-- Single Outer Form -->
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4 transition-opacity duration-300" [class.pointer-events-none]="isLoading()" [class.opacity-60]="isLoading()">
         
@@ -372,6 +375,24 @@
             <app-otp-input-field [code]="phoneOtpCode()" (codeChange)="phoneOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
             <p class="text-xs text-center text-slate-400 dark:text-slate-500 mt-2">
               You can skip this step and verify your phone later.
+            </p>
+          </div>
+
+          <!-- Firebase SMS Verification Block -->
+          <div *ngIf="firebaseService.smsOtpSent()" class="border-t border-slate-100 dark:border-slate-800/80 pt-4">
+            <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              SMS Verification Code
+            </h4>
+            <app-otp-input-field [code]="smsOtpCode()" (codeChange)="smsOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
+            <p class="text-xs text-center text-slate-400 dark:text-slate-500 mt-2">
+              Enter the 6-digit code sent via SMS to your phone number.
+            </p>
+            <!-- Firebase SMS error message -->
+            <p *ngIf="firebaseService.smsError()" class="text-xs text-center text-rose-500 dark:text-rose-400 mt-1 font-semibold">
+              {{ firebaseService.smsError() }}
             </p>
           </div>
 
