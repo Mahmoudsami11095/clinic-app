@@ -38,6 +38,8 @@ export interface RegistrationData {
   city?: string;
   state?: string;
   country?: string;
+  /** Firebase Phone Auth ID token — proves phone number was verified via SMS */
+  firebasePhoneToken?: string;
 }
 
 @Injectable({

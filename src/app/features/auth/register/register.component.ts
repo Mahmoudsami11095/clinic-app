@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy, effect } from '@angular/core';
+import { Component, inject, signal, OnDestroy, effect, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -9,6 +9,7 @@ import { ClinicService } from '../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { FirebaseService } from '../../../core/services/firebase.service';
 import { extractErrorMessage } from '../../../core/utils/error.utils';
 import { InputFieldComponent } from '../../../shared/components/input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
@@ -32,6 +33,7 @@ export class RegisterComponent implements OnDestroy {
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
   protected themeService = inject(ThemeService);
+  protected firebaseService = inject(FirebaseService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private toastr = inject(ToastrService);
@@ -50,6 +52,10 @@ export class RegisterComponent implements OnDestroy {
   whatsappOtpSent = signal(false);
   otpCode = signal<string>('');
   phoneOtpCode = signal<string>('');
+
+  // Firebase SMS OTP States
+  smsOtpCode = signal<string>('');
+  firebasePhoneToken = signal<string | null>(null);
 
   countdown = signal(0);
   private timerInterval: ReturnType<typeof setInterval> | undefined;
@@ -326,9 +332,9 @@ export class RegisterComponent implements OnDestroy {
     const phoneNumber = this.registerForm.get('phoneNumber')?.value;
     const phone = phoneNumber ? `${countryCode}${phoneNumber}` : '';
 
+    // Send email + WhatsApp OTP via backend (existing)
     this.authService.sendRegisterOtp(email, phone || undefined).subscribe({
       next: (res: any) => {
-        this.isLoading.set(false);
         this.otpSent.set(true);
         if (phone) {
           this.whatsappOtpSent.set(true);
@@ -336,9 +342,17 @@ export class RegisterComponent implements OnDestroy {
           this.whatsappOtpSent.set(false);
         }
 
-        this.toastr.success('Verification code(s) sent successfully.', 'Success');
+        this.toastr.success('Email & WhatsApp verification codes sent.', 'Success');
         this.startTimer();
         this.currentStage.set(5);
+
+        // Also send Firebase SMS OTP if phone number is provided
+        if (phone) {
+          this.sendFirebaseSmsOtp(phone);
+        } else {
+          this.isLoading.set(false);
+        }
+
         setTimeout(() => {
           document.getElementById('otp-input-0')?.focus();
         }, 100);
@@ -350,6 +364,29 @@ export class RegisterComponent implements OnDestroy {
         this.toastr.error(errorMsg, 'Error');
       }
     });
+  }
+
+  /**
+   * Send SMS OTP via Firebase Phone Auth.
+   * Sets up reCAPTCHA first, then sends the SMS.
+   */
+  private async sendFirebaseSmsOtp(phone: string): Promise<void> {
+    try {
+      // Set up invisible reCAPTCHA (the container must exist in the DOM)
+      this.firebaseService.setupRecaptcha('firebase-recaptcha-container');
+
+      await this.firebaseService.sendPhoneOtp(phone);
+      this.toastr.success('SMS verification code sent to your phone.', 'Firebase SMS');
+    } catch (error: any) {
+      // Firebase SMS failure is non-blocking — the user can still verify via email/WhatsApp
+      console.warn('Firebase SMS OTP failed:', error.message);
+      this.toastr.warning(
+        'SMS could not be sent. You can still verify via email or WhatsApp.',
+        'SMS Notice'
+      );
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   startTimer() {
@@ -375,6 +412,9 @@ export class RegisterComponent implements OnDestroy {
     this.whatsappOtpSent.set(false);
     this.otpCode.set('');
     this.phoneOtpCode.set('');
+    this.smsOtpCode.set('');
+    this.firebasePhoneToken.set(null);
+    this.firebaseService.reset();
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
@@ -383,7 +423,7 @@ export class RegisterComponent implements OnDestroy {
     this.currentStage.set(1);
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (!this.otpSent()) {
       this.sendVerificationCode();
       return;
@@ -403,6 +443,21 @@ export class RegisterComponent implements OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
+    // If Firebase SMS OTP was sent and the user entered a code, verify it
+    let firebaseToken: string | null = null;
+    const smsCode = this.smsOtpCode();
+    if (this.firebaseService.smsOtpSent() && smsCode.length === 6) {
+      try {
+        firebaseToken = await this.firebaseService.verifyPhoneOtp(smsCode);
+        this.firebasePhoneToken.set(firebaseToken);
+      } catch (error: any) {
+        this.isLoading.set(false);
+        this.errorMessage.set(error.message || 'SMS verification failed.');
+        this.toastr.error(error.message || 'SMS verification failed.', 'Verification Error');
+        return;
+      }
+    }
+
     const formValues = this.registerForm.value;
     const payload: any = {
       name: formValues.name,
@@ -413,7 +468,8 @@ export class RegisterComponent implements OnDestroy {
       phoneNumber: formValues.phoneNumber,
       phone: `${formValues.countryCode}${formValues.phoneNumber}`,
       otpCode: emailCode,
-      phoneOtpCode: phoneCode || null
+      phoneOtpCode: phoneCode || null,
+      firebasePhoneToken: firebaseToken
     };
 
     if (formValues.role === 'doctor') {
@@ -478,6 +534,7 @@ export class RegisterComponent implements OnDestroy {
     this.authService.register(payload).subscribe({
       next: () => {
         this.isLoading.set(false);
+        this.firebaseService.reset();
         this.toastr.success(
           this.languageService.translate('auth.register_success'),
           this.languageService.translate('toast.success')
@@ -568,6 +625,8 @@ export class RegisterComponent implements OnDestroy {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+    // Clean up Firebase reCAPTCHA
+    this.firebaseService.reset();
   }
 
   getCountdownText(): string {
