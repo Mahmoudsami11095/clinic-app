@@ -24,6 +24,7 @@ declare var AppleID: any;
 import { RoleSelection } from '../../../shared/components/role-selection/role-selection';
 import { ProfileDetailsForm } from '../../../shared/components/profile-details-form/profile-details-form';
 import { VerificationStep } from '../../../shared/components/verification-step/verification-step';
+import { SocialRegistrationComponent } from '../components/social-registration/social-registration.component';
 
 @Component({
   selector: 'app-register',
@@ -32,7 +33,7 @@ import { VerificationStep } from '../../../shared/components/verification-step/v
     CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, 
     InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, 
     LocationMapComponent, ClinicSelectionComponent,
-    RoleSelection, ProfileDetailsForm, VerificationStep
+    RoleSelection, ProfileDetailsForm, VerificationStep, SocialRegistrationComponent
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
@@ -58,6 +59,11 @@ export class RegisterComponent implements OnDestroy, OnInit {
 
   // OTP Verification States
   otpSent = signal(false);
+
+  // Social Sign Up State
+  socialSignUpState = signal<'none' | 'role' | 'data'>('none');
+  socialProvider = signal<string>('');
+  socialToken = signal<string>('');
   whatsappOtpSent = signal(false);
   otpCode = signal<string>('');
   phoneOtpCode = signal<string>('');
@@ -575,19 +581,25 @@ export class RegisterComponent implements OnDestroy, OnInit {
 
   private executeSocialLogin(provider: string, token: string) {
     this.isLoading.set(true);
-    const selectedRole = this.registerForm.get('role')?.value || 'patient';
-    this.authService.loginWithSocial(provider, token, selectedRole).subscribe({
+    // Don't pass selectedRole so backend will trigger requiresRoleSelection for new users
+    this.authService.loginWithSocial(provider, token).subscribe({
       next: (res) => {
         this.isLoading.set(false);
-        const user = res.data;
-        this.toastr.success(
-          `${this.languageService.translate('auth.login_success')}: ${user.name}`,
-          this.languageService.translate('toast.success')
-        );
-        if (user.role === 'patient' || user.role === 'assistant') {
-          this.router.navigate(['/appointments']);
+        if (res.requiresRoleSelection) {
+          this.socialProvider.set(provider);
+          this.socialToken.set(token);
+          this.socialSignUpState.set('role');
         } else {
-          this.router.navigate(['/dashboard']);
+          const user = res.data;
+          this.toastr.success(
+            `${this.languageService.translate('auth.login_success')}: ${user.name}`,
+            this.languageService.translate('toast.success')
+          );
+          if (user.role === 'patient' || user.role === 'assistant') {
+            this.router.navigate(['/appointments']);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
         }
       },
       error: (err) => {
@@ -597,6 +609,15 @@ export class RegisterComponent implements OnDestroy, OnInit {
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
     });
+  }
+
+  onSocialRegistrationComplete(user: any) {
+    this.socialSignUpState.set('none');
+    if (user.role === 'patient' || user.role === 'assistant') {
+      this.router.navigate(['/appointments']);
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
 

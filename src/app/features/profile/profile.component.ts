@@ -115,6 +115,8 @@ export class ProfileComponent implements OnInit {
 
 
 
+
+
   loadProfile() {
     this.isLoading.set(true);
     this.http.get<{ data: any }>('/api/auth/profile').subscribe({

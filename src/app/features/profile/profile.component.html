@@ -144,15 +144,6 @@
               </optgroup>
               <option value="other">{{ 'auth.spec_other' | translate }}</option>
             </select>
-            
-            <div *ngIf="profileForm.get('specialization')?.value === 'other'" class="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <app-input-field
-                [formGroup]="profileForm"
-                controlName="otherSpecialization"
-                label="Other Specialization"
-                [placeholder]="'auth.spec_other_placeholder' | translate"
-              ></app-input-field>
-            </div>
           </div>
 
           <!-- Contact Number -->
@@ -204,6 +195,16 @@
                 <p *ngIf="!phoneOtpConfirmed()" class="text-[9px] text-slate-400 dark:text-slate-500 font-medium">After entering the code, click "Confirm OTP" to verify it.</p>
               </div>
             </div>
+          </div>
+          
+          <!-- Other Specialization (Full Width) -->
+          <div *ngIf="profileForm.get('specialization')?.value === 'other'" class="col-span-1 sm:col-span-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <app-input-field
+              [formGroup]="profileForm"
+              controlName="otherSpecialization"
+              label="Other Specialization"
+              [placeholder]="'auth.spec_other_placeholder' | translate"
+            ></app-input-field>
           </div>
 
           <!-- Availability Hours -->
@@ -328,6 +329,8 @@
             <app-location-map 
               (locationPicked)="onPatientLocationPicked($event)"
               [initialAddress]="profileForm.get('address')?.value"
+              [lat]="patientLocationData?.lat"
+              [lng]="patientLocationData?.lng"
               [readOnly]="false"
               [height]="'250px'">
             </app-location-map>

@@ -13,6 +13,7 @@ import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { combinePhoneNumber } from '../../../../core/utils/phone.utils';
 import { TranslatePipe } from '@ngx-translate/core';
 import { SpecializationService, SpecializationGroup } from '../../../../core/services/specialization.service';
+import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
 
 import { RoleSelection } from '../../../../shared/components/role-selection/role-selection';
 import { ProfileDetailsForm } from '../../../../shared/components/profile-details-form/profile-details-form';
@@ -24,7 +25,7 @@ import { VerificationStep } from '../../../../shared/components/verification-ste
   imports: [
     CommonModule, ReactiveFormsModule, OtpInputFieldComponent, PhoneInputFieldComponent, 
     ClinicSelectionComponent, TranslatePipe,
-    RoleSelection, ProfileDetailsForm, VerificationStep
+    RoleSelection, ProfileDetailsForm, VerificationStep, InputFieldComponent
   ],
   templateUrl: './social-registration.component.html'
 })
@@ -52,6 +53,7 @@ export class SocialRegistrationComponent implements OnInit {
   socialForm: FormGroup = this.fb.group({
     countryCode: ['+20', Validators.required],
     phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
     clinicId: ['clinic-1'],
     title: ['Specialist'],
     specialization: ['s1'],
@@ -145,7 +147,10 @@ export class SocialRegistrationComponent implements OnInit {
       return;
     }
 
-    const payload: any = { contactNumber: combinedPhone };
+    const payload: any = { 
+      contactNumber: combinedPhone,
+      password: formVal.password
+    };
     if (this.socialRole() === 'doctor') {
       const selectedClinics = this.socialClinics().filter(c => c.selected);
       

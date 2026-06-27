@@ -37,6 +37,16 @@
 
           <form [formGroup]="socialForm" (ngSubmit)="onSubmitSocialExtraData()" class="space-y-4 transition-opacity duration-300" [class.pointer-events-none]="isLoading()" [class.opacity-60]="isLoading()">
             
+            <!-- Password Field -->
+            <app-input-field
+              [formGroup]="socialForm"
+              controlName="password"
+              label="auth.password"
+              type="password"
+              placeholder="••••••••"
+              icon="pi pi-lock"
+            ></app-input-field>
+
             <!-- Shared Profile Details Form -->
             <app-profile-details-form
               [parentFormGroup]="socialForm"
