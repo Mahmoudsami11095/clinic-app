@@ -4,6 +4,8 @@ import { ToastrService } from 'ngx-toastr';
 import { catchError, throwError } from 'rxjs';
 import { extractErrorMessage } from '../utils/error.utils';
 import { LanguageService } from '../i18n/language.service';
+import emailjs from '@emailjs/browser';
+import { environment } from '../../../environments/environment';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toastr = inject(ToastrService);
@@ -36,6 +38,30 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         const isUnassignedClinicError = err.status === 403 && req.method === 'GET' && errorMessage.toLowerCase().includes('assigned to at least one clinic');
         if (!isUnassignedClinicError) {
           toastr.error(errorMessage, errorTitle);
+        }
+      }
+
+      // Automatically send an email notification to the developer for critical errors
+      if (err.status === 0 || err.status >= 500) {
+        if (environment.emailjs.publicKey !== 'YOUR_PUBLIC_KEY') {
+          const templateParams = {
+            status: err.status === 0 ? '0 (Server Unreachable)' : err.status.toString(),
+            url: req.url,
+            time: new Date().toLocaleString(),
+            message: errorMessage
+          };
+          
+          emailjs.send(
+            environment.emailjs.serviceId,
+            environment.emailjs.templateId,
+            templateParams,
+            { publicKey: environment.emailjs.publicKey }
+          ).then(
+            (response) => console.log('Error successfully reported via email.', response.status, response.text),
+            (error) => console.error('Failed to report error via email.', error)
+          );
+        } else {
+          console.warn('EmailJS public key is not configured. Cannot send error report.');
         }
       }
 

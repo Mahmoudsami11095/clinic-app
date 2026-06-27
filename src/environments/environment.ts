@@ -7,5 +7,10 @@ export const environment = {
     email: 'mahmoudsami11095@gmail.com',
     phone: '01555102395',
     whatsappUrl: 'https://wa.me/201555102395'
+  },
+  emailjs: {
+    serviceId: 'service_p6kpoxc',
+    templateId: 'template_oplyfrx',
+    publicKey: '9tz0jlPJT4s4h8ONn'
   }
 };
