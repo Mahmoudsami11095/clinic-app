@@ -88,6 +88,13 @@
             <div class="pt-1">
               <span class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Phone</span>
               <span>{{ clinic()?.phone }}</span>
+              @if (clinic()?.phone) {
+                <a [href]="'https://wa.me/' + clinic()!.phone!.replace('+', '')" 
+                   target="_blank" 
+                   class="inline-flex mt-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors items-center gap-1.5 w-fit">
+                  <i class="pi pi-whatsapp text-[12px]"></i> Message on WhatsApp
+                </a>
+              }
             </div>
           </div>
           
