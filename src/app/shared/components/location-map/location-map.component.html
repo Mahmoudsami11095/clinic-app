@@ -1,3 +1,20 @@
-<div class="mt-3 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm relative" [style.height]="height">
-  <div #mapContainer class="w-full h-full"></div>
+<div class="mt-3 flex flex-col gap-3 w-full">
+  <div class="w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm relative" [style.height]="height">
+    <div #mapContainer class="w-full h-full"></div>
+  </div>
+
+  <div *ngIf="currentLat && currentLng" class="animate-in fade-in slide-in-from-top-2 duration-300">
+    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+      {{ readOnly ? 'Address Details' : 'Detailed Address (Optional)' }}
+    </label>
+    <div *ngIf="readOnly" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs text-slate-850 dark:text-slate-200 font-semibold min-h-[44px]">
+      {{ manualAddress || 'No address details provided' }}
+    </div>
+    <textarea *ngIf="!readOnly"
+              [value]="manualAddress"
+              (input)="onManualAddressChange($event)"
+              placeholder="e.g. Building 5, Floor 3, Apartment 12..."
+              rows="2"
+              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold resize-none"></textarea>
+  </div>
 </div>

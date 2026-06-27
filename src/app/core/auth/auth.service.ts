@@ -164,7 +164,12 @@ export class AuthService {
   }
 
   register(userData: RegistrationData): Observable<User> {
-    return this.http.post<{ message: string; data: User }>('/api/auth/register', userData).pipe(
+    return this.http.post<{ message: string; data: User; token?: string }>('/api/auth/register', userData).pipe(
+      tap(res => {
+        if (res.data && res.token) {
+          this.setCurrentUser(res.data, res.token);
+        }
+      }),
       map(res => res.data)
     );
   }

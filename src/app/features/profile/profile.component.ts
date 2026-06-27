@@ -14,6 +14,7 @@ import { phoneValidator } from '../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../core/utils/phone.utils';
 import { ClinicService } from '../../core/services/clinic.service';
 import { LocationMapComponent } from '../../shared/components/location-map/location-map.component';
+import { SpecializationService, SpecializationGroup } from '../../core/services/specialization.service';
 
 @Component({
   selector: 'app-profile',
@@ -29,8 +30,10 @@ export class ProfileComponent implements OnInit {
   protected authService = inject(AuthService);
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
+  protected specializationService = inject(SpecializationService);
 
   profileForm!: FormGroup;
+  specializationGroups = signal<SpecializationGroup[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
   userRole = signal<string>('');
@@ -73,7 +76,7 @@ export class ProfileComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.minLength(6)]],
-      title: [{ value: '', disabled: true }],
+      title: [''],
       role: [{ value: '', disabled: true }],
 
       // OTP Verification Codes
@@ -86,6 +89,7 @@ export class ProfileComponent implements OnInit {
 
       // Doctor Specific fields
       specialization: [''],
+      otherSpecialization: [''],
       contactNumber: [''],
       avatar: [''],
       availabilityHours: ['09:00-17:00'],
@@ -103,7 +107,13 @@ export class ProfileComponent implements OnInit {
     this.profileForm.get('countryCode')?.valueChanges.subscribe(() => {
       this.profileForm.get('phoneNumber')?.updateValueAndValidity();
     });
+
+    this.specializationService.getGroupedSpecializations().subscribe(groups => {
+      this.specializationGroups.set(groups);
+    });
   }
+
+
 
 
 
@@ -133,12 +143,30 @@ export class ProfileComponent implements OnInit {
 
         const phoneData = splitPhoneNumber(data.contactNumber || '');
 
+        let specValue = '';
+        let otherSpecValue = '';
+        if (data.specializationId) {
+          specValue = data.specializationId;
+        } else if (data.specialization) {
+          // If there's no ID but there is text, it means it was an "other" specialization
+          // OR it was an old record that only had text. Let's see if the text matches any ID
+          const allSpecs = this.specializationGroups().flatMap(g => g.options);
+          const matched = allSpecs.find(s => s.value === data.specialization || s.id === data.specialization);
+          if (matched) {
+            specValue = matched.id;
+          } else {
+            specValue = 'other';
+            otherSpecValue = data.specialization;
+          }
+        }
+
         this.profileForm.patchValue({
           name: data.name,
           email: data.email,
           title: data.title,
           role: data.role,
-          specialization: data.specialization || '',
+          specialization: specValue,
+          otherSpecialization: otherSpecValue,
           countryCode: phoneData.countryCode,
           phoneNumber: phoneData.phoneNumber,
           contactNumber: data.contactNumber || '',
@@ -329,6 +357,8 @@ export class ProfileComponent implements OnInit {
 
     if (this.userRole() === 'doctor') {
       formValue.availabilityDays = JSON.stringify(this.selectedAvailabilityDays);
+      formValue.specializationId = formValue.specialization === 'other' ? null : formValue.specialization;
+      formValue.specialization = formValue.specialization === 'other' ? formValue.otherSpecialization : null;
     } else if (this.userRole() === 'patient') {
       formValue.clinicIds = this.linkedClinics().map(c => c.id);
       if (this.patientLocationData) {

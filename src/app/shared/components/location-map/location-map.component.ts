@@ -25,10 +25,21 @@ export class LocationMapComponent implements OnInit, OnChanges {
   private marker: google.maps.Marker | null = null;
   private geocoder: google.maps.Geocoder | null = null;
 
+  currentLat?: number;
+  currentLng?: number;
+  currentCity?: string;
+  currentState?: string;
+  currentCountry?: string;
+  manualAddress: string = '';
+
   // Default to Cairo, Egypt
   private defaultLocation = { lat: 30.0444, lng: 31.2357 };
 
   ngOnInit() {
+    this.manualAddress = this.initialAddress || '';
+    if (this.lat) this.currentLat = this.lat;
+    if (this.lng) this.currentLng = this.lng;
+    
     this.googleMapsService.loadGoogleMapsScript().then(() => {
       this.geocoder = new google.maps.Geocoder();
       this.initMap();
@@ -143,20 +154,40 @@ export class LocationMapComponent implements OnInit, OnChanges {
               }
             }
 
-            this.locationPicked.emit({
-              address: result.formatted_address,
-              lat: latLng.lat(),
-              lng: latLng.lng(),
-              city,
-              state,
-              country
-            });
+            this.currentLat = latLng.lat();
+            this.currentLng = latLng.lng();
+            this.currentCity = city;
+            this.currentState = state;
+            this.currentCountry = country;
+            this.manualAddress = result.formatted_address;
+
+            this.emitLocation();
           });
         } else {
           console.error('Geocoder failed due to: ' + status);
         }
       });
     }
+  }
+
+  onManualAddressChange(event: Event) {
+    const input = event.target as HTMLTextAreaElement | HTMLInputElement;
+    this.manualAddress = input.value;
+    if (this.currentLat && this.currentLng) {
+      this.emitLocation();
+    }
+  }
+
+  private emitLocation() {
+    if (!this.currentLat || !this.currentLng) return;
+    this.locationPicked.emit({
+      address: this.manualAddress,
+      lat: this.currentLat,
+      lng: this.currentLng,
+      city: this.currentCity,
+      state: this.currentState,
+      country: this.currentCountry
+    });
   }
 
   private updateMap() {

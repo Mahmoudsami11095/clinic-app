@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans select-none selection:bg-indigo-500/30 transition-colors duration-300">
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-y-auto font-sans select-none selection:bg-indigo-500/30 transition-colors duration-300">
   
   <!-- Floating Ambient background blobs -->
   <div class="absolute -top-40 -start-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -206,40 +206,10 @@
 
         <!-- STAGE 2: Role Selection Cards -->
         <div *ngIf="currentStage() === 2" class="space-y-6 animate-in fade-in duration-200">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <!-- Doctor Card -->
-            <button type="button" (click)="setRole('doctor'); nextStage()"
-                    [class]="registerForm.get('role')?.value === 'doctor' ? 'border-indigo-600 ring-2 ring-indigo-500/25 bg-white dark:bg-slate-800 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40'"
-                    class="p-6 border rounded-2xl text-center transition-all cursor-pointer group focus:outline-none hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md">
-              <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <i class="pi pi-heart-fill text-lg"></i>
-              </div>
-              <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Doctor</h5>
-              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a practitioner to manage charts and patients.</p>
-            </button>
-
-            <!-- Patient Card -->
-            <button type="button" (click)="setRole('patient'); nextStage()"
-                    [class]="registerForm.get('role')?.value === 'patient' ? 'border-emerald-600 ring-2 ring-emerald-500/25 bg-white dark:bg-slate-800 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40'"
-                    class="p-6 border rounded-2xl text-center transition-all cursor-pointer group focus:outline-none hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md">
-              <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <i class="pi pi-user text-lg"></i>
-              </div>
-              <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Patient</h5>
-              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join as a patient to schedule visits and view statements.</p>
-            </button>
-
-            <!-- Assistant Card -->
-            <button type="button" (click)="setRole('assistant'); nextStage()"
-                    [class]="registerForm.get('role')?.value === 'assistant' ? 'border-amber-600 ring-2 ring-amber-500/25 bg-white dark:bg-slate-800 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40'"
-                    class="p-6 border rounded-2xl text-center transition-all cursor-pointer group focus:outline-none hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md">
-              <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <i class="pi pi-briefcase text-lg"></i>
-              </div>
-              <h5 class="font-bold text-slate-850 dark:text-slate-250 text-sm">Assistant</h5>
-              <p class="text-xs text-slate-450 dark:text-slate-500 mt-2 leading-relaxed">Join to assist doctors and manage appointments.</p>
-            </button>
-          </div>
+          <app-role-selection
+            [selectedRole]="registerForm.get('role')?.value"
+            (roleChange)="onRoleChange($event)"
+          ></app-role-selection>
 
           <button type="button" (click)="prevStage()"
                   class="w-full py-3 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer">
@@ -247,74 +217,15 @@
           </button>
         </div>
 
+
         <!-- STAGE 3: Profile Details Completion -->
         <div *ngIf="currentStage() === 3" class="space-y-4 animate-in fade-in duration-200">
-          <!-- Shared field: Phone (Contact Number) -->
-          <app-phone-input-field
-            [formGroup]="registerForm"
-            countryCodeName="countryCode"
-            phoneNumberName="phoneNumber"
-            label="Contact Number"
-            [required]="true"
-          ></app-phone-input-field>
-
-
-
-          <!-- Doctor specific fields -->
-          <div *ngIf="registerForm.get('role')?.value === 'doctor'">
-            <app-input-field
-              [formGroup]="registerForm"
-              controlName="specialization"
-              label="Specialization"
-              placeholder="e.g. Dentistry, Cardiology"
-              [required]="true"
-            ></app-input-field>
-          </div>
-
-          <!-- Patient specific fields -->
-          <div *ngIf="registerForm.get('role')?.value === 'patient'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Gender</label>
-                <select formControlName="gender" 
-                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-
-              <app-input-field
-                [formGroup]="registerForm"
-                controlName="bloodGroup"
-                label="Blood Group"
-                placeholder="e.g. O+, A-"
-              ></app-input-field>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Date of Birth</label>
-              <input type="date" formControlName="dob" 
-                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Address</label>
-              <app-location-map 
-                (locationPicked)="onPatientLocationPicked($event)"
-                [initialAddress]="registerForm.get('address')?.value"
-                [readOnly]="false"
-                [height]="'250px'">
-              </app-location-map>
-            </div>
-
-            <app-phone-input-field
-              [formGroup]="registerForm"
-              countryCodeName="clinicCountryCode"
-              phoneNumberName="clinicPhoneNumber"
-              label="Clinic Phone Number (Optional)"
-              [required]="false"
-            ></app-phone-input-field>
-          </div>
+          
+          <app-profile-details-form
+            [parentFormGroup]="registerForm"
+            [role]="registerForm.get('role')?.value"
+            [specializationGroups]="specializationGroups()"
+          ></app-profile-details-form>
 
           <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button type="button" (click)="prevStage()"
@@ -353,53 +264,21 @@
 
         <!-- STAGE 5: OTP Verification Codes -->
         <div *ngIf="currentStage() === 5" class="space-y-6 animate-in fade-in duration-250">
-          <!-- Email Verification Block -->
-          <div>
-            <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
-              Email Verification Code
-            </h4>
-            <app-otp-input-field [code]="otpCode()" (codeChange)="otpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
-
-          </div>
-
-          <!-- WhatsApp Verification Block (Optional) -->
-          <div *ngIf="whatsappOtpSent()" class="border-t border-slate-100 dark:border-slate-800/80 pt-4">
-            <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
-              WhatsApp Verification Code
-              <span class="text-slate-400 dark:text-slate-500 normal-case tracking-normal font-medium ms-1">(Optional)</span>
-            </h4>
-            <!-- Passcode digits input grid for phone -->
-            <app-otp-input-field [code]="phoneOtpCode()" (codeChange)="phoneOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
-            <p class="text-xs text-center text-slate-400 dark:text-slate-500 mt-2">
-              You can skip this step and verify your phone later.
-            </p>
-          </div>
-
-          <!-- Resend Code countdown -->
-          <div class="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span *ngIf="countdown() > 0" class="text-slate-400 dark:text-slate-550">
-              {{ getCountdownText() }}
-            </span>
-            <button type="button" *ngIf="countdown() === 0" (click)="sendVerificationCode()"
-                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors cursor-pointer focus:outline-none font-bold">
-              {{ 'auth.resend_code' | translate }}
-            </button>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex flex-col gap-3">
-            <button type="submit" [disabled]="isLoading()"
-                    class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-sm py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group focus:outline-none">
-              <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white"></i>
-              <span *ngIf="!isLoading()">{{ 'auth.verify_and_register' | translate }}</span>
-            </button>
-
-            <button type="button" (click)="prevStage()" [disabled]="isLoading()"
-                    class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
-              <i class="pi pi-arrow-left text-xs rtl-flip"></i>
-              <span>Back</span>
-            </button>
-          </div>
+          <app-verification-step
+            [emailOtpCode]="otpCode()"
+            (emailOtpCodeChange)="otpCode.set($event)"
+            [phoneOtpCode]="phoneOtpCode()"
+            (phoneOtpCodeChange)="phoneOtpCode.set($event)"
+            [showEmail]="true"
+            [showPhone]="whatsappOtpSent()"
+            [phoneNumberFormatted]="combinedPhoneNumberFormatted"
+            [countdown]="countdown()"
+            [countdownText]="getCountdownText()"
+            [isLoading]="isLoading()"
+            (otpSubmit)="onSubmit()"
+            (resendOtp)="sendVerificationCode()"
+            (back)="prevStage()"
+          ></app-verification-step>
         </div>
       </form>
 
@@ -440,4 +319,6 @@
 
     </div>
   </div>
+  <!-- Extracted to app-social-registration -->
+  <app-social-registration *ngIf="socialSignUpState() !== 'none'" [provider]="socialProvider()" [token]="socialToken()" (complete)="onSocialRegistrationComplete($event)" (cancel)="socialSignUpState.set('none')"></app-social-registration>
 </div>
