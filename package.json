@@ -30,6 +30,7 @@
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
     "@angular/service-worker": "^20.3.0",
+    "@emailjs/browser": "^4.4.1",
     "@microsoft/signalr": "^10.0.0",
     "@ngx-translate/core": "^18.0.0",
     "@ngx-translate/http-loader": "^18.0.0",
