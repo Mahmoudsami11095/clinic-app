@@ -134,7 +134,7 @@ export class SocialRegistrationComponent implements OnInit {
     if (!this.socialPhoneVerified()) {
       this.isLoading.set(true);
       const cleanedPhone = combinedPhone.replace(/[\s\-\(\)]/g, '');
-      this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone }).subscribe({
+      this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone, checkRegistration: true }).subscribe({
         next: (res) => {
           this.isLoading.set(false);
           this.socialOtpDemo.set(res.otp || '');
@@ -142,7 +142,7 @@ export class SocialRegistrationComponent implements OnInit {
           this.socialOtpCode.set('');
           this.toastr.success(`Code sent [Demo: ${res.otp}]`, 'Success');
         },
-        error: (err) => { this.isLoading.set(false); this.toastr.error('Error', 'Error'); }
+        error: (err) => { this.isLoading.set(false); this.toastr.error(err.error?.message || 'Error', 'Error'); }
       });
       return;
     }
