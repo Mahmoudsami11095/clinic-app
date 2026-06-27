@@ -515,7 +515,11 @@ export class RegisterComponent implements OnDestroy, OnInit {
           this.languageService.translate('auth.register_success'),
           this.languageService.translate('toast.success')
         );
-        this.router.navigate(['/login']);
+        if (this.authService.isAuthenticated()) {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.router.navigate(['/login']);
+        }
       },
       error: (err) => {
         this.isLoading.set(false);
