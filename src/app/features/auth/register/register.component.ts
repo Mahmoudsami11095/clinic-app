@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy, effect } from '@angular/core';
+import { Component, inject, signal, OnDestroy, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -16,22 +16,33 @@ import { phoneValidator } from '../../../core/validators/phone.validator';
 import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
 import { LocationMapComponent } from '../../../shared/components/location-map/location-map.component';
 import { ClinicSelectionComponent } from '../../../shared/components/clinic-selection/clinic-selection.component';
+import { SpecializationService, SpecializationGroup } from '../../../core/services/specialization.service';
 
 declare var google: any;
 declare var AppleID: any;
 
+import { RoleSelection } from '../../../shared/components/role-selection/role-selection';
+import { ProfileDetailsForm } from '../../../shared/components/profile-details-form/profile-details-form';
+import { VerificationStep } from '../../../shared/components/verification-step/verification-step';
+
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, LocationMapComponent, ClinicSelectionComponent],
+  imports: [
+    CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, 
+    InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, 
+    LocationMapComponent, ClinicSelectionComponent,
+    RoleSelection, ProfileDetailsForm, VerificationStep
+  ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
-export class RegisterComponent implements OnDestroy {
+export class RegisterComponent implements OnDestroy, OnInit {
   protected authService = inject(AuthService);
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
   protected themeService = inject(ThemeService);
+  protected specializationService = inject(SpecializationService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private toastr = inject(ToastrService);
@@ -60,6 +71,8 @@ export class RegisterComponent implements OnDestroy {
     { value: 'assistant', labelKey: 'auth.role_assistant' }
   ];
 
+  specializationGroups = signal<SpecializationGroup[]>([]);
+
   clinicsList = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
   selectedClinicDays: string[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   get clinicDetailsGroup(): FormGroup {
@@ -70,6 +83,17 @@ export class RegisterComponent implements OnDestroy {
 
   patientLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
   clinicLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
+
+  onRoleChange(role: string) {
+    this.setRole(role as any);
+    this.nextStage();
+  }
+
+  get combinedPhoneNumberFormatted(): string {
+    const code = this.registerForm.get('countryCode')?.value || '';
+    const num = this.registerForm.get('phoneNumber')?.value || '';
+    return code + num;
+  }
 
   onPatientLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
     this.patientLocationData = data;
@@ -103,7 +127,9 @@ export class RegisterComponent implements OnDestroy {
       clinicPhoneNumber: ['', [phoneValidator('clinicCountryCode')]],
  
       // Doctor specific fields
-      specialization: ['General Dentistry'],
+      title: ['Specialist'],
+      specialization: ['s1'], // Set default to first ID (e.g., 's1' for General Dentistry)
+      otherSpecialization: [''],
       clinicDetails: this.fb.group({
         clinicName: [''],
         clinicAddress: [''],
@@ -144,6 +170,15 @@ export class RegisterComponent implements OnDestroy {
       if (this.errorMessage()) {
         this.errorMessage.set(null);
       }
+    });
+  }
+
+  ngOnInit(): void {
+    this.specializationService.getGroupedSpecializations().subscribe({
+      next: (groups) => {
+        this.specializationGroups.set(groups);
+      },
+      error: (err) => console.error('Failed to load specializations:', err)
     });
   }
 
@@ -368,8 +403,6 @@ export class RegisterComponent implements OnDestroy {
     }, 1000);
   }
 
-  // OTP Input events have been replaced by OtpInputFieldComponent
-
   goBackToForm() {
     this.otpSent.set(false);
     this.whatsappOtpSent.set(false);
@@ -424,7 +457,9 @@ export class RegisterComponent implements OnDestroy {
             payload.clinicIds = selectedClinics.map(c => c.id);
         }
 
-        payload.specialization = formValues.specialization;
+        payload.title = formValues.title;
+        payload.specializationId = formValues.specialization === 'other' ? undefined : formValues.specialization;
+        payload.specialization = formValues.specialization === 'other' ? formValues.otherSpecialization : undefined;
         payload.clinicAvailabilities = selectedClinics.map(c => ({
           clinicId: c.id,
           availabilityHours: c.hours,
@@ -456,8 +491,6 @@ export class RegisterComponent implements OnDestroy {
         if (matched) {
           clinicId = matched.id;
         } else {
-          // If a phone was entered but not found, we could show an error, but it's optional, so let's just proceed
-          // Alternatively, we can show an error
           this.toastr.warning('Clinic with the provided phone number was not found. Proceeding without clinic link.', 'Warning');
         }
       }

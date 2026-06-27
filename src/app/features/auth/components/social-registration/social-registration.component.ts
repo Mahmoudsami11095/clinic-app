@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -11,14 +11,24 @@ import { PhoneInputFieldComponent } from '../../../../shared/components/phone-in
 import { ClinicSelectionComponent } from '../../../../shared/components/clinic-selection/clinic-selection.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { combinePhoneNumber } from '../../../../core/utils/phone.utils';
+import { TranslatePipe } from '@ngx-translate/core';
+import { SpecializationService, SpecializationGroup } from '../../../../core/services/specialization.service';
+
+import { RoleSelection } from '../../../../shared/components/role-selection/role-selection';
+import { ProfileDetailsForm } from '../../../../shared/components/profile-details-form/profile-details-form';
+import { VerificationStep } from '../../../../shared/components/verification-step/verification-step';
 
 @Component({
   selector: 'app-social-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, OtpInputFieldComponent, PhoneInputFieldComponent, ClinicSelectionComponent],
+  imports: [
+    CommonModule, ReactiveFormsModule, OtpInputFieldComponent, PhoneInputFieldComponent, 
+    ClinicSelectionComponent, TranslatePipe,
+    RoleSelection, ProfileDetailsForm, VerificationStep
+  ],
   templateUrl: './social-registration.component.html'
 })
-export class SocialRegistrationComponent {
+export class SocialRegistrationComponent implements OnInit {
   protected authService = inject(AuthService);
   protected clinicService = inject(ClinicService);
   private toastr = inject(ToastrService);
@@ -32,19 +42,20 @@ export class SocialRegistrationComponent {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
-  socialSignUpState = signal<'none' | 'role' | 'data' | 'doctor-clinics' | 'social-otp'>('role');
+  currentStage = signal<number>(2);
   socialOtpCode = signal<string>('');
   socialOtpDemo = signal<string>('');
-  socialOtpNextState = signal<'doctor-clinics' | 'submit'>('submit');
   socialPhoneVerified = signal<boolean>(false);
 
   private fb = inject(FormBuilder);
   
   socialForm: FormGroup = this.fb.group({
-    phoneCountryCode: ['+20', Validators.required],
-    phoneNumber: ['', [Validators.required, phoneValidator('phoneCountryCode')]],
+    countryCode: ['+20', Validators.required],
+    phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]],
     clinicId: ['clinic-1'],
-    specialization: ['General Dentistry'],
+    title: ['Specialist'],
+    specialization: ['s1'],
+    otherSpecialization: [''],
     gender: ['Male'],
     dob: ['1996-01-01'],
     bloodGroup: ['O+'],
@@ -71,16 +82,31 @@ export class SocialRegistrationComponent {
 
   socialRole = signal<'doctor' | 'patient' | 'assistant'>('patient');
   socialClinics = signal<{ id: string; name: string; hours: string; days: string[]; selected: boolean }[]>([]);
+  specializationGroups = signal<SpecializationGroup[]>([]);
+  protected specializationService = inject(SpecializationService);
 
   constructor() {
-    this.socialForm.get('phoneCountryCode')?.valueChanges.subscribe(() => {
+    this.socialForm.get('countryCode')?.valueChanges.subscribe(() => {
       this.socialForm.get('phoneNumber')?.updateValueAndValidity();
     });
   }
 
+  ngOnInit(): void {
+    this.specializationService.getGroupedSpecializations().subscribe({
+      next: (groups) => {
+        this.specializationGroups.set(groups);
+      },
+      error: (err) => console.error('Failed to load specializations:', err)
+    });
+  }
+
+  onRoleChange(role: string) {
+    this.onSelectSocialRole(role as any);
+  }
+
   onSelectSocialRole(role: 'doctor' | 'patient' | 'assistant') {
     this.socialRole.set(role);
-    this.socialSignUpState.set('data');
+    this.currentStage.set(3);
     if (role === 'doctor') {
       const clinics = this.clinicService.clinics().map(c => ({
         id: c.id,
@@ -101,7 +127,7 @@ export class SocialRegistrationComponent {
     }
 
     const formVal = this.socialForm.value;
-    const combinedPhone = combinePhoneNumber(formVal.phoneCountryCode, formVal.phoneNumber);
+    const combinedPhone = combinePhoneNumber(formVal.countryCode, formVal.phoneNumber);
     
     if (!this.socialPhoneVerified()) {
       this.isLoading.set(true);
@@ -110,7 +136,7 @@ export class SocialRegistrationComponent {
         next: (res) => {
           this.isLoading.set(false);
           this.socialOtpDemo.set(res.otp || '');
-          this.socialSignUpState.set('social-otp');
+          this.currentStage.set(5);
           this.socialOtpCode.set('');
           this.toastr.success(`Code sent [Demo: ${res.otp}]`, 'Success');
         },
@@ -128,7 +154,9 @@ export class SocialRegistrationComponent {
           payload.clinicIds = selectedClinics.map(c => c.id);
       }
 
-      payload.specialization = formVal.specialization;
+      payload.title = formVal.title;
+      payload.specializationId = formVal.specialization === 'other' ? undefined : formVal.specialization;
+      payload.specialization = formVal.specialization === 'other' ? formVal.otherSpecialization : undefined;
       payload.clinicAvailabilities = selectedClinics.map(c => ({
         clinicId: c.id,
         availabilityHours: c.hours,
@@ -176,14 +204,14 @@ export class SocialRegistrationComponent {
     }
     this.isLoading.set(true);
     const formVal = this.socialForm.value;
-    const combinedPhone = combinePhoneNumber(formVal.phoneCountryCode, formVal.phoneNumber);
+    const combinedPhone = combinePhoneNumber(formVal.countryCode, formVal.phoneNumber);
     const cleanedPhone = combinedPhone.replace(/[\s\-\(\)]/g, '');
     this.http.post<any>('/api/auth/verify-otp', { phoneNumber: cleanedPhone, code }).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.socialPhoneVerified.set(true);
         if (this.socialRole() === 'doctor') {
-            this.socialSignUpState.set('doctor-clinics');
+            this.currentStage.set(4);
         } else {
             this.onSubmitSocialExtraData();
         }
@@ -193,7 +221,7 @@ export class SocialRegistrationComponent {
   }
 
   goBackToSocialData() {
-    this.socialSignUpState.set('data');
+    this.currentStage.set(3);
     this.socialPhoneVerified.set(false);
   }
 

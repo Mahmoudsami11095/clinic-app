@@ -108,11 +108,17 @@
             </div>
           </div>
 
-          <div class="col-span-1">
-            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{{ 'profile.profile_title' | translate }}</label>
-            <input type="text" formControlName="title" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl px-4 py-3 cursor-not-allowed">
+          <div class="col-span-1" *ngIf="userRole() === 'doctor'">
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{{ 'profile.profile_title' | translate }} <span class="text-rose-500">*</span></label>
+            <select formControlName="title" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold transition-colors duration-200">
+              <option value="General Practitioner">{{ 'profile.title_gp' | translate }}</option>
+              <option value="Specialist">{{ 'profile.title_specialist' | translate }}</option>
+              <option value="Consultant">{{ 'profile.title_consultant' | translate }}</option>
+              <option value="Professor">{{ 'profile.title_professor' | translate }}</option>
+              <option value="Fellow">{{ 'profile.title_fellow' | translate }}</option>
+            </select>
           </div>
-          <div class="col-span-1">
+          <div [ngClass]="userRole() === 'doctor' ? 'col-span-1' : 'col-span-2'">
             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{{ 'profile.user_role' | translate }}</label>
             <input type="text" formControlName="role" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl px-4 py-3 cursor-not-allowed capitalize">
           </div>
@@ -129,11 +135,25 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Specialization -->
-          <app-input-field
-            [formGroup]="profileForm"
-            controlName="specialization"
-            label="profile.specialization"
-          ></app-input-field>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{{ 'profile.specialization' | translate }}</label>
+            <select formControlName="specialization" 
+                    class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-550/25 focus:border-indigo-500 text-slate-800 dark:text-slate-200 font-semibold transition-all cursor-pointer">
+              <optgroup *ngFor="let group of specializationGroups()" [label]="group.groupLabelKey | translate">
+                <option *ngFor="let spec of group.options" [value]="spec.id">{{ spec.labelKey | translate }}</option>
+              </optgroup>
+              <option value="other">{{ 'auth.spec_other' | translate }}</option>
+            </select>
+            
+            <div *ngIf="profileForm.get('specialization')?.value === 'other'" class="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <app-input-field
+                [formGroup]="profileForm"
+                controlName="otherSpecialization"
+                label="Other Specialization"
+                [placeholder]="'auth.spec_other_placeholder' | translate"
+              ></app-input-field>
+            </div>
+          </div>
 
           <!-- Contact Number -->
           <div>

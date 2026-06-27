@@ -1,0 +1,94 @@
+<div [formGroup]="parentFormGroup()" class="space-y-4">
+  <!-- Shared field: Phone (Contact Number) -->
+  <app-phone-input-field
+    [formGroup]="parentFormGroup()"
+    countryCodeName="countryCode"
+    phoneNumberName="phoneNumber"
+    label="Contact Number"
+    [required]="true"
+  ></app-phone-input-field>
+
+  <!-- Doctor specific fields -->
+  <div *ngIf="role() === 'doctor'" class="space-y-4">
+    <div *ngIf="parentFormGroup().contains('title')">
+      <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{{ 'profile.profile_title' | translate }} <span class="text-rose-500">*</span></label>
+      <select formControlName="title" 
+              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold transition-colors duration-200">
+        <option value="General Practitioner">{{ 'profile.title_gp' | translate }}</option>
+        <option value="Specialist">{{ 'profile.title_specialist' | translate }}</option>
+        <option value="Consultant">{{ 'profile.title_consultant' | translate }}</option>
+        <option value="Professor">{{ 'profile.title_professor' | translate }}</option>
+        <option value="Fellow">{{ 'profile.title_fellow' | translate }}</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{{ 'auth.specialization_label' | translate }} <span class="text-rose-500">*</span></label>
+      <select formControlName="specialization" 
+              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold transition-colors duration-200">
+        <optgroup *ngFor="let group of specializationGroups()" [label]="group.groupLabelKey | translate">
+          <option *ngFor="let spec of group.options" [value]="spec.id">{{ spec.labelKey | translate }}</option>
+        </optgroup>
+        <option value="other">{{ 'auth.spec_other' | translate }}</option>
+      </select>
+    </div>
+    
+    <div *ngIf="parentFormGroup().get('specialization')?.value === 'other'" class="animate-in fade-in slide-in-from-top-2 duration-300">
+      <app-input-field
+        [formGroup]="parentFormGroup()"
+        controlName="otherSpecialization"
+        label="Other Specialization"
+        [placeholder]="'auth.spec_other_placeholder' | translate"
+        [required]="true"
+      ></app-input-field>
+    </div>
+  </div>
+
+  <!-- Patient specific fields -->
+  <div *ngIf="role() === 'patient'" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Gender</label>
+        <select formControlName="gender" 
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+
+      <app-input-field
+        [formGroup]="parentFormGroup()"
+        controlName="bloodGroup"
+        label="Blood Group"
+        placeholder="e.g. O+, A-"
+      ></app-input-field>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Date of Birth</label>
+      <input type="date" formControlName="dob" 
+             class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 text-slate-850 dark:text-slate-200 font-semibold">
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Address</label>
+      <app-location-map 
+        (locationPicked)="onLocationPicked($event)"
+        [initialAddress]="parentFormGroup().get('address')?.value"
+        [readOnly]="false"
+        [height]="'250px'">
+      </app-location-map>
+    </div>
+
+    <!-- For normal registration, it uses clinicCountryCode / clinicPhoneNumber. For social, it might use different form controls, but the form expects it. Wait, the patient registration in register.component has clinic Phone. Let's include it conditionally if it exists in the form? Or just hardcode it since social-registration might not have it. Let's wrap in an ngIf if the control exists. -->
+    <div *ngIf="parentFormGroup().contains('clinicCountryCode')">
+      <app-phone-input-field
+        [formGroup]="parentFormGroup()"
+        countryCodeName="clinicCountryCode"
+        phoneNumberName="clinicPhoneNumber"
+        label="Clinic Phone Number (Optional)"
+        [required]="false"
+      ></app-phone-input-field>
+    </div>
+  </div>
+</div>

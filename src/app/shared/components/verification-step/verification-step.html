@@ -1,0 +1,56 @@
+<div class="space-y-6 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+  
+  <!-- Email Verification Block -->
+  <div *ngIf="showEmail()">
+    <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
+      Email Verification Code
+    </h4>
+    <app-otp-input-field [code]="emailOtpCode()" (codeChange)="emailOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
+  </div>
+
+  <!-- WhatsApp Verification Block -->
+  <div *ngIf="showPhone()" [class.border-t]="showEmail()" [class.border-slate-100]="showEmail()" [class.dark:border-slate-800]="showEmail()" [class.pt-4]="showEmail()">
+    <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
+      Verify WhatsApp Number
+      <span *ngIf="showEmail()" class="text-slate-400 dark:text-slate-500 normal-case tracking-normal font-medium ms-1">(Optional)</span>
+    </h4>
+    <p *ngIf="phoneNumberFormatted()" class="text-xs text-slate-500 dark:text-slate-400 mb-2">
+      We have sent a verification code to WhatsApp number:
+      <span class="text-indigo-600 dark:text-indigo-400 font-bold block mt-1">{{ phoneNumberFormatted() }}</span>
+    </p>
+    <app-otp-input-field [code]="phoneOtpCode()" (codeChange)="phoneOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
+    <p *ngIf="showEmail()" class="text-xs text-center text-slate-400 dark:text-slate-500 mt-2">
+      You can skip this step and verify your phone later.
+    </p>
+  </div>
+
+  <!-- Demo Code display helper -->
+  <div *ngIf="demoCode()" class="text-xs font-semibold text-indigo-500 dark:text-indigo-400">
+    Demo WhatsApp OTP: <strong class="underline">{{ demoCode() }}</strong>
+  </div>
+
+  <!-- Resend Code countdown -->
+  <div *ngIf="showEmail()" class="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+    <span *ngIf="countdown() > 0" class="text-slate-400 dark:text-slate-550">
+      {{ countdownText() }}
+    </span>
+    <button type="button" *ngIf="countdown() === 0" (click)="onResend()"
+            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors cursor-pointer focus:outline-none font-bold">
+      {{ 'auth.resend_code' | translate }}
+    </button>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex flex-col gap-3 pt-2">
+    <button type="button" (click)="onSubmit()" [disabled]="isLoading()"
+            class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-sm rounded-2xl transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer focus:outline-none">
+      <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-xs"></i>
+      <span>Verify OTP Code</span>
+    </button>
+    <button type="button" (click)="onBack()" [disabled]="isLoading()"
+            class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs py-3 px-6 rounded-2xl transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5">
+      <i class="pi pi-arrow-left text-xs rtl-flip"></i>
+      <span>Back</span>
+    </button>
+  </div>
+</div>
