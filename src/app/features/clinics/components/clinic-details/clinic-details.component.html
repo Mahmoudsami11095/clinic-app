@@ -89,11 +89,25 @@
               <span class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Phone</span>
               <span>{{ clinic()?.phone }}</span>
               @if (clinic()?.phone) {
-                <a [href]="'https://wa.me/' + clinic()!.phone!.replace('+', '')" 
-                   target="_blank" 
-                   class="inline-flex mt-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors items-center gap-1.5 w-fit">
-                  <i class="pi pi-whatsapp text-[12px]"></i> Message on WhatsApp
-                </a>
+                <div class="flex items-center gap-3 mt-3">
+                  <a [href]="'https://wa.me/' + clinic()!.phone!.replace('+', '')" 
+                     target="_blank" 
+                     class="inline-flex px-4 py-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors items-center gap-2 w-fit">
+                    <i class="pi pi-whatsapp text-[14px]"></i> Message on WhatsApp
+                  </a>
+                  <div class="relative group cursor-pointer">
+                    <div class="p-1 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+                      <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/' + clinic()!.phone!.replace('+', '')" 
+                           alt="QR Code" class="w-7 h-7 object-contain rounded-lg" 
+                           title="Hover to enlarge QR Code">
+                    </div>
+                    
+                    <div class="absolute bottom-full start-1/2 -translate-x-1/2 mb-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 p-3 bg-white rounded-2xl shadow-2xl border border-slate-100 pointer-events-none">
+                      <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://wa.me/' + clinic()!.phone!.replace('+', '')" alt="Scan QR" class="w-40 h-40 max-w-none rounded-xl">
+                      <div class="absolute -bottom-2 start-1/2 -translate-x-1/2 border-8 border-transparent border-t-white"></div>
+                    </div>
+                  </div>
+                </div>
               }
             </div>
           </div>
