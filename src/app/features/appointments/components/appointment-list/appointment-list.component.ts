@@ -14,6 +14,8 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
+import { WhatsappService } from '../../../../core/services/whatsapp.service';
+import { PatientService } from '../../../patients/services/patient.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
@@ -31,6 +33,8 @@ export class AppointmentListComponent implements OnInit {
   private languageService = inject(LanguageService);
   private toastr = inject(ToastrService);
   private router = inject(Router);
+  private whatsappService = inject(WhatsappService);
+  private patientService = inject(PatientService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
@@ -183,6 +187,20 @@ export class AppointmentListComponent implements OnInit {
           this.languageService.translate('toast.success')
         );
         this.appointments.update(list => list.filter(a => a.id !== appt.id));
+
+        // Fetch patient to get phone and send cancellation notification
+        this.patientService.getById(appt.patientId).subscribe(patient => {
+          if (patient) {
+            this.whatsappService.sendAppointmentNotification(
+              appt.clinicId || this.clinicService.activeClinicId(),
+              patient,
+              appt.doctorName,
+              appt.date,
+              'cancel',
+              this.toastr
+            );
+          }
+        });
       },
       error: () => {
         this.toastr.error(

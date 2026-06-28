@@ -143,6 +143,11 @@
           </div>
         }
       </div>
+
+      <!-- Integrations Row -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+        <app-whatsapp-connection [clinicId]="clinic()!.id"></app-whatsapp-connection>
+      </div>
     </div>
   } @else {
     <div class="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-550 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">

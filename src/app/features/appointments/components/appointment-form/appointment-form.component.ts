@@ -18,6 +18,7 @@ import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { WhatsappService } from '../../../../core/services/whatsapp.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
@@ -43,6 +44,7 @@ export class AppointmentFormComponent implements OnInit {
   private clinicService = inject(ClinicService);
   private toastr = inject(ToastrService);
   private langService = inject(LanguageService);
+  private whatsappService = inject(WhatsappService);
 
   allPatients: Patient[] = [];
   allDoctors: Doctor[] = [];
@@ -492,6 +494,17 @@ export class AppointmentFormComponent implements OnInit {
             this.langService.translate('toast.appointment_updated'),
             this.langService.translate('toast.success')
           );
+          
+          const action = updated.status === 'cancelled' ? 'cancel' : 'update';
+          this.whatsappService.sendAppointmentNotification(
+            updated.clinicId || clinicId,
+            patient,
+            doc ? `${doc.firstName} ${doc.lastName}` : '',
+            updated.date,
+            action,
+            this.toastr
+          );
+
           this.saved.emit(updated);
         },
         error: (err) => {
@@ -553,6 +566,16 @@ export class AppointmentFormComponent implements OnInit {
           this.langService.translate('toast.appointment_booked'),
           this.langService.translate('toast.success')
         );
+
+        this.whatsappService.sendAppointmentNotification(
+          newAppointment.clinicId || clinicId,
+          patient,
+          doc ? `${doc.firstName} ${doc.lastName}` : '',
+          newAppointment.date,
+          'create',
+          this.toastr
+        );
+
         this.saved.emit(newAppointment);
         this.form.reset();
       },
