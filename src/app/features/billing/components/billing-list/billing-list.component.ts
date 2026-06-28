@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BillingService } from '../../services/billing.service';
@@ -13,6 +13,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-billing-list',
@@ -21,6 +22,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
   styleUrl: './billing-list.component.css'
 })
 export class BillingListComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private billingService = inject(BillingService);
   private patientService = inject(PatientService);
   private appointmentService = inject(AppointmentService);
@@ -99,9 +101,9 @@ export class BillingListComponent implements OnInit {
 
     if (doctorId) {
       forkJoin({
-        billing: this.billingService.getAllWithDetails(),
-        appointments: this.appointmentService.getAll()
-      }).subscribe({
+                billing: this.billingService.getAllWithDetails(),
+                appointments: this.appointmentService.getAll()
+              }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: ({ billing, appointments }) => {
           const doctorApptIds = new Set(
             appointments
@@ -126,7 +128,7 @@ export class BillingListComponent implements OnInit {
         error: () => this.loading.set(false)
       });
     } else if (patientId) {
-      this.billingService.getAllWithDetails().subscribe({
+      this.billingService.getAllWithDetails().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.billingRecords.set(data.filter(b => b.patientId === patientId));
           this.loading.set(false);
@@ -134,7 +136,7 @@ export class BillingListComponent implements OnInit {
         error: () => this.loading.set(false),
       });
     } else {
-      this.billingService.getAllWithDetails().subscribe({
+      this.billingService.getAllWithDetails().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.billingRecords.set(data);
           this.loading.set(false);
@@ -184,7 +186,7 @@ export class BillingListComponent implements OnInit {
   }
 
   handleBillingSaved(record: BillingRecord) {
-    this.patientService.getAll().subscribe(patients => {
+    this.patientService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(patients => {
       const patient = patients.find(p => p.id === record.patientId);
       const newRecordWithDetails: BillingRecordWithDetails = {
         ...record,
@@ -260,7 +262,7 @@ export class BillingListComponent implements OnInit {
       payments: updatedPayments
     };
 
-    this.billingService.update(updated).subscribe({
+    this.billingService.update(updated).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.billingRecords.update(records => 
           records.map(r => r.id === record.id ? { ...r, ...updated, patientName: r.patientName } : r)

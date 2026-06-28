@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ClinicService } from '../../../../core/services/clinic.service';
@@ -8,6 +8,7 @@ import { AppointmentService } from '../../../appointments/services/appointment.s
 import { Clinic } from '../../../../core/models/clinic.model';
 
 import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-clinic-details',
@@ -16,6 +17,7 @@ import { LocationMapComponent } from '../../../../shared/components/location-map
   styleUrl: './clinic-details.component.css'
 })
 export class ClinicDetailsComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private clinicService = inject(ClinicService);
@@ -69,16 +71,16 @@ export class ClinicDetailsComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const id = params.get('id');
       if (id) {
         this.clinicId.set(id);
         if (this.clinicService.clinics().length === 0) {
           this.clinicService.loadClinics();
         }
-        this.doctorService.getAll().subscribe(docs => this.doctors.set(docs));
-        this.patientService.getAll().subscribe(pats => this.patients.set(pats));
-        this.appointmentService.getAll().subscribe(appts => this.appointments.set(appts));
+        this.doctorService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(docs => this.doctors.set(docs));
+        this.patientService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pats => this.patients.set(pats));
+        this.appointmentService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(appts => this.appointments.set(appts));
       } else {
         this.router.navigate(['/clinics']);
       }

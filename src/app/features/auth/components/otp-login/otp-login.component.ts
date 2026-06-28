@@ -1,4 +1,4 @@
-import { Component, inject, output, signal, OnDestroy } from '@angular/core';
+import { Component, inject, output, signal, OnDestroy, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService, User } from '../../../../core/auth/auth.service';
@@ -7,6 +7,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-field/otp-input-field.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 function emailOrPhoneValidator(control: any) {
   const value = control.value;
@@ -25,6 +26,7 @@ function emailOrPhoneValidator(control: any) {
   templateUrl: './otp-login.component.html'
 })
 export class OtpLoginComponent implements OnDestroy {
+    private destroyRef = inject(DestroyRef);
   protected authService = inject(AuthService);
   protected languageService = inject(LanguageService);
   private toastr = inject(ToastrService);
@@ -45,7 +47,7 @@ export class OtpLoginComponent implements OnDestroy {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, emailOrPhoneValidator]]
     });
-    this.loginForm.valueChanges.subscribe(() => {
+    this.loginForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.errorMessage()) this.errorMessage.set(null);
     });
   }
@@ -62,7 +64,7 @@ export class OtpLoginComponent implements OnDestroy {
       this.isLoading.set(true);
       this.errorMessage.set(null);
       
-      this.authService.verifyOtp(this.loginForm.get('email')?.value, emailCode).subscribe({
+      this.authService.verifyOtp(this.loginForm.get('email')?.value, emailCode).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (user) => {
           this.isLoading.set(false);
           this.loginSuccess.emit(user);
@@ -89,7 +91,7 @@ export class OtpLoginComponent implements OnDestroy {
     this.errorMessage.set(null);
     const email = emailControl.value;
 
-    this.authService.sendOtp(email).subscribe({
+    this.authService.sendOtp(email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         this.otpSent.set(true);

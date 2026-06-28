@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { PatientService } from '../../services/patient.service';
@@ -9,6 +9,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-patient-detail',
@@ -88,6 +89,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
   `
 })
 export class PatientDetailComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private patientService = inject(PatientService);
   private location = inject(Location);
@@ -102,7 +104,7 @@ export class PatientDetailComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.patientService.getById(id).subscribe({
+      this.patientService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           if (data) {
             this.patient.set(data);

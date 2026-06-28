@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Material } from '../../models/material.model';
 import { MaterialsService } from '../../services/materials.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-inventory-form',
@@ -13,6 +14,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
   styleUrls: ['./inventory-form.component.scss']
 })
 export class InventoryFormComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Input() material: Material | null = null;
   @Input() doctorId: string = '';
   @Input() clinicId: string = '';
@@ -56,7 +58,7 @@ export class InventoryFormComponent implements OnInit {
       ? this.materialsService.update(this.material.id, materialData)
       : this.materialsService.create(materialData);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.saved.emit();

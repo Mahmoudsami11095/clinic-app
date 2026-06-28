@@ -1,4 +1,4 @@
-import { Component, OnInit, effect } from '@angular/core';
+import { Component, OnInit, effect, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialsService } from '../../services/materials.service';
@@ -7,6 +7,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { InventoryFormComponent } from '../inventory-form/inventory-form.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-inventory-list',
@@ -16,6 +17,7 @@ import { InventoryFormComponent } from '../inventory-form/inventory-form.compone
   styleUrls: ['./inventory-list.component.scss']
 })
 export class InventoryListComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   materials: Material[] = [];
   doctorId: string = '';
   activeClinicId: string = 'all';
@@ -69,7 +71,7 @@ export class InventoryListComponent implements OnInit {
 
   loadMaterials(): void {
     this.loading = true;
-    this.materialsService.getByDoctor(this.doctorId, this.activeClinicId).subscribe({
+    this.materialsService.getByDoctor(this.doctorId, this.activeClinicId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.materials = res.data;
         this.loading = false;
@@ -121,7 +123,7 @@ export class InventoryListComponent implements OnInit {
 
   deleteMaterial(id: string): void {
     if (confirm('Are you sure you want to delete this material?')) {
-      this.materialsService.delete(id).subscribe({
+      this.materialsService.delete(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loadMaterials();
         },

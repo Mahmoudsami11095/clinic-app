@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,6 +14,7 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-appointment-list',
@@ -22,6 +23,7 @@ import { ToastrService } from 'ngx-toastr';
   styleUrl: './appointment-list.component.css'
 })
 export class AppointmentListComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private appointmentService = inject(AppointmentService);
   private prescriptionService = inject(PrescriptionService);
   protected authService = inject(AuthService);
@@ -91,14 +93,14 @@ export class AppointmentListComponent implements OnInit {
       return;
     }
 
-    this.appointmentService.getAllWithDetails().subscribe({
+    this.appointmentService.getAllWithDetails().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.appointments.set(data);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
-    this.prescriptionService.getAll().subscribe({
+    this.prescriptionService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.prescriptions.set(data);
       }
@@ -174,7 +176,7 @@ export class AppointmentListComponent implements OnInit {
     if (!confirm(this.languageService.translate('appointments.confirm_delete'))) {
       return;
     }
-    this.appointmentService.delete(appt.id).subscribe({
+    this.appointmentService.delete(appt.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.toastr.success(
           this.languageService.translate('toast.appointment_deleted'),
@@ -192,7 +194,7 @@ export class AppointmentListComponent implements OnInit {
   }
 
   handleAppointmentSaved(_saved: Appointment) {
-    this.appointmentService.getAllWithDetails().subscribe(data => {
+    this.appointmentService.getAllWithDetails().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.appointments.set(data);
     });
     this.closeModal();
@@ -217,7 +219,7 @@ export class AppointmentListComponent implements OnInit {
   }
 
   handlePrescriptionSaved(pres: Prescription) {
-    this.prescriptionService.getAll().subscribe(data => {
+    this.prescriptionService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
       this.prescriptions.set(data);
     });
     this.closePrescriptionModal();

@@ -1,10 +1,11 @@
-import { Component, Input, OnInit, signal } from '@angular/core';
+import { Component, Input, OnInit, signal, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { InputFieldComponent } from '../input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../phone-input-field/phone-input-field.component';
 import { LocationMapComponent } from '../location-map/location-map.component';
 import { phoneValidator } from '../../../core/validators/phone.validator';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-clinic-selection',
@@ -13,6 +14,7 @@ import { phoneValidator } from '../../../core/validators/phone.validator';
   templateUrl: './clinic-selection.component.html'
 })
 export class ClinicSelectionComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Input({ required: true }) formGroup!: FormGroup;
   
   // Array of clinics from the parent
@@ -26,7 +28,7 @@ export class ClinicSelectionComponent implements OnInit {
       this.showCreateClinic.set(true);
     }
 
-    this.formGroup.get('clinicName')?.valueChanges.subscribe((val) => {
+    this.formGroup.get('clinicName')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((val) => {
       const phoneCtrl = this.formGroup.get('newClinicPhoneNumber');
       const addressCtrl = this.formGroup.get('clinicAddress');
       const startCtrl = this.formGroup.get('clinicAvailabilityStart');
@@ -53,7 +55,7 @@ export class ClinicSelectionComponent implements OnInit {
       daysCtrl?.updateValueAndValidity();
     });
 
-    this.formGroup.get('newClinicCountryCode')?.valueChanges.subscribe(() => {
+    this.formGroup.get('newClinicCountryCode')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.formGroup.get('newClinicPhoneNumber')?.updateValueAndValidity();
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
@@ -8,6 +8,7 @@ import { DoctorFormComponent } from '../doctor-form/doctor-form.component';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-doctor-list',
@@ -16,6 +17,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
   styleUrl: './doctor-list.component.css'
 })
 export class DoctorListComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private doctorService = inject(DoctorService);
   private clinicService = inject(ClinicService);
   protected langService = inject(LanguageService);
@@ -62,7 +64,7 @@ export class DoctorListComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.doctorService.getAll().subscribe({
+    this.doctorService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.doctors.set(data);
         this.loading.set(false);

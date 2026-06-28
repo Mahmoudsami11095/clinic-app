@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, inject } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { BillingService } from '../../services/billing.service';
@@ -14,6 +14,7 @@ import { getDoctorLinkedPatientIds } from '../../../../core/services/doctor-pati
 import { forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-billing-form',
@@ -22,6 +23,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
   styleUrl: './billing-form.component.css'
 })
 export class BillingFormComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Output() saved = new EventEmitter<BillingRecord>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -58,9 +60,9 @@ export class BillingFormComponent implements OnInit {
     const activeClinicId = this.clinicService.activeClinicId();
 
     forkJoin({
-      patients: this.patientService.getAll(),
-      appointments: this.appointmentService.getAll()
-    }).subscribe({
+            patients: this.patientService.getAll(),
+            appointments: this.appointmentService.getAll()
+          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ patients, appointments }) => {
         this.allAppointments = appointments;
 
@@ -84,7 +86,7 @@ export class BillingFormComponent implements OnInit {
       }
     });
 
-    this.form.get('patientId')?.valueChanges.subscribe(patientId => {
+    this.form.get('patientId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(patientId => {
       if (patientId) {
         let appts = this.allAppointments.filter(a => a.patientId === patientId);
         if (doctorId) {
@@ -99,7 +101,7 @@ export class BillingFormComponent implements OnInit {
       }
     });
 
-    this.form.get('status')?.valueChanges.subscribe(status => {
+    this.form.get('status')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       const paidAmtCtrl = this.form.get('paidAmount');
       if (status === 'partially_paid') {
         paidAmtCtrl?.setValidators([Validators.required, Validators.min(0.1)]);
@@ -163,7 +165,7 @@ export class BillingFormComponent implements OnInit {
       clinicId: clinicId !== 'all' ? clinicId : undefined
     };
 
-    this.billingService.create(newRecord).subscribe({
+    this.billingService.create(newRecord).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.submitting = false;
         this.toastr.success(

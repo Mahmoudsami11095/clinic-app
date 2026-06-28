@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnDestroy, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -12,6 +12,7 @@ import { extractErrorMessage } from '../../../core/utils/error.utils';
 import { OtpLoginComponent } from '../components/otp-login/otp-login.component';
 import { ForgotPasswordComponent } from '../components/forgot-password/forgot-password.component';
 import { SocialRegistrationComponent } from '../components/social-registration/social-registration.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
@@ -35,6 +36,7 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
+    private destroyRef = inject(DestroyRef);
   protected authService = inject(AuthService);
   protected languageService = inject(LanguageService);
   protected themeService = inject(ThemeService);
@@ -72,7 +74,7 @@ export class LoginComponent {
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
-    this.loginForm.valueChanges.subscribe(() => {
+    this.loginForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.errorMessage()) {
         this.errorMessage.set(null);
       }
@@ -106,7 +108,7 @@ export class LoginComponent {
     this.errorMessage.set(null);
     const { email, password } = this.loginForm.value;
 
-    this.authService.login({ email, password }).subscribe({
+    this.authService.login({ email, password }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
         this.isLoading.set(false);
         this.toastr.success(`${this.languageService.translate('auth.login_success')}: ${user.name}`, this.languageService.translate('toast.success'));
@@ -175,7 +177,7 @@ export class LoginComponent {
 
   private executeSocialLogin(provider: string, token: string, role?: string) {
     this.isLoading.set(true);
-    this.authService.loginWithSocial(provider, token, role).subscribe({
+    this.authService.loginWithSocial(provider, token, role).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         if (res.requiresRoleSelection) {
@@ -208,7 +210,7 @@ export class LoginComponent {
       password: 'password123'
     });
 
-    this.authService.login({ email: user.email, password: 'password123' }).subscribe({
+    this.authService.login({ email: user.email, password: 'password123' }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (loggedInUser) => {
         this.isLoading.set(false);
         this.toastr.success(
