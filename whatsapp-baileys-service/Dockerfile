@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Install git, required by some Baileys dependencies or git-based dependencies
 RUN apk add --no-cache git
