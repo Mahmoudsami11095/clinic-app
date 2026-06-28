@@ -437,6 +437,10 @@ export class RegisterComponent implements OnDestroy, OnInit {
     let phoneCode = '';
     if (this.whatsappOtpSent()) {
       phoneCode = this.phoneOtpCode();
+      if (phoneCode.length < 6) {
+        this.errorMessage.set(this.languageService.translate('auth.required_fields') || 'WhatsApp verification code is required.');
+        return;
+      }
     }
 
     this.isLoading.set(true);

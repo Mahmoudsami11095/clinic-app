@@ -45,7 +45,6 @@ export class SocialRegistrationComponent implements OnInit {
 
   currentStage = signal<number>(2);
   socialOtpCode = signal<string>('');
-  socialOtpDemo = signal<string>('');
   socialPhoneVerified = signal<boolean>(false);
 
   private fb = inject(FormBuilder);
@@ -137,10 +136,9 @@ export class SocialRegistrationComponent implements OnInit {
       this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone, checkRegistration: true }).subscribe({
         next: (res) => {
           this.isLoading.set(false);
-          this.socialOtpDemo.set(res.otp || '');
           this.currentStage.set(5);
           this.socialOtpCode.set('');
-          this.toastr.success(`Code sent [Demo: ${res.otp}]`, 'Success');
+          this.toastr.success('Verification code sent successfully.', 'Success');
         },
         error: (err) => { this.isLoading.set(false); this.toastr.error(err.error?.message || 'Error', 'Error'); }
       });

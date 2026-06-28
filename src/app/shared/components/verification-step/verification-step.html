@@ -12,21 +12,12 @@
   <div *ngIf="showPhone()" [class.border-t]="showEmail()" [class.border-slate-100]="showEmail()" [class.dark:border-slate-800]="showEmail()" [class.pt-4]="showEmail()">
     <h4 class="text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">
       Verify WhatsApp Number
-      <span *ngIf="showEmail()" class="text-slate-400 dark:text-slate-500 normal-case tracking-normal font-medium ms-1">(Optional)</span>
     </h4>
     <p *ngIf="phoneNumberFormatted()" class="text-xs text-slate-500 dark:text-slate-400 mb-2">
       We have sent a verification code to WhatsApp number:
       <span class="text-indigo-600 dark:text-indigo-400 font-bold block mt-1">{{ phoneNumberFormatted() }}</span>
     </p>
     <app-otp-input-field [code]="phoneOtpCode()" (codeChange)="phoneOtpCode.set($event)" (otpComplete)="onSubmit()"></app-otp-input-field>
-    <p *ngIf="showEmail()" class="text-xs text-center text-slate-400 dark:text-slate-500 mt-2">
-      You can skip this step and verify your phone later.
-    </p>
-  </div>
-
-  <!-- Demo Code display helper -->
-  <div *ngIf="demoCode()" class="text-xs font-semibold text-indigo-500 dark:text-indigo-400">
-    Demo WhatsApp OTP: <strong class="underline">{{ demoCode() }}</strong>
   </div>
 
   <!-- Resend Code countdown -->

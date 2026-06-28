@@ -22,8 +22,6 @@ export class VerificationStep {
   countdownText = input<string>('');
   isLoading = input<boolean>(false);
   
-  demoCode = input<string>(''); // For social demo
-
   otpSubmit = output<void>();
   resendOtp = output<void>();
   back = output<void>();
