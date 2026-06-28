@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/whatsapp/:path*",
+      "destination": "http://20.91.240.54:3000/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
