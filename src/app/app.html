@@ -1,13 +1,2 @@
+<app-top-progress-bar />
 <router-outlet />
-<ngx-spinner bdColor="rgba(0, 0, 0, 0.7)" size="medium" color="#fff" type="ball-spin-clockwise" [fullScreen]="true">
-  <div class="flex items-center justify-center gap-2 mt-4">
-    <p class="text-white font-semibold text-lg tracking-wider animate-pulse">
-      {{ 'common.loading' | translate }}
-    </p>
-    <div class="flex space-x-1 rtl:space-x-reverse items-center pt-2">
-      <span class="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style="animation-delay: -0.3s"></span>
-      <span class="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style="animation-delay: -0.15s"></span>
-      <span class="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></span>
-    </div>
-  </div>
-</ngx-spinner>
