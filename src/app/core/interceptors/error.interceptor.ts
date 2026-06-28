@@ -45,7 +45,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         originalError: err
       });
 
-      if (err.status === 0 || err.status === 401 || err.status === 403 || err.status >= 500) {
+      if (err.status === 0 || err.status === 400 || err.status === 401 || err.status === 403 || err.status >= 500) {
         const isUnassignedClinicError = err.status === 403 && req.method === 'GET' && errorMessage.toLowerCase().includes('assigned to at least one clinic');
         if (!isUnassignedClinicError) {
           toastr.error(errorMessage, errorTitle);
