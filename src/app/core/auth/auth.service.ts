@@ -44,22 +44,11 @@ export interface RegistrationData {
   providedIn: 'root'
 })
 export class AuthService {
-  private mockUsersSignal = signal<User[]>([]);
-  get mockUsers(): User[] {
-    return this.mockUsersSignal();
-  }
-
-  loadUsers() {
-    this.http.get<{ data: User[] }>('/api/auth/users').subscribe({
-      next: (res) => this.mockUsersSignal.set(res.data)
-    });
-  }
-
   private http = inject(HttpClient);
   private router = inject(Router);
 
   constructor() {
-    this.loadUsers();
+    // Legacy loadUsers() call removed to prevent fetching all users on page load
   }
 
   private currentUserSignal = signal<User | null>(this.getInitialUser());
@@ -95,9 +84,7 @@ export class AuthService {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Find in mockUsers first, or return the parsed object (could be a newly registered user)
-        const match = this.mockUsers.find(u => u.id === parsed.id);
-        if (match) return match;
+        // Return the parsed object from local storage (real backend user)
         return parsed as User;
       } catch (e) {
         // Fallback
