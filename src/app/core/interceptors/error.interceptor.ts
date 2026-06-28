@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injector } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, throwError } from 'rxjs';
+import { catchError, throwError, retry, timer } from 'rxjs';
 import { extractErrorMessage } from '../utils/error.utils';
 import { LanguageService } from '../i18n/language.service';
 import emailjs from '@emailjs/browser';
@@ -12,6 +12,17 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const injector = inject(Injector);
 
   return next(req).pipe(
+    retry({
+      count: 2,
+      delay: (error: HttpErrorResponse, retryCount: number) => {
+        // Retry on Server Unreachable (0) or Service Unavailable (503, 504) which usually happen on cold starts
+        if (error.status === 0 || error.status === 503 || error.status === 504) {
+          console.warn(`[HTTP Error Interceptor]: Request failed with status ${error.status}. Retrying (${retryCount}/2)...`);
+          return timer(2000); // wait 2 seconds before retrying
+        }
+        return throwError(() => error);
+      }
+    }),
     catchError((err: HttpErrorResponse) => {
       let errorMessage = err.message || 'Unknown error';
       let errorTitle = 'Error';
@@ -41,11 +52,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      // Automatically send an email notification to the developer for critical errors
-      if (err.status === 0 || err.status >= 500) {
+      // Automatically send an email notification to the developer for critical backend crashes
+      if (err.status >= 500) {
         if (environment.emailjs.publicKey !== 'YOUR_PUBLIC_KEY') {
           const templateParams = {
-            status: err.status === 0 ? '0 (Server Unreachable)' : err.status.toString(),
+            status: err.status.toString(),
             url: req.url,
             time: new Date().toLocaleString(),
             message: errorMessage
