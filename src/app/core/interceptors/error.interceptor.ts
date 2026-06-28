@@ -52,8 +52,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      // Automatically send an email notification to the developer for critical backend crashes
-      if (err.status >= 500) {
+      const isWhatsAppError = errorMessage.toLowerCase().includes('failed to send whatsapp');
+      // Automatically send an email notification to the developer for critical backend crashes or WhatsApp API failures
+      if (err.status >= 500 || isWhatsAppError) {
         if (environment.emailjs.publicKey !== 'YOUR_PUBLIC_KEY') {
           const templateParams = {
             status: err.status.toString(),

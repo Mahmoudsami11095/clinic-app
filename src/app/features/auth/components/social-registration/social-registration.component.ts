@@ -133,13 +133,17 @@ export class SocialRegistrationComponent implements OnInit {
     const combinedPhone = combinePhoneNumber(formVal.countryCode, formVal.phoneNumber);
     
     if (!this.socialPhoneVerified()) {
-      // Temporarily bypass OTP verification due to backend WhatsApp service failure
-      this.socialPhoneVerified.set(true);
-      if (this.socialRole() === 'doctor') {
-          this.currentStage.set(4);
-      } else {
-          this.onSubmitSocialExtraData();
-      }
+      this.isLoading.set(true);
+      const cleanedPhone = combinedPhone.replace(/[\s\-\(\)]/g, '');
+      this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone, checkRegistration: true }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (res) => {
+          this.isLoading.set(false);
+          this.currentStage.set(5);
+          this.socialOtpCode.set('');
+          this.toastr.success('Verification code sent successfully.', 'Success');
+        },
+        error: (err) => { this.isLoading.set(false); this.toastr.error(err.error?.message || 'Error', 'Error'); }
+      });
       return;
     }
 
