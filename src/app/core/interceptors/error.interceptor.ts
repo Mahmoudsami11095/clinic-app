@@ -45,15 +45,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         originalError: err
       });
 
-      if (err.status === 0 || err.status === 401 || err.status === 403 || err.status >= 500) {
+      if (err.status === 0 || err.status === 400 || err.status === 401 || err.status === 403 || err.status >= 500) {
         const isUnassignedClinicError = err.status === 403 && req.method === 'GET' && errorMessage.toLowerCase().includes('assigned to at least one clinic');
         if (!isUnassignedClinicError) {
           toastr.error(errorMessage, errorTitle);
         }
       }
 
-      // Automatically send an email notification to the developer for critical backend crashes
-      if (err.status >= 500) {
+      const isWhatsAppError = errorMessage.toLowerCase().includes('failed to send whatsapp');
+      // Automatically send an email notification to the developer for critical backend crashes or WhatsApp API failures
+      if (err.status >= 500 || isWhatsAppError) {
         if (environment.emailjs.publicKey !== 'YOUR_PUBLIC_KEY') {
           const templateParams = {
             status: err.status.toString(),
