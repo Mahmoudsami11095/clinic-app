@@ -9,10 +9,11 @@ import { Clinic } from '../../../../core/models/clinic.model';
 
 import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { WhatsappConnectionComponent } from '../whatsapp-connection/whatsapp-connection.component';
 
 @Component({
   selector: 'app-clinic-details',
-  imports: [CommonModule, RouterModule, LocationMapComponent],
+  imports: [CommonModule, RouterModule, LocationMapComponent, WhatsappConnectionComponent],
   templateUrl: './clinic-details.component.html',
   styleUrl: './clinic-details.component.css'
 })
