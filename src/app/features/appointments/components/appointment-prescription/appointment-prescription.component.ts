@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentService } from '../../services/appointment.service';
@@ -10,6 +10,7 @@ import { Prescription } from '../../../prescriptions/models/prescription.model';
 import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
 import { PatientHistoryComponent } from '../../../patients/components/patient-history/patient-history.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-appointment-prescription',
@@ -127,6 +128,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
   `
 })
 export class AppointmentPrescriptionComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private appointmentService = inject(AppointmentService);
@@ -147,7 +149,7 @@ export class AppointmentPrescriptionComponent implements OnInit {
       return;
     }
 
-    this.appointmentService.getAllWithDetails().subscribe({
+    this.appointmentService.getAllWithDetails().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (appts) => {
         const appt = appts.find(a => a.id === id);
         if (!appt) {
@@ -158,7 +160,7 @@ export class AppointmentPrescriptionComponent implements OnInit {
         this.appointment.set(appt);
 
         // Fetch prescription for this appointment
-        this.prescriptionService.getAll().subscribe({
+        this.prescriptionService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (prescriptions) => {
             const rx = prescriptions.find(p => p.appointmentId === id);
             this.prescription.set(rx || null);
@@ -166,7 +168,7 @@ export class AppointmentPrescriptionComponent implements OnInit {
         });
 
         // Fetch patient details for history
-        this.patientService.getById(appt.patientId).subscribe({
+        this.patientService.getById(appt.patientId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (pat) => {
             if (pat) {
               this.patient.set(pat);

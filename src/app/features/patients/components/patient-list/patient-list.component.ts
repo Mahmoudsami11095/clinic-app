@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-patient-list',
@@ -18,6 +19,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
   styleUrl: './patient-list.component.css'
 })
 export class PatientListComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private patientService = inject(PatientService);
   protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
@@ -57,7 +59,7 @@ export class PatientListComponent implements OnInit {
       return;
     }
 
-    this.patientService.getAll().subscribe({
+    this.patientService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.patients.set(data);
         this.loading.set(false);

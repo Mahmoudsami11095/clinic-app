@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, inject, signal, computed, ElementRef, ViewChild, effect } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject, signal, computed, ElementRef, ViewChild, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
@@ -21,6 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-patient-history',
@@ -1276,6 +1277,7 @@ import { gsap } from 'gsap';
   `
 })
 export class PatientHistoryComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Input({ required: true }) patient!: Patient;
   @Input() initialTab?: 'future-visits' | 'past-visits' | 'prescriptions' | 'billing' | 'dental';
 
@@ -1661,7 +1663,7 @@ export class PatientHistoryComponent implements OnInit {
     const activeClinicId = this.clinicService.activeClinicId();
     if (user && (user.role === 'doctor' || user.role === 'assistant')) {
       const doctorId = user.doctorId || user.id;
-      this.materialsService.getByDoctor(doctorId, activeClinicId).subscribe({
+      this.materialsService.getByDoctor(doctorId, activeClinicId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (res) => {
           this.availableMaterials.set(res.data);
         },
@@ -1702,12 +1704,12 @@ export class PatientHistoryComponent implements OnInit {
   loadPatientHistory() {
     this.loadingData.set(true);
     forkJoin({
-      appointments: this.appointmentService.getAllWithDetails(),
-      prescriptions: this.prescriptionService.getAllWithDetails(),
-      billing: this.billingService.getAllWithDetails(),
-      dental: this.dentalService.getLogs(this.patient.id),
-      files: this.patientService.getFiles(this.patient.id)
-    }).subscribe({
+            appointments: this.appointmentService.getAllWithDetails(),
+            prescriptions: this.prescriptionService.getAllWithDetails(),
+            billing: this.billingService.getAllWithDetails(),
+            dental: this.dentalService.getLogs(this.patient.id),
+            files: this.patientService.getFiles(this.patient.id)
+          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ appointments, prescriptions, billing, dental, files }) => {
         // Filter appointments for this patient
         const filteredAppts = appointments.filter(a => a.patientId === this.patient.id);
@@ -1739,7 +1741,7 @@ export class PatientHistoryComponent implements OnInit {
 
   downloadFile(fileName: string) {
     this.toastr.info(`Downloading ${fileName}...`, 'Download Started');
-    this.patientService.downloadFile(this.patient.id, fileName).subscribe({
+    this.patientService.downloadFile(this.patient.id, fileName).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1762,7 +1764,7 @@ export class PatientHistoryComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      this.patientService.uploadFile(this.patient.id, file).subscribe({
+      this.patientService.uploadFile(this.patient.id, file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (res) => {
           this.filesList.update(list => [res.data, ...list]);
           this.toastr.success(`${file.name} uploaded successfully.`, 'File Uploaded');
@@ -1777,7 +1779,7 @@ export class PatientHistoryComponent implements OnInit {
 
   deleteFile(fileName: string) {
     if (confirm(`Are you sure you want to delete ${fileName}?`)) {
-      this.patientService.deleteFile(this.patient.id, fileName).subscribe({
+      this.patientService.deleteFile(this.patient.id, fileName).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.filesList.update(list => list.filter(f => f.name !== fileName));
           this.toastr.warning(`${fileName} deleted successfully.`, 'File Deleted');
@@ -1867,7 +1869,7 @@ export class PatientHistoryComponent implements OnInit {
       clinicId: this.clinicService.activeClinicId() === 'all' ? undefined : this.clinicService.activeClinicId()
     };
 
-    this.dentalService.addLog(logData).subscribe({
+    this.dentalService.addLog(logData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (newLog) => {
         this.dentalLogs.update(logs => [newLog, ...logs]);
         this.submittingDentalLog.set(false);

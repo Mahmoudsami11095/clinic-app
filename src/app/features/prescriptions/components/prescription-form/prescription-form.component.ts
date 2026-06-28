@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentWithDetails } from '../../../appointments/models/appointment.model';
@@ -7,6 +7,7 @@ import { PrescriptionService } from '../../services/prescription.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-prescription-form',
@@ -170,6 +171,7 @@ import { ToastrService } from 'ngx-toastr';
   `
 })
 export class PrescriptionFormComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Input({ required: true }) appointment!: AppointmentWithDetails;
   @Input() prescription: Prescription | null = null;
   @Input() readOnly = false;
@@ -228,7 +230,7 @@ export class PrescriptionFormComponent implements OnInit {
     };
 
     if (this.prescription) {
-      this.prescriptionService.update(newPrescription).subscribe({
+      this.prescriptionService.update(newPrescription).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.toastr.success(
             this.langService.translate('toast.prescription_saved'),
@@ -244,7 +246,7 @@ export class PrescriptionFormComponent implements OnInit {
         }
       });
     } else {
-      this.prescriptionService.create(newPrescription).subscribe({
+      this.prescriptionService.create(newPrescription).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.toastr.success(
             this.langService.translate('toast.prescription_saved'),

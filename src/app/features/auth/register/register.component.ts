@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnDestroy, OnInit, effect } from '@angular/core';
+import { Component, inject, signal, OnDestroy, OnInit, effect, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -48,6 +49,7 @@ export class RegisterComponent implements OnDestroy, OnInit {
   private router = inject(Router);
   private toastr = inject(ToastrService);
   private http = inject(HttpClient);
+  private destroyRef = inject(DestroyRef);
 
   registerForm: FormGroup;
   showPassword = signal(false);
@@ -152,11 +154,15 @@ export class RegisterComponent implements OnDestroy, OnInit {
       })
     });
 
-    this.registerForm.get('countryCode')?.valueChanges.subscribe(() => {
+    this.registerForm.get('countryCode')?.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(() => {
       this.registerForm.get('phoneNumber')?.updateValueAndValidity();
     });
 
-    this.registerForm.get('clinicCountryCode')?.valueChanges.subscribe(() => {
+    this.registerForm.get('clinicCountryCode')?.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(() => {
       this.registerForm.get('clinicPhoneNumber')?.updateValueAndValidity();
     });
 
@@ -172,7 +178,9 @@ export class RegisterComponent implements OnDestroy, OnInit {
       this.clinicsList.set(clinics);
     });
 
-    this.registerForm.valueChanges.subscribe(() => {
+    this.registerForm.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(() => {
       if (this.errorMessage()) {
         this.errorMessage.set(null);
       }
@@ -180,7 +188,9 @@ export class RegisterComponent implements OnDestroy, OnInit {
   }
 
   ngOnInit(): void {
-    this.specializationService.getGroupedSpecializations().subscribe({
+    this.specializationService.getGroupedSpecializations().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (groups) => {
         this.specializationGroups.set(groups);
       },
@@ -246,7 +256,7 @@ export class RegisterComponent implements OnDestroy, OnInit {
       this.isLoading.set(true);
       this.errorMessage.set(null);
       const email = emailCtrl?.value;
-      this.authService.checkAvailability(email).subscribe({
+      this.authService.checkAvailability(email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.isLoading.set(false);
           this.currentStage.set(2);
@@ -291,7 +301,7 @@ export class RegisterComponent implements OnDestroy, OnInit {
       const countryCode = this.registerForm.get('countryCode')?.value;
       const phoneNumber = this.registerForm.get('phoneNumber')?.value;
       const phone = phoneNumber ? `${countryCode}${phoneNumber}` : '';
-      this.authService.checkAvailability(undefined, phone || undefined).subscribe({
+      this.authService.checkAvailability(undefined, phone || undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.isLoading.set(false);
           if (role === 'doctor') {
@@ -367,7 +377,7 @@ export class RegisterComponent implements OnDestroy, OnInit {
     const phoneNumber = this.registerForm.get('phoneNumber')?.value;
     const phone = phoneNumber ? `${countryCode}${phoneNumber}` : '';
 
-    this.authService.sendRegisterOtp(email, phone || undefined).subscribe({
+    this.authService.sendRegisterOtp(email, phone || undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         this.isLoading.set(false);
         this.otpSent.set(true);
@@ -518,7 +528,7 @@ export class RegisterComponent implements OnDestroy, OnInit {
       }
     }
 
-    this.authService.register(payload).subscribe({
+    this.authService.register(payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.toastr.success(
@@ -586,7 +596,7 @@ export class RegisterComponent implements OnDestroy, OnInit {
   private executeSocialLogin(provider: string, token: string) {
     this.isLoading.set(true);
     // Don't pass selectedRole so backend will trigger requiresRoleSelection for new users
-    this.authService.loginWithSocial(provider, token).subscribe({
+    this.authService.loginWithSocial(provider, token).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         if (res.requiresRoleSelection) {

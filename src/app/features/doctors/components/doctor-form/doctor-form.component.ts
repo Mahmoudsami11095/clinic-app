@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Output, EventEmitter, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormArray, FormControl, AbstractControl, ValidationErrors } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
@@ -10,6 +10,7 @@ import { ToastrService } from 'ngx-toastr';
 import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-doctor-form',
@@ -18,6 +19,7 @@ import { phoneValidator } from '../../../../core/validators/phone.validator';
   styleUrl: './doctor-form.component.css'
 })
 export class DoctorFormComponent {
+    private destroyRef = inject(DestroyRef);
   @Output() saved = new EventEmitter<Doctor>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -45,7 +47,7 @@ export class DoctorFormComponent {
   });
 
   constructor() {
-    this.form.get('countryCode')?.valueChanges.subscribe(() => {
+    this.form.get('countryCode')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.form.get('phoneNumber')?.updateValueAndValidity();
     });
   }
@@ -103,7 +105,7 @@ export class DoctorFormComponent {
       }
     };
 
-    this.doctorService.create(newDoctor).subscribe({
+    this.doctorService.create(newDoctor).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.submitting = false;
         this.toastr.success(

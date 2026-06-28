@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicService } from '../../../../core/services/clinic.service';
@@ -11,6 +11,7 @@ import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
 import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
 import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-clinic-form',
@@ -19,6 +20,7 @@ import { LocationMapComponent } from '../../../../shared/components/location-map
   styleUrl: './clinic-form.component.css'
 })
 export class ClinicFormComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Input() clinic?: Clinic;
   @Output() saved = new EventEmitter<Clinic>();
   @Output() cancelled = new EventEmitter<void>();
@@ -44,7 +46,7 @@ export class ClinicFormComponent implements OnInit {
   });
 
   constructor() {
-    this.form.get('countryCode')?.valueChanges.subscribe(() => {
+    this.form.get('countryCode')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.form.get('phoneNumber')?.updateValueAndValidity();
     });
   }
@@ -147,7 +149,7 @@ export class ClinicFormComponent implements OnInit {
         country: this.locationData?.country ?? this.clinic.country
       };
 
-      this.clinicService.update(updatedClinic).subscribe({
+      this.clinicService.update(updatedClinic).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.submitting = false;
           this.toastr.success(
@@ -180,7 +182,7 @@ export class ClinicFormComponent implements OnInit {
         country: this.locationData?.country
       };
 
-      this.clinicService.create(newClinic).subscribe({
+      this.clinicService.create(newClinic).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.submitting = false;
           this.toastr.success(

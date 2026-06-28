@@ -1,4 +1,4 @@
-import { Component, inject, output, signal, OnDestroy } from '@angular/core';
+import { Component, inject, output, signal, OnDestroy, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -7,6 +7,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-field/otp-input-field.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-forgot-password',
@@ -15,6 +16,7 @@ import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-
   templateUrl: './forgot-password.component.html'
 })
 export class ForgotPasswordComponent implements OnDestroy {
+    private destroyRef = inject(DestroyRef);
   protected authService = inject(AuthService);
   protected languageService = inject(LanguageService);
   private toastr = inject(ToastrService);
@@ -43,7 +45,7 @@ export class ForgotPasswordComponent implements OnDestroy {
     }
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    this.authService.forgotPassword(this.forgotEmail()).subscribe({
+    this.authService.forgotPassword(this.forgotEmail()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         this.forgotStep.set(2);
@@ -82,7 +84,7 @@ export class ForgotPasswordComponent implements OnDestroy {
     this.errorMessage.set(null);
     const code = this.forgotOtpCode();
     
-    this.authService.resetPassword(this.forgotEmail(), code, this.forgotNewPassword()).subscribe({
+    this.authService.resetPassword(this.forgotEmail(), code, this.forgotNewPassword()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         this.toastr.success(this.languageService.translate('auth.password_reset_success'), this.languageService.translate('toast.success'));

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-clinic-list',
@@ -22,6 +23,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
   styleUrl: './clinic-list.component.css'
 })
 export class ClinicListComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   protected clinicService = inject(ClinicService);
   private router = inject(Router);
   private doctorService = inject(DoctorService);
@@ -93,10 +95,10 @@ export class ClinicListComponent implements OnInit {
 
   ngOnInit() {
     forkJoin({
-      doctors: this.doctorService.getAll(),
-      patients: this.patientService.getAll(),
-      appointments: this.appointmentService.getAll()
-    }).subscribe({
+            doctors: this.doctorService.getAll(),
+            patients: this.patientService.getAll(),
+            appointments: this.appointmentService.getAll()
+          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.doctors.set(data.doctors);
         this.patients.set(data.patients);
@@ -184,7 +186,7 @@ export class ClinicListComponent implements OnInit {
       return;
     }
 
-    this.clinicService.assignDoctorsByEmails(clinic.id, emailsList).subscribe({
+    this.clinicService.assignDoctorsByEmails(clinic.id, emailsList).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         if (res.notFound && res.notFound.length > 0) {
           this.assignDoctorError.set(`Failed to invite/find these email(s): ${res.notFound.join(', ')}`);
@@ -199,7 +201,7 @@ export class ClinicListComponent implements OnInit {
           }, 1500);
         }
         this.clinicService.loadClinics();
-        this.doctorService.getAll().subscribe(docs => this.doctors.set(docs));
+        this.doctorService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(docs => this.doctors.set(docs));
       },
       error: (err) => {
         console.error('Doctor assignment error:', err);
@@ -223,7 +225,7 @@ export class ClinicListComponent implements OnInit {
     const email = this.assistantEmailInput().trim();
     if (!clinic || !email) return;
 
-    this.clinicService.assignAssistantByEmail(clinic.id, email).subscribe({
+    this.clinicService.assignAssistantByEmail(clinic.id, email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.assignAssistantSuccess.set(res.message);
         this.assignAssistantError.set('');
@@ -251,17 +253,17 @@ export class ClinicListComponent implements OnInit {
   }
 
   respondToAssignment(clinicId: string, status: 'Accepted' | 'Rejected') {
-    this.clinicService.respondToAssignment(clinicId, status).subscribe({
+    this.clinicService.respondToAssignment(clinicId, status).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.clinicService.loadClinics();
-        this.doctorService.getAll().subscribe(docs => this.doctors.set(docs));
+        this.doctorService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(docs => this.doctors.set(docs));
       }
     });
   }
 
   deleteClinic(id: string) {
     if (confirm('Are you sure you want to delete this clinic?')) {
-      this.clinicService.delete(id).subscribe({
+      this.clinicService.delete(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.clinicService.loadClinics();
         }

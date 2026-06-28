@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal, computed, Input } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, Input, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalDataService, EndodonticRecord, CanalMeasurement } from '../../services/dental-data.service';
 import { ToothStatus } from '../../../../core/services/dental.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 interface HistoricalLog {
   id: number;
@@ -21,6 +22,7 @@ interface HistoricalLog {
   styleUrl: './skeuomorphic-dental-chart.component.css'
 })
 export class SkeuomorphicDentalChartComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private dentalDataService = inject(DentalDataService);
 
   @Input() set dentition(val: 'adult' | 'child') {
@@ -102,7 +104,7 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
   }
 
   refreshRecords() {
-    this.dentalDataService.getAllRecords().subscribe(recs => {
+    this.dentalDataService.getAllRecords().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(recs => {
       this.records.set(recs);
       const toothId = this.selectedToothId();
       if (toothId) {
@@ -290,7 +292,7 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
     record.painLevel = this.editPain;
     record.clinicalNotes = this.editNotes;
 
-    this.dentalDataService.updateEndodonticRecord(record).subscribe(updated => {
+    this.dentalDataService.updateEndodonticRecord(record).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(updated => {
       // Store in history logs
       const historyKey = `dental_history_logs_${id}`;
       const logs = [...this.historyLogs()];

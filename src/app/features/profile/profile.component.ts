@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -31,6 +32,7 @@ export class ProfileComponent implements OnInit {
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
   protected specializationService = inject(SpecializationService);
+  private destroyRef = inject(DestroyRef);
 
   profileForm!: FormGroup;
   specializationGroups = signal<SpecializationGroup[]>([]);
@@ -104,11 +106,15 @@ export class ProfileComponent implements OnInit {
       pastIllnesses: ['']
     });
 
-    this.profileForm.get('countryCode')?.valueChanges.subscribe(() => {
+    this.profileForm.get('countryCode')?.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.profileForm.get('phoneNumber')?.updateValueAndValidity();
     });
 
-    this.specializationService.getGroupedSpecializations().subscribe(groups => {
+    this.specializationService.getGroupedSpecializations().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(groups => {
       this.specializationGroups.set(groups);
     });
   }
@@ -119,7 +125,7 @@ export class ProfileComponent implements OnInit {
 
   loadProfile() {
     this.isLoading.set(true);
-    this.http.get<{ data: any }>('/api/auth/profile').subscribe({
+    this.http.get<{ data: any }>('/api/auth/profile').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         const data = res.data;
@@ -218,7 +224,7 @@ export class ProfileComponent implements OnInit {
       return;
     }
     this.isSendingEmailOtp.set(true);
-    this.http.post<any>('/api/auth/profile-send-otp', { email }).subscribe({
+    this.http.post<any>('/api/auth/profile-send-otp', { email }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isSendingEmailOtp.set(false);
         this.emailOtpSent.set(true);
@@ -239,7 +245,7 @@ export class ProfileComponent implements OnInit {
       return;
     }
     this.isSendingPhoneOtp.set(true);
-    this.http.post<any>('/api/auth/profile-send-otp', { countryCode: code, phoneNumber: num, contactNumber: `${code}${num}` }).subscribe({
+    this.http.post<any>('/api/auth/profile-send-otp', { countryCode: code, phoneNumber: num, contactNumber: `${code}${num}` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isSendingPhoneOtp.set(false);
         this.phoneOtpSent.set(true);
@@ -260,7 +266,7 @@ export class ProfileComponent implements OnInit {
       return;
     }
     this.isConfirmingEmailOtp.set(true);
-    this.http.post<any>('/api/auth/verify-otp', { email, code, removeAfterVerification: false }).subscribe({
+    this.http.post<any>('/api/auth/verify-otp', { email, code, removeAfterVerification: false }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isConfirmingEmailOtp.set(false);
         this.emailOtpConfirmed.set(true);
@@ -282,7 +288,7 @@ export class ProfileComponent implements OnInit {
       return;
     }
     this.isConfirmingPhoneOtp.set(true);
-    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: `${code}${num}`, code: codeOtp, removeAfterVerification: false }).subscribe({
+    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: `${code}${num}`, code: codeOtp, removeAfterVerification: false }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isConfirmingPhoneOtp.set(false);
         this.phoneOtpConfirmed.set(true);
@@ -370,7 +376,7 @@ export class ProfileComponent implements OnInit {
       }
     }
 
-    this.http.put<{ message: string; data: any }>('/api/auth/profile', formValue).subscribe({
+    this.http.put<{ message: string; data: any }>('/api/auth/profile', formValue).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isSaving.set(false);
         this.toastr.success('Profile updated successfully.', 'Success');

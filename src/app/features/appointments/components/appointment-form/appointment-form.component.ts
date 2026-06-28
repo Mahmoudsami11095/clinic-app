@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter, inject, signal, effect, computed } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, inject, signal, effect, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AppointmentService } from '../../services/appointment.service';
@@ -18,6 +18,7 @@ import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-appointment-form',
@@ -26,6 +27,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
   styleUrl: './appointment-form.component.css'
 })
 export class AppointmentFormComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Input() appointment: Appointment | null = null;
   @Input() embeddedMode: boolean = false;
   @Output() saved = new EventEmitter<Appointment>();
@@ -151,19 +153,19 @@ export class AppointmentFormComponent implements OnInit {
 
     this.syncClinicFromHeader(this.clinicService.activeClinicId());
 
-    this.form.get('clinicId')?.valueChanges.subscribe(() => {
+    this.form.get('clinicId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (!this.showClinicSelector()) return;
       this.form.patchValue({ patientId: '' });
       this.applyFilters();
       this.updateTimeSlots();
     });
 
-    this.form.get('doctorId')?.valueChanges.subscribe(() => {
+    this.form.get('doctorId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateAvailableTypes();
       this.updateTimeSlots();
     });
 
-    this.form.get('date')?.valueChanges.subscribe(() => {
+    this.form.get('date')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateTimeSlots();
     });
 
@@ -173,10 +175,10 @@ export class AppointmentFormComponent implements OnInit {
     }
 
     forkJoin({
-      patients: this.patientService.getAll(),
-      doctors: this.doctorService.getAll(),
-      appointments: this.appService.getAll()
-    }).subscribe({
+            patients: this.patientService.getAll(),
+            doctors: this.doctorService.getAll(),
+            appointments: this.appService.getAll()
+          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ patients, doctors, appointments }) => {
         this.allPatients = patients;
         this.allDoctors = doctors;
@@ -483,7 +485,7 @@ export class AppointmentFormComponent implements OnInit {
         clinicId: clinicId !== 'all' ? clinicId : this.appointment.clinicId
       };
 
-      this.appService.update(updated).subscribe({
+      this.appService.update(updated).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.submitting = false;
           this.toastr.success(
@@ -543,7 +545,7 @@ export class AppointmentFormComponent implements OnInit {
           return this.billingService.create(newBilling);
         }
         return of(null);
-      })
+      }), takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
         this.submitting = false;

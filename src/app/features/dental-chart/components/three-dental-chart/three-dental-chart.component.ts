@@ -10,11 +10,10 @@ import {
   signal,
   computed,
   effect,
-  Input
-} from '@angular/core';
+  Input, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { toSignal, toObservable } from '@angular/core/rxjs-interop';
+import { toSignal, toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { switchMap, finalize } from 'rxjs/operators';
 import * as THREE from 'three';
@@ -43,6 +42,7 @@ interface HistoricalLog {
   styleUrl: './three-dental-chart.component.css'
 })
 export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestroy {
+    private destroyRef = inject(DestroyRef);
   @ViewChild('canvasContainer', { static: true }) canvasContainer!: ElementRef<HTMLDivElement>;
 
   private dentalDataService = inject(DentalDataService);
@@ -205,7 +205,7 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   private refreshRecords() {
-    this.dentalDataService.getAllRecords().subscribe(recs => {
+    this.dentalDataService.getAllRecords().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(recs => {
       this.allRecords.set(recs);
       this.updateAllTeethAppearances();
     });
@@ -666,7 +666,7 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
     this.selectedToothId.set(toothId);
 
     // Sync Form fields and history logs
-    this.dentalDataService.getEndodonticRecord(toothId).subscribe(record => {
+    this.dentalDataService.getEndodonticRecord(toothId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(record => {
       if (record) {
         this.editStatuses = [...record.status];
         this.editPain = record.painLevel;
@@ -852,14 +852,14 @@ export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestr
     const id = this.selectedToothId();
     if (!id) return;
 
-    this.dentalDataService.getEndodonticRecord(id).subscribe(record => {
+    this.dentalDataService.getEndodonticRecord(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(record => {
       if (!record) return;
 
       record.status = [...this.editStatuses];
       record.painLevel = this.editPain;
       record.clinicalNotes = this.editNotes;
 
-      this.dentalDataService.updateEndodonticRecord(record).subscribe(updated => {
+      this.dentalDataService.updateEndodonticRecord(record).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(updated => {
         // Save to history log
         const historyKey = `dental_history_logs_${id}`;
         const logs = [...this.historyLogs()];

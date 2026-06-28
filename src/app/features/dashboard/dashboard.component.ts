@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService, DashboardStats, RecentAppointment, DashboardAnalytics } from './services/dashboard.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ClinicService } from '../../core/services/clinic.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ChartModule } from 'primeng/chart';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 export interface StatCard {
   key: keyof DashboardStats;
@@ -20,6 +21,7 @@ export interface StatCard {
   styleUrl: './dashboard.component.css'
 })
 export class Dashboard implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private clinicService = inject(ClinicService);
@@ -73,7 +75,7 @@ export class Dashboard implements OnInit {
 
   loadDashboardData() {
     this.loading.set(true);
-    this.dashboardService.getDashboardData().subscribe({
+    this.dashboardService.getDashboardData().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ stats, recentAppointments, analytics }) => {
         this.stats.set(stats);
         this.recentAppointments.set(recentAppointments);

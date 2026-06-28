@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, inject, signal } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { PatientService } from '../../services/patient.service';
@@ -33,6 +33,7 @@ import { PhoneInputFieldComponent } from '../../../../shared/components/phone-in
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../../../core/utils/phone.utils';
 import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-patient-form',
@@ -41,6 +42,7 @@ import { LocationMapComponent } from '../../../../shared/components/location-map
   styleUrl: './patient-form.component.css'
 })
 export class PatientFormComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   @Input() patient?: Patient;
   @Output() saved = new EventEmitter<Patient>();
   @Output() cancelled = new EventEmitter<void>();
@@ -111,12 +113,12 @@ export class PatientFormComponent implements OnInit {
     }
     this.form.get('clinicId')?.updateValueAndValidity();
 
-    this.form.get('countryCode')?.valueChanges.subscribe(() => {
+    this.form.get('countryCode')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.form.get('phoneNumber')?.updateValueAndValidity();
     });
 
     // Fetch doctors list for appointment stage
-    this.doctorService.getAll().subscribe({
+    this.doctorService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (docs) => this.doctorsList.set(docs)
     });
 
@@ -305,7 +307,7 @@ export class PatientFormComponent implements OnInit {
         updatedPatient.country = this.locationData.country;
       }
 
-      this.patientService.update(this.patient.id, updatedPatient).subscribe({
+      this.patientService.update(this.patient.id, updatedPatient).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.submitting = false;
           this.toastr.success(
@@ -352,7 +354,7 @@ export class PatientFormComponent implements OnInit {
         newPatient.country = this.locationData.country;
       }
 
-      this.patientService.create(newPatient).subscribe({
+      this.patientService.create(newPatient).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           if (rawValue.bookAppointment && apptValue) {
             const newAppt: Appointment = {
@@ -392,7 +394,7 @@ export class PatientFormComponent implements OnInit {
                   return this.billingService.create(newBilling);
                 }
                 return of(null);
-              })
+              }), takeUntilDestroyed(this.destroyRef)
             ).subscribe({
               next: () => {
                 this.submitting = false;

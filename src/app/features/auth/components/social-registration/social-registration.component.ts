@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, OnInit } from '@angular/core';
+import { Component, inject, input, output, signal, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -18,6 +18,7 @@ import { InputFieldComponent } from '../../../../shared/components/input-field/i
 import { RoleSelection } from '../../../../shared/components/role-selection/role-selection';
 import { ProfileDetailsForm } from '../../../../shared/components/profile-details-form/profile-details-form';
 import { VerificationStep } from '../../../../shared/components/verification-step/verification-step';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-social-registration',
@@ -30,6 +31,7 @@ import { VerificationStep } from '../../../../shared/components/verification-ste
   templateUrl: './social-registration.component.html'
 })
 export class SocialRegistrationComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   protected authService = inject(AuthService);
   protected clinicService = inject(ClinicService);
   private toastr = inject(ToastrService);
@@ -87,13 +89,13 @@ export class SocialRegistrationComponent implements OnInit {
   protected specializationService = inject(SpecializationService);
 
   constructor() {
-    this.socialForm.get('countryCode')?.valueChanges.subscribe(() => {
+    this.socialForm.get('countryCode')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.socialForm.get('phoneNumber')?.updateValueAndValidity();
     });
   }
 
   ngOnInit(): void {
-    this.specializationService.getGroupedSpecializations().subscribe({
+    this.specializationService.getGroupedSpecializations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (groups) => {
         this.specializationGroups.set(groups);
       },
@@ -133,7 +135,7 @@ export class SocialRegistrationComponent implements OnInit {
     if (!this.socialPhoneVerified()) {
       this.isLoading.set(true);
       const cleanedPhone = combinedPhone.replace(/[\s\-\(\)]/g, '');
-      this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone, checkRegistration: true }).subscribe({
+      this.http.post<any>('/api/auth/request-otp', { phoneNumber: cleanedPhone, checkRegistration: true }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (res) => {
           this.isLoading.set(false);
           this.currentStage.set(5);
@@ -187,7 +189,7 @@ export class SocialRegistrationComponent implements OnInit {
     }
 
     this.isLoading.set(true);
-    this.authService.loginWithSocial(this.provider(), this.token(), this.socialRole(), payload).subscribe({
+    this.authService.loginWithSocial(this.provider(), this.token(), this.socialRole(), payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         this.complete.emit(res.data);
@@ -209,7 +211,7 @@ export class SocialRegistrationComponent implements OnInit {
     const formVal = this.socialForm.value;
     const combinedPhone = combinePhoneNumber(formVal.countryCode, formVal.phoneNumber);
     const cleanedPhone = combinedPhone.replace(/[\s\-\(\)]/g, '');
-    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: cleanedPhone, code }).subscribe({
+    this.http.post<any>('/api/auth/verify-otp', { phoneNumber: cleanedPhone, code }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.socialPhoneVerified.set(true);

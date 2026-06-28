@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RadiologyService, RadiologyCenter, RadiologyRecord } from '../../services/radiology.service';
@@ -7,6 +7,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-radiology-dashboard',
@@ -17,6 +18,7 @@ import { LocationMapComponent } from '../../../../shared/components/location-map
   templateUrl: './radiology-dashboard.component.html'
 })
 export class RadiologyDashboardComponent implements OnInit {
+    private destroyRef = inject(DestroyRef);
   private radiologyService = inject(RadiologyService);
   private patientService = inject(PatientService);
   protected authService = inject(AuthService);
@@ -75,7 +77,7 @@ export class RadiologyDashboardComponent implements OnInit {
   }
 
   loadCenters() {
-    this.radiologyService.getCenters().subscribe({
+    this.radiologyService.getCenters().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: RadiologyCenter[]) => this.centers.set(data),
       error: () => this.showError('Failed to load centers')
     });
@@ -85,14 +87,14 @@ export class RadiologyDashboardComponent implements OnInit {
     const user = this.authService.currentUser();
     const doctorId = user?.role === 'doctor' ? user.id : undefined;
     
-    this.radiologyService.getRecords(doctorId).subscribe({
+    this.radiologyService.getRecords(doctorId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: RadiologyRecord[]) => this.records.set(data),
       error: () => this.showError('Failed to load records')
     });
   }
 
   loadPatients() {
-    this.patientService.getAll().subscribe({
+    this.patientService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         const mapped = data.map(p => ({
           ...p,
@@ -127,7 +129,7 @@ export class RadiologyDashboardComponent implements OnInit {
     }
 
     if (value.id) {
-      this.radiologyService.updateCenter(value.id, value).subscribe({
+      this.radiologyService.updateCenter(value.id, value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loadCenters();
           this.centerDialogVisible.set(false);
@@ -136,7 +138,7 @@ export class RadiologyDashboardComponent implements OnInit {
         error: () => this.showError('Failed to update center')
       });
     } else {
-      this.radiologyService.createCenter(value).subscribe({
+      this.radiologyService.createCenter(value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loadCenters();
           this.centerDialogVisible.set(false);
@@ -149,7 +151,7 @@ export class RadiologyDashboardComponent implements OnInit {
 
   deleteCenter(id: string) {
     if (confirm('Are you sure you want to delete this center?')) {
-      this.radiologyService.deleteCenter(id).subscribe({
+      this.radiologyService.deleteCenter(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loadCenters();
           this.showSuccess('Center deleted successfully');
@@ -182,7 +184,7 @@ export class RadiologyDashboardComponent implements OnInit {
     }
 
     if (value.id) {
-      this.radiologyService.updateRecord(value.id, value).subscribe({
+      this.radiologyService.updateRecord(value.id, value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loadRecords();
           this.recordDialogVisible.set(false);
@@ -191,7 +193,7 @@ export class RadiologyDashboardComponent implements OnInit {
         error: () => this.showError('Failed to update record')
       });
     } else {
-      this.radiologyService.createRecord(value).subscribe({
+      this.radiologyService.createRecord(value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loadRecords();
           this.recordDialogVisible.set(false);
@@ -204,7 +206,7 @@ export class RadiologyDashboardComponent implements OnInit {
 
   deleteRecord(id: string) {
     if (confirm('Are you sure you want to delete this record?')) {
-      this.radiologyService.deleteRecord(id).subscribe({
+      this.radiologyService.deleteRecord(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loadRecords();
           this.showSuccess('Record deleted successfully');
