@@ -22,6 +22,10 @@ export class WhatsappService {
     return this.http.get<{ status: string }>(`${this.apiUrl}/session/status?clinicId=${clinicId}`);
   }
 
+  logoutSession(clinicId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/session/logout`, { clinicId });
+  }
+
   sendMessage(clinicId: string, phone: string, message: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/message/send`, { clinicId, phone, message });
   }

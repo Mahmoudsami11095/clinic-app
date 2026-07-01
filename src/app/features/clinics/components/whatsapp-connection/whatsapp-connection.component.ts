@@ -103,6 +103,24 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
     }
   }
 
+  isUnlinking = signal(false);
+
+  disconnectWhatsApp() {
+    this.isUnlinking.set(true);
+    this.whatsappService.logoutSession(this.clinicId).subscribe({
+      next: () => {
+        this.isConnected.set(false);
+        this.isUnlinking.set(false);
+        this.qrImageSource.set(null);
+        this.pairingCode.set(null);
+      },
+      error: (err) => {
+        console.error('Failed to unlink WhatsApp', err);
+        this.isUnlinking.set(false);
+      }
+    });
+  }
+
   testPhone = '';
   testMessage = 'Hello from Clinic!';
   isSendingTest = signal(false);

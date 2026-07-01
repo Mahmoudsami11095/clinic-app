@@ -133,8 +133,33 @@ function getStatus(clinicId) {
   return (sock && sock.user) ? 'Connected' : 'Disconnected';
 }
 
+/**
+ * Logout and clean up session
+ */
+async function logoutSession(clinicId) {
+  const sock = sessions.get(clinicId);
+  if (sock) {
+    try {
+      await sock.logout();
+    } catch (err) {
+      console.error(`[Clinic ${clinicId}] Error during WhatsApp logout:`, err);
+      try {
+        sock.end();
+      } catch (e) {}
+      fs.rmSync(path.join(SESSIONS_DIR, clinicId), { recursive: true, force: true });
+    }
+    sessions.delete(clinicId);
+  } else {
+    const sessionPath = path.join(SESSIONS_DIR, clinicId);
+    if (fs.existsSync(sessionPath)) {
+      fs.rmSync(sessionPath, { recursive: true, force: true });
+    }
+  }
+}
+
 module.exports = {
   startSession,
   sendMessage,
-  getStatus
+  getStatus,
+  logoutSession
 };
