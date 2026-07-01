@@ -13,9 +13,11 @@ import { GooglePlacesDirective } from '../../../../shared/directives/google-plac
 import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
+import { WhatsappConnectionComponent } from '../whatsapp-connection/whatsapp-connection.component';
+
 @Component({
   selector: 'app-clinic-form',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, PhoneInputFieldComponent, GooglePlacesDirective, LocationMapComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, PhoneInputFieldComponent, GooglePlacesDirective, LocationMapComponent, WhatsappConnectionComponent],
   templateUrl: './clinic-form.component.html',
   styleUrl: './clinic-form.component.css'
 })
@@ -31,6 +33,8 @@ export class ClinicFormComponent implements OnInit {
   private langService = inject(LanguageService);
 
   submitting = false;
+  showWhatsappSetup = false;
+  createdClinic: Clinic | null = null;
   selectedPlace: google.maps.places.PlaceResult | null = null;
   locationData?: {address: string, lat: number, lng: number, city?: string, state?: string, country?: string};
 
@@ -189,8 +193,8 @@ export class ClinicFormComponent implements OnInit {
             this.langService.translate('toast.clinic_created'),
             this.langService.translate('toast.success')
           );
-          this.saved.emit(data);
-          this.form.reset();
+          this.createdClinic = data;
+          this.showWhatsappSetup = true;
         },
         error: () => {
           this.submitting = false;
@@ -201,6 +205,15 @@ export class ClinicFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  finishClinicCreation() {
+    if (this.createdClinic) {
+      this.saved.emit(this.createdClinic);
+    }
+    this.form.reset();
+    this.showWhatsappSetup = false;
+    this.createdClinic = null;
   }
 
   onCancel() {
