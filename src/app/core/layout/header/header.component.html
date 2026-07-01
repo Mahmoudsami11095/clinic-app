@@ -5,6 +5,13 @@
       <i class="pi pi-bars text-xl"></i>
     </button>
 
+    <!-- Trial Mode Banner -->
+    <div *ngIf="user.role === 'doctor' && user.subscriptionStatus === 'trial'"
+         class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold ring-1 ring-amber-500/5">
+      <i class="pi pi-clock text-[10px] animate-pulse"></i>
+      <span>{{ getTrialRemainingDays() }} Days Remaining in Free Trial</span>
+    </div>
+
     <!-- Search Bar -->
     <div class="relative w-96 hidden md:block group">
       <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>

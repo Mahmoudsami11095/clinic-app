@@ -13,6 +13,11 @@ export interface User {
   title: string;
   clinicId?: string; // Associated clinic ID (for admin/asst/patient)
   clinicIds?: string[]; // Associated clinic IDs (for doctors)
+  subscriptionStatus?: string;
+  trialEndDate?: string;
+  subscriptionEndDate?: string;
+  isInitialFeePaid?: boolean;
+  appliedPromoCode?: string;
 }
 
 export interface RegistrationData {
@@ -167,6 +172,48 @@ export class AuthService {
 
   resetPassword(email: string, code: string, newPassword: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>('/api/auth/reset-password', { email, code, newPassword });
+  }
+
+  getSubscriptionStatus(): Observable<any> {
+    return this.http.get<any>('/api/subscriptions/status');
+  }
+
+  validatePromo(code: string): Observable<any> {
+    return this.http.post<any>('/api/subscriptions/validate-promo', { code });
+  }
+
+  activateManual(code?: string): Observable<any> {
+    return this.http.post<any>('/api/subscriptions/activate-manual', { code }).pipe(
+      tap(res => {
+        const user = this.currentUser();
+        if (user) {
+          user.subscriptionStatus = res.subscriptionStatus;
+          user.subscriptionEndDate = res.subscriptionEndDate;
+          user.isInitialFeePaid = res.isInitialFeePaid;
+          this.setCurrentUser(user);
+        }
+      })
+    );
+  }
+
+  getSubscriptionSettings(): Observable<any> {
+    return this.http.get<any>('/api/admin/subscription-settings');
+  }
+
+  updateSubscriptionSettings(settings: any): Observable<any> {
+    return this.http.put<any>('/api/admin/subscription-settings', settings);
+  }
+
+  getPromos(): Observable<any> {
+    return this.http.get<any>('/api/admin/promos');
+  }
+
+  createPromo(promo: any): Observable<any> {
+    return this.http.post<any>('/api/admin/promos', promo);
+  }
+
+  deletePromo(id: string): Observable<any> {
+    return this.http.delete<any>(`/api/admin/promos/${id}`);
   }
 
   logout() {

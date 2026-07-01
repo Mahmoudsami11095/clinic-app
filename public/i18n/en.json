@@ -116,7 +116,8 @@
     "dental_history": "Dental History",
     "dental_chart": "3D Teeth Chart",
     "inventory": "Inventory",
-    "radiology": "Radiology"
+    "radiology": "Radiology",
+    "subscription_mgmt": "Subscriptions"
   },
   "dashboard": {
     "title": "Dashboard",
