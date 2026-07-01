@@ -21,7 +21,7 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
   qrImageSource = signal<string | null>(null);
   pairingCode = signal<string | null>(null);
   linkMethod = signal<'qr' | 'phone'>('qr');
-  phoneNumberInput = signal('');
+  phoneNumberInput = '';
   
   private pollSubscription?: Subscription;
 
@@ -51,7 +51,7 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
     this.qrImageSource.set(null);
     this.pairingCode.set(null);
     
-    const phone = this.linkMethod() === 'phone' ? this.phoneNumberInput() : undefined;
+    const phone = this.linkMethod() === 'phone' ? this.phoneNumberInput : undefined;
     
     this.whatsappService.startSession(this.clinicId, phone).subscribe({
       next: () => {
@@ -101,18 +101,18 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
     }
   }
 
-  testPhone = signal('');
-  testMessage = signal('Hello from Clinic!');
+  testPhone = '';
+  testMessage = 'Hello from Clinic!';
   isSendingTest = signal(false);
   testStatus = signal<{ success: boolean; message: string } | null>(null);
 
   sendTestMessage() {
-    if (!this.testPhone() || !this.testMessage()) return;
+    if (!this.testPhone || !this.testMessage) return;
     
     this.isSendingTest.set(true);
     this.testStatus.set(null);
     
-    this.whatsappService.sendMessage(this.clinicId, this.testPhone(), this.testMessage()).subscribe({
+    this.whatsappService.sendMessage(this.clinicId, this.testPhone, this.testMessage).subscribe({
       next: () => {
         this.isSendingTest.set(false);
         this.testStatus.set({ success: true, message: 'Message sent successfully!' });
