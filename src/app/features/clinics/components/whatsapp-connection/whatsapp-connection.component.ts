@@ -72,24 +72,26 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (res) => {
-          this.isLoading.set(false);
-          
           if (res.status === 'Connected') {
+            this.isLoading.set(false);
             this.isConnected.set(true);
             this.qrImageSource.set(null);
             this.pairingCode.set(null);
             this.stopPolling();
           } else {
             if (res.qr) {
+              this.isLoading.set(false);
               this.qrImageSource.set(res.qr);
             }
             if (res.pairingCode) {
+              this.isLoading.set(false);
               this.pairingCode.set(res.pairingCode);
             }
           }
         },
         error: () => {
           this.stopPolling();
+          this.isLoading.set(false);
         }
       });
   }
