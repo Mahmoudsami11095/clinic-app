@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class WhatsappService {
   private http = inject(HttpClient);
   // URL to the Node.js Baileys microservice
-  private apiUrl = '/whatsapp-api';
+  private apiUrl = '/wa-api';
 
   startSession(clinicId: string, phone?: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/session/start`, { clinicId, phone });
