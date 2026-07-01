@@ -10,12 +10,12 @@ export class WhatsappService {
   // URL to the Node.js Baileys microservice
   private apiUrl = '/whatsapp-api';
 
-  startSession(clinicId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/session/start`, { clinicId });
+  startSession(clinicId: string, phone?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/session/start`, { clinicId, phone });
   }
 
-  getQrCode(clinicId: string): Observable<{ qr: string | null, status: string }> {
-    return this.http.get<{ qr: string | null, status: string }>(`${this.apiUrl}/session/qr?clinicId=${clinicId}`);
+  getQrCode(clinicId: string): Observable<{ qr: string | null, pairingCode: string | null, status: string }> {
+    return this.http.get<{ qr: string | null, pairingCode: string | null, status: string }>(`${this.apiUrl}/session/qr?clinicId=${clinicId}`);
   }
 
   getStatus(clinicId: string): Observable<{ status: string }> {
