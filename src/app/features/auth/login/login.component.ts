@@ -197,8 +197,9 @@ export class LoginComponent {
     });
   }
 
-  onSocialRegistrationComplete(user: User) {
+  onSocialRegistrationComplete(event: { user: User; createdClinicName?: string } | User) {
     this.socialSignUpState.set('none');
+    const user = 'user' in event ? event.user : event;
     this.redirectToDefaultPage(user);
   }
 

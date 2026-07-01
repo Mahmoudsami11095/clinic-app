@@ -5,7 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, A
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../../../core/auth/auth.service';
+import { AuthService, User } from '../../../core/auth/auth.service';
 import { ClinicService } from '../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
