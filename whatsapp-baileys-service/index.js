@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const qrcode = require('qrcode');
-const { startSession, sendMessage, getStatus } = require('./whatsapp.service');
+const { startSession, sendMessage, getStatus, logoutSession } = require('./whatsapp.service');
 
 const app = express();
 
@@ -119,6 +119,26 @@ app.post('/api/message/send', async (req, res) => {
   } catch (error) {
     console.error(`Failed to send message for Clinic ${clinicId}:`, error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 5. Logout Session
+ * Clears the active socket connection and deletes session credentials from the VM.
+ */
+app.post('/api/session/logout', async (req, res) => {
+  const { clinicId } = req.body;
+
+  if (!clinicId) {
+    return res.status(400).json({ error: 'clinicId is required' });
+  }
+
+  try {
+    await logoutSession(clinicId);
+    res.json({ success: true, message: 'Session logged out successfully.' });
+  } catch (error) {
+    console.error(`Failed to logout session for Clinic ${clinicId}:`, error);
+    res.status(500).json({ error: 'Failed to logout session.' });
   }
 });
 
