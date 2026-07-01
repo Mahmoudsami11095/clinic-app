@@ -31,7 +31,7 @@
             
             <button 
               (click)="sendTestMessage()"
-              [disabled]="isSendingTest() || !testPhone() || !testMessage()"
+              [disabled]="isSendingTest() || !testPhone || !testMessage"
               class="w-full py-2 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
               @if(isSendingTest()) {
                 <i class="pi pi-spin pi-spinner"></i> Sending...
@@ -118,7 +118,7 @@
 
           <button 
             (click)="connectWhatsApp()"
-            [disabled]="linkMethod() === 'phone' && !phoneNumberInput()"
+            [disabled]="linkMethod() === 'phone' && !phoneNumberInput"
             class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
             <i class="pi pi-link"></i> Link Device
           </button>
