@@ -26,6 +26,7 @@ import { RoleSelection } from '../../../shared/components/role-selection/role-se
 import { ProfileDetailsForm } from '../../../shared/components/profile-details-form/profile-details-form';
 import { VerificationStep } from '../../../shared/components/verification-step/verification-step';
 import { SocialRegistrationComponent } from '../components/social-registration/social-registration.component';
+import { WhatsappConnectionComponent } from '../../clinics/components/whatsapp-connection/whatsapp-connection.component';
 
 @Component({
   selector: 'app-register',
@@ -34,7 +35,8 @@ import { SocialRegistrationComponent } from '../components/social-registration/s
     CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, 
     InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, 
     LocationMapComponent, ClinicSelectionComponent,
-    RoleSelection, ProfileDetailsForm, VerificationStep, SocialRegistrationComponent
+    RoleSelection, ProfileDetailsForm, VerificationStep, SocialRegistrationComponent,
+    WhatsappConnectionComponent
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
@@ -58,6 +60,7 @@ export class RegisterComponent implements OnDestroy, OnInit {
 
   // Stepper / Wizard state
   currentStage = signal<number>(1);
+  createdClinicId = signal<string>('');
 
   // OTP Verification States
   otpSent = signal(false);
@@ -529,16 +532,26 @@ export class RegisterComponent implements OnDestroy, OnInit {
     }
 
     this.authService.register(payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
+      next: (user) => {
         this.isLoading.set(false);
         this.toastr.success(
           this.languageService.translate('auth.register_success'),
           this.languageService.translate('toast.success')
         );
-        if (this.authService.isAuthenticated()) {
-          this.router.navigate(['/dashboard']);
+
+        const isDoctor = formValues.role === 'doctor';
+        const hasCreatedClinic = formValues.clinicDetails.clinicName && formValues.clinicDetails.clinicName.trim().length >= 3;
+        const newClinicId = user?.clinicIds?.[0] || user?.clinicId;
+
+        if (isDoctor && hasCreatedClinic && newClinicId && this.authService.isAuthenticated()) {
+          this.createdClinicId.set(newClinicId);
+          this.currentStage.set(6);
         } else {
-          this.router.navigate(['/login']);
+          if (this.authService.isAuthenticated()) {
+            this.router.navigate(['/dashboard']);
+          } else {
+            this.router.navigate(['/login']);
+          }
         }
       },
       error: (err) => {
@@ -548,6 +561,10 @@ export class RegisterComponent implements OnDestroy, OnInit {
         this.toastr.error(errorMsg, this.languageService.translate('toast.error'));
       }
     });
+  }
+
+  navigateToDashboard() {
+    this.router.navigate(['/dashboard']);
   }
 
   socialLogin(provider: string) {

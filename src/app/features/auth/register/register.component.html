@@ -280,6 +280,27 @@
             (back)="prevStage()"
           ></app-verification-step>
         </div>
+
+        <!-- STAGE 6: Optional WhatsApp Connection Onboarding -->
+        <div *ngIf="currentStage() === 6" class="space-y-5 animate-in fade-in duration-200 text-center">
+          <div class="bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-350 p-4 rounded-2xl text-xs font-semibold text-left mb-4 flex items-start gap-2.5 border border-indigo-100 dark:border-indigo-900/30">
+            <i class="pi pi-sparkles text-sm mt-0.5 text-indigo-500"></i>
+            <div>
+              <p class="font-bold text-slate-800 dark:text-slate-200 mb-1">Registration Complete! 🎉</p>
+              <p class="text-slate-650 dark:text-slate-400">Your account and clinic have been successfully created. You can now link your clinic's WhatsApp number to enable automated appointment notifications.</p>
+              <p class="mt-2 text-[10px] text-slate-450 dark:text-slate-500 font-medium">This step is completely optional. If you skip this, you can always link it later from your clinic profile details page.</p>
+            </div>
+          </div>
+
+          <app-whatsapp-connection [clinicId]="createdClinicId()"></app-whatsapp-connection>
+
+          <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="button" (click)="navigateToDashboard()"
+                    class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 cursor-pointer">
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
       </form>
 
       <!-- Social Authentication Section -->

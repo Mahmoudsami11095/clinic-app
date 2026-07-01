@@ -1,3 +1,4 @@
+@if (!showWhatsappSetup) {
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
   <!-- Clinic Name -->
   <div>
@@ -103,3 +104,27 @@
     </button>
   </div>
 </form>
+} @else {
+  <div class="space-y-5 text-center animate-in fade-in duration-200">
+    <div class="bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 p-4 rounded-xl text-xs font-semibold text-left flex items-start gap-2.5 border border-indigo-100 dark:border-indigo-900/30">
+      <i class="pi pi-sparkles text-sm mt-0.5"></i>
+      <div>
+        <p class="font-bold mb-1">Clinic Created Successfully! 🎉</p>
+        <p>You can now link a WhatsApp number to enable automated appointment booking notifications for this clinic.</p>
+        <p class="mt-2 text-[10px] opacity-80">This is completely optional. If you skip this, you can always link it later from the Clinic profile details page.</p>
+      </div>
+    </div>
+
+    <app-whatsapp-connection [clinicId]="createdClinic!.id"></app-whatsapp-connection>
+
+    <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+      <button
+        type="button"
+        (click)="finishClinicCreation()"
+        class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition-all focus:outline-none shadow-md"
+      >
+        Done & Close
+      </button>
+    </div>
+  </div>
+}
