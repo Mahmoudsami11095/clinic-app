@@ -25,7 +25,7 @@ if (!fs.existsSync(SESSIONS_DIR)) {
  * @param {string} clinicId 
  * @param {object} callbacks { onQR, onConnected, onDisconnected }
  */
-async function startSession(clinicId, callbacks) {
+async function startSession(clinicId, callbacks, phoneNumber = null) {
   // If session is already connected, don't restart it
   if (sessions.has(clinicId)) {
     console.log(`[Clinic ${clinicId}] Session already running.`);
@@ -41,7 +41,7 @@ async function startSession(clinicId, callbacks) {
     logger: pino({ level: 'silent' }), // Suppress detailed logs, use 'info' for debugging
     printQRInTerminal: false,
     auth: state,
-    browser: ['Clinic Web', 'Chrome', '1.0.0']
+    browser: ['Ubuntu', 'Chrome', '20.0.04']
   });
 
   sessions.set(clinicId, sock);
@@ -66,7 +66,7 @@ async function startSession(clinicId, callbacks) {
       // Reconnect if not logged out explicitly
       if (shouldReconnect) {
         console.log(`[Clinic ${clinicId}] Reconnecting...`);
-        startSession(clinicId, callbacks);
+        startSession(clinicId, callbacks, phoneNumber);
       } else {
         console.log(`[Clinic ${clinicId}] Logged out. Session deleted.`);
         // Optional: Remove session folder if logged out
@@ -87,6 +87,19 @@ async function startSession(clinicId, callbacks) {
   sock.ev.on('messages.upsert', (m) => {
     // console.log(JSON.stringify(m, undefined, 2));
   });
+
+  // Request pairing code if a phone number is provided and we aren't registered yet
+  if (phoneNumber && !sock.authState.creds.registered) {
+    setTimeout(async () => {
+      try {
+        const code = await sock.requestPairingCode(phoneNumber.replace(/\D/g, ''));
+        console.log(`[Clinic ${clinicId}] Generated pairing code: ${code}`);
+        if (callbacks.onPairingCode) callbacks.onPairingCode(code);
+      } catch (err) {
+        console.error(`[Clinic ${clinicId}] Failed to request pairing code:`, err);
+      }
+    }, 1500);
+  }
 
   return sock;
 }

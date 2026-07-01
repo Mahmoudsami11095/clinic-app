@@ -19,6 +19,9 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
   isConnected = signal(false);
   isLoading = signal(false);
   qrImageSource = signal<string | null>(null);
+  pairingCode = signal<string | null>(null);
+  linkMethod = signal<'qr' | 'phone'>('qr');
+  phoneNumberInput = signal('');
   
   private pollSubscription?: Subscription;
 
@@ -46,8 +49,11 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
   connectWhatsApp() {
     this.isLoading.set(true);
     this.qrImageSource.set(null);
+    this.pairingCode.set(null);
     
-    this.whatsappService.startSession(this.clinicId).subscribe({
+    const phone = this.linkMethod() === 'phone' ? this.phoneNumberInput() : undefined;
+    
+    this.whatsappService.startSession(this.clinicId, phone).subscribe({
       next: () => {
         this.startPolling();
       },
@@ -59,7 +65,7 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
   }
 
   private startPolling() {
-    // Poll every 3 seconds for QR code
+    // Poll every 3 seconds for QR code or pairing code
     this.pollSubscription = interval(3000)
       .pipe(
         switchMap(() => this.whatsappService.getQrCode(this.clinicId))
@@ -71,9 +77,15 @@ export class WhatsappConnectionComponent implements OnInit, OnDestroy {
           if (res.status === 'Connected') {
             this.isConnected.set(true);
             this.qrImageSource.set(null);
+            this.pairingCode.set(null);
             this.stopPolling();
-          } else if (res.qr) {
-            this.qrImageSource.set(res.qr);
+          } else {
+            if (res.qr) {
+              this.qrImageSource.set(res.qr);
+            }
+            if (res.pairingCode) {
+              this.pairingCode.set(res.pairingCode);
+            }
           }
         },
         error: () => {

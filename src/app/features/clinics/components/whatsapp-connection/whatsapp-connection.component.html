@@ -5,10 +5,10 @@
   
   <div class="flex-1 flex flex-col items-center justify-center py-4">
     
-    @if (isLoading() && !qrImageSource()) {
+    @if (isLoading() && !qrImageSource() && !pairingCode()) {
       <div class="flex flex-col items-center gap-3 text-slate-500">
         <i class="pi pi-spinner pi-spin text-3xl text-emerald-500"></i>
-        <p class="text-sm font-medium">Loading...</p>
+        <p class="text-sm font-medium">Initializing connection...</p>
       </div>
     } @else if (isConnected()) {
       <div class="flex flex-col items-center gap-3 w-full">
@@ -58,17 +58,68 @@
           <i class="pi pi-spin pi-spinner text-emerald-500"></i> Waiting for scan...
         </div>
       </div>
+    } @else if (pairingCode()) {
+      <div class="flex flex-col items-center gap-4 text-center w-full">
+        <div class="text-left w-full max-w-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800">
+          <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+            <i class="pi pi-info-circle text-emerald-500"></i> How to link on your phone:
+          </h4>
+          <ol class="text-xs text-slate-500 dark:text-slate-400 list-decimal pl-4 flex flex-col gap-1.5">
+            <li>Open WhatsApp on your mobile phone.</li>
+            <li>Tap <b>Menu</b> (or <b>Settings</b> on iOS) and select <b>Linked Devices</b>.</li>
+            <li>Tap <b>Link a Device</b>, then tap <b>Link with phone number instead</b>.</li>
+            <li>Enter the 8-digit code shown below:</li>
+          </ol>
+        </div>
+
+        <div class="px-6 py-4 bg-emerald-50 dark:bg-emerald-500/10 border-2 border-dashed border-emerald-500/30 rounded-xl font-mono text-3xl font-extrabold tracking-widest text-emerald-600 dark:text-emerald-400 select-all shadow-sm">
+          {{ pairingCode() }}
+        </div>
+
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <i class="pi pi-spin pi-spinner text-emerald-500"></i> Waiting for mobile authentication...
+        </div>
+      </div>
     } @else {
-      <div class="flex flex-col items-center gap-4 text-center">
+      <div class="flex flex-col items-center gap-4 text-center w-full">
         <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center">
           <i class="pi pi-whatsapp text-3xl"></i>
         </div>
-        <div>
+        
+        <div class="w-full max-w-xs">
           <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Not Connected</h3>
-          <p class="text-sm text-slate-500 mt-1 mb-4">Connect this clinic's WhatsApp account to enable notifications.</p>
+          <p class="text-xs text-slate-500 mt-1 mb-4">Choose how you want to link your WhatsApp account:</p>
+          
+          <div class="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl mb-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <button 
+              (click)="linkMethod.set('qr')" 
+              [ngClass]="linkMethod() === 'qr' ? 'bg-white dark:bg-slate-700 text-emerald-500 dark:text-emerald-400 shadow-sm' : ''" 
+              class="flex-1 py-1.5 rounded-lg transition-all">
+              QR Code
+            </button>
+            <button 
+              (click)="linkMethod.set('phone')" 
+              [ngClass]="linkMethod() === 'phone' ? 'bg-white dark:bg-slate-700 text-emerald-500 dark:text-emerald-400 shadow-sm' : ''" 
+              class="flex-1 py-1.5 rounded-lg transition-all">
+              Phone Number
+            </button>
+          </div>
+
+          @if (linkMethod() === 'phone') {
+            <div class="mb-4">
+              <input 
+                type="text" 
+                [(ngModel)]="phoneNumberInput" 
+                placeholder="Phone (e.g. 201555102395)" 
+                class="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700 dark:text-slate-200">
+              <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1 text-left">Include country code without + or spaces.</p>
+            </div>
+          }
+
           <button 
             (click)="connectWhatsApp()"
-            class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2 mx-auto shadow-sm shadow-emerald-500/30">
+            [disabled]="linkMethod() === 'phone' && !phoneNumberInput()"
+            class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
             <i class="pi pi-link"></i> Link Device
           </button>
         </div>
