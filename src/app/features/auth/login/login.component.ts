@@ -8,6 +8,7 @@ import { AuthService, User } from '../../../core/auth/auth.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { ClinicService } from '../../../core/services/clinic.service';
 import { extractErrorMessage } from '../../../core/utils/error.utils';
 import { OtpLoginComponent } from '../components/otp-login/otp-login.component';
 import { ForgotPasswordComponent } from '../components/forgot-password/forgot-password.component';
@@ -43,6 +44,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private toastr = inject(ToastrService);
+  private clinicService = inject(ClinicService);
 
   loginForm: FormGroup;
   showPassword = signal(false);
@@ -200,7 +202,33 @@ export class LoginComponent {
   onSocialRegistrationComplete(event: { user: User; createdClinicName?: string } | User) {
     this.socialSignUpState.set('none');
     const user = 'user' in event ? event.user : event;
-    this.redirectToDefaultPage(user);
+    const createdClinicName = event && 'createdClinicName' in event ? event.createdClinicName : undefined;
+
+    if (user.role === 'doctor' && createdClinicName && this.authService.isAuthenticated()) {
+      this.isLoading.set(true);
+      this.clinicService.getClinicsObservable().subscribe({
+        next: (clinics) => {
+          this.isLoading.set(false);
+          const matched = clinics.find(c => c.name.toLowerCase() === createdClinicName.toLowerCase()) || clinics[0];
+          if (matched) {
+            this.toastr.success(
+              'Registration successful! You can now link your clinic\'s WhatsApp number to enable automated messages.',
+              'Welcome',
+              { timeOut: 8000 }
+            );
+            this.router.navigate(['/clinics', matched.id]);
+          } else {
+            this.redirectToDefaultPage(user);
+          }
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.redirectToDefaultPage(user);
+        }
+      });
+    } else {
+      this.redirectToDefaultPage(user);
+    }
   }
 
   quickLogin(user: User) {
