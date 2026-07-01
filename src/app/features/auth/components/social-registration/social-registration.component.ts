@@ -39,7 +39,7 @@ export class SocialRegistrationComponent implements OnInit {
 
   provider = input.required<string>();
   token = input.required<string>();
-  complete = output<User>();
+  complete = output<{ user: User; createdClinicName?: string }>();
   cancel = output<void>();
 
   isLoading = signal(false);
@@ -189,10 +189,13 @@ export class SocialRegistrationComponent implements OnInit {
     }
 
     this.isLoading.set(true);
+    const hasCreatedClinic = formVal.clinicDetails.clinicName && formVal.clinicDetails.clinicName.trim().length >= 3;
+    const createdClinicName = hasCreatedClinic ? formVal.clinicDetails.clinicName.trim() : undefined;
+
     this.authService.loginWithSocial(this.provider(), this.token(), this.socialRole(), payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isLoading.set(false);
-        this.complete.emit(res.data);
+        this.complete.emit({ user: res.data, createdClinicName });
       },
       error: (err) => {
         this.isLoading.set(false);

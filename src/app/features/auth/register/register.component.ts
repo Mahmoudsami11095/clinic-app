@@ -5,7 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, A
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../../../core/auth/auth.service';
+import { AuthService, User } from '../../../core/auth/auth.service';
 import { ClinicService } from '../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -541,11 +541,25 @@ export class RegisterComponent implements OnDestroy, OnInit {
 
         const isDoctor = formValues.role === 'doctor';
         const hasCreatedClinic = formValues.clinicDetails.clinicName && formValues.clinicDetails.clinicName.trim().length >= 3;
-        const newClinicId = user?.clinicIds?.[0] || user?.clinicId;
 
-        if (isDoctor && hasCreatedClinic && newClinicId && this.authService.isAuthenticated()) {
-          this.createdClinicId.set(newClinicId);
-          this.currentStage.set(6);
+        if (isDoctor && hasCreatedClinic && this.authService.isAuthenticated()) {
+          this.isLoading.set(true);
+          this.clinicService.getClinicsObservable().subscribe({
+            next: (clinics) => {
+              this.isLoading.set(false);
+              const matched = clinics.find(c => c.name.toLowerCase() === formValues.clinicDetails.clinicName.trim().toLowerCase()) || clinics[0];
+              if (matched) {
+                this.createdClinicId.set(matched.id);
+                this.currentStage.set(6);
+              } else {
+                this.router.navigate(['/dashboard']);
+              }
+            },
+            error: () => {
+              this.isLoading.set(false);
+              this.router.navigate(['/dashboard']);
+            }
+          });
         } else {
           if (this.authService.isAuthenticated()) {
             this.router.navigate(['/dashboard']);
@@ -642,12 +656,37 @@ export class RegisterComponent implements OnDestroy, OnInit {
     });
   }
 
-  onSocialRegistrationComplete(user: any) {
+  onSocialRegistrationComplete(event: { user: User; createdClinicName?: string }) {
     this.socialSignUpState.set('none');
-    if (user.role === 'patient' || user.role === 'assistant') {
-      this.router.navigate(['/appointments']);
+    const { user, createdClinicName } = event;
+
+    const isDoctor = user.role === 'doctor';
+    const hasCreatedClinic = !!createdClinicName;
+
+    if (isDoctor && hasCreatedClinic && this.authService.isAuthenticated()) {
+      this.isLoading.set(true);
+      this.clinicService.getClinicsObservable().subscribe({
+        next: (clinics) => {
+          this.isLoading.set(false);
+          const matched = clinics.find(c => c.name.toLowerCase() === createdClinicName.toLowerCase()) || clinics[0];
+          if (matched) {
+            this.createdClinicId.set(matched.id);
+            this.currentStage.set(6);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.router.navigate(['/dashboard']);
+        }
+      });
     } else {
-      this.router.navigate(['/dashboard']);
+      if (this.authService.isAuthenticated()) {
+        this.router.navigate(['/dashboard']);
+      } else {
+        this.router.navigate(['/login']);
+      }
     }
   }
 

@@ -101,6 +101,15 @@ export class ClinicService {
     });
   }
 
+  getClinicsObservable() {
+    return this.http.get<{ data: Clinic[] }>('/api/clinics').pipe(
+      map(res => {
+        this.clinicsSignal.set(res.data);
+        return res.data;
+      })
+    );
+  }
+
   setActiveClinicId(id: string) {
     this.activeClinicIdSignal.set(id);
   }
