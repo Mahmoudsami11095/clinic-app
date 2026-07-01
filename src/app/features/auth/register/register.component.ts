@@ -542,31 +542,43 @@ export class RegisterComponent implements OnDestroy, OnInit {
         const isDoctor = formValues.role === 'doctor';
         const hasCreatedClinic = formValues.clinicDetails.clinicName && formValues.clinicDetails.clinicName.trim().length >= 3;
 
-        if (isDoctor && hasCreatedClinic && this.authService.isAuthenticated()) {
-          this.isLoading.set(true);
-          this.clinicService.getClinicsObservable().subscribe({
-            next: (clinics) => {
-              this.isLoading.set(false);
-              const matched = clinics.find(c => c.name.toLowerCase() === formValues.clinicDetails.clinicName.trim().toLowerCase()) || clinics[0];
-              if (matched) {
-                this.createdClinicId.set(matched.id);
-                this.currentStage.set(6);
+        // Auto-login the user immediately using their credentials!
+        this.isLoading.set(true);
+        this.authService.login({ email: payload.email, password: payload.password }).subscribe({
+          next: (loggedInUser) => {
+            this.isLoading.set(false);
+            if (isDoctor && hasCreatedClinic) {
+              this.isLoading.set(true);
+              this.clinicService.getClinicsObservable().subscribe({
+                next: (clinics) => {
+                  this.isLoading.set(false);
+                  const matched = clinics.find(c => c.name.toLowerCase() === formValues.clinicDetails.clinicName.trim().toLowerCase()) || clinics[0];
+                  if (matched) {
+                    this.createdClinicId.set(matched.id);
+                    this.currentStage.set(6);
+                  } else {
+                    this.router.navigate(['/dashboard']);
+                  }
+                },
+                error: () => {
+                  this.isLoading.set(false);
+                  this.router.navigate(['/dashboard']);
+                }
+              });
+            } else {
+              if (loggedInUser.role === 'patient' || loggedInUser.role === 'assistant') {
+                this.router.navigate(['/appointments']);
               } else {
                 this.router.navigate(['/dashboard']);
               }
-            },
-            error: () => {
-              this.isLoading.set(false);
-              this.router.navigate(['/dashboard']);
             }
-          });
-        } else {
-          if (this.authService.isAuthenticated()) {
-            this.router.navigate(['/dashboard']);
-          } else {
+          },
+          error: () => {
+            this.isLoading.set(false);
+            // Fallback to manual login if auto-login fails
             this.router.navigate(['/login']);
           }
-        }
+        });
       },
       error: (err) => {
         this.isLoading.set(false);
