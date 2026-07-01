@@ -8,9 +8,10 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
   const user = authService.currentUser();
 
   if (user && user.role === 'doctor') {
-    const isExpired = user.subscriptionStatus === 'expired' || 
-      (user.subscriptionStatus === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate)) ||
-      (user.subscriptionStatus === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate));
+    const status = user.subscriptionStatus?.toLowerCase();
+    const isExpired = status === 'expired' || 
+      (status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate)) ||
+      (status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate));
 
     if (isExpired) {
       if (state.url.startsWith('/subscription')) {
@@ -22,9 +23,10 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
   }
 
   if (user && user.role === 'doctor' && state.url.startsWith('/subscription')) {
-    const isExpired = user.subscriptionStatus === 'expired' || 
-      (user.subscriptionStatus === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate)) ||
-      (user.subscriptionStatus === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate));
+    const status = user.subscriptionStatus?.toLowerCase();
+    const isExpired = status === 'expired' || 
+      (status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate)) ||
+      (status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate));
       
     if (!isExpired) {
       router.navigate(['/dashboard']);

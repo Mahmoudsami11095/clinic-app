@@ -62,7 +62,7 @@ export class Header {
 
   getTrialRemainingDays(): number {
     const user = this.authService.currentUser();
-    if (user && user.role === 'doctor' && user.subscriptionStatus === 'trial' && user.trialEndDate) {
+    if (user && user.role === 'doctor' && user.subscriptionStatus?.toLowerCase() === 'trial' && user.trialEndDate) {
       const trialEnd = new Date(user.trialEndDate).getTime();
       const now = new Date().getTime();
       const diffTime = trialEnd - now;
