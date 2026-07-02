@@ -1,6 +1,8 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injector } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
+import { Router } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 import { catchError, throwError, retry, timer } from 'rxjs';
 import { extractErrorMessage } from '../utils/error.utils';
 import { LanguageService } from '../i18n/language.service';
@@ -45,7 +47,22 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         originalError: err
       });
 
-      if (err.status === 0 || err.status === 400 || err.status === 401 || err.status === 403 || err.status >= 500) {
+      if (err.status === 402) {
+        try {
+          const router = injector.get(Router);
+          const authService = injector.get(AuthService);
+          
+          // Redirect to subscription screen
+          router.navigate(['/subscription']);
+          
+          // Silently refresh subscription status to update headers/banners
+          authService.refreshSubscriptionStatus().subscribe();
+        } catch (e) {
+          console.error('[HTTP Error Interceptor]: Redirection failed', e);
+        }
+      }
+
+      if (err.status === 0 || err.status === 400 || err.status === 401 || err.status === 403 || err.status === 402 || err.status >= 500) {
         const isUnassignedClinicError = err.status === 403 && req.method === 'GET' && errorMessage.toLowerCase().includes('assigned to at least one clinic');
         if (!isUnassignedClinicError) {
           toastr.error(errorMessage, errorTitle);

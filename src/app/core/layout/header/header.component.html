@@ -5,6 +5,44 @@
       <i class="pi pi-bars text-xl"></i>
     </button>
 
+    <!-- Subscription Status Banners -->
+    <ng-container *ngIf="user.role === 'doctor'">
+      <!-- Trial Active -->
+      <div *ngIf="user.subscriptionStatus?.toLowerCase() === 'trial'"
+           class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold ring-1 ring-amber-500/5">
+        <i class="pi pi-clock text-[10px] animate-pulse"></i>
+        <span>{{ getTrialRemainingDays() }} Days Remaining in Free Trial</span>
+      </div>
+
+      <!-- Active Subscription -->
+      <div *ngIf="user.subscriptionStatus?.toLowerCase() === 'active'"
+           class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold ring-1 ring-emerald-500/5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Subscription Active</span>
+      </div>
+
+      <!-- Pending Approval -->
+      <div *ngIf="user.subscriptionStatus?.toLowerCase() === 'pendingapproval'"
+           class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-bold ring-1 ring-indigo-500/5">
+        <i class="pi pi-spin pi-spinner text-[10px]"></i>
+        <span>Subscription Pending Approval</span>
+      </div>
+
+      <!-- Suspended -->
+      <div *ngIf="user.subscriptionStatus?.toLowerCase() === 'suspended'"
+           class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold ring-1 ring-rose-500/5">
+        <i class="pi pi-ban text-[10px]"></i>
+        <span>Subscription Suspended</span>
+      </div>
+
+      <!-- Expired -->
+      <div *ngIf="user.subscriptionStatus?.toLowerCase() === 'expired'"
+           class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold ring-1 ring-rose-500/5">
+        <i class="pi pi-exclamation-triangle text-[10px]"></i>
+        <span>Subscription Expired</span>
+      </div>
+    </ng-container>
+
     <!-- Search Bar -->
     <div class="relative w-96 hidden md:block group">
       <i class="pi pi-search absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>

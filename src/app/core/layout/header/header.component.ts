@@ -59,4 +59,15 @@ export class Header {
     }
     return name.substring(0, 2).toUpperCase();
   }
+
+  getTrialRemainingDays(): number {
+    const user = this.authService.currentUser();
+    if (user && user.role === 'doctor' && user.subscriptionStatus?.toLowerCase() === 'trial' && user.trialEndDate) {
+      const trialEnd = new Date(user.trialEndDate).getTime();
+      const now = new Date().getTime();
+      const diffTime = trialEnd - now;
+      return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+    return 0;
+  }
 }
