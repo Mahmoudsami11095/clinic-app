@@ -294,15 +294,20 @@
                       }
                     </td>
                     <td class="py-4 px-6">
-                      @if (doc.subscriptionStatus !== 'Active') {
+                      @if (doc.subscriptionStatus === 'Active' || doc.subscriptionStatus === 'Trial') {
+                        <button
+                          (click)="deactivateDoctor(doc.id)"
+                          class="bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-400 text-xs font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out"
+                        >
+                          Deactivate
+                        </button>
+                      } @else {
                         <button
                           (click)="activateDoctor(doc.id)"
                           class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-extrabold py-2 px-4 rounded-lg transition duration-150 ease-in-out shadow-sm"
                         >
                           Approve & Activate
                         </button>
-                      } @else {
-                        <span class="text-slate-500 text-xs font-medium">Activated</span>
                       }
                     </td>
                   </tr>

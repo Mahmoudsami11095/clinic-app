@@ -224,6 +224,10 @@ export class AuthService {
     return this.http.post<any>(`/api/admin/doctors/${doctorId}/activate`, {});
   }
 
+  deactivateDoctorSubscription(doctorId: string): Observable<any> {
+    return this.http.post<any>(`/api/admin/doctors/${doctorId}/deactivate`, {});
+  }
+
   logout() {
     this.setCurrentUser(null);
     this.router.navigate(['/login']);

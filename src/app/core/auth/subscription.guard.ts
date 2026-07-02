@@ -14,6 +14,7 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
 
     const isLocked = status === 'expired' || 
                      status === 'pendingapproval' || 
+                     status === 'suspended' || 
                      isTrialExpired || 
                      isSubscriptionExpired ||
                      !status;
@@ -34,6 +35,7 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
 
     const isLocked = status === 'expired' || 
                      status === 'pendingapproval' || 
+                     status === 'suspended' || 
                      isTrialExpired || 
                      isSubscriptionExpired ||
                      !status;

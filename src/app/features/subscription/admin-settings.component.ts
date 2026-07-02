@@ -162,15 +162,30 @@ export class AdminSettingsComponent implements OnInit {
   }
 
   activateDoctor(doctorId: string) {
-    if (!confirm('Are you sure you want to approve and activate this doctor\'s subscription?')) return;
+    if (!confirm('Are you want to approve and activate this doctor\'s subscription?')) return;
 
     this.authService.activateDoctorSubscription(doctorId).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.toastr.success(res.message || 'Subscription activated successfully.');
         this.doctorsList.update(list => list.map(d => d.id === doctorId ? { ...d, subscriptionStatus: 'Active' } : d));
       },
-      error: (err) => {
+      error: (err: any) => {
         const errMsg = err?.error?.message || 'Failed to activate subscription.';
+        this.toastr.error(errMsg);
+      }
+    });
+  }
+
+  deactivateDoctor(doctorId: string) {
+    if (!confirm('Are you sure you want to deactivate/suspend this doctor\'s subscription?')) return;
+
+    this.authService.deactivateDoctorSubscription(doctorId).subscribe({
+      next: (res: any) => {
+        this.toastr.success(res.message || 'Subscription deactivated successfully.');
+        this.doctorsList.update(list => list.map(d => d.id === doctorId ? { ...d, subscriptionStatus: 'Suspended' } : d));
+      },
+      error: (err: any) => {
+        const errMsg = err?.error?.message || 'Failed to deactivate subscription.';
         this.toastr.error(errMsg);
       }
     });

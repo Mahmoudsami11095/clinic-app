@@ -26,6 +26,23 @@
         Once the administrator approves your activation, your account access will be restored automatically.
       </p>
     </div>
+  } @else if (authService.currentUser()?.subscriptionStatus?.toLowerCase() === 'suspended') {
+    <div class="w-full max-w-xl space-y-8 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8 rounded-2xl shadow-2xl text-center">
+      <div class="inline-flex items-center justify-center p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        Subscription Suspended
+      </h2>
+      <p class="mt-4 text-lg text-slate-300">
+        Your doctor subscription has been suspended by the administration.
+      </p>
+      <p class="text-sm text-slate-500">
+        Please contact support or the platform administrator to resolve this issue and restore your account access.
+      </p>
+    </div>
   } @else {
     <div class="w-full max-w-xl space-y-8 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8 rounded-2xl shadow-2xl">
       
