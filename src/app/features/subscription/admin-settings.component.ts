@@ -235,6 +235,24 @@ export class AdminSettingsComponent implements OnInit {
     });
   }
 
+  softDeleteAccount(email: string) {
+    if (!email) return;
+
+    const confirm1 = confirm(`Are you sure you want to delete the account "${email}"? This action can be reversed by an administrator.`);
+    if (!confirm1) return;
+
+    this.authService.softDeleteAccount(email).subscribe({
+      next: (res: any) => {
+        this.toastr.success(res.message || 'Account deleted successfully.');
+        this.loadDoctors();
+      },
+      error: (err: any) => {
+        const errMsg = err?.error?.message || 'Failed to delete account.';
+        this.toastr.error(errMsg);
+      }
+    });
+  }
+
   deleteAccount(email: string) {
     console.log('deleteAccount called with email:', email);
     if (!email) {
