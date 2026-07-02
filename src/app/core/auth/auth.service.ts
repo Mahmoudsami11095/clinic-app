@@ -247,6 +247,10 @@ export class AuthService {
     return this.http.delete<any>(`/api/admin/accounts/${email}`);
   }
 
+  softDeleteAccount(email: string): Observable<any> {
+    return this.http.post<any>(`/api/admin/accounts/${email}/soft-delete`, {});
+  }
+
   approveReceipt(receiptId: string): Observable<any> {
     return this.http.post<any>(`/api/admin/receipts/${receiptId}/approve`, {});
   }
