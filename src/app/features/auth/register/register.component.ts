@@ -436,6 +436,8 @@ export class RegisterComponent implements OnDestroy, OnInit {
   }
 
   onSubmit() {
+    if (this.isLoading()) return;
+    
     if (!this.otpSent()) {
       this.sendVerificationCode();
       return;
