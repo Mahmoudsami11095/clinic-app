@@ -192,4 +192,34 @@ export class AdminSettingsComponent implements OnInit {
       }
     });
   }
+
+  approveReceipt(receiptId: string, doctorId: string) {
+    if (!confirm('Are you sure you want to approve this transfer receipt? This will activate the doctor\'s subscription.')) return;
+
+    this.authService.approveReceipt(receiptId).subscribe({
+      next: (res: any) => {
+        this.toastr.success(res.message || 'Receipt approved successfully.');
+        this.loadDoctors();
+      },
+      error: (err: any) => {
+        const errMsg = err?.error?.message || 'Failed to approve receipt.';
+        this.toastr.error(errMsg);
+      }
+    });
+  }
+
+  rejectReceipt(receiptId: string, doctorId: string) {
+    if (!confirm('Are you sure you want to reject this transfer receipt?')) return;
+
+    this.authService.rejectReceipt(receiptId).subscribe({
+      next: (res: any) => {
+        this.toastr.success(res.message || 'Receipt rejected successfully.');
+        this.loadDoctors();
+      },
+      error: (err: any) => {
+        const errMsg = err?.error?.message || 'Failed to reject receipt.';
+        this.toastr.error(errMsg);
+      }
+    });
+  }
 }

@@ -243,6 +243,14 @@ export class AuthService {
     return this.http.post<any>(`/api/admin/doctors/${doctorId}/deactivate`, {});
   }
 
+  approveReceipt(receiptId: string): Observable<any> {
+    return this.http.post<any>(`/api/admin/receipts/${receiptId}/approve`, {});
+  }
+
+  rejectReceipt(receiptId: string): Observable<any> {
+    return this.http.post<any>(`/api/admin/receipts/${receiptId}/reject`, {});
+  }
+
   uploadReceipt(formData: FormData): Observable<any> {
     return this.http.post<any>('/api/subscriptions/upload-receipt', formData);
   }
