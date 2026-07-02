@@ -10,6 +10,7 @@ import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-patient-detail',
@@ -55,6 +56,14 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
             >
               Edit
             </button>
+            @if (authService.isAdmin()) {
+              <button
+                (click)="deletePatient()"
+                class="px-6 py-1.5 bg-rose-500 text-white rounded-full text-xs font-bold uppercase tracking-wider hover:bg-rose-600 transition-colors cursor-pointer shadow-sm"
+              >
+                Delete
+              </button>
+            }
             <button
               (click)="goBack()"
               class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all cursor-pointer flex items-center justify-center ms-2"
@@ -95,6 +104,7 @@ export class PatientDetailComponent implements OnInit {
   private location = inject(Location);
   private toastr = inject(ToastrService);
   private languageService = inject(LanguageService);
+  authService = inject(AuthService);
 
   patient = signal<Patient | null>(null);
   loading = signal(true);
@@ -140,6 +150,23 @@ export class PatientDetailComponent implements OnInit {
   handlePatientUpdated(updatedPatient: Patient) {
     this.patient.set(updatedPatient);
     this.closeEditModal();
+  }
+
+  deletePatient() {
+    if (confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
+      const p = this.patient();
+      if (!p) return;
+      
+      this.patientService.delete(p.id).subscribe({
+        next: () => {
+          this.toastr.success('Patient deleted successfully');
+          this.goBack();
+        },
+        error: (err) => {
+          this.toastr.error(extractErrorMessage(err, (k) => this.languageService.translate(k)));
+        }
+      });
+    }
   }
 
   goBack() {
