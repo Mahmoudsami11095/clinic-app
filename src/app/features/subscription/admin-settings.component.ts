@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../core/auth/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin-settings',
@@ -15,6 +16,7 @@ export class AdminSettingsComponent implements OnInit {
   private fb = inject(FormBuilder);
   private toastr = inject(ToastrService);
   protected authService = inject(AuthService);
+  protected env = environment;
 
   settingsForm!: FormGroup;
   promoForm!: FormGroup;

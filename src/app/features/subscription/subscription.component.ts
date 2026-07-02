@@ -90,8 +90,9 @@ export class SubscriptionComponent implements OnInit {
       next: (res) => {
         this.pricingData.set(res);
         if (res.pricing) {
+          const setupFee = res.isInitialFeePaid ? 0 : res.pricing.initialSetupFee;
           this.finalAnnualFee.set(res.pricing.annualSubscriptionFee);
-          this.totalDue.set(res.pricing.initialSetupFee + res.pricing.annualSubscriptionFee);
+          this.totalDue.set(setupFee + res.pricing.annualSubscriptionFee);
         }
       },
       error: () => {
@@ -137,9 +138,11 @@ export class SubscriptionComponent implements OnInit {
     this.promoForm.reset();
     
     const pricing = this.pricingData()?.pricing;
+    const isPaid = this.pricingData()?.isInitialFeePaid;
     if (pricing) {
+      const setupFee = isPaid ? 0 : pricing.initialSetupFee;
       this.finalAnnualFee.set(pricing.annualSubscriptionFee);
-      this.totalDue.set(pricing.initialSetupFee + pricing.annualSubscriptionFee);
+      this.totalDue.set(setupFee + pricing.annualSubscriptionFee);
     }
   }
 
@@ -155,6 +158,47 @@ export class SubscriptionComponent implements OnInit {
       error: (err) => {
         this.isActivating.set(false);
         const errMsg = err?.error?.message || 'Payment simulation failed.';
+        this.toastr.error(errMsg);
+      }
+    });
+  }
+
+  selectedFile: File | null = null;
+  isUploadingReceipt = signal(false);
+
+  onFileSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (file) {
+      this.selectedFile = file;
+    }
+  }
+
+  uploadReceipt() {
+    if (!this.selectedFile) {
+      this.toastr.warning('Please select a transfer receipt file first.');
+      return;
+    }
+
+    this.isUploadingReceipt.set(true);
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
+
+    this.authService.uploadReceipt(formData).subscribe({
+      next: (res) => {
+        this.isUploadingReceipt.set(false);
+        this.toastr.success('Transfer receipt uploaded successfully! Pending administrator approval.');
+        
+        // Refresh local user status to update layout state to PendingApproval
+        const user = this.authService.currentUser();
+        if (user) {
+          user.subscriptionStatus = res.subscriptionStatus;
+          user.isInitialFeePaid = res.isInitialFeePaid;
+          this.authService.setCurrentUser(user);
+        }
+      },
+      error: (err) => {
+        this.isUploadingReceipt.set(false);
+        const errMsg = err?.error?.message || 'Failed to upload receipt.';
         this.toastr.error(errMsg);
       }
     });

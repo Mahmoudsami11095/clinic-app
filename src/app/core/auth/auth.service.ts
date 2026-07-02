@@ -243,6 +243,10 @@ export class AuthService {
     return this.http.post<any>(`/api/admin/doctors/${doctorId}/deactivate`, {});
   }
 
+  uploadReceipt(formData: FormData): Observable<any> {
+    return this.http.post<any>('/api/subscriptions/upload-receipt', formData);
+  }
+
   logout() {
     this.setCurrentUser(null);
     this.router.navigate(['/login']);

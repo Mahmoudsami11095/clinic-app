@@ -293,7 +293,7 @@
                         -
                       }
                     </td>
-                    <td class="py-4 px-6">
+                    <td class="py-4 px-6 flex items-center space-x-3">
                       @if (doc.subscriptionStatus === 'Active' || doc.subscriptionStatus === 'Trial') {
                         <button
                           (click)="deactivateDoctor(doc.id)"
@@ -308,6 +308,17 @@
                         >
                           Approve & Activate
                         </button>
+                      }
+
+                      @if (doc.receiptUrl) {
+                        <a
+                          [href]="env.apiUrl + doc.receiptUrl"
+                          target="_blank"
+                          class="inline-flex items-center space-x-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors border-b border-indigo-500/30"
+                        >
+                          <i class="pi pi-file-pdf"></i>
+                          <span>View Receipt</span>
+                        </a>
                       }
                     </td>
                   </tr>
