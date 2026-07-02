@@ -42,6 +42,29 @@
       <p class="text-sm text-slate-500">
         Please contact support or the platform administrator to resolve this issue and restore your account access.
       </p>
+
+      @if (env.developerContact; as dev) {
+        <div class="mt-6 pt-6 border-t border-slate-700/50 text-slate-400 space-y-3">
+          <p class="text-sm font-semibold text-white">Administrator Contact Info:</p>
+          <div class="flex flex-col items-center space-y-2 text-sm">
+            <span class="font-bold text-indigo-400">{{ dev.name }}</span>
+            <div class="flex flex-wrap justify-center gap-4 mt-2">
+              <a [href]="'mailto:' + dev.email" [title]="dev.email" class="text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+                <i class="pi pi-envelope text-sm"></i>
+                <span>{{ dev.email }}</span>
+              </a>
+              <a [href]="'tel:' + dev.phone" [title]="dev.phone" class="text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+                <i class="pi pi-phone text-sm"></i>
+                <span>{{ dev.phone }}</span>
+              </a>
+              <a [href]="dev.whatsappUrl" target="_blank" title="WhatsApp" class="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                <i class="pi pi-whatsapp text-sm"></i>
+                <span>WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   } @else {
     <div class="w-full max-w-xl space-y-8 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8 rounded-2xl shadow-2xl">

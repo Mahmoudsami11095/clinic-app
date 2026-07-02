@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ToastrService } from 'ngx-toastr';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-subscription',
@@ -17,6 +18,7 @@ export class SubscriptionComponent implements OnInit {
   private toastr = inject(ToastrService);
   private router = inject(Router);
   protected authService = inject(AuthService);
+  protected env = environment;
 
   promoForm!: FormGroup;
   isValidatingPromo = signal(false);
