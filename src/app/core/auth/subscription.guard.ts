@@ -9,11 +9,16 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
 
   if (user && user.role === 'doctor') {
     const status = user.subscriptionStatus?.toLowerCase();
-    const isExpired = status === 'expired' || 
-      (status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate)) ||
-      (status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate));
+    const isTrialExpired = status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate);
+    const isSubscriptionExpired = status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate);
 
-    if (isExpired) {
+    const isLocked = status === 'expired' || 
+                     status === 'pendingapproval' || 
+                     isTrialExpired || 
+                     isSubscriptionExpired ||
+                     !status;
+
+    if (isLocked) {
       if (state.url.startsWith('/subscription')) {
         return true;
       }
@@ -24,11 +29,16 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
 
   if (user && user.role === 'doctor' && state.url.startsWith('/subscription')) {
     const status = user.subscriptionStatus?.toLowerCase();
-    const isExpired = status === 'expired' || 
-      (status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate)) ||
-      (status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate));
+    const isTrialExpired = status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate);
+    const isSubscriptionExpired = status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate);
+
+    const isLocked = status === 'expired' || 
+                     status === 'pendingapproval' || 
+                     isTrialExpired || 
+                     isSubscriptionExpired ||
+                     !status;
       
-    if (!isExpired) {
+    if (!isLocked) {
       router.navigate(['/dashboard']);
       return false;
     }

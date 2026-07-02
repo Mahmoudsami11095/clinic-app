@@ -104,8 +104,7 @@ export class SubscriptionComponent implements OnInit {
     this.authService.activateManual(code).subscribe({
       next: () => {
         this.isActivating.set(false);
-        this.toastr.success('Payment simulated successfully! Welcome back.');
-        this.router.navigate(['/dashboard']);
+        this.toastr.success('Payment simulated successfully! Awaiting administrator approval.');
       },
       error: (err) => {
         this.isActivating.set(false);

@@ -1,132 +1,161 @@
 <div class="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
-  <div class="w-full max-w-xl space-y-8 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8 rounded-2xl shadow-2xl">
-    
-    <!-- Header -->
-    <div class="text-center">
-      <div class="inline-flex items-center justify-center p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 mb-4 animate-bounce">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+  @if (authService.currentUser()?.subscriptionStatus?.toLowerCase() === 'pendingapproval') {
+    <div class="w-full max-w-xl space-y-8 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8 rounded-2xl shadow-2xl text-center">
+      <div class="inline-flex items-center justify-center p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl text-indigo-400 mb-4 animate-pulse">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
       </div>
       <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-        Activate Your Subscription
+        Payment Pending Approval
       </h2>
-      <p class="mt-3 text-lg text-slate-400">
-        Your 6-month trial has ended. Complete your payment below to unlock full access to the clinic management suite.
+      <p class="mt-4 text-lg text-slate-300">
+        Your subscription fee payment has been submitted successfully and is currently under review by the platform administrator.
+      </p>
+      <div class="bg-slate-900/50 border border-slate-700/30 rounded-xl p-6 text-sm text-slate-400 space-y-2 text-start">
+        <div class="flex justify-between">
+          <span>Practitioner:</span>
+          <span class="font-semibold text-white">{{ authService.currentUser()?.name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Status:</span>
+          <span class="font-semibold text-indigo-400">Awaiting Admin Verification</span>
+        </div>
+      </div>
+      <p class="text-sm text-slate-500">
+        Once the administrator approves your activation, your account access will be restored automatically.
       </p>
     </div>
-
-    <!-- Pricing Details -->
-    <div class="bg-slate-900/50 border border-slate-700/30 rounded-xl p-6 space-y-4">
-      <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Plan Summary</h3>
+  } @else {
+    <div class="w-full max-w-xl space-y-8 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8 rounded-2xl shadow-2xl">
       
-      <div class="flex justify-between items-center py-2 border-b border-slate-800">
-        <span class="text-slate-300">Initial Setup & Migration Fee</span>
-        <span class="font-bold text-white">{{ pricingData()?.pricing?.initialSetupFee | currency }}</span>
+      <!-- Header -->
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 mb-4 animate-bounce">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+          </svg>
+        </div>
+        <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          Activate Your Subscription
+        </h2>
+        <p class="mt-3 text-lg text-slate-400">
+          Your 6-month trial has ended. Complete your payment below to unlock full access to the clinic management suite.
+        </p>
       </div>
 
-      <div class="flex justify-between items-center py-2 border-b border-slate-800">
-        <span class="text-slate-300">Annual Subscription (1 Year)</span>
-        <div class="text-right">
-          @if (appliedCode() && discountAmount() > 0) {
-            <span class="line-through text-slate-500 mr-2">{{ pricingData()?.pricing?.annualSubscriptionFee | currency }}</span>
-            <span class="font-bold text-emerald-400">{{ finalAnnualFee() | currency }}</span>
+      <!-- Pricing Details -->
+      <div class="bg-slate-900/50 border border-slate-700/30 rounded-xl p-6 space-y-4">
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Plan Summary</h3>
+        
+        <div class="flex justify-between items-center py-2 border-b border-slate-800">
+          <span class="text-slate-300">Initial Setup & Migration Fee</span>
+          <span class="font-bold text-white">{{ pricingData()?.pricing?.initialSetupFee | currency }}</span>
+        </div>
+
+        <div class="flex justify-between items-center py-2 border-b border-slate-800">
+          <span class="text-slate-300">Annual Subscription (1 Year)</span>
+          <div class="text-right">
+            @if (appliedCode() && discountAmount() > 0) {
+              <span class="line-through text-slate-500 mr-2">{{ pricingData()?.pricing?.annualSubscriptionFee | currency }}</span>
+              <span class="font-bold text-emerald-400">{{ finalAnnualFee() | currency }}</span>
+            } @else {
+              <span class="font-bold text-white">{{ finalAnnualFee() | currency }}</span>
+            }
+          </div>
+        </div>
+
+        @if (appliedCode() && extraMonths() > 0) {
+          <div class="flex justify-between items-center py-2 text-emerald-400 border-b border-slate-800">
+            <span>Applied Bonus (Free Months)</span>
+            <span class="font-semibold">+{{ extraMonths() }} Months Added</span>
+          </div>
+        }
+
+        <div class="flex justify-between items-center pt-4">
+          <span class="text-lg font-bold text-white">Total Amount Due</span>
+          <span class="text-2xl font-black text-amber-500">{{ totalDue() | currency }}</span>
+        </div>
+      </div>
+
+      <!-- Promo Code Entry -->
+      <form [formGroup]="promoForm" (ngSubmit)="applyPromo()" class="space-y-4">
+        <div class="flex space-x-2">
+          <div class="relative flex-grow">
+            <input
+              id="code"
+              type="text"
+              formControlName="code"
+              placeholder="Enter Promo Code (e.g. HALFPRICE)"
+              class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-500 uppercase font-mono tracking-wider"
+              [readonly]="!!appliedCode()"
+            />
+          </div>
+          
+          @if (!appliedCode()) {
+            <button
+              type="submit"
+              [disabled]="promoForm.invalid || isValidatingPromo()"
+              class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              @if (isValidatingPromo()) {
+                <span>Checking...</span>
+              } @else {
+                <span>Apply</span>
+              }
+            </button>
           } @else {
-            <span class="font-bold text-white">{{ finalAnnualFee() | currency }}</span>
+            <button
+              type="button"
+              (click)="clearPromo()"
+              class="bg-red-900/30 border border-red-900/50 hover:bg-red-900/50 text-red-400 font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out"
+            >
+              Clear
+            </button>
           }
         </div>
-      </div>
 
-      @if (appliedCode() && extraMonths() > 0) {
-        <div class="flex justify-between items-center py-2 text-emerald-400 border-b border-slate-800">
-          <span>Applied Bonus (Free Months)</span>
-          <span class="font-semibold">+{{ extraMonths() }} Months Added</span>
-        </div>
-      }
-
-      <div class="flex justify-between items-center pt-4">
-        <span class="text-lg font-bold text-white">Total Amount Due</span>
-        <span class="text-2xl font-black text-amber-500">{{ totalDue() | currency }}</span>
-      </div>
-    </div>
-
-    <!-- Promo Code Entry -->
-    <form [formGroup]="promoForm" (ngSubmit)="applyPromo()" class="space-y-4">
-      <div class="flex space-x-2">
-        <div class="relative flex-grow">
-          <input
-            id="code"
-            type="text"
-            formControlName="code"
-            placeholder="Enter Promo Code (e.g. HALFPRICE)"
-            class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-500 uppercase font-mono tracking-wider"
-            [readonly]="!!appliedCode()"
-          />
-        </div>
-        
-        @if (!appliedCode()) {
-          <button
-            type="submit"
-            [disabled]="promoForm.invalid || isValidatingPromo()"
-            class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            @if (isValidatingPromo()) {
-              <span>Checking...</span>
-            } @else {
-              <span>Apply</span>
-            }
-          </button>
-        } @else {
-          <button
-            type="button"
-            (click)="clearPromo()"
-            class="bg-red-900/30 border border-red-900/50 hover:bg-red-900/50 text-red-400 font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out"
-          >
-            Clear
-          </button>
+        @if (appliedCode()) {
+          <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 flex-shrink-0">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+            </svg>
+            <span>Promo Code <strong>{{ appliedCode() }}</strong> applied: 
+              @if (discountType() === 'Percent') { {{ discountValue() }}% discount off Annual Fee }
+              @else if (discountType() === 'Flat') { {{ discountValue() | currency }} off Annual Fee }
+              @else if (discountType() === 'FreeMonths') { +{{ discountValue() }} Months free trial extension }
+            </span>
+          </div>
         }
+      </form>
+
+      <!-- Payment Action -->
+      <div class="space-y-4 pt-4 border-t border-slate-700/50">
+        <button
+          type="button"
+          (click)="processPayment()"
+          [disabled]="isActivating()"
+          class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-lg py-4 px-6 rounded-xl transition duration-150 ease-in-out shadow-lg hover:shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+        >
+          @if (isActivating()) {
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-slate-950" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Simulating Checkout...</span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+            </svg>
+            <span>Pay and Activate Now</span>
+          }
+        </button>
+
+        <p class="text-xs text-center text-slate-500">
+          Note: Payment gateway integration is currently simulated. Clicking payment completes checkout manually.
+        </p>
       </div>
 
-      @if (appliedCode()) {
-        <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 flex-shrink-0">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-          </svg>
-          <span>Promo Code <strong>{{ appliedCode() }}</strong> applied: 
-            @if (discountType() === 'Percent') { {{ discountValue() }}% discount off Annual Fee }
-            @else if (discountType() === 'Flat') { {{ discountValue() | currency }} off Annual Fee }
-            @else if (discountType() === 'FreeMonths') { +{{ discountValue() }} Months free trial extension }
-          </span>
-        </div>
-      }
-    </form>
-
-    <!-- Payment Action -->
-    <div class="space-y-4 pt-4 border-t border-slate-700/50">
-      <button
-        type="button"
-        (click)="processPayment()"
-        [disabled]="isActivating()"
-        class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-lg py-4 px-6 rounded-xl transition duration-150 ease-in-out shadow-lg hover:shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-      >
-        @if (isActivating()) {
-          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-slate-950" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Simulating Checkout...</span>
-        } @else {
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-          </svg>
-          <span>Pay and Activate Now</span>
-        }
-      </button>
-
-      <p class="text-xs text-center text-slate-500">
-        Note: Payment gateway integration is currently simulated. Clicking payment completes checkout manually.
-      </p>
     </div>
-
-  </div>
+  }
 </div>
