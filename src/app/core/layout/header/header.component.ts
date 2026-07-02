@@ -70,4 +70,21 @@ export class Header {
     }
     return 0;
   }
+
+  getPendingApprovalDetails(): string {
+    const user = this.authService.currentUser();
+    if (!user || user.role !== 'doctor') return 'Subscription Pending Approval';
+    
+    if (user.subscriptionEndDate && new Date(user.subscriptionEndDate) > new Date()) {
+      const formattedDate = new Date(user.subscriptionEndDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      return `Pending Approval (Active till ${formattedDate})`;
+    }
+    
+    if (user.trialEndDate && new Date(user.trialEndDate) > new Date()) {
+      const formattedDate = new Date(user.trialEndDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      return `Pending Approval (Trial Active till ${formattedDate})`;
+    }
+    
+    return 'Subscription Pending Approval';
+  }
 }
