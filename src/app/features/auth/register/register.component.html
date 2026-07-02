@@ -75,7 +75,7 @@
     <div class="lg:col-span-7 p-6 sm:p-10 lg:p-14 flex flex-col justify-between bg-white dark:bg-slate-900 relative overflow-y-auto">
       
       <!-- Titles -->
-      <div class="mb-6 mt-4 lg:mt-0 text-center lg:text-start">
+      <div *ngIf="currentStage() !== 6" class="mb-6 mt-4 lg:mt-0 text-center lg:text-start">
         <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           <span *ngIf="currentStage() === 1">Create Account</span>
           <span *ngIf="currentStage() === 2">Select Profile Role</span>
@@ -93,7 +93,7 @@
       </div>
 
       <!-- Stepper Progress Indicator -->
-      <div class="flex items-center justify-between mb-8 max-w-md mx-auto relative px-4 text-start select-none w-full">
+      <div *ngIf="currentStage() !== 6" class="flex items-center justify-between mb-8 max-w-md mx-auto relative px-4 text-start select-none w-full">
         <!-- Background progress line -->
         <div class="absolute top-1/2 left-4 right-4 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0"></div>
         <div class="absolute top-1/2 left-4 h-0.5 bg-indigo-600 -translate-y-1/2 z-0 transition-all duration-300"
