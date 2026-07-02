@@ -9,14 +9,17 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
 
   if (user && user.role === 'doctor') {
     const status = user.subscriptionStatus?.toLowerCase();
-    const isTrialExpired = status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate);
-    const isSubscriptionExpired = status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate);
+    const isTrialExpired = user.trialEndDate ? new Date() > new Date(user.trialEndDate) : true;
+    const isSubscriptionExpired = user.subscriptionEndDate ? new Date() > new Date(user.subscriptionEndDate) : true;
 
-    const isLocked = status === 'expired' || 
-                     status === 'suspended' || 
-                     isTrialExpired || 
-                     isSubscriptionExpired ||
-                     !status;
+    let isLocked = false;
+    if (status === 'expired' || status === 'suspended' || !status) {
+      isLocked = true;
+    } else if (status === 'trial') {
+      isLocked = isTrialExpired;
+    } else if (status === 'active') {
+      isLocked = isSubscriptionExpired;
+    }
 
     if (isLocked) {
       if (state.url.startsWith('/subscription')) {
@@ -29,14 +32,17 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
 
   if (user && user.role === 'doctor' && state.url.startsWith('/subscription')) {
     const status = user.subscriptionStatus?.toLowerCase();
-    const isTrialExpired = status === 'trial' && user.trialEndDate && new Date() > new Date(user.trialEndDate);
-    const isSubscriptionExpired = status === 'active' && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate);
+    const isTrialExpired = user.trialEndDate ? new Date() > new Date(user.trialEndDate) : true;
+    const isSubscriptionExpired = user.subscriptionEndDate ? new Date() > new Date(user.subscriptionEndDate) : true;
 
-    const isLocked = status === 'expired' || 
-                     status === 'suspended' || 
-                     isTrialExpired || 
-                     isSubscriptionExpired ||
-                     !status;
+    let isLocked = false;
+    if (status === 'expired' || status === 'suspended' || !status) {
+      isLocked = true;
+    } else if (status === 'trial') {
+      isLocked = isTrialExpired;
+    } else if (status === 'active') {
+      isLocked = isSubscriptionExpired;
+    }
       
     if (!isLocked) {
       router.navigate(['/dashboard']);

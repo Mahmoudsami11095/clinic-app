@@ -38,9 +38,19 @@ export class AdminSettingsComponent implements OnInit {
     this.promoForm = this.fb.group({
       code: ['', [Validators.required, Validators.pattern('^[a-zA-Z0-9]+$')]],
       discountType: ['Percent', [Validators.required]],
-      value: [10, [Validators.required, Validators.min(1)]],
+      value: [10, [Validators.required, Validators.min(1), Validators.max(100)]],
       maxUses: [100, [Validators.required, Validators.min(1)]],
       expiryDays: [365, [Validators.required, Validators.min(1)]]
+    });
+
+    this.promoForm.get('discountType')?.valueChanges.subscribe(type => {
+      const valueControl = this.promoForm.get('value');
+      if (type === 'Percent') {
+        valueControl?.setValidators([Validators.required, Validators.min(1), Validators.max(100)]);
+      } else {
+        valueControl?.setValidators([Validators.required, Validators.min(1)]);
+      }
+      valueControl?.updateValueAndValidity();
     });
 
     this.loadData();
