@@ -170,6 +170,23 @@ export class SubscriptionComponent implements OnInit {
   onFileSelected(event: any) {
     const file = event.target.files?.[0];
     if (file) {
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      if (!fileExt || !allowedExtensions.includes(fileExt)) {
+        this.toastr.error('Only image files (PNG, JPG, JPEG) and PDF files (PDF) are allowed.', 'Invalid File Format');
+        event.target.value = '';
+        this.selectedFile = null;
+        return;
+      }
+
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        this.toastr.error('File size cannot exceed 5MB.', 'File Too Large');
+        event.target.value = '';
+        this.selectedFile = null;
+        return;
+      }
+
       this.selectedFile = file;
     }
   }
