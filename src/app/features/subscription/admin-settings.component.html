@@ -243,6 +243,7 @@
                 <th class="py-4 px-6">Email</th>
                 <th class="py-4 px-6">Status</th>
                 <th class="py-4 px-6">Onboarding Payment</th>
+                <th class="py-4 px-6">Receipts History</th>
                 <th class="py-4 px-6">Expiry Date</th>
                 <th class="py-4 px-6">Actions</th>
               </tr>
@@ -250,7 +251,7 @@
             <tbody class="divide-y divide-slate-800">
               @if (doctorsList().length === 0) {
                 <tr>
-                  <td colspan="6" class="py-8 px-6 text-center text-slate-500 text-sm font-medium">
+                  <td colspan="7" class="py-8 px-6 text-center text-slate-500 text-sm font-medium">
                     No doctor accounts registered in the database.
                   </td>
                 </tr>
@@ -284,6 +285,24 @@
                         </span>
                       }
                     </td>
+                    <td class="py-4 px-6">
+                      @if (doc.receipts && doc.receipts.length > 0) {
+                        <div class="flex flex-col gap-1.5 max-h-24 overflow-y-auto pr-1">
+                          @for (receipt of doc.receipts; track receipt.id) {
+                            <a
+                              [href]="env.apiUrl.replace('/api', '') + receipt.receiptUrl"
+                              target="_blank"
+                              class="inline-flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                            >
+                              <i class="pi pi-file"></i>
+                              <span>{{ receipt.uploadedAt | date:'shortDate' }} ({{ receipt.status }})</span>
+                            </a>
+                          }
+                        </div>
+                      } @else {
+                        <span class="text-slate-500 text-xs">-</span>
+                      }
+                    </td>
                     <td class="py-4 px-6 text-slate-400">
                       @if (doc.subscriptionStatus === 'Active') {
                         {{ doc.subscriptionEndDate | date:'mediumDate' }}
@@ -309,7 +328,7 @@
                           Approve & Activate
                         </button>
                       }
-
+ 
                       @if (doc.receiptUrl) {
                         <a
                           [href]="env.apiUrl.replace('/api', '') + doc.receiptUrl"
@@ -317,7 +336,7 @@
                           class="inline-flex items-center space-x-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors border-b border-indigo-500/30"
                         >
                           <i class="pi pi-file-pdf"></i>
-                          <span>View Receipt</span>
+                          <span>View Latest</span>
                         </a>
                       }
                     </td>
