@@ -243,6 +243,10 @@ export class AuthService {
     return this.http.post<any>(`/api/admin/doctors/${doctorId}/deactivate`, {});
   }
 
+  deleteAccount(email: string): Observable<any> {
+    return this.http.delete<any>(`/api/admin/accounts/${email}`);
+  }
+
   approveReceipt(receiptId: string): Observable<any> {
     return this.http.post<any>(`/api/admin/receipts/${receiptId}/approve`, {});
   }

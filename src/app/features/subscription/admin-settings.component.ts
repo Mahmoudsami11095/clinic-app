@@ -24,6 +24,8 @@ export class AdminSettingsComponent implements OnInit {
   isSavingSettings = signal(false);
   isCreatingPromo = signal(false);
   isLoadingData = signal(true);
+  isDeletingAccount = signal(false);
+  deleteEmail = signal('');
 
   promosList = signal<any[]>([]);
   doctorsList = signal<any[]>([]);
@@ -228,6 +230,35 @@ export class AdminSettingsComponent implements OnInit {
       },
       error: (err: any) => {
         const errMsg = err?.error?.message || 'Failed to reject receipt.';
+        this.toastr.error(errMsg);
+      }
+    });
+  }
+
+  deleteAccount(email: string) {
+    console.log('deleteAccount called with email:', email);
+    if (!email) {
+      console.log('deleteAccount: email was falsy, returning early');
+      return;
+    }
+    console.log('deleteAccount: showing confirm dialog...');
+    const confirm1 = confirm(`ARE YOU ABSOLUTELY SURE you want to delete the account "${email}"?\n\nAll associated patient/doctor files, medical histories, billing receipts, and appointments will be permanently purged!`);
+    if (!confirm1) return;
+
+    const confirm2 = confirm(`FINAL WARNING:\nThis action cannot be undone and will disrupt clinic operations if this user is active. Click OK if you wish to proceed with permanent deletion.`);
+    if (!confirm2) return;
+
+    this.isDeletingAccount.set(true);
+    this.authService.deleteAccount(email).subscribe({
+      next: (res: any) => {
+        this.isDeletingAccount.set(false);
+        this.toastr.success(res.message || 'Account and all related records deleted successfully.');
+        this.deleteEmail.set('');
+        this.loadDoctors();
+      },
+      error: (err: any) => {
+        this.isDeletingAccount.set(false);
+        const errMsg = err?.error?.message || 'Failed to delete account.';
         this.toastr.error(errMsg);
       }
     });
