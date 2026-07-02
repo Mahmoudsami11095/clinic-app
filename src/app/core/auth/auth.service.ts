@@ -178,6 +178,21 @@ export class AuthService {
     return this.http.get<any>('/api/subscriptions/status');
   }
 
+  refreshSubscriptionStatus(): Observable<any> {
+    return this.getSubscriptionStatus().pipe(
+      tap(res => {
+        const user = this.currentUser();
+        if (user) {
+          user.subscriptionStatus = res.subscriptionStatus;
+          user.subscriptionEndDate = res.subscriptionEndDate;
+          user.trialEndDate = res.trialEndDate;
+          user.isInitialFeePaid = res.isInitialFeePaid;
+          this.setCurrentUser(user);
+        }
+      })
+    );
+  }
+
   validatePromo(code: string): Observable<any> {
     return this.http.post<any>('/api/subscriptions/validate-promo', { code });
   }

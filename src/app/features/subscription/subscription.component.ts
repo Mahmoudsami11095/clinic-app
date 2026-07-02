@@ -33,12 +33,56 @@ export class SubscriptionComponent implements OnInit {
   extraMonths = signal<number>(0);
   totalDue = signal<number>(400);
 
+  isCheckingStatus = signal(false);
+
+  checkLockedStatus(status: any) {
+    const statusLower = status.subscriptionStatus?.toLowerCase();
+    const isTrialExpired = statusLower === 'trial' && status.trialEndDate && new Date() > new Date(status.trialEndDate);
+    const isSubExpired = statusLower === 'active' && status.subscriptionEndDate && new Date() > new Date(status.subscriptionEndDate);
+    
+    return statusLower === 'expired' || 
+           statusLower === 'pendingapproval' || 
+           statusLower === 'suspended' || 
+           isTrialExpired || 
+           isSubExpired || 
+           !statusLower;
+  }
+
   ngOnInit() {
     this.promoForm = this.fb.group({
       code: ['', [Validators.required]]
     });
 
     this.loadPricing();
+
+    // Refresh subscription status from database on load
+    this.authService.refreshSubscriptionStatus().subscribe({
+      next: (res) => {
+        if (!this.checkLockedStatus(res)) {
+          this.router.navigate(['/dashboard']);
+        }
+      }
+    });
+  }
+
+  checkApprovalStatus() {
+    this.isCheckingStatus.set(true);
+    this.authService.refreshSubscriptionStatus().subscribe({
+      next: (res) => {
+        this.isCheckingStatus.set(false);
+        const isLocked = this.checkLockedStatus(res);
+        if (!isLocked) {
+          this.toastr.success('Your subscription has been approved and activated! Welcome back.');
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.toastr.info('Subscription status checked. Still awaiting approval or action.');
+        }
+      },
+      error: () => {
+        this.isCheckingStatus.set(false);
+        this.toastr.error('Failed to verify subscription status.');
+      }
+    });
   }
 
   loadPricing() {
