@@ -153,7 +153,8 @@ export class SubscriptionComponent implements OnInit {
     this.authService.activateManual(code).subscribe({
       next: () => {
         this.isActivating.set(false);
-        this.toastr.success('Payment simulated successfully! Awaiting administrator approval.');
+        this.toastr.success('Payment simulated successfully! Welcome.');
+        this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isActivating.set(false);
@@ -186,7 +187,7 @@ export class SubscriptionComponent implements OnInit {
     this.authService.uploadReceipt(formData).subscribe({
       next: (res) => {
         this.isUploadingReceipt.set(false);
-        this.toastr.success('Transfer receipt uploaded successfully! Pending administrator approval.');
+        this.toastr.success('Transfer receipt uploaded successfully! Welcome.');
         
         // Refresh local user status to update layout state to PendingApproval
         const user = this.authService.currentUser();
@@ -195,6 +196,8 @@ export class SubscriptionComponent implements OnInit {
           user.isInitialFeePaid = res.isInitialFeePaid;
           this.authService.setCurrentUser(user);
         }
+
+        this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isUploadingReceipt.set(false);
