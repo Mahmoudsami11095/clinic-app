@@ -223,6 +223,96 @@
         </div>
       </div>
 
+      <!-- Section 4: Doctor Subscriptions & Approvals -->
+      <div class="lg:col-span-3 bg-slate-800 border border-slate-700/60 p-6 rounded-2xl shadow-md space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-amber-500">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+            <span>Doctor Subscriptions & Approvals</span>
+          </h2>
+          <p class="text-slate-400 text-xs mt-1">Review onboarding stages and approve manual payments for active practitioners.</p>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-700/50 rounded-xl">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-700/50">
+                <th class="py-4 px-6">Doctor</th>
+                <th class="py-4 px-6">Email</th>
+                <th class="py-4 px-6">Status</th>
+                <th class="py-4 px-6">Onboarding Payment</th>
+                <th class="py-4 px-6">Expiry Date</th>
+                <th class="py-4 px-6">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              @if (doctorsList().length === 0) {
+                <tr>
+                  <td colspan="6" class="py-8 px-6 text-center text-slate-500 text-sm font-medium">
+                    No doctor accounts registered in the database.
+                  </td>
+                </tr>
+              } @else {
+                @for (doc of doctorsList(); track doc.id) {
+                  <tr class="hover:bg-slate-750/30 text-sm">
+                    <td class="py-4 px-6 font-bold text-white">{{ doc.name }}</td>
+                    <td class="py-4 px-6 text-slate-300">{{ doc.email }}</td>
+                    <td class="py-4 px-6">
+                      <span class="px-3 py-1 text-xs rounded-full font-semibold border"
+                        [ngClass]="{
+                          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': doc.subscriptionStatus === 'Active',
+                          'bg-amber-500/10 text-amber-400 border-amber-500/20': doc.subscriptionStatus === 'Trial',
+                          'bg-rose-500/10 text-rose-400 border-rose-500/20': doc.subscriptionStatus === 'Expired',
+                          'bg-indigo-500/10 text-indigo-400 border-indigo-500/20': doc.subscriptionStatus === 'PendingApproval'
+                        }"
+                      >
+                        {{ doc.subscriptionStatus }}
+                      </span>
+                    </td>
+                    <td class="py-4 px-6">
+                      @if (doc.isInitialFeePaid) {
+                        <span class="text-emerald-400 text-xs font-bold flex items-center space-x-1">
+                          <i class="pi pi-check-circle"></i>
+                          <span>Setup Paid</span>
+                        </span>
+                      } @else {
+                        <span class="text-slate-400 text-xs font-medium flex items-center space-x-1">
+                          <i class="pi pi-minus-circle"></i>
+                          <span>Not Paid</span>
+                        </span>
+                      }
+                    </td>
+                    <td class="py-4 px-6 text-slate-400">
+                      @if (doc.subscriptionStatus === 'Active') {
+                        {{ doc.subscriptionEndDate | date:'mediumDate' }}
+                      } @else if (doc.subscriptionStatus === 'Trial') {
+                        Trial ends {{ doc.trialEndDate | date:'mediumDate' }}
+                      } @else {
+                        -
+                      }
+                    </td>
+                    <td class="py-4 px-6">
+                      @if (doc.subscriptionStatus !== 'Active') {
+                        <button
+                          (click)="activateDoctor(doc.id)"
+                          class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-extrabold py-2 px-4 rounded-lg transition duration-150 ease-in-out shadow-sm"
+                        >
+                          Approve & Activate
+                        </button>
+                      } @else {
+                        <span class="text-slate-500 text-xs font-medium">Activated</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   }
 </div>

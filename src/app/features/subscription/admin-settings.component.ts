@@ -24,6 +24,7 @@ export class AdminSettingsComponent implements OnInit {
   isLoadingData = signal(true);
 
   promosList = signal<any[]>([]);
+  doctorsList = signal<any[]>([]);
 
   ngOnInit() {
     this.settingsForm = this.fb.group({
@@ -58,16 +59,29 @@ export class AdminSettingsComponent implements OnInit {
         this.authService.getPromos().subscribe({
           next: (promoRes) => {
             this.promosList.set(promoRes.data || []);
-            this.isLoadingData.set(false);
+            this.loadDoctors();
           },
           error: () => {
             this.toastr.error('Failed to load active promo codes.');
-            this.isLoadingData.set(false);
+            this.loadDoctors();
           }
         });
       },
       error: () => {
         this.toastr.error('Failed to load global subscription configurations.');
+        this.isLoadingData.set(false);
+      }
+    });
+  }
+
+  loadDoctors() {
+    this.authService.getDoctorsSubscriptions().subscribe({
+      next: (res) => {
+        this.doctorsList.set(res.data || []);
+        this.isLoadingData.set(false);
+      },
+      error: () => {
+        this.toastr.error('Failed to load doctors subscription list.');
         this.isLoadingData.set(false);
       }
     });
@@ -143,6 +157,21 @@ export class AdminSettingsComponent implements OnInit {
       },
       error: () => {
         this.toastr.error('Failed to delete promo code.');
+      }
+    });
+  }
+
+  activateDoctor(doctorId: string) {
+    if (!confirm('Are you sure you want to approve and activate this doctor\'s subscription?')) return;
+
+    this.authService.activateDoctorSubscription(doctorId).subscribe({
+      next: (res) => {
+        this.toastr.success(res.message || 'Subscription activated successfully.');
+        this.doctorsList.update(list => list.map(d => d.id === doctorId ? { ...d, subscriptionStatus: 'Active' } : d));
+      },
+      error: (err) => {
+        const errMsg = err?.error?.message || 'Failed to activate subscription.';
+        this.toastr.error(errMsg);
       }
     });
   }

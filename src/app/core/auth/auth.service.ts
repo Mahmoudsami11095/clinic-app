@@ -216,6 +216,14 @@ export class AuthService {
     return this.http.delete<any>(`/api/admin/promos/${id}`);
   }
 
+  getDoctorsSubscriptions(): Observable<any> {
+    return this.http.get<any>('/api/admin/doctors');
+  }
+
+  activateDoctorSubscription(doctorId: string): Observable<any> {
+    return this.http.post<any>(`/api/admin/doctors/${doctorId}/activate`, {});
+  }
+
   logout() {
     this.setCurrentUser(null);
     this.router.navigate(['/login']);
