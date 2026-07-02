@@ -116,7 +116,8 @@
     "dental_history": "سجل الأسنان",
     "dental_chart": "مخطط الأسنان ثلاثي الأبعاد",
     "inventory": "المخزون",
-    "radiology": "الأشعة"
+    "radiology": "الأشعة",
+    "subscription_mgmt": "الاشتراكات"
   },
   "dashboard": {
     "title": "لوحة التحكم",

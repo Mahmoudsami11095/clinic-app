@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../core/auth/auth.service';
 import { extractErrorMessage } from '../../core/utils/error.utils';
 import { LanguageService } from '../../core/i18n/language.service';
+import { environment } from '../../../environments/environment';
 
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { InputFieldComponent } from '../../shared/components/input-field/input-field.component';
@@ -43,6 +44,8 @@ export class ProfileComponent implements OnInit {
   linkedClinics = signal<any[]>([]);
   newClinicCountryCode = signal('+20');
   newClinicPhoneNumber = signal('');
+  protected env = environment;
+  subscriptionData = signal<any>(null);
 
   originalEmail = '';
   originalContactNumber = '';
@@ -71,6 +74,17 @@ export class ProfileComponent implements OnInit {
 
     this.initForm();
     this.loadProfile();
+    this.loadSubscriptionStatus();
+  }
+
+  loadSubscriptionStatus() {
+    if (this.userRole() === 'doctor') {
+      this.authService.getSubscriptionStatus().subscribe({
+        next: (res) => {
+          this.subscriptionData.set(res);
+        }
+      });
+    }
   }
 
   private initForm() {

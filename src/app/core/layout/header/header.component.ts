@@ -59,4 +59,32 @@ export class Header {
     }
     return name.substring(0, 2).toUpperCase();
   }
+
+  getTrialRemainingDays(): number {
+    const user = this.authService.currentUser();
+    if (user && user.role === 'doctor' && user.subscriptionStatus?.toLowerCase() === 'trial' && user.trialEndDate) {
+      const trialEnd = new Date(user.trialEndDate).getTime();
+      const now = new Date().getTime();
+      const diffTime = trialEnd - now;
+      return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+    return 0;
+  }
+
+  getPendingApprovalDetails(): string {
+    const user = this.authService.currentUser();
+    if (!user || user.role !== 'doctor') return 'Subscription Pending Approval';
+    
+    if (user.subscriptionEndDate && new Date(user.subscriptionEndDate) > new Date()) {
+      const formattedDate = new Date(user.subscriptionEndDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      return `Pending Approval (Active till ${formattedDate})`;
+    }
+    
+    if (user.trialEndDate && new Date(user.trialEndDate) > new Date()) {
+      const formattedDate = new Date(user.trialEndDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      return `Pending Approval (Trial Active till ${formattedDate})`;
+    }
+    
+    return 'Subscription Pending Approval';
+  }
 }
