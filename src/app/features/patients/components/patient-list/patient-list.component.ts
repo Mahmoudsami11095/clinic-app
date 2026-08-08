@@ -11,6 +11,9 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { ToastrService } from 'ngx-toastr';
+import { extractErrorMessage } from '../../../../core/utils/error.utils';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-patient-list',
@@ -24,6 +27,8 @@ export class PatientListComponent implements OnInit {
   protected authService = inject(AuthService);
   private clinicService = inject(ClinicService);
   private router = inject(Router);
+  private toastr = inject(ToastrService);
+  private languageService = inject(LanguageService);
 
   patients = signal<Patient[]>([]);
   loading = signal(true);
@@ -122,5 +127,20 @@ export class PatientListComponent implements OnInit {
 
   viewPatientDetails(patient: Patient) {
     this.router.navigate(['/patients', patient.id]);
+  }
+
+  deletePatient(patient: Patient, event?: Event) {
+    event?.stopPropagation();
+    if (confirm(`Are you sure you want to delete ${patient.firstName} ${patient.lastName}? This action cannot be undone.`)) {
+      this.patientService.delete(patient.id).subscribe({
+        next: () => {
+          this.toastr.success('Patient deleted successfully');
+          this.patients.update(list => list.filter(p => p.id !== patient.id));
+        },
+        error: (err) => {
+          this.toastr.error(extractErrorMessage(err, (k) => this.languageService.translate(k)));
+        }
+      });
+    }
   }
 }
