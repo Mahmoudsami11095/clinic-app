@@ -1866,7 +1866,9 @@ export class PatientHistoryComponent implements OnInit {
       medication: this.medication().trim() || undefined,
       isPlanned: this.isPlannedForm(),
       consumedMaterials: consumedMaterialsList.length > 0 ? consumedMaterialsList : undefined,
-      clinicId: this.clinicService.activeClinicId() === 'all' ? undefined : this.clinicService.activeClinicId()
+      clinicId: (this.clinicService.activeClinicId() && this.clinicService.activeClinicId() !== 'all') 
+        ? this.clinicService.activeClinicId() 
+        : this.patient.clinicId
     };
 
     this.dentalService.addLog(logData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
