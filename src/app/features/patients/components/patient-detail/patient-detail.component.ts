@@ -56,7 +56,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
             >
               Edit
             </button>
-            @if (authService.isAdmin()) {
+            @if (authService.isAdmin() || authService.isDoctor()) {
               <button
                 (click)="deletePatient()"
                 class="px-6 py-1.5 bg-rose-500 text-white rounded-full text-xs font-bold uppercase tracking-wider hover:bg-rose-600 transition-colors cursor-pointer shadow-sm"

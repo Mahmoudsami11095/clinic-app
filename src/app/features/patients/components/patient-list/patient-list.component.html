@@ -88,10 +88,22 @@
                 <span class="truncate">{{ patient.email }}</span>
               </p>
             </div>
-            <span class="px-2 py-0.5 text-xs font-bold rounded-md ring-1"
-                  [ngClass]="getBloodGroupClass(patient.bloodGroup)">
-              {{ patient.bloodGroup }}
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="px-2 py-0.5 text-xs font-bold rounded-md ring-1"
+                    [ngClass]="getBloodGroupClass(patient.bloodGroup)">
+                {{ patient.bloodGroup }}
+              </span>
+              @if (authService.isAdmin() || authService.isDoctor()) {
+                <button
+                  type="button"
+                  (click)="deletePatient(patient, $event)"
+                  [title]="'common.delete' | translate"
+                  class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                >
+                  <i class="pi pi-trash text-sm"></i>
+                </button>
+              }
+            </div>
           </div>
 
           <!-- Info Grid -->
