@@ -2,13 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, forkJoin, Observable } from 'rxjs';
 import { Prescription, PrescriptionWithDetails } from '../models/prescription.model';
-import { Patient } from '../../patients/models/patient.model';
-import { Doctor } from '../../doctors/models/doctor.model';
-import { Appointment } from '../../appointments/models/appointment.model';
+import { PatientService } from '../../patients/services/patient.service';
+import { DoctorService } from '../../doctors/services/doctor.service';
+import { AppointmentService } from '../../appointments/services/appointment.service';
+import { formatPersonName } from '../../../core/utils/person-formatter';
 
 @Injectable({ providedIn: 'root' })
 export class PrescriptionService {
   private http = inject(HttpClient);
+  private patientService = inject(PatientService);
+  private doctorService = inject(DoctorService);
+  private appointmentService = inject(AppointmentService);
 
   getAll() {
     return this.http
@@ -19,9 +23,9 @@ export class PrescriptionService {
   getAllWithDetails(): Observable<PrescriptionWithDetails[]> {
     return forkJoin({
       prescriptions: this.getAll(),
-      patients: this.http.get<{ data: Patient[] }>('/api/patients').pipe(map(r => r.data)),
-      doctors: this.http.get<{ data: Doctor[] }>('/api/doctors').pipe(map(r => r.data)),
-      appointments: this.http.get<{ data: Appointment[] }>('/api/appointments').pipe(map(r => r.data))
+      patients: this.patientService.getAll(),
+      doctors: this.doctorService.getAll(),
+      appointments: this.appointmentService.getAll()
     }).pipe(
       map(({ prescriptions, patients, doctors, appointments }) => {
         return prescriptions.map(pres => {
@@ -30,8 +34,8 @@ export class PrescriptionService {
           const appointment = appointments.find(a => a.id === pres.appointmentId);
           return {
             ...pres,
-            patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient',
-            doctorName: doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unknown Doctor',
+            patientName: formatPersonName(patient) || 'Unknown Patient',
+            doctorName: formatPersonName(doctor, 'Dr.') || 'Unknown Doctor',
             appointmentDate: appointment ? appointment.date : pres.date
           };
         });

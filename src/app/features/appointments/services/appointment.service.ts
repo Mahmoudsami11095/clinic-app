@@ -2,12 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, forkJoin, Observable } from 'rxjs';
 import { Appointment, AppointmentWithDetails } from '../models/appointment.model';
-import { Patient } from '../../patients/models/patient.model';
-import { Doctor } from '../../doctors/models/doctor.model';
+import { PatientService } from '../../patients/services/patient.service';
+import { DoctorService } from '../../doctors/services/doctor.service';
+import { formatPersonName } from '../../../core/utils/person-formatter';
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentService {
   private http = inject(HttpClient);
+  private patientService = inject(PatientService);
+  private doctorService = inject(DoctorService);
 
   getAll() {
     return this.http
@@ -18,8 +21,8 @@ export class AppointmentService {
   getAllWithDetails(): Observable<AppointmentWithDetails[]> {
     return forkJoin({
       appointments: this.getAll(),
-      patients: this.http.get<{ data: Patient[] }>('/api/patients').pipe(map(r => r.data)),
-      doctors: this.http.get<{ data: Doctor[] }>('/api/doctors').pipe(map(r => r.data)),
+      patients: this.patientService.getAll(),
+      doctors: this.doctorService.getAll(),
     }).pipe(
       map(({ appointments, patients, doctors }) => {
         return appointments.map(appt => {
@@ -27,8 +30,8 @@ export class AppointmentService {
           const doctor = doctors.find(d => d.id === appt.doctorId);
           return {
             ...appt,
-            patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient',
-            doctorName: doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unknown Doctor'
+            patientName: formatPersonName(patient) || 'Unknown Patient',
+            doctorName: formatPersonName(doctor, 'Dr.') || 'Unknown Doctor'
           };
         });
       })
