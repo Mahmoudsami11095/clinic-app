@@ -2,8 +2,8 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { phoneValidator } from './validators/phone.validator';
 import { splitPhoneNumber, combinePhoneNumber } from './utils/phone.utils';
 
-describe('Frontend Boundary & Edge Case Validation Suite', () => {
-  describe('Phone Validator Boundaries', () => {
+describe('Frontend Boundary & Complete Branch Coverage Suite', () => {
+  describe('Phone Validator Decision Branches', () => {
     let form: FormGroup;
     let countryControl: FormControl;
     let phoneControl: FormControl;
@@ -100,25 +100,59 @@ describe('Frontend Boundary & Edge Case Validation Suite', () => {
       phoneControl.setValue('1234567890123456');
       expect(phoneControl.errors).toEqual({ invalidLength: true });
     });
+
+    it('should fallback to default country +20 when control has no parent formGroup', () => {
+      const standaloneControl = new FormControl('01012345678', [phoneValidator('countryCode')]);
+      expect(standaloneControl.errors).toBeNull();
+
+      standaloneControl.setValue('01312345678'); // Invalid Egypt prefix on fallback
+      expect(standaloneControl.errors).toEqual({ invalidEgyptPhone: true });
+    });
+
+    it('should fallback to default country +20 when country control is not found in formGroup', () => {
+      const unlinkedForm = new FormGroup({
+        phoneNumber: new FormControl('01012345678', [phoneValidator('missingCountryCode')])
+      });
+      const control = unlinkedForm.get('phoneNumber')!;
+      expect(control.errors).toBeNull();
+
+      control.setValue('01312345678'); // Invalid Egypt prefix on fallback
+      expect(control.errors).toEqual({ invalidEgyptPhone: true });
+    });
   });
 
-  describe('Phone Utility Edge Cases', () => {
-    it('splitPhoneNumber should handle null, undefined, and empty string', () => {
+  describe('Phone Utility Complete Branch Coverage', () => {
+    it('splitPhoneNumber should handle null, undefined, empty string, and whitespace', () => {
       expect(splitPhoneNumber(null)).toEqual({ countryCode: '+20', phoneNumber: '' });
       expect(splitPhoneNumber(undefined)).toEqual({ countryCode: '+20', phoneNumber: '' });
       expect(splitPhoneNumber('')).toEqual({ countryCode: '+20', phoneNumber: '' });
       expect(splitPhoneNumber('   ')).toEqual({ countryCode: '+20', phoneNumber: '' });
     });
 
-    it('splitPhoneNumber should parse international prefixes correctly', () => {
+    it('splitPhoneNumber should parse all registered international prefixes correctly', () => {
       expect(splitPhoneNumber('+20 1001234567')).toEqual({ countryCode: '+20', phoneNumber: '1001234567' });
       expect(splitPhoneNumber('+966 501234567')).toEqual({ countryCode: '+966', phoneNumber: '501234567' });
+      expect(splitPhoneNumber('+971 501234567')).toEqual({ countryCode: '+971', phoneNumber: '501234567' });
       expect(splitPhoneNumber('+1 8005550199')).toEqual({ countryCode: '+1', phoneNumber: '8005550199' });
+      expect(splitPhoneNumber('+44 7911123456')).toEqual({ countryCode: '+44', phoneNumber: '7911123456' });
     });
 
-    it('combinePhoneNumber should handle null and undefined safely', () => {
+    it('splitPhoneNumber should execute fallback branches when prefix is unregistered', () => {
+      // Unregistered prefix with length >= 4
+      expect(splitPhoneNumber('+999123456')).toEqual({ countryCode: '+999', phoneNumber: '123456' });
+
+      // Starts with + but length < 4
+      expect(splitPhoneNumber('+7')).toEqual({ countryCode: '+20', phoneNumber: '+7' });
+
+      // Does not start with +
+      expect(splitPhoneNumber('01001234567')).toEqual({ countryCode: '+20', phoneNumber: '01001234567' });
+    });
+
+    it('combinePhoneNumber should execute all null-coalescing branches', () => {
       expect(combinePhoneNumber(null, null)).toBe('+20');
+      expect(combinePhoneNumber(undefined, undefined)).toBe('+20');
       expect(combinePhoneNumber('+966', null)).toBe('+966');
+      expect(combinePhoneNumber(null, '1001234567')).toBe('+201001234567');
       expect(combinePhoneNumber('+20', '1001234567')).toBe('+201001234567');
     });
   });
