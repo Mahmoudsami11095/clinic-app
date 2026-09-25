@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface SpecializationDto {
@@ -25,38 +25,48 @@ export interface SpecializationGroup {
 })
 export class SpecializationService {
   private apiUrl = `${environment.apiUrl}/specializations`;
+  private specializations$?: Observable<SpecializationDto[]>;
+  private grouped$?: Observable<SpecializationGroup[]>;
 
   constructor(private http: HttpClient) {}
 
   getSpecializations(): Observable<SpecializationDto[]> {
-    return this.http.get<{ success: boolean; data: SpecializationDto[] }>(this.apiUrl).pipe(
-      map(response => response.data)
-    );
+    if (!this.specializations$) {
+      this.specializations$ = this.http.get<{ success: boolean; data: SpecializationDto[] }>(this.apiUrl).pipe(
+        map(response => response.data),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+    return this.specializations$;
   }
 
   getGroupedSpecializations(): Observable<SpecializationGroup[]> {
-    return this.getSpecializations().pipe(
-      map(specializations => {
-        const groups: { [key: string]: SpecializationGroup } = {};
+    if (!this.grouped$) {
+      this.grouped$ = this.getSpecializations().pipe(
+        map(specializations => {
+          const groups: { [key: string]: SpecializationGroup } = {};
 
-        specializations.forEach(spec => {
-          const groupKey = spec.category;
-          if (!groups[groupKey]) {
-            groups[groupKey] = {
-              groupLabelKey: groupKey === 'Dentistry' ? 'auth.spec_group_dentistry' : 'auth.spec_group_medicine',
-              options: []
-            };
-          }
+          specializations.forEach(spec => {
+            const groupKey = spec.category;
+            if (!groups[groupKey]) {
+              groups[groupKey] = {
+                groupLabelKey: groupKey === 'Dentistry' ? 'auth.spec_group_dentistry' : 'auth.spec_group_medicine',
+                options: []
+              };
+            }
 
-          groups[groupKey].options.push({
-            value: spec.name,
-            labelKey: spec.translationKey,
-            id: spec.id
+            groups[groupKey].options.push({
+              value: spec.name,
+              labelKey: spec.translationKey,
+              id: spec.id
+            });
           });
-        });
 
-        return Object.values(groups);
-      })
-    );
+          return Object.values(groups);
+        }),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+    return this.grouped$;
   }
 }
