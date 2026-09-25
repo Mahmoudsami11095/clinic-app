@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
@@ -9,12 +10,22 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './phone-input-field.component.html'
 })
-export class PhoneInputFieldComponent {
+export class PhoneInputFieldComponent implements OnInit {
   @Input({ required: true }) formGroup!: FormGroup;
   @Input() countryCodeName = 'countryCode';
   @Input() phoneNumberName = 'phoneNumber';
   @Input() label = 'patients.phone';
   @Input() required = true;
+
+  private destroyRef = inject(DestroyRef);
+
+  ngOnInit(): void {
+    this.formGroup.get(this.countryCodeName)?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.formGroup.get(this.phoneNumberName)?.updateValueAndValidity();
+      });
+  }
 
   isInvalid(): boolean {
     const ctrl = this.formGroup.get(this.phoneNumberName);
