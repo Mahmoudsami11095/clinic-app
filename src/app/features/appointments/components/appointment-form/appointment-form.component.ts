@@ -291,8 +291,15 @@ export class AppointmentFormComponent implements OnInit {
       hoursStr = clinicAvail.availabilityHours;
       days = clinicAvail.availabilityDays || [];
     } else {
-      hoursStr = doc.availability?.hours || '';
-      days = doc.availability?.days || [];
+      const clinic = this.clinicsList().find(c => c.id === clinicId);
+      if (clinic) {
+        hoursStr = clinic.availabilityHours || '';
+        try {
+          days = clinic.availabilityDays ? JSON.parse(clinic.availabilityDays) : [];
+        } catch {
+          days = [];
+        }
+      }
     }
 
     if (!hoursStr || (days.length > 0 && !days.some(d => d.toLowerCase() === dayOfWeek.toLowerCase()))) {
@@ -400,8 +407,15 @@ export class AppointmentFormComponent implements OnInit {
       hoursStr = clinicAvail.availabilityHours;
       days = clinicAvail.availabilityDays || [];
     } else {
-      hoursStr = doc.availability?.hours || '';
-      days = doc.availability?.days || [];
+      const clinic = this.clinicsList().find(c => c.id === clinicId);
+      if (clinic) {
+        hoursStr = clinic.availabilityHours || '';
+        try {
+          days = clinic.availabilityDays ? JSON.parse(clinic.availabilityDays) : [];
+        } catch {
+          days = [];
+        }
+      }
     }
 
     if (!hoursStr) {

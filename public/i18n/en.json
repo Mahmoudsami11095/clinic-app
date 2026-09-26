@@ -318,6 +318,7 @@
     "office_days": "Office Days",
     "consultation_hours": "Consultation Hours",
     "select_one_day": "Select at least one day",
+    "no_clinic_schedule": "No clinic schedule assigned",
     "processing": "Processing...",
     "add_to_team": "Add to Team",
     "spec_cardiology": "Cardiology",

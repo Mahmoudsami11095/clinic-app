@@ -318,6 +318,7 @@
     "office_days": "أيام العمل",
     "consultation_hours": "ساعات الاستشارة",
     "select_one_day": "اختر يوماً واحداً على الأقل",
+    "no_clinic_schedule": "لم يتم تحديد جدول للعيادة",
     "processing": "جاري المعالجة...",
     "add_to_team": "إضافة للفريق",
     "spec_cardiology": "طب القلب",

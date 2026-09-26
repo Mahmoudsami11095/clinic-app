@@ -57,10 +57,6 @@ export class ProfileComponent implements OnInit {
   isConfirmingPhoneOtp = signal(false);
   emailOtpConfirmed = signal(false);
   phoneOtpConfirmed = signal(false);
-
-  selectedAvailabilityDays: string[] = [];
-  availableDaysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
   patientLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
 
   onPatientLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
@@ -108,7 +104,6 @@ export class ProfileComponent implements OnInit {
       otherSpecialization: [''],
       contactNumber: [''],
       avatar: [''],
-      availabilityHours: ['09:00-17:00'],
 
       // Patient Specific fields
       gender: ['Male'],
@@ -191,7 +186,6 @@ export class ProfileComponent implements OnInit {
           phoneNumber: phoneData.phoneNumber,
           contactNumber: data.contactNumber || '',
           avatar: data.avatar || '',
-          availabilityHours: data.availabilityHours || '09:00-17:00',
           gender: data.gender || 'Male',
           dateOfBirth: data.dateOfBirth || '',
           bloodGroup: data.bloodGroup || '',
@@ -202,14 +196,6 @@ export class ProfileComponent implements OnInit {
           emailOtpCode: '',
           phoneOtpCode: ''
         });
-
-        if (data.availabilityDays) {
-          try {
-            this.selectedAvailabilityDays = JSON.parse(data.availabilityDays);
-          } catch {
-            this.selectedAvailabilityDays = [];
-          }
-        }
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -315,13 +301,6 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  toggleAvailabilityDay(day: string) {
-    if (this.selectedAvailabilityDays.includes(day)) {
-      this.selectedAvailabilityDays = this.selectedAvailabilityDays.filter(d => d !== day);
-    } else {
-      this.selectedAvailabilityDays = [...this.selectedAvailabilityDays, day];
-    }
-  }
 
   addClinicByPhone() {
     if (!this.newClinicPhoneNumber()) {
@@ -376,7 +355,6 @@ export class ProfileComponent implements OnInit {
     }
 
     if (this.userRole() === 'doctor') {
-      formValue.availabilityDays = JSON.stringify(this.selectedAvailabilityDays);
       formValue.specializationId = formValue.specialization === 'other' ? null : formValue.specialization;
       formValue.specialization = formValue.specialization === 'other' ? formValue.otherSpecialization : null;
     } else if (this.userRole() === 'patient') {
