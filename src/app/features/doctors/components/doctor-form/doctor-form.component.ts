@@ -1,6 +1,6 @@
 import { Component, Output, EventEmitter, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormArray, FormControl, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { Doctor } from '../../models/doctor.model';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -31,7 +31,6 @@ export class DoctorFormComponent {
   submitting = false;
 
   readonly specializations = ['Cardiology', 'Pediatrics', 'Neurology', 'Dermatology', 'Psychiatry', 'Orthopedics', 'General Practice', 'Dentistry'];
-  readonly weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   form = this.fb.group({
     firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -39,11 +38,7 @@ export class DoctorFormComponent {
     specialization: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     countryCode: ['+20', Validators.required],
-    phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]],
-    availability: this.fb.group({
-      days: this.fb.array([], Validators.required),
-      hours: ['09:00 - 17:00', Validators.required]
-    })
+    phoneNumber: ['', [Validators.required, phoneValidator('countryCode')]]
   });
 
   constructor() {
@@ -52,32 +47,10 @@ export class DoctorFormComponent {
     });
   }
 
-  get daysFormArray() {
-    return this.form.get('availability.days') as FormArray;
-  }
-
-  onDayToggle(day: string, event: Event) {
-    const checked = (event.target as HTMLInputElement).checked;
-    if (checked) {
-      this.daysFormArray.push(new FormControl(day));
-    } else {
-      const index = this.daysFormArray.controls.findIndex(x => x.value === day);
-      if (index !== -1) {
-        this.daysFormArray.removeAt(index);
-      }
-    }
-  }
-
-  isDaySelected(day: string): boolean {
-    return this.daysFormArray.controls.some(x => x.value === day);
-  }
-
   isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
   }
-
-
 
   onSubmit() {
     if (this.form.invalid) {
@@ -98,11 +71,7 @@ export class DoctorFormComponent {
       email: rawValue.email!,
       contactNumber: contactNum,
       countryCode: rawValue.countryCode!,
-      phoneNumber: rawValue.phoneNumber!,
-      availability: {
-        days: rawValue.availability?.days as string[] || [],
-        hours: rawValue.availability?.hours || ''
-      }
+      phoneNumber: rawValue.phoneNumber!
     };
 
     this.doctorService.create(newDoctor).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

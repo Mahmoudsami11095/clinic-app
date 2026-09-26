@@ -102,18 +102,39 @@
             </div>
           </div>
 
-          <!-- Availability Footer -->
-          <div class="p-5 bg-slate-50/50 dark:bg-slate-900/50 mt-auto">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{{ 'doctors.availability' | translate }}</span>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-450">
-                {{ doctor.availability.hours }}
-              </span>
-            </div>
-            <div class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 font-medium">
-              <i class="pi pi-calendar-clock text-indigo-400 dark:text-indigo-500"></i>
-              {{ getFormattedDays(doctor.availability.days) }}
-            </div>
+          <!-- Clinic Availability Footer -->
+          <div class="p-5 bg-slate-50/50 dark:bg-slate-900/50 mt-auto border-t border-slate-100 dark:border-slate-800">
+            @if (getDoctorSchedules(doctor); as schedules) {
+              @if (schedules.length > 0) {
+                <div class="space-y-2">
+                  @for (sched of schedules; track sched.clinicId) {
+                    <div>
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 truncate max-w-[130px]" [title]="sched.clinicName">
+                          <i class="pi pi-building text-[10px] text-indigo-500 me-1"></i>{{ sched.clinicName }}
+                        </span>
+                        @if (sched.hours) {
+                          <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-450">
+                            {{ sched.hours }}
+                          </span>
+                        }
+                      </div>
+                      @if (sched.days) {
+                        <div class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                          <i class="pi pi-calendar-clock text-indigo-400 dark:text-indigo-500 text-[11px]"></i>
+                          <span>{{ sched.days }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 italic">
+                  <i class="pi pi-clock text-slate-400 text-xs"></i>
+                  <span>{{ 'doctors.no_clinic_schedule' | translate }}</span>
+                </div>
+              }
+            }
           </div>
 
         </div>

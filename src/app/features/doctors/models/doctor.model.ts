@@ -13,7 +13,7 @@ export interface Doctor {
   countryCode?: string;
   phoneNumber?: string;
   avatar: string | null;
-  availability: DoctorAvailability;
+  availability?: DoctorAvailability;
   clinicIds?: string[];
   clinicAvailabilities?: { clinicId: string; availabilityHours: string; availabilityDays: string[] }[];
 }

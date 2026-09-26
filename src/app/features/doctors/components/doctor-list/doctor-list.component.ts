@@ -107,6 +107,46 @@ export class DoctorListComponent implements OnInit {
     return days.map(d => this.langService.translate(this.dayKeyMap[d] || d)).join(', ');
   }
 
+  getDoctorSchedules(doctor: Doctor): { clinicId: string; clinicName: string; hours: string; days: string }[] {
+    const clinics = this.clinicService.clinics();
+    const activeClinicId = this.clinicService.activeClinicId();
+
+    const targetClinics = activeClinicId !== 'all' 
+      ? clinics.filter(c => c.id === activeClinicId && (doctor.clinicIds?.includes(c.id) || doctor.clinicAvailabilities?.some(ca => ca.clinicId === c.id)))
+      : clinics.filter(c => doctor.clinicIds?.includes(c.id) || doctor.clinicAvailabilities?.some(ca => ca.clinicId === c.id));
+
+    const schedules: { clinicId: string; clinicName: string; hours: string; days: string }[] = [];
+
+    for (const clinic of targetClinics) {
+      const ca = doctor.clinicAvailabilities?.find(a => a.clinicId === clinic.id);
+      const hours = ca?.availabilityHours || clinic.availabilityHours || '';
+      let days = '';
+      if (ca?.availabilityDays && ca.availabilityDays.length > 0) {
+        days = this.getFormattedDays(ca.availabilityDays);
+      } else if (clinic.availabilityDays) {
+        try {
+          const parsed = JSON.parse(clinic.availabilityDays);
+          if (Array.isArray(parsed)) {
+            days = this.getFormattedDays(parsed);
+          }
+        } catch {
+          days = clinic.availabilityDays;
+        }
+      }
+
+      if (hours || days) {
+        schedules.push({
+          clinicId: clinic.id,
+          clinicName: clinic.name,
+          hours,
+          days
+        });
+      }
+    }
+
+    return schedules;
+  }
+
   openModal() {
     this.isModalOpen.set(true);
   }
