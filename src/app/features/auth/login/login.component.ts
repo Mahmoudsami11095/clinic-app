@@ -49,6 +49,8 @@ export class LoginComponent {
   loginForm: FormGroup;
   showPassword = signal(false);
   isLoading = signal(false);
+  isSuccess = signal(false);
+  welcomeUser = signal<User | null>(null);
   errorMessage = signal<string | null>(null);
 
   loginMode = signal<'password' | 'otp'>('password');
@@ -112,14 +114,7 @@ export class LoginComponent {
 
     this.authService.login({ email, password }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
-        this.isLoading.set(false);
-        this.toastr.success(`${this.languageService.translate('auth.login_success')}: ${user.name}`, this.languageService.translate('toast.success'));
-        const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'] || '/';
-        if (returnUrl && returnUrl !== '/' && returnUrl !== '/login' && returnUrl !== '/register') {
-          this.router.navigateByUrl(returnUrl);
-        } else {
-          this.redirectToDefaultPage(user);
-        }
+        this.handleSuccessfulAuth(user);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -131,8 +126,7 @@ export class LoginComponent {
   }
 
   onOtpLoginSuccess(user: User) {
-    this.toastr.success(`${this.languageService.translate('auth.login_success')}: ${user.name}`, this.languageService.translate('toast.success'));
-    this.redirectToDefaultPage(user);
+    this.handleSuccessfulAuth(user);
   }
 
   startForgotPassword() {
@@ -187,7 +181,7 @@ export class LoginComponent {
           this.socialToken.set(token);
           this.socialSignUpState.set('role');
         } else {
-          this.redirectToDefaultPage(res.data);
+          this.handleSuccessfulAuth(res.data);
         }
       },
       error: (err) => {
@@ -241,12 +235,7 @@ export class LoginComponent {
 
     this.authService.login({ email: user.email, password: 'password123' }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (loggedInUser) => {
-        this.isLoading.set(false);
-        this.toastr.success(
-          `${this.languageService.translate('auth.login_success')}: ${loggedInUser.name}`,
-          this.languageService.translate('toast.success')
-        );
-        this.redirectToDefaultPage(loggedInUser);
+        this.handleSuccessfulAuth(loggedInUser);
       },
       error: () => {
         this.isLoading.set(false);
@@ -264,6 +253,22 @@ export class LoginComponent {
       return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  private handleSuccessfulAuth(user: User, returnUrlOverride?: string) {
+    this.isLoading.set(false);
+    this.isSuccess.set(true);
+    this.welcomeUser.set(user);
+    this.toastr.success(`${this.languageService.translate('auth.login_success')}: ${user.name}`, this.languageService.translate('toast.success'));
+
+    setTimeout(() => {
+      const returnUrl = returnUrlOverride || this.router.parseUrl(this.router.url).queryParams['returnUrl'] || '/';
+      if (returnUrl && returnUrl !== '/' && returnUrl !== '/login' && returnUrl !== '/register') {
+        this.router.navigateByUrl(returnUrl);
+      } else {
+        this.redirectToDefaultPage(user);
+      }
+    }, 650);
   }
 
   private redirectToDefaultPage(user: User) {

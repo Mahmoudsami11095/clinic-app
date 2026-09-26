@@ -22,3 +22,53 @@
 html[dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
 }
+
+/* =========================================
+   Sign-In Success Animation & Transition
+   ========================================= */
+
+.login-success-card {
+  box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.25), 0 0 0 1px rgba(16, 185, 129, 0.2) !important;
+  transform: scale(1.005);
+}
+
+.animate-success-reveal {
+  animation: successReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes successReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.checkmark-icon {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: checkmarkDraw 0.45s ease-out 0.1s forwards;
+}
+
+@keyframes checkmarkDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.success-progress-bar {
+  animation: progressFill 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes progressFill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
