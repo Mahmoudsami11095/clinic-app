@@ -25,7 +25,8 @@
   </div>
 
   <!-- Main Container Card -->
-  <div class="w-full max-w-6xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 min-h-[720px] animate-fade-in-up">
+  <div class="w-full max-w-6xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 min-h-[720px] animate-fade-in-up transition-all duration-500"
+       [class.login-success-card]="isSuccess()">
     
     <!-- Left Pane: Branding & Info Card (visible on large screen) -->
     <div class="hidden lg:flex lg:col-span-5 bg-gradient-to-tr from-slate-950 via-indigo-950 to-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden">
@@ -97,6 +98,38 @@
 
     <!-- Right Pane: Credentials Form & Demo Switcher -->
     <div class="lg:col-span-7 p-6 sm:p-10 lg:p-14 flex flex-col justify-between bg-white dark:bg-slate-900 relative overflow-y-auto">
+      
+      <!-- Sign-In Success Overlay -->
+      <div *ngIf="isSuccess() && welcomeUser()" 
+           class="absolute inset-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-success-reveal">
+        <div class="relative mb-5">
+          <div class="absolute -inset-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+          <div class="relative w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-xl shadow-emerald-500/40">
+            <span class="text-2xl font-extrabold tracking-wider">{{ getAvatarInitials(welcomeUser()!.name) }}</span>
+            <div class="absolute -bottom-1 -end-1 w-7 h-7 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-md">
+              <div class="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                <i class="pi pi-check text-[10px] font-bold"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold mb-3">
+          <i class="pi pi-shield text-xs"></i>
+          {{ 'auth.authenticated' | translate }}
+        </span>
+
+        <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          {{ 'auth.welcome_back_user' | translate }}, {{ welcomeUser()!.name }}!
+        </h3>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
+          {{ 'auth.redirecting_to_dashboard' | translate }}
+        </p>
+
+        <div class="w-52 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-6 shadow-inner">
+          <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full success-progress-bar"></div>
+        </div>
+      </div>
       
       <!-- Top form titles -->
       <div class="mb-6 mt-4 lg:mt-0 text-center lg:text-start">
@@ -181,11 +214,22 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" [disabled]="isLoading()"
-                class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer group mt-2 focus:outline-none">
-          <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-xs"></i>
-          <span *ngIf="!isLoading()">{{ 'auth.sign_in' | translate }}</span>
-          <i *ngIf="!isLoading()" class="pi pi-arrow-right text-xs rtl-flip group-hover:translate-x-1 transition-transform"></i>
+        <button type="submit" [disabled]="isLoading() || isSuccess()"
+                [ngClass]="isSuccess() 
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 scale-[1.02]' 
+                  : 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white shadow-lg shadow-indigo-600/20'"
+                class="w-full font-bold text-xs py-3.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer group mt-2 focus:outline-none">
+          <ng-container *ngIf="isSuccess()">
+            <svg class="w-4 h-4 checkmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>{{ 'auth.authenticated' | translate }}</span>
+          </ng-container>
+          <ng-container *ngIf="!isSuccess()">
+            <i *ngIf="isLoading()" class="pi pi-spin pi-spinner text-white text-xs"></i>
+            <span *ngIf="!isLoading()">{{ 'auth.sign_in' | translate }}</span>
+            <i *ngIf="!isLoading()" class="pi pi-arrow-right text-xs rtl-flip group-hover:translate-x-1 transition-transform"></i>
+          </ng-container>
         </button>
       </form>
 
