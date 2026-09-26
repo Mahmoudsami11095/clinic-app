@@ -1,6 +1,8 @@
 {
-  "name": "clinic-app",
-  "short_name": "clinic-app",
+  "name": "MedClinic - Healthcare System",
+  "short_name": "MedClinic",
+  "theme_color": "#4f46e5",
+  "background_color": "#090d16",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
