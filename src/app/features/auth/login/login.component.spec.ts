@@ -97,13 +97,17 @@ describe('LoginComponent', () => {
     expect(component.isLoading()).toBeFalse();
     expect(mockToastrService.success).toHaveBeenCalled();
 
-    // Verify navigation has NOT occurred yet before the 650ms animation
+    // Verify navigation has NOT occurred yet before the 1000ms animation
     expect(router.navigate).not.toHaveBeenCalled();
 
-    // Fast-forward through animation timeout
-    tick(650);
+    // Fast-forward 500ms (half-way): photo is actively displaying
+    tick(500);
+    expect(router.navigate).not.toHaveBeenCalled();
 
-    // Verify navigation occurs to doctor dashboard
+    // Complete the 1-second display duration
+    tick(500);
+
+    // Verify navigation occurs to doctor dashboard after exactly 1 second
     expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
   }));
 
@@ -124,7 +128,7 @@ describe('LoginComponent', () => {
     expect(mockToastrService.error).toHaveBeenCalled();
   });
 
-  it('should trigger success animation on quickLogin', fakeAsync(() => {
+  it('should trigger success animation and 1s photo display on quickLogin', fakeAsync(() => {
     mockAuthService.login.and.returnValue(of(mockUser));
 
     component.quickLogin(mockUser);
@@ -132,7 +136,7 @@ describe('LoginComponent', () => {
     expect(component.isSuccess()).toBeTrue();
     expect(component.welcomeUser()).toEqual(mockUser);
 
-    tick(650);
+    tick(1000);
     expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
   }));
 
