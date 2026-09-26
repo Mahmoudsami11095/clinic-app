@@ -268,7 +268,7 @@ export class LoginComponent {
       } else {
         this.redirectToDefaultPage(user);
       }
-    }, 650);
+    }, 1000);
   }
 
   private redirectToDefaultPage(user: User) {
