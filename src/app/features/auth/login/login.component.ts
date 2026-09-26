@@ -259,6 +259,7 @@ export class LoginComponent {
     this.isLoading.set(false);
     this.isSuccess.set(true);
     this.welcomeUser.set(user);
+    this.authService.triggerPostLoginWelcome();
     this.toastr.success(`${this.languageService.translate('auth.login_success')}: ${user.name}`, this.languageService.translate('toast.success'));
 
     setTimeout(() => {
@@ -268,7 +269,7 @@ export class LoginComponent {
       } else {
         this.redirectToDefaultPage(user);
       }
-    }, 1000);
+    }, 250);
   }
 
   private redirectToDefaultPage(user: User) {

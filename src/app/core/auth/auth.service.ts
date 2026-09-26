@@ -60,6 +60,30 @@ export class AuthService {
 
   currentUser = this.currentUserSignal.asReadonly();
 
+  justLoggedIn = signal<boolean>(false);
+
+  triggerPostLoginWelcome() {
+    this.justLoggedIn.set(true);
+    try {
+      sessionStorage.setItem('just_logged_in', 'true');
+    } catch {}
+  }
+
+  consumeJustLoggedIn(): boolean {
+    let sessionFlag = false;
+    try {
+      sessionFlag = sessionStorage.getItem('just_logged_in') === 'true';
+      if (sessionFlag) {
+        sessionStorage.removeItem('just_logged_in');
+      }
+    } catch {}
+    const val = this.justLoggedIn() || sessionFlag;
+    if (this.justLoggedIn()) {
+      this.justLoggedIn.set(false);
+    }
+    return val;
+  }
+
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
   isAdmin = computed(() => this.currentUserSignal()?.role === 'admin');

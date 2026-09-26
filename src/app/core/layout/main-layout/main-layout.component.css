@@ -1,1 +1,14 @@
 /* Main Layout Tailwind Styles */
+
+.welcome-progress-bar {
+  animation: welcomeProgress 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes welcomeProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}

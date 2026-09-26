@@ -30,7 +30,7 @@ describe('LoginComponent', () => {
   };
 
   beforeEach(async () => {
-    mockAuthService = jasmine.createSpyObj('AuthService', ['login', 'loginWithSocial', 'isAuthenticated']);
+    mockAuthService = jasmine.createSpyObj('AuthService', ['login', 'loginWithSocial', 'isAuthenticated', 'triggerPostLoginWelcome']);
     mockLanguageService = jasmine.createSpyObj('LanguageService', ['translate', 'setLanguage']);
     mockLanguageService.currentLang = signal('en') as any;
     mockLanguageService.dir = signal('ltr') as any;
@@ -97,17 +97,14 @@ describe('LoginComponent', () => {
     expect(component.isLoading()).toBeFalse();
     expect(mockToastrService.success).toHaveBeenCalled();
 
-    // Verify navigation has NOT occurred yet before the 1000ms animation
+    // Verify navigation has NOT occurred immediately before button checkmark
     expect(router.navigate).not.toHaveBeenCalled();
 
-    // Fast-forward 500ms (half-way): photo is actively displaying
-    tick(500);
-    expect(router.navigate).not.toHaveBeenCalled();
+    // Fast forward 250ms
+    tick(250);
 
-    // Complete the 1-second display duration
-    tick(500);
-
-    // Verify navigation occurs to doctor dashboard after exactly 1 second
+    // Verify post-login welcome is triggered and navigation occurs to doctor dashboard
+    expect(mockAuthService.triggerPostLoginWelcome).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
   }));
 
@@ -128,7 +125,7 @@ describe('LoginComponent', () => {
     expect(mockToastrService.error).toHaveBeenCalled();
   });
 
-  it('should trigger success animation and 1s photo display on quickLogin', fakeAsync(() => {
+  it('should trigger success animation and navigate on quickLogin', fakeAsync(() => {
     mockAuthService.login.and.returnValue(of(mockUser));
 
     component.quickLogin(mockUser);
@@ -136,7 +133,8 @@ describe('LoginComponent', () => {
     expect(component.isSuccess()).toBeTrue();
     expect(component.welcomeUser()).toEqual(mockUser);
 
-    tick(1000);
+    tick(250);
+    expect(mockAuthService.triggerPostLoginWelcome).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
   }));
 
