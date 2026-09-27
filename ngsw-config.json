@@ -29,5 +29,42 @@
         ]
       }
     }
+  ],
+  "dataGroups": [
+    {
+      "name": "google-fonts",
+      "urls": [
+        "https://fonts.googleapis.com/**",
+        "https://fonts.gstatic.com/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 30,
+        "maxAge": "30d",
+        "strategy": "performance"
+      }
+    },
+    {
+      "name": "map-tiles",
+      "urls": [
+        "https://*.tile.openstreetmap.org/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 150,
+        "maxAge": "7d",
+        "strategy": "performance"
+      }
+    },
+    {
+      "name": "cdn-icons-assets",
+      "urls": [
+        "https://cdnjs.cloudflare.com/**",
+        "https://unpkg.com/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "30d",
+        "strategy": "performance"
+      }
+    }
   ]
 }
