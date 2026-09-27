@@ -25,6 +25,42 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
+export interface TreatmentTemplate {
+  id: string;
+  name: string;
+  category: 'restorative' | 'endodontics' | 'preventive' | 'prosthodontics' | 'surgery';
+  status: ToothStatus;
+  suggestedMedication?: string;
+  materialNameMatch?: string;
+}
+
+export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
+  // Restorative
+  { id: 't_comp_occ', name: 'Composite Restoration (Occlusal)', category: 'restorative', status: 'filled', suggestedMedication: 'Normal post-op care; avoid hard chewing for 2 hrs', materialNameMatch: 'Composite' },
+  { id: 't_comp_mod', name: 'Composite Restoration (MOD Class II)', category: 'restorative', status: 'filled', suggestedMedication: 'Warm salt water rinses as needed', materialNameMatch: 'Composite' },
+  { id: 't_gi', name: 'Glass Ionomer Cement Restoration', category: 'restorative', status: 'filled', materialNameMatch: 'Glass Ionomer' },
+
+  // Endodontics
+  { id: 't_rct_single', name: 'Root Canal Treatment (Single Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID, Amoxicillin 500mg TID if symptomatic' },
+  { id: 't_rct_molar', name: 'Root Canal Treatment (Molar Multi-Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID + Paracetamol 500mg PRN' },
+  { id: 't_pulp_cap', name: 'Direct/Indirect Pulp Capping', category: 'endodontics', status: 'under_treatment', suggestedMedication: 'Analgesics PRN for mild sensitivity' },
+
+  // Preventive & Perio
+  { id: 't_scale', name: 'Full Mouth Scaling & Prophylaxis', category: 'preventive', status: 'healthy', suggestedMedication: 'Chlorhexidine 0.12% oral rinse BID for 7 days' },
+  { id: 't_deep_plan', name: 'Subgingival Deep Scaling & Root Planing', category: 'preventive', status: 'under_treatment', suggestedMedication: 'Warm saline rinses; Chlorhexidine mouthwash' },
+  { id: 't_fluoride', name: 'Topical Fluoride Varnish Application', category: 'preventive', status: 'healthy', suggestedMedication: 'No eating or drinking hot fluids for 30 minutes' },
+
+  // Prosthodontics
+  { id: 't_zir_crown', name: 'Zirconia Full Ceramic Crown', category: 'prosthodontics', status: 'crown', suggestedMedication: 'Check occlusion; gentle flossing' },
+  { id: 't_pfm_crown', name: 'Porcelain-Fused-to-Metal (PFM) Crown', category: 'prosthodontics', status: 'crown' },
+  { id: 't_post_core', name: 'Prefabricated Post & Core Buildup', category: 'prosthodontics', status: 'crown' },
+
+  // Oral Surgery
+  { id: 't_ext_simple', name: 'Routine Simple Dental Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Bite gauze firmly 30 mins; Paracetamol 500mg TID, Amoxicillin 500mg' },
+  { id: 't_ext_surg', name: 'Surgical Transalveolar Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Ice pack 15m intervals; Ibuprofen 400mg + Amoxicillin 500mg x 5 days' },
+  { id: 't_impaction', name: 'Surgical Wisdom Tooth Disimpaction', category: 'surgery', status: 'missing', suggestedMedication: 'Post-op surgical protocol; Antibiotics + Anti-inflammatory' }
+];
+
 @Component({
   selector: 'app-patient-history',
   imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent],
@@ -476,26 +512,37 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
               </div>
             </div>
             
-            <!-- View Mode Selector (Segmented Control) -->
-            <div class="flex bg-slate-100 p-1 rounded-xl gap-1 border border-slate-200/60">
+            <!-- Actions & View Mode Selector -->
+            <div class="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                (click)="setDentalView('3d')"
-                [class]="activeDentalView() === '3d' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'"
-                class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 focus:outline-none cursor-pointer border-none"
+                (click)="openTreatmentPlanModal()"
+                class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm"
               >
-                <i class="pi pi-box"></i>
-                <span>3D Volumetric Model</span>
+                <i class="pi pi-file-edit"></i>
+                <span>{{ 'dental.treatment_plan' | translate }} ({{ getAllPlannedTreatments().length }})</span>
               </button>
-              <button
-                type="button"
-                (click)="setDentalView('grid')"
-                [class]="activeDentalView() === 'grid' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'"
-                class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 focus:outline-none cursor-pointer border-none"
-              >
-                <i class="pi pi-table"></i>
-                <span>Interactive Grid View</span>
-              </button>
+
+              <div class="flex bg-slate-100 p-1 rounded-xl gap-1 border border-slate-200/60">
+                <button
+                  type="button"
+                  (click)="setDentalView('3d')"
+                  [class]="activeDentalView() === '3d' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'"
+                  class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 focus:outline-none cursor-pointer border-none"
+                >
+                  <i class="pi pi-box"></i>
+                  <span>3D Volumetric Model</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="setDentalView('grid')"
+                  [class]="activeDentalView() === 'grid' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'"
+                  class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 focus:outline-none cursor-pointer border-none"
+                >
+                  <i class="pi pi-table"></i>
+                  <span>Interactive Grid View</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1198,6 +1245,76 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
                             </div>
                           }
 
+                          <!-- Quick-Pick Treatment Templates -->
+                          <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                <i class="pi pi-bolt text-amber-500 mr-1"></i> {{ 'dental.quick_templates' | translate }}
+                              </label>
+                              <div class="flex items-center gap-1 overflow-x-auto max-w-[200px] sm:max-w-none">
+                                <button
+                                  type="button"
+                                  (click)="selectedTemplateCategory.set('all')"
+                                  [class]="selectedTemplateCategory() === 'all' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800 bg-slate-100'"
+                                  class="px-2 py-0.5 rounded text-[9px] transition-all cursor-pointer border-none"
+                                >
+                                  {{ 'dental.cat_all' | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  (click)="selectedTemplateCategory.set('restorative')"
+                                  [class]="selectedTemplateCategory() === 'restorative' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800 bg-slate-100'"
+                                  class="px-2 py-0.5 rounded text-[9px] transition-all cursor-pointer border-none"
+                                >
+                                  {{ 'dental.cat_restorative' | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  (click)="selectedTemplateCategory.set('endodontics')"
+                                  [class]="selectedTemplateCategory() === 'endodontics' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800 bg-slate-100'"
+                                  class="px-2 py-0.5 rounded text-[9px] transition-all cursor-pointer border-none"
+                                >
+                                  {{ 'dental.cat_endodontics' | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  (click)="selectedTemplateCategory.set('preventive')"
+                                  [class]="selectedTemplateCategory() === 'preventive' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800 bg-slate-100'"
+                                  class="px-2 py-0.5 rounded text-[9px] transition-all cursor-pointer border-none"
+                                >
+                                  {{ 'dental.cat_preventive' | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  (click)="selectedTemplateCategory.set('prosthodontics')"
+                                  [class]="selectedTemplateCategory() === 'prosthodontics' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800 bg-slate-100'"
+                                  class="px-2 py-0.5 rounded text-[9px] transition-all cursor-pointer border-none"
+                                >
+                                  {{ 'dental.cat_prosthodontics' | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  (click)="selectedTemplateCategory.set('surgery')"
+                                  [class]="selectedTemplateCategory() === 'surgery' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-800 bg-slate-100'"
+                                  class="px-2 py-0.5 rounded text-[9px] transition-all cursor-pointer border-none"
+                                >
+                                  {{ 'dental.cat_surgery' | translate }}
+                                </button>
+                              </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1 max-h-[90px] overflow-y-auto p-1.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                              @for (tpl of getFilteredTemplates(); track tpl.id) {
+                                <button
+                                  type="button"
+                                  (click)="applyTreatmentTemplate(tpl)"
+                                  class="px-2 py-1 rounded-lg text-[10px] font-medium bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 transition-all shadow-2xs cursor-pointer text-start flex items-center gap-1"
+                                >
+                                  <span>{{ tpl.name }}</span>
+                                </button>
+                              }
+                            </div>
+                          </div>
+
                           <!-- Treatment / Procedure -->
                           <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.treatment' | translate }}</label>
@@ -1301,6 +1418,172 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
         </div>
       }
 
+      <!-- Dental Treatment Plan & Progress Report Modal -->
+      @if (isTreatmentPlanPrintOpen()) {
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" (click)="closeTreatmentPlanModal()">
+          <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
+            <!-- Modal Header (Web Controls, hidden on print) -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 no-print">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
+                  <i class="pi pi-file-edit text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">{{ 'dental.treatment_plan_title' | translate }}</h3>
+                  <p class="text-[11px] text-slate-500">Formal A4 Patient Consent & Clinical Schedule</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="printTreatmentPlan()"
+                  class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition-all flex items-center gap-1.5 cursor-pointer border-none"
+                >
+                  <i class="pi pi-print"></i>
+                  <span>{{ 'dental.print_plan' | translate }}</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="closeTreatmentPlanModal()"
+                  class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition-colors"
+                >
+                  <i class="pi pi-times text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Modal Body: Printable Formal Document (Isolates nicely for A4 printing) -->
+            <div class="p-6 sm:p-8 overflow-y-auto flex-1 printable-document-content">
+              <!-- Clinic Letterhead Header -->
+              <div class="border-b-2 border-slate-900 pb-5 mb-6 flex justify-between items-start">
+                <div>
+                  <h2 class="text-2xl font-black text-slate-900 tracking-tight uppercase">
+                    {{ getActiveClinicInfo().name }}
+                  </h2>
+                  <p class="text-xs text-slate-500 font-medium mt-0.5">Comprehensive Oral Health & Maxillofacial Care</p>
+                  <div class="mt-2 text-[11px] text-slate-600 space-y-0.5">
+                    <p><i class="pi pi-map-marker text-[10px] text-indigo-600 mr-1"></i> {{ getActiveClinicInfo().address }}</p>
+                    <p><i class="pi pi-phone text-[10px] text-indigo-600 mr-1"></i> {{ getActiveClinicInfo().phone }}</p>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <div class="inline-block px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-2">
+                    {{ 'dental.treatment_plan' | translate }}
+                  </div>
+                  <p class="text-xs font-bold text-slate-700">Date: {{ today | date:'mediumDate' }}</p>
+                  <p class="text-[11px] text-slate-500 font-mono">Plan Ref: DTP-{{ patient.id | slice:0:6 | uppercase }}</p>
+                </div>
+              </div>
+
+              <!-- Patient Profile Grid -->
+              <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-start">
+                <div>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Patient Full Name</span>
+                  <span class="text-xs font-bold text-slate-900 mt-0.5 block">{{ patient.firstName }} {{ patient.lastName }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Age & Gender</span>
+                  <span class="text-xs font-semibold text-slate-800 mt-0.5 block">{{ getAge(patient.dateOfBirth) }} y.o. • {{ patient.gender | uppercase }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Patient ID / File</span>
+                  <span class="text-xs font-mono font-bold text-slate-800 mt-0.5 block">{{ patient.id | slice:0:8 | uppercase }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Attending Doctor</span>
+                  <span class="text-xs font-bold text-indigo-700 mt-0.5 block">{{ authService.currentUser()?.name || 'Dr. Attending' }}</span>
+                </div>
+              </div>
+
+              <!-- Planned Procedures Table -->
+              <div class="mb-6">
+                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center justify-between">
+                  <span>{{ 'dental.treatment_procedure' | translate }}</span>
+                  <span class="text-indigo-600 font-mono text-[11px]">{{ getAllPlannedTreatments().length }} Planned Item(s)</span>
+                </h4>
+
+                @if (getAllPlannedTreatments().length === 0) {
+                  <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200/60">
+                    <i class="pi pi-calendar-plus text-3xl text-slate-300 mb-2 block"></i>
+                    <p class="text-xs text-slate-500 font-medium">{{ 'dental.no_planned_treatments' | translate }}</p>
+                  </div>
+                } @else {
+                  <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+                    <table class="min-w-full divide-y divide-slate-200 text-start text-xs">
+                      <thead class="bg-slate-100">
+                        <tr>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Tooth #</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Anatomical Tooth</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Diagnostic Status</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Planned Procedure</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-center">Est. Visits</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-end">Scheduled</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 bg-white">
+                        @for (log of getAllPlannedTreatments(); track log.id) {
+                          <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3 font-mono font-bold text-indigo-700">#{{ log.toothNumber }}</td>
+                            <td class="px-4 py-3 font-medium text-slate-800">{{ getToothAnatomicalName(log.toothNumber) }}</td>
+                            <td class="px-4 py-3">
+                              <div class="flex flex-wrap gap-1">
+                                @for (st of log.status; track st) {
+                                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
+                                    {{ 'dental.' + st | translate }}
+                                  </span>
+                                }
+                              </div>
+                            </td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">
+                              {{ log.treatment || 'Consultation / Evaluation' }}
+                              @if (log.medication) {
+                                <span class="block text-[10px] font-normal text-slate-500 italic mt-0.5">Rx: {{ log.medication }}</span>
+                              }
+                            </td>
+                            <td class="px-4 py-3 font-medium text-slate-700 text-center">{{ getEstimatedVisits(log) }} visit(s)</td>
+                            <td class="px-4 py-3 text-slate-500 text-end whitespace-nowrap">{{ log.date | date:'shortDate' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+
+              <!-- Consent Clause & Dual Signatures -->
+              <div class="mt-8 pt-6 border-t border-slate-200">
+                <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-4 mb-8">
+                  <h5 class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <i class="pi pi-shield text-indigo-600"></i>
+                    <span>{{ 'dental.patient_consent' | translate }}</span>
+                  </h5>
+                  <p class="text-xs text-indigo-950 leading-relaxed">
+                    {{ 'dental.consent_clause' | translate }}
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-12 pt-4">
+                  <div class="text-start">
+                    <div class="border-b border-slate-400 pb-1 h-12 flex items-end">
+                      <span class="text-[10px] text-slate-300 italic">Signature</span>
+                    </div>
+                    <p class="text-xs font-bold text-slate-800 mt-2">{{ 'dental.patient_signature' | translate }}</p>
+                    <p class="text-[10px] text-slate-400">Date: ________________________</p>
+                  </div>
+                  <div class="text-start">
+                    <div class="border-b border-slate-400 pb-1 h-12 flex items-end">
+                      <span class="text-[10px] text-slate-300 italic">Signature & Clinic Stamp</span>
+                    </div>
+                    <p class="text-xs font-bold text-slate-800 mt-2">{{ 'dental.doctor_signature' | translate }}</p>
+                    <p class="text-[10px] text-slate-400">{{ authService.currentUser()?.name }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Print Modals -->
       <app-prescription-print-modal
         [isOpen]="isPrescriptionPrintOpen()"
@@ -1333,6 +1616,7 @@ export class PatientHistoryComponent implements OnInit {
   private langService = inject(LanguageService);
   private materialsService = inject(MaterialsService);
 
+  today = new Date();
   activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
   appointments = signal<any[]>([]);
 
@@ -1343,6 +1627,11 @@ export class PatientHistoryComponent implements OnInit {
 
   isInvoicePrintOpen = signal(false);
   selectedInvoiceToPrint = signal<any | null>(null);
+
+  // Treatment Plan & Templates State
+  isTreatmentPlanPrintOpen = signal(false);
+  selectedTemplateCategory = signal<'all' | 'restorative' | 'endodontics' | 'preventive' | 'prosthodontics' | 'surgery'>('all');
+  treatmentTemplates = DENTAL_TREATMENT_TEMPLATES;
 
   openPrescriptionPrint(pres: any) {
     this.selectedPrescriptionToPrint.set(pres);
@@ -1776,6 +2065,106 @@ export class PatientHistoryComponent implements OnInit {
         return newForm;
       });
     }
+  }
+
+  getFilteredTemplates(): TreatmentTemplate[] {
+    const cat = this.selectedTemplateCategory();
+    if (cat === 'all') return this.treatmentTemplates;
+    return this.treatmentTemplates.filter(t => t.category === cat);
+  }
+
+  applyTreatmentTemplate(tpl: TreatmentTemplate): void {
+    this.treatment.set(tpl.name);
+    if (tpl.suggestedMedication && !this.medication().trim()) {
+      this.medication.set(tpl.suggestedMedication);
+    }
+    if (tpl.status) {
+      this.toggleStatus(tpl.status);
+    }
+    // If completed log, look for matching consumable
+    if (!this.isPlannedForm() && tpl.materialNameMatch) {
+      const match = this.availableMaterials().find(m => m.name.toLowerCase().includes(tpl.materialNameMatch!.toLowerCase()) && m.quantity > 0);
+      if (match && this.consumedMaterialsForm().every(cm => cm.materialId !== match.id)) {
+        this.consumedMaterialsForm.update(list => [...list, { materialId: match.id!, quantity: 1, maxQuantity: match.quantity }]);
+      }
+    }
+  }
+
+  getAllPlannedTreatments(): DentalLog[] {
+    return this.dentalLogs()
+      .filter(log => log.isPlanned)
+      .sort((a, b) => Number(a.toothNumber) - Number(b.toothNumber));
+  }
+
+  openTreatmentPlanModal(): void {
+    this.isTreatmentPlanPrintOpen.set(true);
+  }
+
+  closeTreatmentPlanModal(): void {
+    this.isTreatmentPlanPrintOpen.set(false);
+  }
+
+  printTreatmentPlan(): void {
+    window.print();
+  }
+
+  getToothAnatomicalName(toothNum: number | string): string {
+    const num = Number(toothNum);
+    const names: Record<number, string> = {
+      11: 'Maxillary Right Central Incisor',
+      12: 'Maxillary Right Lateral Incisor',
+      13: 'Maxillary Right Canine',
+      14: 'Maxillary Right First Premolar',
+      15: 'Maxillary Right Second Premolar',
+      16: 'Maxillary Right First Molar',
+      17: 'Maxillary Right Second Molar',
+      18: 'Maxillary Right Third Molar (Wisdom)',
+      21: 'Maxillary Left Central Incisor',
+      22: 'Maxillary Left Lateral Incisor',
+      23: 'Maxillary Left Canine',
+      24: 'Maxillary Left First Premolar',
+      25: 'Maxillary Left Second Premolar',
+      26: 'Maxillary Left First Molar',
+      27: 'Maxillary Left Second Molar',
+      28: 'Maxillary Left Third Molar (Wisdom)',
+      31: 'Mandibular Left Central Incisor',
+      32: 'Mandibular Left Lateral Incisor',
+      33: 'Mandibular Left Canine',
+      34: 'Mandibular Left First Premolar',
+      35: 'Mandibular Left Second Premolar',
+      36: 'Mandibular Left First Molar',
+      37: 'Mandibular Left Second Molar',
+      38: 'Mandibular Left Third Molar (Wisdom)',
+      41: 'Mandibular Right Central Incisor',
+      42: 'Mandibular Right Lateral Incisor',
+      43: 'Mandibular Right Canine',
+      44: 'Mandibular Right First Premolar',
+      45: 'Mandibular Right Second Premolar',
+      46: 'Mandibular Right First Molar',
+      47: 'Mandibular Right Second Molar',
+      48: 'Mandibular Right Third Molar (Wisdom)'
+    };
+    return names[num] || `Tooth #${toothNum}`;
+  }
+
+  getEstimatedVisits(log: DentalLog): number {
+    const t = log.treatment?.toLowerCase() || '';
+    if (t.includes('root canal') || t.includes('crown') || t.includes('molar')) {
+      return 2;
+    }
+    return 1;
+  }
+
+  getActiveClinicInfo(): { name: string; address: string; phone: string } {
+    const activeId = this.clinicService.activeClinicId();
+    const matched = this.clinicService.clinics().find(c => c.id === activeId)
+                 || this.clinicService.clinics().find(c => c.id === this.patient.clinicId)
+                 || this.clinicService.clinics()[0];
+    return {
+      name: matched ? matched.name : (this.clinicService.activeClinicName() || 'DENTAL CLINIC'),
+      address: matched?.address || 'Cairo, Egypt',
+      phone: matched?.phone || '+20 100 000 0000'
+    };
   }
 
   ngOnDestroy() {
