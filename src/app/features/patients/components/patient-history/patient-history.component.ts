@@ -7,6 +7,8 @@ import { PatientService } from '../../services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
 import { BillingService } from '../../../billing/services/billing.service';
+import { PrescriptionPrintModalComponent } from '../../../prescriptions/components/prescription-print-modal/prescription-print-modal.component';
+import { InvoicePrintModalComponent } from '../../../billing/components/invoice-print-modal/invoice-print-modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalService, DentalLog, ToothStatus, ConsumedMaterial } from '../../../../core/services/dental.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -25,7 +27,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-patient-history',
-  imports: [CommonModule, TranslatePipe, FormsModule],
+  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent],
   template: `
     <div class="space-y-6">
       <!-- Top Row: Summary Info Grid (3 Cards) -->
@@ -244,7 +246,18 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
                               <p class="font-semibold text-slate-800">{{ 'patients.prescription_from' | translate }} {{ pres.doctorName }}</p>
                               <p class="text-xs text-slate-400 font-medium mt-0.5">Issued on {{ pres.date | date:'mediumDate' }}</p>
                             </div>
-                            <span class="text-xs font-mono bg-slate-50 px-2.5 py-1 border border-slate-200/50 rounded-lg text-slate-600">ID: {{ pres.id.substring(0,8) }}</span>
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs font-mono bg-slate-50 px-2.5 py-1 border border-slate-200/50 rounded-lg text-slate-600">ID: {{ pres.id.substring(0,8) }}</span>
+                              <button
+                                type="button"
+                                (click)="openPrescriptionPrint(pres)"
+                                class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/60 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                                [title]="'prescriptions.print_rx' | translate"
+                              >
+                                <i class="pi pi-print text-xs"></i>
+                                <span>{{ 'prescriptions.print_rx' | translate }}</span>
+                              </button>
+                            </div>
                           </div>
                           
                           <!-- Medications Grid -->
@@ -295,7 +308,8 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
                             <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.issue_date' | translate }}</th>
                             <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.amount' | translate }}</th>
                             <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
-                            <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.payment_status' | translate }}</th>
+                            <th class="py-3.5 px-5 font-semibold text-start">{{ 'billing.method' | translate }}</th>
+                            <th class="py-3.5 px-5 font-semibold text-end">{{ 'common.actions' | translate }}</th>
                           </tr>
                         </thead>
                           <tbody class="divide-y divide-slate-100 text-slate-600">
@@ -323,6 +337,17 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
                                   </span>
                                 </td>
                                 <td class="py-3.5 px-5 text-slate-500 font-medium text-start">{{ bill.paymentMethod || '—' }}</td>
+                                <td class="py-3.5 px-5 text-end">
+                                  <button
+                                    type="button"
+                                    (click)="openInvoicePrint(bill)"
+                                    class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    [title]="'billing.print_receipt' | translate"
+                                  >
+                                    <i class="pi pi-print text-xs"></i>
+                                    <span>{{ 'billing.print_receipt' | translate }}</span>
+                                  </button>
+                                </td>
                               </tr>
                             }
                           </tbody>
@@ -1273,6 +1298,20 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
           </div>
         </div>
       }
+
+      <!-- Print Modals -->
+      <app-prescription-print-modal
+        [isOpen]="isPrescriptionPrintOpen()"
+        [prescription]="selectedPrescriptionToPrint()"
+        [appointment]="selectedAppointmentForPrint()"
+        (close)="closePrescriptionPrint()"
+      ></app-prescription-print-modal>
+
+      <app-invoice-print-modal
+        [isOpen]="isInvoicePrintOpen()"
+        [bill]="selectedInvoiceToPrint()"
+        (close)="closeInvoicePrint()"
+      ></app-invoice-print-modal>
     </div>
   `
 })
@@ -1294,6 +1333,46 @@ export class PatientHistoryComponent implements OnInit {
 
   activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
   appointments = signal<any[]>([]);
+
+  // Print Modals State
+  isPrescriptionPrintOpen = signal(false);
+  selectedPrescriptionToPrint = signal<any | null>(null);
+  selectedAppointmentForPrint = signal<any | null>(null);
+
+  isInvoicePrintOpen = signal(false);
+  selectedInvoiceToPrint = signal<any | null>(null);
+
+  openPrescriptionPrint(pres: any) {
+    this.selectedPrescriptionToPrint.set(pres);
+    const appt = this.appointments().find(a => a.id === pres.appointmentId);
+    this.selectedAppointmentForPrint.set(appt || {
+      patientName: `${this.patient.firstName} ${this.patient.lastName}`,
+      doctorName: pres.doctorName || 'Consultant Specialist',
+      type: 'Medical Consultation',
+      date: pres.date,
+      patientId: this.patient.id
+    });
+    this.isPrescriptionPrintOpen.set(true);
+  }
+
+  closePrescriptionPrint() {
+    this.isPrescriptionPrintOpen.set(false);
+    this.selectedPrescriptionToPrint.set(null);
+    this.selectedAppointmentForPrint.set(null);
+  }
+
+  openInvoicePrint(bill: any) {
+    this.selectedInvoiceToPrint.set({
+      ...bill,
+      patientName: bill.patientName || `${this.patient.firstName} ${this.patient.lastName}`
+    });
+    this.isInvoicePrintOpen.set(true);
+  }
+
+  closeInvoicePrint() {
+    this.isInvoicePrintOpen.set(false);
+    this.selectedInvoiceToPrint.set(null);
+  }
   
   // Constants for Tooth SVGs (Crown/Enamel Outlines, Pulps, Canals)
   readonly SVG_OUTLINES: Record<string, string> = {

@@ -9,6 +9,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { BillingFormComponent } from '../billing-form/billing-form.component';
+import { InvoicePrintModalComponent } from '../invoice-print-modal/invoice-print-modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -17,7 +18,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-billing-list',
-  imports: [CommonModule, FormsModule, ModalComponent, BillingFormComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, ModalComponent, BillingFormComponent, InvoicePrintModalComponent, TranslatePipe],
   templateUrl: './billing-list.component.html',
   styleUrl: './billing-list.component.css'
 })
@@ -46,6 +47,10 @@ export class BillingListComponent implements OnInit {
   payMethod = signal<string>('Cash');
   payDate = signal<string>(new Date().toISOString().split('T')[0]);
   paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
+
+  // Print Modal State
+  isPrintModalOpen = signal(false);
+  selectedInvoiceToPrint = signal<BillingRecordWithDetails | null>(null);
 
   expandedInvoiceId = signal<string | null>(null);
 
@@ -280,5 +285,15 @@ export class BillingListComponent implements OnInit {
         );
       }
     });
+  }
+
+  openPrintModal(bill: BillingRecordWithDetails) {
+    this.selectedInvoiceToPrint.set(bill);
+    this.isPrintModalOpen.set(true);
+  }
+
+  closePrintModal() {
+    this.isPrintModalOpen.set(false);
+    this.selectedInvoiceToPrint.set(null);
   }
 }

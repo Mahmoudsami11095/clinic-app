@@ -4,14 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { AppointmentWithDetails } from '../../../appointments/models/appointment.model';
 import { Prescription, MedicationItem } from '../../models/prescription.model';
 import { PrescriptionService } from '../../services/prescription.service';
+import { PrescriptionPrintModalComponent } from '../prescription-print-modal/prescription-print-modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
+import { signal } from '@angular/core';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-prescription-form',
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, PrescriptionPrintModalComponent, TranslatePipe],
   template: `
     <form (ngSubmit)="submit()" class="space-y-6">
       <!-- Patient and Appointment Metadata Details -->
@@ -151,23 +153,44 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
       </div>
 
       <!-- Action Footer -->
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+      <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+        <!-- Print Prescription Button -->
         <button
           type="button"
-          (click)="cancelled.emit()"
-          class="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-colors"
+          (click)="openPrintModal()"
+          class="px-4 py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/60 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+          [title]="'prescriptions.print_rx' | translate"
         >
-          {{ (readOnly ? 'common.close' : 'common.cancel') | translate }}
+          <i class="pi pi-print text-teal-600"></i>
+          <span>{{ 'prescriptions.print_rx' | translate }}</span>
         </button>
-        <button
-          *ngIf="!readOnly"
-          type="submit"
-          class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-        >
-          {{ 'common.save_prescription' | translate }}
-        </button>
+
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            (click)="cancelled.emit()"
+            class="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+          >
+            {{ (readOnly ? 'common.close' : 'common.cancel') | translate }}
+          </button>
+          <button
+            *ngIf="!readOnly"
+            type="submit"
+            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+          >
+            {{ 'common.save_prescription' | translate }}
+          </button>
+        </div>
       </div>
     </form>
+
+    <!-- Print Modal -->
+    <app-prescription-print-modal
+      [isOpen]="isPrintModalOpen()"
+      [prescription]="currentPrescriptionForPrint()"
+      [appointment]="appointment"
+      (close)="closePrintModal()"
+    ></app-prescription-print-modal>
   `
 })
 export class PrescriptionFormComponent implements OnInit {
@@ -185,6 +208,30 @@ export class PrescriptionFormComponent implements OnInit {
 
   medications: MedicationItem[] = [];
   notes = '';
+
+  isPrintModalOpen = signal(false);
+
+  openPrintModal() {
+    this.isPrintModalOpen.set(true);
+  }
+
+  closePrintModal() {
+    this.isPrintModalOpen.set(false);
+  }
+
+  currentPrescriptionForPrint(): Prescription {
+    if (this.prescription) return this.prescription;
+    const validMeds = this.medications.filter(m => m.name && m.name.trim() !== '');
+    return {
+      id: 'RX-NEW',
+      appointmentId: this.appointment?.id || '',
+      patientId: this.appointment?.patientId || '',
+      doctorId: this.appointment?.doctorId || '',
+      date: new Date().toISOString(),
+      medications: validMeds.length > 0 ? validMeds : this.medications,
+      notes: this.notes
+    };
+  }
 
   ngOnInit() {
     if (this.prescription) {

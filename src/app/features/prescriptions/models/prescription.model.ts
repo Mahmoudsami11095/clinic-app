@@ -3,6 +3,7 @@ export interface MedicationItem {
   dosage: string;      // e.g., "500 mg"
   frequency: string;   // e.g., "Twice daily"
   duration: string;    // e.g., "7 days"
+  instructions?: string;
 }
 
 export interface Prescription {

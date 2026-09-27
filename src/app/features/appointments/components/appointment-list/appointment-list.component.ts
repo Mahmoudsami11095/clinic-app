@@ -10,6 +10,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';
 import { Prescription } from '../../../prescriptions/models/prescription.model';
 import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
+import { PrescriptionPrintModalComponent } from '../../../prescriptions/components/prescription-print-modal/prescription-print-modal.component';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
@@ -20,7 +21,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-appointment-list',
-  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent, PrescriptionFormComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent, PrescriptionFormComponent, PrescriptionPrintModalComponent, TranslatePipe],
   templateUrl: './appointment-list.component.html',
   styleUrl: './appointment-list.component.css'
 })
@@ -52,6 +53,11 @@ export class AppointmentListComponent implements OnInit {
   selectedAppointmentForPrescription = signal<AppointmentWithDetails | null>(null);
   selectedPrescription = signal<Prescription | null>(null);
   isPrescriptionReadOnly = signal(false);
+
+  // Direct Print Modal State
+  isPrintRxModalOpen = signal(false);
+  prescriptionToPrint = signal<Prescription | null>(null);
+  appointmentForPrint = signal<AppointmentWithDetails | null>(null);
 
   filteredAppointments = computed(() => {
     let result = this.appointments();
@@ -245,5 +251,17 @@ export class AppointmentListComponent implements OnInit {
 
   viewPrescribePage(appt: AppointmentWithDetails) {
     this.router.navigate(['/appointments', appt.id, 'prescribe']);
+  }
+
+  openPrescriptionPrintModal(appt: AppointmentWithDetails, pres: Prescription) {
+    this.prescriptionToPrint.set(pres);
+    this.appointmentForPrint.set(appt);
+    this.isPrintRxModalOpen.set(true);
+  }
+
+  closePrescriptionPrintModal() {
+    this.isPrintRxModalOpen.set(false);
+    this.prescriptionToPrint.set(null);
+    this.appointmentForPrint.set(null);
   }
 }

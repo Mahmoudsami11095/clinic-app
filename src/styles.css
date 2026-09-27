@@ -75,3 +75,56 @@ html.dark .toast-container .toast-error {
 .pac-container {
   z-index: 999999 !important;
 }
+
+/* =========================================================
+   Print Formatting Specification (80mm ESC/POS & Formal A4)
+   ========================================================= */
+@media print {
+  /* Hide standard web application elements */
+  .no-print,
+  app-sidebar,
+  app-navbar,
+  header,
+  nav,
+  .toast-container,
+  button,
+  .p-toast {
+    display: none !important;
+  }
+
+  /* Force white background and high-contrast text for thermal/laser printing */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 12pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset layout constraints for print */
+  main, .relative, .overflow-y-auto {
+    overflow: visible !important;
+    max-height: none !important;
+    position: static !important;
+  }
+
+  /* Isolate printable document container */
+  .printable-document-content {
+    visibility: visible !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    margin: 0 auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Page setup for auto-sizing */
+  @page {
+    margin: 4mm;
+    size: auto;
+  }
+}
+

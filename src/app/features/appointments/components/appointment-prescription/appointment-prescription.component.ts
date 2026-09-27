@@ -8,6 +8,7 @@ import { AppointmentWithDetails } from '../../models/appointment.model';
 import { Patient } from '../../../patients/models/patient.model';
 import { Prescription } from '../../../prescriptions/models/prescription.model';
 import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
+import { PrescriptionPrintModalComponent } from '../../../prescriptions/components/prescription-print-modal/prescription-print-modal.component';
 import { PatientHistoryComponent } from '../../../patients/components/patient-history/patient-history.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -15,7 +16,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 @Component({
   selector: 'app-appointment-prescription',
   standalone: true,
-  imports: [CommonModule, PrescriptionFormComponent, PatientHistoryComponent, TranslatePipe],
+  imports: [CommonModule, PrescriptionFormComponent, PrescriptionPrintModalComponent, PatientHistoryComponent, TranslatePipe],
   template: `
     <div class="space-y-6">
       @if (loading()) {
@@ -47,13 +48,27 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
               </p>
             </div>
 
-            <button
-              (click)="goBack()"
-              class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all cursor-pointer flex items-center justify-center"
-              [title]="'common.close' | translate"
-            >
-              <i class="pi pi-times text-xl"></i>
-            </button>
+            <div class="flex items-center gap-3">
+              @if (prescription()) {
+                <button
+                  type="button"
+                  (click)="isPrintModalOpen.set(true)"
+                  class="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/60 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+                  [title]="'prescriptions.print_rx' | translate"
+                >
+                  <i class="pi pi-print text-teal-600"></i>
+                  <span>{{ 'prescriptions.print_rx' | translate }}</span>
+                </button>
+              }
+
+              <button
+                (click)="goBack()"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all cursor-pointer flex items-center justify-center"
+                [title]="'common.close' | translate"
+              >
+                <i class="pi pi-times text-xl"></i>
+              </button>
+            </div>
           </div>
 
           <!-- Restructured Stacked Layout -->
@@ -121,6 +136,13 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
               ></app-prescription-form>
             </div>
 
+            <!-- Print Modal -->
+            <app-prescription-print-modal
+              [isOpen]="isPrintModalOpen()"
+              [prescription]="prescription()"
+              [appointment]="appt"
+              (close)="isPrintModalOpen.set(false)"
+            ></app-prescription-print-modal>
           </div>
         }
       }
@@ -140,6 +162,7 @@ export class AppointmentPrescriptionComponent implements OnInit {
   prescription = signal<Prescription | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  isPrintModalOpen = signal(false);
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
