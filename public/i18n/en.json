@@ -634,7 +634,21 @@
     "quantity_required": "Quantity is required and must be 0 or more.",
     "optional": "(Optional)",
     "unit_placeholder": "e.g. Boxes, Pieces, ml",
-    "save_material": "Save Material"
+    "save_material": "Save Material",
+    "min_stock_alert": "Min Stock Alert Threshold",
+    "min_stock_required": "Min stock threshold is required and must be at least 1.",
+    "min_threshold": "Min Threshold",
+    "status": "Status",
+    "in_stock": "Healthy",
+    "low_stock": "Low Stock",
+    "out_of_stock": "Out of Stock",
+    "alert_banner_title": "Inventory Stock Alert",
+    "alert_banner_desc": "material(s) require re-stocking attention.",
+    "filter_all": "All Items",
+    "filter_low": "Low Stock",
+    "filter_out": "Out of Stock",
+    "filter_healthy": "Healthy Stock",
+    "reorder_needed": "Reorder Needed"
   },
   "profile": {
     "profile_title": "Profile Title",

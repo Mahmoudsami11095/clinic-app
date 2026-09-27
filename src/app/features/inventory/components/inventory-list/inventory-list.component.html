@@ -1,81 +1,221 @@
 <div class="inventory-container p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">{{ 'inventory.title' | translate }}</h2>
-    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" (click)="openAddForm()">
-      <i class="fas fa-plus mr-2"></i> {{ 'inventory.add_material' | translate }}
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">{{ 'inventory.title' | translate }}</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Monitor clinical supplies, thresholds, and consumption alerts</p>
+    </div>
+    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2" (click)="openAddForm()">
+      <i class="fas fa-plus"></i>
+      <span>{{ 'inventory.add_material' | translate }}</span>
     </button>
   </div>
 
-  <div class="mb-6 flex flex-col sm:flex-row gap-4" *ngIf="materials.length > 0 || searchTerm || clinicService.allowedClinics().length > 0">
-    <div class="relative max-w-md flex-1">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <i class="fas fa-search text-gray-400"></i>
+  <!-- Low Stock Alert Banner -->
+  <div *ngIf="!loading && totalAlertCount > 0" class="mb-6 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-4 shadow-sm transition-all">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+          <i class="fas fa-exclamation-triangle text-lg"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-amber-900 dark:text-amber-200">
+            {{ 'inventory.alert_banner_title' | translate }} ({{ totalAlertCount }})
+          </h4>
+          <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+            <span *ngIf="outOfStockCount > 0" class="font-semibold text-rose-600 dark:text-rose-400">{{ outOfStockCount }} {{ 'inventory.out_of_stock' | translate }}</span>
+            <span *ngIf="outOfStockCount > 0 && lowStockCount > 0"> &bull; </span>
+            <span *ngIf="lowStockCount > 0" class="font-semibold text-amber-700 dark:text-amber-300">{{ lowStockCount }} {{ 'inventory.low_stock' | translate }}</span>
+            — {{ 'inventory.alert_banner_desc' | translate }}
+          </p>
+        </div>
       </div>
-      <input 
-        type="text" 
-        [(ngModel)]="searchTerm" 
-        class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors" 
-        [placeholder]="'inventory.search_placeholder' | translate">
-    </div>
-    
-    <div class="relative max-w-xs flex-1">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <i class="fas fa-building text-gray-400"></i>
+      <div class="flex items-center gap-2 self-end sm:self-center">
+        <button 
+          (click)="setFilter('low')"
+          [class.ring-2]="activeFilter === 'low'"
+          class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer">
+          <i class="fas fa-filter mr-1"></i> {{ 'inventory.filter_low' | translate }}
+        </button>
+        <button 
+          *ngIf="outOfStockCount > 0"
+          (click)="setFilter('out')"
+          [class.ring-2]="activeFilter === 'out'"
+          class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer">
+          {{ 'inventory.filter_out' | translate }}
+        </button>
       </div>
-      <select 
-        [value]="activeClinicId"
-        (change)="onClinicChange($event)"
-        class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors appearance-none">
-        <option value="all">{{ 'common.all_clinics' | translate }}</option>
-        <option *ngFor="let clinic of clinicService.allowedClinics()" [value]="clinic.id">
-          {{ clinic.name }}
-        </option>
-      </select>
     </div>
   </div>
 
-  <div *ngIf="loading" class="text-center py-8">
+  <!-- Search, Clinic Picker, and Filter Tabs -->
+  <div class="mb-6 space-y-4" *ngIf="materials.length > 0 || searchTerm || clinicService.allowedClinics().length > 0">
+    <div class="flex flex-col sm:flex-row gap-4">
+      <div class="relative max-w-md flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <i class="fas fa-search text-gray-400 text-sm"></i>
+        </div>
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors shadow-sm" 
+          [placeholder]="'inventory.search_placeholder' | translate">
+      </div>
+      
+      <div class="relative max-w-xs flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <i class="fas fa-building text-gray-400 text-sm"></i>
+        </div>
+        <select 
+          [value]="activeClinicId"
+          (change)="onClinicChange($event)"
+          class="block w-full pl-10 pr-8 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors appearance-none shadow-sm cursor-pointer">
+          <option value="all">{{ 'common.all_clinics' | translate }}</option>
+          <option *ngFor="let clinic of clinicService.allowedClinics()" [value]="clinic.id">
+            {{ clinic.name }}
+          </option>
+        </select>
+        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+          <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Status Filter Pills -->
+    <div class="flex flex-wrap items-center gap-2 pt-1">
+      <button 
+        (click)="setFilter('all')"
+        [class]="activeFilter === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+        <span>{{ 'inventory.filter_all' | translate }}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-[10px]" [class]="activeFilter === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+          {{ materials.length }}
+        </span>
+      </button>
+
+      <button 
+        (click)="setFilter('low')"
+        [class]="activeFilter === 'low' ? 'bg-amber-600 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-50 dark:hover:bg-amber-950/30'"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+        <i class="fas fa-exclamation-circle text-xs"></i>
+        <span>{{ 'inventory.filter_low' | translate }}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-[10px]" [class]="activeFilter === 'low' ? 'bg-white/20 text-white' : 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200'">
+          {{ lowStockCount }}
+        </span>
+      </button>
+
+      <button 
+        (click)="setFilter('out')"
+        [class]="activeFilter === 'out' ? 'bg-rose-600 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/30'"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+        <i class="fas fa-times-circle text-xs"></i>
+        <span>{{ 'inventory.filter_out' | translate }}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-[10px]" [class]="activeFilter === 'out' ? 'bg-white/20 text-white' : 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200'">
+          {{ outOfStockCount }}
+        </span>
+      </button>
+
+      <button 
+        (click)="setFilter('healthy')"
+        [class]="activeFilter === 'healthy' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+        <i class="fas fa-check-circle text-xs"></i>
+        <span>{{ 'inventory.filter_healthy' | translate }}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-[10px]" [class]="activeFilter === 'healthy' ? 'bg-white/20 text-white' : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200'">
+          {{ materials.length - totalAlertCount }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-12">
     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
   </div>
 
-  <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+  <div *ngIf="error" class="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4 text-sm font-medium">
     {{ error }}
   </div>
 
-  <div *ngIf="!loading && !error && materials.length === 0" class="text-center py-8 text-gray-500 bg-white dark:bg-gray-800 rounded-lg shadow">
-    <p>{{ 'inventory.no_materials' | translate }}</p>
+  <div *ngIf="!loading && !error && materials.length === 0" class="text-center py-12 text-gray-500 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <i class="fas fa-boxes text-4xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+    <p class="font-medium">{{ 'inventory.no_materials' | translate }}</p>
   </div>
 
-  <div *ngIf="!loading && materials.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead class="bg-gray-50 dark:bg-gray-900">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.name' | translate }}</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.quantity' | translate }}</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.unit' | translate }}</th>
-          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'common.actions' | translate }}</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-        <tr *ngFor="let material of filteredMaterials" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ material.name }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-            <span [ngClass]="{'text-red-500 font-bold': material.quantity <= 5}">{{ material.quantity }}</span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ material.unit || '-' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button class="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 mr-4" (click)="openEditForm(material)">
-              <i class="fas fa-edit"></i> {{ 'common.edit' | translate }}
-            </button>
-            <button class="text-red-600 hover:text-red-900 dark:hover:text-red-400" (click)="deleteMaterial(material.id!)">
-              <i class="fas fa-trash"></i> {{ 'common.delete' | translate }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div *ngIf="!loading && materials.length > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-900/60">
+          <tr>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.name' | translate }}</th>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.quantity' | translate }}</th>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.min_threshold' | translate }}</th>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.status' | translate }}</th>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'inventory.unit' | translate }}</th>
+            <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700/60">
+          <tr *ngFor="let material of filteredMaterials" class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
+            <!-- Material Name -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ material.name }}</div>
+            </td>
+            
+            <!-- Quantity & Visual Level -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold" 
+                      [class.text-rose-600]="isOutOfStock(material)"
+                      [class.text-amber-600]="isLowStock(material)"
+                      [class.text-emerald-600]="!isOutOfStock(material) && !isLowStock(material)">
+                  {{ material.quantity }}
+                </span>
+                <span class="text-xs text-slate-400 font-normal">/ {{ material.minStockAlert ?? 5 }} min</span>
+              </div>
+            </td>
+
+            <!-- Min Threshold -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-xs font-mono font-medium text-slate-600 dark:text-slate-300">
+                {{ material.minStockAlert ?? 5 }}
+              </span>
+            </td>
+
+            <!-- Status Pill Badge -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span *ngIf="isOutOfStock(material)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                {{ 'inventory.out_of_stock' | translate }}
+              </span>
+              <span *ngIf="isLowStock(material)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                <i class="fas fa-exclamation-triangle text-[10px]"></i>
+                {{ 'inventory.low_stock' | translate }}
+              </span>
+              <span *ngIf="!isOutOfStock(material) && !isLowStock(material)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                <i class="fas fa-check text-[10px]"></i>
+                {{ 'inventory.in_stock' | translate }}
+              </span>
+            </td>
+
+            <!-- Unit -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+              {{ material.unit || '-' }}
+            </td>
+
+            <!-- Actions -->
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button class="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 mr-4 transition-colors cursor-pointer" (click)="openEditForm(material)">
+                <i class="fas fa-edit mr-1"></i> {{ 'common.edit' | translate }}
+              </button>
+              <button class="text-red-600 hover:text-red-900 dark:hover:text-red-400 transition-colors cursor-pointer" (click)="deleteMaterial(material.id!)">
+                <i class="fas fa-trash mr-1"></i> {{ 'common.delete' | translate }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     
-    <div *ngIf="filteredMaterials.length === 0 && !loading" class="text-center py-8 text-gray-500 bg-white dark:bg-gray-800">
+    <div *ngIf="filteredMaterials.length === 0 && !loading" class="text-center py-10 text-gray-500 bg-white dark:bg-gray-800">
       <p>{{ 'inventory.no_materials_match' | translate }}</p>
     </div>
   </div>

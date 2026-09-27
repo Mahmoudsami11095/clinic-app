@@ -5,6 +5,7 @@ export interface Material {
   name: string;
   quantity: number;
   unit?: string;
+  minStockAlert?: number;
 }
 
 export interface ConsumedMaterial {
