@@ -28,6 +28,55 @@ export class InventoryListComponent implements OnInit {
   loading: boolean = true;
   error: string = '';
   searchTerm: string = '';
+  activeFilter: 'all' | 'low' | 'out' | 'healthy' = 'all';
+
+  get lowStockCount(): number {
+    return this.materials.filter(m => this.isLowStock(m)).length;
+  }
+
+  get outOfStockCount(): number {
+    return this.materials.filter(m => this.isOutOfStock(m)).length;
+  }
+
+  get totalAlertCount(): number {
+    return this.lowStockCount + this.outOfStockCount;
+  }
+
+  isLowStock(material: Material): boolean {
+    const threshold = material.minStockAlert ?? 5;
+    return material.quantity > 0 && material.quantity <= threshold;
+  }
+
+  isOutOfStock(material: Material): boolean {
+    return material.quantity <= 0;
+  }
+
+  getStockStatus(material: Material): 'out' | 'low' | 'healthy' {
+    if (this.isOutOfStock(material)) return 'out';
+    if (this.isLowStock(material)) return 'low';
+    return 'healthy';
+  }
+
+  setFilter(filter: 'all' | 'low' | 'out' | 'healthy'): void {
+    this.activeFilter = filter;
+  }
+
+  get filteredMaterials(): Material[] {
+    let list = this.materials;
+    if (this.activeFilter === 'low') {
+      list = list.filter(m => this.isLowStock(m));
+    } else if (this.activeFilter === 'out') {
+      list = list.filter(m => this.isOutOfStock(m));
+    } else if (this.activeFilter === 'healthy') {
+      list = list.filter(m => !this.isLowStock(m) && !this.isOutOfStock(m));
+    }
+
+    if (!this.searchTerm.trim()) {
+      return list;
+    }
+    const term = this.searchTerm.toLowerCase().trim();
+    return list.filter(m => m.name.toLowerCase().includes(term));
+  }
 
   constructor(
     private materialsService: MaterialsService,
@@ -51,7 +100,7 @@ export class InventoryListComponent implements OnInit {
         this.doctorId = user.doctorId || user.id;
       } else if (user.role === 'assistant') {
         this.isAssistant = true;
-        this.doctorId = user.doctorId || ''; // Assuming assistants have doctorId mapping
+        this.doctorId = user.doctorId || '';
       }
     }
 
@@ -82,14 +131,6 @@ export class InventoryListComponent implements OnInit {
         console.error(err);
       }
     });
-  }
-
-  get filteredMaterials(): Material[] {
-    if (!this.searchTerm.trim()) {
-      return this.materials;
-    }
-    const term = this.searchTerm.toLowerCase().trim();
-    return this.materials.filter(m => m.name.toLowerCase().includes(term));
   }
 
   openAddForm(): void {

@@ -1248,7 +1248,9 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
                                       >
                                         <option value="" disabled>Select Material</option>
                                         @for (mat of availableMaterials(); track mat.id) {
-                                          <option [value]="mat.id" [disabled]="mat.quantity <= 0">{{ mat.name }} ({{ mat.quantity }} in stock)</option>
+                                          <option [value]="mat.id" [disabled]="mat.quantity <= 0">
+                                            {{ mat.quantity <= 0 ? '❌ ' + mat.name + ' (Out of stock)' : (mat.quantity <= (mat.minStockAlert ?? 5) ? '⚠️ ' + mat.name + ' (Low: ' + mat.quantity + ' ' + (mat.unit || '') + ')' : mat.name + ' (' + mat.quantity + ' in stock)') }}
+                                          </option>
                                         }
                                       </select>
                                       

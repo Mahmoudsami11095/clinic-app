@@ -33,7 +33,8 @@ export class InventoryFormComponent implements OnInit {
   ngOnInit(): void {
     this.materialForm = this.fb.group({
       name: [this.material?.name || '', [Validators.required]],
-      quantity: [this.material?.quantity || 0, [Validators.required, Validators.min(0)]],
+      quantity: [this.material?.quantity ?? 0, [Validators.required, Validators.min(0)]],
+      minStockAlert: [this.material?.minStockAlert ?? 5, [Validators.required, Validators.min(1)]],
       unit: [this.material?.unit || '']
     });
   }
@@ -50,7 +51,8 @@ export class InventoryFormComponent implements OnInit {
       doctorId: this.doctorId,
       clinicId: this.clinicId,
       name: formValue.name,
-      quantity: formValue.quantity,
+      quantity: Number(formValue.quantity),
+      minStockAlert: Number(formValue.minStockAlert),
       unit: formValue.unit
     };
 

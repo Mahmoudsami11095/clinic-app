@@ -635,7 +635,21 @@
     "quantity_required": "الكمية مطلوبة ويجب أن تكون 0 أو أكثر.",
     "optional": "(اختياري)",
     "unit_placeholder": "مثال: علب، قطع، مل",
-    "save_material": "حفظ المادة"
+    "save_material": "حفظ المادة",
+    "min_stock_alert": "حد تنبيه انخفاض المخزون",
+    "min_stock_required": "حد التنبيه الأدنى مطلوب ويجب أن يكون 1 على الأقل.",
+    "min_threshold": "الحد الأدنى",
+    "status": "حالة المخزون",
+    "in_stock": "مخزون كافٍ",
+    "low_stock": "مخزون منخفض",
+    "out_of_stock": "نفد المخزون",
+    "alert_banner_title": "تنبيه مخزون المواد",
+    "alert_banner_desc": "مادة / مواد بحاجة إلى إعادة طلب وتجديد المخزون.",
+    "filter_all": "جميع المواد",
+    "filter_low": "مخزون منخفض",
+    "filter_out": "نفد المخزون",
+    "filter_healthy": "مخزون كافٍ",
+    "reorder_needed": "مطلوب إعادة طلب"
   },
   "profile": {
     "profile_title": "المسمى الوظيفي",
