@@ -335,15 +335,23 @@
           <span class="sm:hidden">{{ 'billing.pay' | translate }}</span>
         </button>
       }
-      <button class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors cursor-pointer" [title]="'billing.download_invoice' | translate">
-        <i class="pi pi-download text-sm"></i>
+      <button
+        (click)="openPrintModal(bill)"
+        class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors cursor-pointer"
+        [title]="'billing.print_receipt' | translate"
+      >
+        <i class="pi pi-print text-sm"></i>
       </button>
       <button class="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer" [title]="'billing.view_options' | translate">
         <i class="pi pi-ellipsis-v text-sm"></i>
       </button>
     } @else {
-      <button class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors cursor-pointer" [title]="'billing.download_invoice' | translate">
-        <i class="pi pi-download text-sm"></i>
+      <button
+        (click)="openPrintModal(bill)"
+        class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors cursor-pointer"
+        [title]="'billing.print_receipt' | translate"
+      >
+        <i class="pi pi-print text-sm"></i>
       </button>
     }
   </ng-template>
@@ -515,4 +523,11 @@
       @}
     </form>
   </app-modal>
+
+  <!-- Print Invoice / Thermal Receipt Modal -->
+  <app-invoice-print-modal
+    [isOpen]="isPrintModalOpen()"
+    [bill]="selectedInvoiceToPrint()"
+    (close)="closePrintModal()"
+  ></app-invoice-print-modal>
 </div>
