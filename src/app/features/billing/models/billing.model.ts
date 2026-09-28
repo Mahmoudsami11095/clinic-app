@@ -9,6 +9,11 @@ export interface BillingRecord {
   patientId: string;
   appointmentId?: string;
   amount: number;
+  subtotal?: number;
+  discountPercentage?: number;
+  discountAmount?: number;
+  discountReason?: string;
+  discountAuthorizedBy?: string;
   paidAmount?: number;
   status: string; // 'paid' | 'pending' | 'overdue'
   dateIssued: string;
