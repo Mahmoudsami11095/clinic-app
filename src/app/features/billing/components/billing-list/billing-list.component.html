@@ -203,6 +203,12 @@
                 <!-- Amount -->
                 <td class="py-4 px-6">
                   <div class="font-bold text-slate-800 dark:text-slate-100">{{ bill.amount | currency }}</div>
+                  @if (bill.discountPercentage && bill.discountPercentage > 0) {
+                    <div class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5 flex items-center gap-1">
+                      <span class="bg-amber-100 dark:bg-amber-950/60 px-1 rounded">-{{ bill.discountPercentage }}%</span>
+                      <span class="text-slate-400 line-through text-[9px]">{{ (bill.subtotal || bill.amount) | currency }}</span>
+                    </div>
+                  }
                   @if (bill.paidAmount && bill.status === 'partially_paid') {
                     <div class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">{{ 'billing.paid' | translate }}: {{ bill.paidAmount | currency }}</div>
                   }

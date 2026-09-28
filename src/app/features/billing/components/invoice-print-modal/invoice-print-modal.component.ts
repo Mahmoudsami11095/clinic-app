@@ -153,8 +153,14 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                 <div class="text-[12px] space-y-1 font-mono">
                   <div class="flex justify-between">
                     <span class="text-slate-600">{{ 'billing.subtotal' | translate }}:</span>
-                    <span>{{ bill.amount | currency }}</span>
+                    <span>{{ (bill.subtotal || bill.amount) | currency }}</span>
                   </div>
+                  @if (bill.discountAmount && bill.discountAmount > 0) {
+                    <div class="flex justify-between text-rose-600">
+                      <span>Discount ({{ bill.discountPercentage }}%):</span>
+                      <span>-{{ bill.discountAmount | currency }}</span>
+                    </div>
+                  }
                   <div class="flex justify-between font-bold text-[13px] pt-1 border-t border-slate-200 text-slate-900">
                     <span>{{ 'billing.total_amount' | translate }}:</span>
                     <span>{{ bill.amount | currency }}</span>
@@ -355,12 +361,24 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                   <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-2 font-mono text-xs">
                     <div class="flex justify-between text-slate-600">
                       <span>Gross Subtotal:</span>
-                      <span>{{ bill.amount | currency }}</span>
+                      <span>{{ (bill.subtotal || bill.amount) | currency }}</span>
                     </div>
-                    <div class="flex justify-between text-slate-600">
-                      <span>Discount (0%):</span>
-                      <span>$0.00</span>
-                    </div>
+                    @if (bill.discountAmount && bill.discountAmount > 0) {
+                      <div class="flex justify-between text-rose-600">
+                        <span>Discount ({{ bill.discountPercentage }}% - {{ bill.discountReason || 'Courtesy' }}):</span>
+                        <span>-{{ bill.discountAmount | currency }}</span>
+                      </div>
+                      @if (bill.discountAuthorizedBy) {
+                        <div class="text-[10px] text-slate-500 italic text-end">
+                          Auth: {{ bill.discountAuthorizedBy }}
+                        </div>
+                      }
+                    } @else {
+                      <div class="flex justify-between text-slate-600">
+                        <span>Discount (0%):</span>
+                        <span>$0.00</span>
+                      </div>
+                    }
                     <div class="flex justify-between font-bold text-sm text-slate-900 pt-2 border-t border-slate-300">
                       <span>Total Net Payable:</span>
                       <span>{{ bill.amount | currency }}</span>
