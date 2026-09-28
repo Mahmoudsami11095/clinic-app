@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalDataService, EndodonticRecord, CanalMeasurement } from '../../services/dental-data.service';
 import { ToothStatus } from '../../../../core/services/dental.service';
+import { DentalNotationService } from '../../../../core/services/dental-notation.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 interface HistoricalLog {
@@ -22,8 +23,17 @@ interface HistoricalLog {
   styleUrl: './skeuomorphic-dental-chart.component.css'
 })
 export class SkeuomorphicDentalChartComponent implements OnInit {
-    private destroyRef = inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
   private dentalDataService = inject(DentalDataService);
+  public notationService = inject(DentalNotationService);
+
+  formatToothNumber(fdi: string | number): string {
+    return this.notationService.formatToothNumber(fdi);
+  }
+
+  getDualDisplay(fdi: string | number) {
+    return this.notationService.getDualDisplay(fdi);
+  }
 
   @Input() set dentition(val: 'adult' | 'child') {
     this.activeDentition.set(val);

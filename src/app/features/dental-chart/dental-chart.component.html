@@ -31,6 +31,26 @@
       </span>
     </div>
     
+    <!-- Dual Dental Notation Switcher (BR-DEN-01) -->
+    <div class="view-toggle-segmented notation-toggle-segmented" [title]="'dental.toggle_notation_tooltip' | translate">
+      <button 
+        type="button"
+        class="toggle-btn" 
+        [class.active]="notationService.notation() === 'FDI'" 
+        (click)="setNotation('FDI')">
+        <i class="pi pi-hashtag"></i>
+        <span>{{ 'dental.notation_fdi_short' | translate }}</span>
+      </button>
+      <button 
+        type="button"
+        class="toggle-btn" 
+        [class.active]="notationService.notation() === 'UNIVERSAL'" 
+        (click)="setNotation('UNIVERSAL')">
+        <i class="pi pi-globe"></i>
+        <span>{{ 'dental.notation_universal_short' | translate }}</span>
+      </button>
+    </div>
+
     <!-- Design Selector (Segmented Toggle) -->
     <div class="view-toggle-segmented">
       <button 
