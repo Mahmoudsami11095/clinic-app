@@ -436,6 +436,7 @@
     "frequency_placeholder": "e.g. 3 times daily (after meals)",
     "duration_placeholder": "e.g. 7 days",
     "notes_placeholder": "Special patient instructions, warnings, or dietary advice...",
+    "add_at_least_one_error": "Please add at least one medication name.",
     "print_rx": "Print Prescription",
     "print_formal_rx": "Standard Medical Rx (A4/A5)",
     "print_thermal_rx": "80mm Thermal Rx Slip",
@@ -449,7 +450,24 @@
     "frequency": "Frequency",
     "duration": "Duration",
     "clinical_rx_header": "Electronic Medical Prescription",
-    "print_preview": "Prescription Print Preview"
+    "print_preview": "Prescription Print Preview",
+    "allergies_banner": "Patient Recorded Allergies",
+    "no_known_allergies": "No Known Drug Allergies (NKDA)",
+    "known_allergies_alert": "Active Drug Allergies on Record",
+    "allergy_conflict_detected": "Allergy Conflict Detected",
+    "allergy_conflict_badge": "Drug Allergy Alert",
+    "override_modal_title": "Clinical Safety Alert: Allergy Conflict Detected",
+    "override_protocol_notice": "This prescription contains medication(s) that conflict with the patient's recorded drug allergies. To proceed with saving, a mandatory clinical justification must be entered into the legal medical record (BR-RX-01).",
+    "override_reason_label": "Mandatory Clinical Justification / Override Reason",
+    "override_reason_placeholder": "e.g., Patient allergy skin tested negative; desensitization protocol active; emergency override with antihistamine coverage...",
+    "quick_reasons": "Quick Justification Templates",
+    "reason_tested": "Skin / allergy testing verified negative",
+    "reason_emergency": "Urgent clinical need; premedication administered",
+    "reason_desensitized": "Active desensitization protocol completed",
+    "reason_tolerated": "Patient previously tolerated this agent safely",
+    "cancel_change": "Cancel & Modify Medications",
+    "confirm_override": "Confirm & Document Clinical Override",
+    "justification_required": "Please provide a valid clinical justification (min. 5 characters) to override this allergy alert."
   },
   "clinics": {
     "title": "Clinics",
@@ -482,19 +500,6 @@
     "phone_error": "A valid phone number is required.",
     "saving": "Saving...",
     "save_clinic": "Save Clinic"
-  },
-  "prescriptions": {
-    "consultation_details": "Consultation Details",
-    "prescribed_medications": "Prescribed Medications",
-    "add_medication": "Add Medication",
-    "no_medications": "No medications added yet. Click \"Add Medication\" above.",
-    "medication_placeholder": "e.g. Amoxicillin",
-    "dosage_placeholder": "e.g. 500 mg",
-    "frequency_placeholder": "e.g. Twice daily",
-    "duration_placeholder": "e.g. 7 days",
-    "remove_medication": "Remove Medication",
-    "notes_placeholder": "Add any extra instructions (e.g. take after food)...",
-    "add_at_least_one_error": "Please add at least one medication name."
   },
   "dental": {
     "teeth_chart": "Teeth Chart",

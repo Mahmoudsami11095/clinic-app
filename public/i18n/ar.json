@@ -436,6 +436,7 @@
     "frequency_placeholder": "مثال: كل 12 ساعة بعد الطعام",
     "duration_placeholder": "مثال: 7 أيام",
     "notes_placeholder": "تعليمات خاصة للمريض، محاذير استخدام، أو نصائح غذائية...",
+    "add_at_least_one_error": "يرجى إضافة اسم دواء واحد على الأقل.",
     "print_rx": "طباعة الروشتة الطبية",
     "print_formal_rx": "نموذج روشتة رسمي (A4/A5)",
     "print_thermal_rx": "روشتة حرارية سريعة (80 مم)",
@@ -449,7 +450,24 @@
     "frequency": "التكرار",
     "duration": "المدة",
     "clinical_rx_header": "روشتة طبية إلكترونية معتمدة",
-    "print_preview": "معاينة طباعة الروشتة"
+    "print_preview": "معاينة طباعة الروشتة",
+    "allergies_banner": "الحساسية الدوائية المسجلة للمريض",
+    "no_known_allergies": "لا توجد حساسية دوائية مسجلة (NKDA)",
+    "known_allergies_alert": "تنبيه: توجد حساسية دوائية مسجلة",
+    "allergy_conflict_detected": "تم اكتشاف تعارض مع حساسية المريض",
+    "allergy_conflict_badge": "تنبيه حساسية دوائية",
+    "override_modal_title": "تنبيه الأمان السريري: تم اكتشاف تعارض دوائي",
+    "override_protocol_notice": "تحتوي هذه الروشتة على أدوية تتعارض مع الحساسية الدوائية المسجلة للمريض. للمتابعة وحفظ الوصفة، يلزم إدخال تبرير سريري إلزامي لتوثيقه قانونياً في السجل الطبي (BR-RX-01).",
+    "override_reason_label": "التبرير السريري الإلزامي / سبب تجاوز التنبيه",
+    "override_reason_placeholder": "مثال: تم إجراء اختبار حساسية وكانت النتيجة سلبية؛ تم اتباع بروتوكول إزالة التحسس؛ صرف طارئ تحت إشراف طبي...",
+    "quick_reasons": "نماذج تبرير سريعة",
+    "reason_tested": "تم إجراء اختبار الحساسية وكانت النتيجة سلبية",
+    "reason_emergency": "حالة سريرية حرجة؛ تم إعطاء أدوية وقائية مضادة للحساسية",
+    "reason_desensitized": "تم تطبيق بروتوكول إزالة التحسس بنجاح",
+    "reason_tolerated": "تحمل المريض هذا الدواء سابقاً دون أي مضاعفات",
+    "cancel_change": "إلغاء وتعديل الأدوية",
+    "confirm_override": "تأكيد وتوثيق التجاوز السريري",
+    "justification_required": "يرجى كتابة تبرير سريري صالح (٥ أحرف على الأقل) لتجاوز تنبيه الحساسية."
   },
   "clinics": {
     "title": "العيادات",
@@ -482,19 +500,6 @@
     "phone_error": "رقم هاتف صالح مطلوب.",
     "saving": "جاري الحفظ...",
     "save_clinic": "حفظ العيادة"
-  },
-  "prescriptions": {
-    "consultation_details": "تفاصيل الاستشارة",
-    "prescribed_medications": "الأدوية الموصوفة",
-    "add_medication": "إضافة دواء",
-    "no_medications": "لم يتم إضافة أدوية بعد. اضغط على \"إضافة دواء\" أعلاه.",
-    "medication_placeholder": "مثال: أموكسيسيلين",
-    "dosage_placeholder": "مثال: 500 ملغ",
-    "frequency_placeholder": "مثال: مرتين يومياً",
-    "duration_placeholder": "مثال: 7 أيام",
-    "remove_medication": "إزالة الدواء",
-    "notes_placeholder": "إضافة أي تعليمات إضافية (مثال: تؤخذ بعد الطعام)...",
-    "add_at_least_one_error": "يرجى إضافة اسم دواء واحد على الأقل."
   },
   "dental": {
     "teeth_chart": "مخطط الأسنان",
