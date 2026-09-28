@@ -129,6 +129,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
             <div class="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
               <app-prescription-form
                 [appointment]="appt"
+                [patient]="pat"
                 [prescription]="prescription()"
                 [readOnly]="false"
                 (saved)="onSaved()"

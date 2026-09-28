@@ -24,6 +24,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { AllergyConflictService, AllergyConflictResult } from '../../../../core/services/allergy-conflict.service';
 
 export interface TreatmentTemplate {
   id: string;
@@ -1339,6 +1340,21 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                               [placeholder]="'dental.medication' | translate"
                               class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
                             />
+                            @if (dentalMedicationConflict(); as conflict) {
+                              <div class="mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-2 animate-fadeIn shadow-sm">
+                                <i class="pi pi-exclamation-triangle text-rose-600 text-sm mt-0.5 flex-shrink-0"></i>
+                                <div class="space-y-0.5">
+                                  <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold uppercase tracking-wider text-[9px] bg-rose-600 text-white px-1.5 py-0.5 rounded">
+                                      {{ 'prescriptions.allergy_conflict_badge' | translate }}
+                                    </span>
+                                    <span class="font-bold text-rose-800">{{ conflict.drugClass }}</span>
+                                    <span class="text-rose-600 font-semibold">({{ 'patients.allergies' | translate }}: {{ conflict.allergen }})</span>
+                                  </div>
+                                  <p class="text-[11px] text-rose-700 leading-tight font-medium">{{ conflict.warningMessage }}</p>
+                                </div>
+                              </div>
+                            }
                           </div>
 
                           <!-- Consumed Materials -->
@@ -1615,6 +1631,7 @@ export class PatientHistoryComponent implements OnInit {
   private toastr = inject(ToastrService);
   private langService = inject(LanguageService);
   private materialsService = inject(MaterialsService);
+  private allergyService = inject(AllergyConflictService);
 
   today = new Date();
   activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
@@ -1723,6 +1740,12 @@ export class PatientHistoryComponent implements OnInit {
   isPlannedForm = signal<boolean>(false);
   availableMaterials = signal<Material[]>([]);
   consumedMaterialsForm = signal<{materialId: string, quantity: number, maxQuantity: number}[]>([]);
+
+  dentalMedicationConflict = computed<AllergyConflictResult | null>(() => {
+    const med = this.medication();
+    if (!med || !med.trim() || !this.patient?.allergies) return null;
+    return this.allergyService.checkMedication(this.patient.allergies, med);
+  });
 
   readonly statusOptions = [
     { value: 'healthy' as ToothStatus, icon: 'pi pi-check-circle', activeClass: 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]', inactiveClass: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900' },
