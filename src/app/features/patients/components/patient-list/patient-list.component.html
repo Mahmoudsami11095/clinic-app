@@ -80,9 +80,20 @@
               {{ patient.firstName.charAt(0) }}{{ patient.lastName.charAt(0) }}
             </div>
             <div class="flex-1 min-w-0 text-start">
-              <h3 class="text-base font-semibold text-slate-800 dark:text-slate-100 truncate">
-                {{ patient.firstName }} {{ patient.lastName }}
-              </h3>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base font-semibold text-slate-800 dark:text-slate-100 truncate">
+                  {{ patient.firstName }} {{ patient.lastName }}
+                </h3>
+                @if (getPatientDebt(patient.id); as debt) {
+                  @if (debt.totalDebt > 0) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-xs"
+                          [title]="('billing.outstanding_debt_warning' | translate) + ': ' + (debt.totalDebt | currency)">
+                      <i class="pi pi-exclamation-circle text-[8px]"></i>
+                      {{ 'billing.debt_pill' | translate }}: {{ debt.totalDebt | currency }}
+                    </span>
+                  }
+                }
+              </div>
               <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
                 <i class="pi pi-envelope text-xs"></i>
                 <span class="truncate">{{ patient.email }}</span>

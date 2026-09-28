@@ -422,7 +422,17 @@
     "total_amount": "Total Amount",
     "thank_you_visit": "Thank you for visiting our clinic!",
     "digital_verification_notice": "Prescriptions & receipts verified digitally.",
-    "signature_authorized": "Authorized Signature & Stamp"
+    "signature_authorized": "Authorized Signature & Stamp",
+    "outstanding_debt_alert": "Outstanding Debt Alert (BR-FIN-02)",
+    "outstanding_debt_warning": "Patient has an unpaid balance",
+    "debt_pill": "Debt",
+    "account_settled": "Account Settled (Zero Debt)",
+    "financial_status": "Financial Status",
+    "unpaid_invoices": "Unpaid Invoices",
+    "settle_balance": "View Invoices & Settle",
+    "view_ledger": "Patient Ledger",
+    "unpaid_invoices_count": "unpaid invoice(s)",
+    "historical_debt_warning": "Warning: Patient has an outstanding balance of {amount} across {count} unpaid invoice(s)."
   },
   "prescriptions": {
     "title": "Prescriptions",

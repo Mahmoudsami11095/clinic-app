@@ -73,6 +73,30 @@
         @if (isInvalid('patientId')) {
           <p class="mt-1 text-xs text-rose-600">{{ 'appointments.patient_required' | translate }}</p>
         }
+
+        <!-- BR-FIN-02: Patient Outstanding Debt Warning Callout -->
+        @if (selectedPatientDebt(); as debt) {
+          @if (debt.totalDebt > 0) {
+            <div class="mt-2.5 p-3 bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-800/80 rounded-xl flex items-start gap-2.5 text-amber-950 dark:text-amber-200 text-xs shadow-sm animate-fadeIn">
+              <div class="w-6 h-6 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold flex-shrink-0 mt-0.5 shadow-xs">
+                <i class="pi pi-exclamation-triangle text-xs"></i>
+              </div>
+              <div class="flex-1 space-y-1">
+                <div class="flex items-center justify-between flex-wrap gap-1">
+                  <span class="font-bold uppercase tracking-wider text-[9px] bg-amber-600 text-white px-2 py-0.5 rounded-full">
+                    {{ 'billing.outstanding_debt_alert' | translate }}
+                  </span>
+                  <span class="font-bold text-amber-900 dark:text-amber-100 text-xs">
+                    {{ debt.totalDebt | currency }}
+                  </span>
+                </div>
+                <p class="text-amber-800 dark:text-amber-300 text-[11px] leading-relaxed font-medium">
+                  {{ 'billing.outstanding_debt_warning' | translate }}: {{ debt.totalDebt | currency }} ({{ debt.unpaidCount }} {{ 'billing.unpaid_invoices_count' | translate }}).
+                </p>
+              </div>
+            </div>
+          }
+        }
       </div>
 
       <!-- Doctor Select -->

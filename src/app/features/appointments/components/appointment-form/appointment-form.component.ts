@@ -20,6 +20,7 @@ import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { WhatsappService } from '../../../../core/services/whatsapp.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
 
 @Component({
   selector: 'app-appointment-form',
@@ -45,10 +46,12 @@ export class AppointmentFormComponent implements OnInit {
   private toastr = inject(ToastrService);
   private langService = inject(LanguageService);
   private whatsappService = inject(WhatsappService);
+  private patientDebtService = inject(PatientDebtService);
 
   allPatients: Patient[] = [];
   allDoctors: Doctor[] = [];
   allAppointments: Appointment[] = [];
+  billingRecords: BillingRecord[] = [];
   
   filteredPatientsList = signal<Patient[]>([]);
   filteredDoctorsList = signal<Doctor[]>([]);
@@ -56,6 +59,9 @@ export class AppointmentFormComponent implements OnInit {
   showClinicSelector = signal(false);
   lockedDoctorLabel = signal('');
   submitting = false;
+
+  // BR-FIN-02 Outstanding Patient Debt Warning
+  selectedPatientDebt = signal<PatientDebtSummary | null>(null);
 
   form = this.fb.group({
     patientId: ['', Validators.required],
@@ -171,20 +177,26 @@ export class AppointmentFormComponent implements OnInit {
       this.updateTimeSlots();
     });
 
+    this.form.get('patientId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pid => {
+      this.updatePatientDebt(pid);
+    });
+
     if (this.embeddedMode) {
       this.form.get('patientId')?.clearValidators();
       this.form.get('patientId')?.updateValueAndValidity();
     }
 
     forkJoin({
-            patients: this.patientService.getAll(),
-            doctors: this.doctorService.getAll(),
-            appointments: this.appService.getAll()
-          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ patients, doctors, appointments }) => {
+      patients: this.patientService.getAll(),
+      doctors: this.doctorService.getAll(),
+      appointments: this.appService.getAll(),
+      billing: this.billingService.getAll()
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ patients, doctors, appointments, billing }) => {
         this.allPatients = patients;
         this.allDoctors = doctors;
         this.allAppointments = appointments;
+        this.billingRecords = billing || [];
 
         this.setupLockedDoctor(doctorId, doctors);
 
@@ -197,10 +209,22 @@ export class AppointmentFormComponent implements OnInit {
           this.patchFormForEdit(this.appointment);
         }
 
+        // Initialize debt check for the currently selected patient
+        this.updatePatientDebt(this.form.get('patientId')?.value);
+
         this.applyFilters();
         this.updateAvailableTypes();
       }
     });
+  }
+
+  updatePatientDebt(patientId: string | null | undefined): void {
+    if (!patientId || !this.billingRecords.length) {
+      this.selectedPatientDebt.set(null);
+      return;
+    }
+    const debt = this.patientDebtService.calculatePatientDebt(patientId, this.billingRecords);
+    this.selectedPatientDebt.set(debt.totalDebt > 0 ? debt : null);
   }
 
   private patchFormForEdit(appt: Appointment): void {
