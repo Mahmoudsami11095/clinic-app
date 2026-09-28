@@ -13,6 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AllergyConflictService, AllergyConflictResult } from '../../../../core/services/allergy-conflict.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { Patient } from '../../../patients/models/patient.model';
+import { PediatricSafetyService } from '../../../../core/services/pediatric-safety.service';
 
 @Component({
   selector: 'app-prescription-form',
@@ -71,6 +72,110 @@ import { Patient } from '../../../patients/models/patient.model';
           </span>
         </div>
       }
+
+      <!-- BR-RX-03: Pediatric Safety Dosing & Patient Vitals Section -->
+      <div class="border rounded-2xl p-4.5 transition-all shadow-sm"
+           [class.border-amber-300]="isPediatric"
+           [class.bg-amber-50/30]="isPediatric"
+           [class.border-slate-200/80]="!isPediatric"
+           [class.bg-slate-50/50]="!isPediatric">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-base flex-shrink-0"
+                 [class.bg-amber-500/20]="isPediatric"
+                 [class.text-amber-800]="isPediatric"
+                 [class.bg-slate-200/60]="!isPediatric"
+                 [class.text-slate-600]="!isPediatric">
+              <i class="pi pi-heart-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="text-sm font-bold text-slate-800">
+                  {{ (isPediatric ? 'prescriptions.pediatric_safety_title' : 'patients.vital_signs') | translate }}
+                </h4>
+                @if (isPediatric) {
+                  <span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-500 text-white rounded-md shadow-xs">
+                    <i class="pi pi-shield text-[9px]"></i>
+                    {{ 'prescriptions.pediatric_patient_badge' | translate }} ({{ patientAge }} y.o.)
+                  </span>
+                }
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                {{ (isPediatric ? 'prescriptions.pediatric_safety_desc' : 'prescriptions.patient_weight_optional_hint') | translate }}
+              </p>
+            </div>
+          </div>
+
+          @if (isPediatric) {
+            <span class="text-[11px] font-bold px-2.5 py-1 bg-amber-200/80 text-amber-900 border border-amber-300/80 rounded-lg flex items-center gap-1.5 self-start sm:self-auto flex-shrink-0">
+              <i class="pi pi-exclamation-triangle text-amber-700"></i>
+              BR-RX-03 Mandatory Prerequisite
+            </span>
+          }
+        </div>
+
+        <!-- Weight Input & Verification Display -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-3 mt-3 border-t border-slate-200/60">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+              <span>{{ 'prescriptions.patient_weight_label' | translate }}</span>
+              @if (isPediatric) {
+                <span class="text-rose-500 text-sm font-black">*</span>
+              }
+            </label>
+            <div class="relative rounded-xl">
+              <input
+                type="number"
+                step="0.1"
+                min="0.5"
+                max="250"
+                [(ngModel)]="patientWeightKg"
+                (ngModelChange)="onWeightChanged()"
+                name="patientWeightKg"
+                [disabled]="readOnly"
+                [placeholder]="'prescriptions.patient_weight_placeholder' | translate"
+                class="w-full bg-white border rounded-xl px-3.5 py-2 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all"
+                [class.border-rose-400]="isWeightInvalid"
+                [class.focus:ring-rose-500/20]="isWeightInvalid"
+                [class.border-amber-300]="isPediatric && !isWeightInvalid"
+                [class.focus:ring-amber-500/20]="isPediatric && !isWeightInvalid"
+                [class.border-slate-200]="!isPediatric && !isWeightInvalid"
+                [class.focus:ring-indigo-500/20]="!isPediatric && !isWeightInvalid"
+              />
+              <div class="absolute inset-y-0 end-0 pe-3 flex items-center pointer-events-none text-xs font-bold text-slate-400 uppercase">
+                {{ 'prescriptions.patient_weight_unit' | translate }}
+              </div>
+            </div>
+
+            <!-- Validation Feedback -->
+            @if (isWeightInvalid) {
+              <p class="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1 animate-fadeIn">
+                <i class="pi pi-times-circle text-[10px]"></i>
+                {{ 'prescriptions.patient_weight_required' | translate }}
+              </p>
+            } @else if (patientWeightKg && patientWeightKg > 0) {
+              <p class="text-[11px] font-semibold text-emerald-600 mt-1 flex items-center gap-1 animate-fadeIn">
+                <i class="pi pi-check-circle text-[10px]"></i>
+                {{ 'prescriptions.pediatric_weight_verified' | translate }}: {{ patientWeightKg }} kg
+              </p>
+            }
+          </div>
+
+          <!-- Dosage Calculation Safety Notice -->
+          @if (isPediatric && patientWeightKg && patientWeightKg > 0) {
+            <div class="sm:col-span-1 lg:col-span-2 bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-3 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-700 flex items-center justify-center font-bold flex-shrink-0">
+                <i class="pi pi-verified text-base"></i>
+              </div>
+              <div class="text-xs">
+                <p class="font-bold text-emerald-900">Pediatric Safety Dosing Verified ({{ patientWeightKg }} kg)</p>
+                <p class="text-emerald-700 text-[11px]">Weight-based dosing prerequisite (BR-RX-03) satisfied. Safe for child formulation verification (mg/kg/day).</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
 
       <!-- Medications Header & List -->
       <div class="space-y-4">
@@ -372,13 +477,37 @@ export class PrescriptionFormComponent implements OnInit {
   private prescriptionService = inject(PrescriptionService);
   private patientService = inject(PatientService);
   private allergyService = inject(AllergyConflictService);
+  private pediatricSafetyService = inject(PediatricSafetyService);
   private langService = inject(LanguageService);
   private toastr = inject(ToastrService);
 
   medications: MedicationItem[] = [];
   notes = '';
+  patientWeightKg: number | null = null;
+  weightInputTouched = false;
 
   isPrintModalOpen = signal(false);
+
+  // BR-RX-03 Pediatric Safety Dosing & Age Computations
+  get patientAge(): number | null {
+    const p = this._patientSignal();
+    return this.pediatricSafetyService.calculateAge(p?.dateOfBirth);
+  }
+
+  get isPediatric(): boolean {
+    const p = this._patientSignal();
+    return this.pediatricSafetyService.isPediatric(p?.dateOfBirth);
+  }
+
+  get isWeightInvalid(): boolean {
+    if (!this.weightInputTouched) return false;
+    const res = this.pediatricSafetyService.validatePediatricWeight(this.isPediatric, this.patientWeightKg);
+    return !res.valid;
+  }
+
+  onWeightChanged() {
+    this.weightInputTouched = true;
+  }
 
   // BR-RX-01 Conflict Interceptor State
   isOverrideModalOpen = signal(false);
@@ -413,7 +542,13 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   currentPrescriptionForPrint(): Prescription {
-    if (this.prescription) return this.prescription;
+    if (this.prescription) {
+      return {
+        ...this.prescription,
+        patientWeightKg: this.patientWeightKg ?? this.prescription.patientWeightKg,
+        isPediatric: this.isPediatric
+      };
+    }
     const validMeds = this.medications.filter(m => m.name && m.name.trim() !== '');
     return {
       id: 'RX-NEW',
@@ -422,7 +557,9 @@ export class PrescriptionFormComponent implements OnInit {
       doctorId: this.appointment?.doctorId || '',
       date: new Date().toISOString(),
       medications: validMeds.length > 0 ? validMeds : this.medications,
-      notes: this.notes
+      notes: this.notes,
+      patientWeightKg: this.patientWeightKg || undefined,
+      isPediatric: this.isPediatric
     };
   }
 
@@ -430,9 +567,15 @@ export class PrescriptionFormComponent implements OnInit {
     if (this.prescription) {
       this.medications = this.prescription.medications.map(m => ({ ...m }));
       this.notes = this.prescription.notes || '';
+      if (this.prescription.patientWeightKg) {
+        this.patientWeightKg = this.prescription.patientWeightKg;
+      } else {
+        this.patientWeightKg = this.pediatricSafetyService.extractWeightFromNotes(this.prescription.notes);
+      }
     } else {
       this.medications = [{ name: '', dosage: '', frequency: '', duration: '' }];
       this.notes = '';
+      this.patientWeightKg = null;
     }
 
     // Auto-fetch patient allergies if patient wasn't passed directly as @Input
@@ -509,6 +652,20 @@ export class PrescriptionFormComponent implements OnInit {
       return;
     }
 
+    // BR-RX-03: Mandatory Pediatric Safety Dosing Prerequisite (< 14 years)
+    this.weightInputTouched = true;
+    const weightValidation = this.pediatricSafetyService.validatePediatricWeight(
+      this.isPediatric,
+      this.patientWeightKg
+    );
+    if (!weightValidation.valid) {
+      this.toastr.error(
+        this.langService.translate('prescriptions.patient_weight_required'),
+        this.langService.translate('toast.error')
+      );
+      return;
+    }
+
     // BR-RX-01: Hard Allergy Conflict Interceptor
     const conflicts = this.allergyService.checkAllMedications(this.patientAllergiesStr(), validMeds);
     if (conflicts.length > 0 && !this.overrideApproved) {
@@ -522,6 +679,19 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   private proceedWithSave(validMeds: MedicationItem[]) {
+    // Append BR-RX-03 audit clause if pediatric patient
+    if (this.isPediatric && this.patientWeightKg) {
+      const doctorName = this.appointment?.doctorName || 'Attending Physician';
+      const auditClause = this.pediatricSafetyService.formatPediatricAuditClause(
+        this.patientWeightKg,
+        this.patientAge ?? 0,
+        doctorName
+      );
+      if (!this.notes.includes('[PEDIATRIC SAFETY DOSING - BR-RX-03]')) {
+        this.notes = (this.notes ? this.notes.trim() + '\n' : '') + auditClause;
+      }
+    }
+
     const newPrescription: Prescription = {
       id: this.prescription?.id || crypto.randomUUID(),
       appointmentId: this.appointment.id,
@@ -529,7 +699,9 @@ export class PrescriptionFormComponent implements OnInit {
       doctorId: this.appointment.doctorId,
       date: this.prescription?.date || new Date().toISOString(),
       medications: validMeds,
-      notes: this.notes
+      notes: this.notes,
+      patientWeightKg: this.patientWeightKg || undefined,
+      isPediatric: this.isPediatric
     };
 
     if (this.prescription) {

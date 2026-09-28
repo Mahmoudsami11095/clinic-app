@@ -424,6 +424,7 @@
     @if (selectedAppointmentForPrescription(); as appt) {
       <app-prescription-form
         [appointment]="appt"
+        [patient]="selectedPatientForPrescription()"
         [prescription]="selectedPrescription()"
         [readOnly]="isPrescriptionReadOnly()"
         (saved)="handlePrescriptionSaved($event)"

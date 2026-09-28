@@ -17,6 +17,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
 import { WhatsappService } from '../../../../core/services/whatsapp.service';
 import { PatientService } from '../../../patients/services/patient.service';
+import { Patient } from '../../../patients/models/patient.model';
 import { BillingService } from '../../../billing/services/billing.service';
 import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -56,6 +57,7 @@ export class AppointmentListComponent implements OnInit {
   // Prescription Modal State
   isPrescriptionModalOpen = signal(false);
   selectedAppointmentForPrescription = signal<AppointmentWithDetails | null>(null);
+  selectedPatientForPrescription = signal<Patient | null>(null);
   selectedPrescription = signal<Prescription | null>(null);
   isPrescriptionReadOnly = signal(false);
 
@@ -248,6 +250,12 @@ export class AppointmentListComponent implements OnInit {
     const pres = this.getPrescriptionForAppointment(appt.id);
     this.selectedPrescription.set(pres || null);
     this.isPrescriptionReadOnly.set(readOnly);
+    this.selectedPatientForPrescription.set(null);
+    if (appt.patientId) {
+      this.patientService.getById(appt.patientId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(p => {
+        if (p) this.selectedPatientForPrescription.set(p);
+      });
+    }
     this.isPrescriptionModalOpen.set(true);
   }
 
@@ -255,6 +263,7 @@ export class AppointmentListComponent implements OnInit {
     this.isPrescriptionModalOpen.set(false);
     this.selectedAppointmentForPrescription.set(null);
     this.selectedPrescription.set(null);
+    this.selectedPatientForPrescription.set(null);
   }
 
   handlePrescriptionSaved(pres: Prescription) {

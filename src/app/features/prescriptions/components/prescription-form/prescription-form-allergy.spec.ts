@@ -3,6 +3,7 @@ import { PrescriptionFormComponent } from './prescription-form.component';
 import { PrescriptionService } from '../../services/prescription.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { AllergyConflictService } from '../../../../core/services/allergy-conflict.service';
+import { PediatricSafetyService } from '../../../../core/services/pediatric-safety.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
 import { AppointmentWithDetails } from '../../../appointments/models/appointment.model';
@@ -85,6 +86,7 @@ describe('PrescriptionFormComponent - Allergy Conflict Interceptor (BR-RX-01)', 
       providers: [
         PrescriptionFormComponent,
         AllergyConflictService,
+        PediatricSafetyService,
         { provide: PrescriptionService, useValue: mockPrescriptionService },
         { provide: PatientService, useValue: mockPatientService },
         { provide: ToastrService, useValue: mockToastr },

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Prescription } from '../../models/prescription.model';
 import { AppointmentWithDetails } from '../../../appointments/models/appointment.model';
 import { ClinicService } from '../../../../core/services/clinic.service';
+import { PediatricSafetyService } from '../../../../core/services/pediatric-safety.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
@@ -128,14 +129,21 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                   <div>
                     <span class="text-slate-500 font-medium block text-[10px] uppercase tracking-wider">{{ 'appointments.patient_label' | translate }}</span>
                     <span class="font-bold text-slate-900 text-sm mt-0.5 block">{{ appointment.patientName }}</span>
+                    @if (isPediatric()) {
+                      <span class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded mt-1">
+                        <i class="pi pi-shield text-[8px]"></i> {{ 'prescriptions.pediatric_patient_badge' | translate }}
+                      </span>
+                    }
                   </div>
                   <div>
                     <span class="text-slate-500 font-medium block text-[10px] uppercase tracking-wider">File Number</span>
                     <span class="font-mono font-semibold text-slate-800 mt-0.5 block">{{ (prescription.patientId || appointment.patientId || 'PT-1001').substring(0, 8) }}</span>
                   </div>
                   <div>
-                    <span class="text-slate-500 font-medium block text-[10px] uppercase tracking-wider">{{ 'appointments.type_select' | translate }}</span>
-                    <span class="font-semibold text-slate-800 mt-0.5 block capitalize">{{ appointment.type }}</span>
+                    <span class="text-slate-500 font-medium block text-[10px] uppercase tracking-wider">{{ 'prescriptions.patient_weight_print_label' | translate }}</span>
+                    <span class="font-bold text-teal-800 mt-0.5 block">
+                      {{ getPrescriptionWeight() ? (getPrescriptionWeight() + ' kg') : 'N/A' }}
+                    </span>
                   </div>
                   <div>
                     <span class="text-slate-500 font-medium block text-[10px] uppercase tracking-wider">{{ 'appointments.date_time' | translate }}</span>
@@ -247,6 +255,16 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                     <span class="text-slate-500">Patient:</span>
                     <span class="font-bold truncate max-w-[170px]">{{ appointment.patientName }}</span>
                   </div>
+                  <div class="flex justify-between" *ngIf="getPrescriptionWeight()">
+                    <span class="text-slate-500">{{ 'prescriptions.patient_weight_print_label' | translate }}:</span>
+                    <span class="font-bold text-teal-800">{{ getPrescriptionWeight() }} kg</span>
+                  </div>
+                  @if (isPediatric()) {
+                    <div class="bg-amber-50 border border-amber-200/80 rounded px-1.5 py-0.5 text-[9px] font-bold text-amber-800 flex justify-between">
+                      <span>{{ 'prescriptions.pediatric_patient_badge' | translate }}</span>
+                      <span>{{ getPrescriptionWeight() ? (getPrescriptionWeight() + ' kg') : '' }}</span>
+                    </div>
+                  }
                   <div class="flex justify-between">
                     <span class="text-slate-500">Rx Ref:</span>
                     <span class="font-mono">#{{ formatId(prescription.id) }}</span>
@@ -350,11 +368,22 @@ export class PrescriptionPrintModalComponent {
   @Output() close = new EventEmitter<void>();
 
   private clinicService = inject(ClinicService);
+  private pediatricSafetyService = inject(PediatricSafetyService);
 
   printMode = signal<'a4' | 'thermal'>('a4');
 
   setMode(mode: 'a4' | 'thermal') {
     this.printMode.set(mode);
+  }
+
+  getPrescriptionWeight(): number | null {
+    if (this.prescription?.patientWeightKg) return this.prescription.patientWeightKg;
+    return this.pediatricSafetyService.extractWeightFromNotes(this.prescription?.notes);
+  }
+
+  isPediatric(): boolean {
+    if (this.prescription?.isPediatric !== undefined) return this.prescription.isPediatric;
+    return (this.prescription?.notes?.includes('[PEDIATRIC SAFETY DOSING - BR-RX-03]') ?? false);
   }
 
   clinicDetails = computed(() => {
