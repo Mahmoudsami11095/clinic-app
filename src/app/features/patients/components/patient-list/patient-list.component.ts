@@ -14,6 +14,8 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { BillingService } from '../../../billing/services/billing.service';
+import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
 
 @Component({
   selector: 'app-patient-list',
@@ -29,8 +31,11 @@ export class PatientListComponent implements OnInit {
   private router = inject(Router);
   private toastr = inject(ToastrService);
   private languageService = inject(LanguageService);
+  private billingService = inject(BillingService);
+  private patientDebtService = inject(PatientDebtService);
 
   patients = signal<Patient[]>([]);
+  debtMap = signal<Map<string, PatientDebtSummary>>(new Map());
   loading = signal(true);
   searchQuery = signal('');
   selectedGender = signal<string>('all');
@@ -71,6 +76,16 @@ export class PatientListComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+
+    this.billingService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (bills) => {
+        this.debtMap.set(this.patientDebtService.buildDebtMap(bills || []));
+      }
+    });
+  }
+
+  getPatientDebt(patientId: string): PatientDebtSummary | undefined {
+    return this.debtMap().get(patientId);
   }
 
   onSearch(event: Event) {

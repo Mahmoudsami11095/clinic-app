@@ -17,6 +17,8 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
 import { WhatsappService } from '../../../../core/services/whatsapp.service';
 import { PatientService } from '../../../patients/services/patient.service';
+import { BillingService } from '../../../billing/services/billing.service';
+import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
@@ -36,9 +38,12 @@ export class AppointmentListComponent implements OnInit {
   private router = inject(Router);
   private whatsappService = inject(WhatsappService);
   private patientService = inject(PatientService);
+  private billingService = inject(BillingService);
+  private patientDebtService = inject(PatientDebtService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
+  debtMap = signal<Map<string, PatientDebtSummary>>(new Map());
   loading = signal(true);
   
   // Filters
@@ -115,6 +120,16 @@ export class AppointmentListComponent implements OnInit {
         this.prescriptions.set(data);
       }
     });
+
+    this.billingService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (bills) => {
+        this.debtMap.set(this.patientDebtService.buildDebtMap(bills || []));
+      }
+    });
+  }
+
+  getPatientDebt(patientId: string): PatientDebtSummary | undefined {
+    return this.debtMap().get(patientId);
   }
 
   onSearch(event: Event) {

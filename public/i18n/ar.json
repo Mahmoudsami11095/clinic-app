@@ -422,7 +422,17 @@
     "total_amount": "المبلغ الإجمالي",
     "thank_you_visit": "شكراً لزيارتكم عيادتنا ونتمنى لكم دوام الصحة والعافية!",
     "digital_verification_notice": "إيصال ورقي معتمد وموثق رقمياً بالنظام.",
-    "signature_authorized": "التوقيع والختم المعتمد"
+    "signature_authorized": "التوقيع والختم المعتمد",
+    "outstanding_debt_alert": "تنبيه: مديونية مستحقة على المريض (BR-FIN-02)",
+    "outstanding_debt_warning": "يوجد رصيد مستحق غير مدفوع على هذا المريض",
+    "debt_pill": "مستحق",
+    "account_settled": "الحساب خالص (لا توجد مديونية)",
+    "financial_status": "الحالة المالية للمريض",
+    "unpaid_invoices": "فواتير غير مدفوعة",
+    "settle_balance": "عرض الفواتير والسداد",
+    "view_ledger": "سجل حساب المريض",
+    "unpaid_invoices_count": "فواتير غير مدفوعة",
+    "historical_debt_warning": "تنبيه: يوجد على هذا المريض رصيد غير مدفوع بقيمة {amount} عبر {count} فواتير."
   },
   "prescriptions": {
     "title": "الوصفات الطبية",

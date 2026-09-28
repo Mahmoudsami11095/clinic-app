@@ -25,6 +25,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { AllergyConflictService, AllergyConflictResult } from '../../../../core/services/allergy-conflict.service';
+import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
 
 export interface TreatmentTemplate {
   id: string;
@@ -67,8 +68,8 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
   imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent],
   template: `
     <div class="space-y-6">
-      <!-- Top Row: Summary Info Grid (3 Cards) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Top Row: Summary Info Grid (4 Cards - BR-FIN-02) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Card 1: Identity Card -->
         <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex items-center gap-4 text-start">
           <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xl uppercase shadow-inner flex-shrink-0">
@@ -136,6 +137,65 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
               <p class="font-semibold text-slate-700 mt-0.5">{{ patient.pastIllnesses || 'None' }}</p>
             </div>
           </div>
+        </div>
+
+        <!-- Card 4: Financial Status & Debt Warning (BR-FIN-02) -->
+        <div class="border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-start flex flex-col justify-between"
+             [ngClass]="patientDebt().totalDebt > 0
+               ? 'bg-rose-50/40 border-rose-200/90 shadow-rose-500/5'
+               : 'bg-white border-slate-200/60'">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-xs font-bold uppercase tracking-wider"
+                  [ngClass]="patientDebt().totalDebt > 0 ? 'text-rose-700' : 'text-slate-400'">
+                {{ 'billing.financial_status' | translate }}
+              </h4>
+              @if (patientDebt().totalDebt > 0) {
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-600 text-white shadow-xs">
+                  <i class="pi pi-exclamation-circle text-[9px]"></i>
+                  {{ 'billing.debt_pill' | translate }}
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <i class="pi pi-check text-[9px]"></i>
+                  Settled
+                </span>
+              }
+            </div>
+
+            @if (patientDebt().totalDebt > 0) {
+              <div class="space-y-1">
+                <p class="text-[10px] text-rose-600/80 font-semibold">{{ 'billing.total_due' | translate }}</p>
+                <p class="text-2xl font-black text-rose-700 tracking-tight">{{ patientDebt().totalDebt | currency }}</p>
+                <p class="text-xs text-rose-800 font-medium pt-1">
+                  {{ patientDebt().unpaidCount }} {{ 'billing.unpaid_invoices_count' | translate }}
+                </p>
+              </div>
+            } @else {
+              <div class="space-y-1">
+                <p class="text-[10px] text-slate-400 font-medium">{{ 'billing.account_settled' | translate }}</p>
+                <p class="text-sm font-bold text-slate-700 mt-1 flex items-center gap-1.5">
+                  <i class="pi pi-shield-check text-emerald-500 text-base"></i>
+                  Zero Outstanding
+                </p>
+                <p class="text-xs text-slate-400 pt-1">
+                  {{ billingRecords().length }} invoice(s) on file
+                </p>
+              </div>
+            }
+          </div>
+
+          <button
+            type="button"
+            (click)="setActiveTab('billing')"
+            class="mt-4 w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            [ngClass]="patientDebt().totalDebt > 0
+              ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20'
+              : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'"
+          >
+            <i class="pi pi-wallet text-xs"></i>
+            <span>{{ (patientDebt().totalDebt > 0 ? 'billing.settle_balance' : 'billing.view_ledger') | translate }}</span>
+          </button>
         </div>
       </div>
 
@@ -1632,6 +1692,7 @@ export class PatientHistoryComponent implements OnInit {
   private langService = inject(LanguageService);
   private materialsService = inject(MaterialsService);
   private allergyService = inject(AllergyConflictService);
+  private patientDebtService = inject(PatientDebtService);
 
   today = new Date();
   activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
@@ -1745,6 +1806,10 @@ export class PatientHistoryComponent implements OnInit {
     const med = this.medication();
     if (!med || !med.trim() || !this.patient?.allergies) return null;
     return this.allergyService.checkMedication(this.patient.allergies, med);
+  });
+
+  patientDebt = computed<PatientDebtSummary>(() => {
+    return this.patientDebtService.calculatePatientDebt(this.patient.id, this.billingRecords());
   });
 
   readonly statusOptions = [
