@@ -119,4 +119,11 @@ describe('InventoryListComponent', () => {
     component.searchTerm = 'Pouches'; // Pouches is low stock, not healthy
     expect(component.filteredMaterials.length).toBe(0);
   });
+
+  it('should accept activeFilter change to "low" and correctly filter low-stock items', () => {
+    component.setFilter('low');
+    expect(component.activeFilter).toBe('low');
+    expect(component.filteredMaterials.length).toBe(2);
+    expect(component.filteredMaterials.every(m => component.isLowStock(m))).toBeTrue();
+  });
 });

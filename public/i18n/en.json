@@ -146,7 +146,13 @@
     "status": "Status",
     "scheduled": "scheduled",
     "completed": "completed",
-    "cancelled": "cancelled"
+    "cancelled": "cancelled",
+    "low_stock_badge": "Low Stock Warning",
+    "low_stock_alert_title": "Critical Low-Stock Reorder Alert",
+    "low_stock_alert_desc": "Inventory items have reached or fallen below minimum safe stock thresholds. Immediate replenishment is recommended.",
+    "reorder_inventory": "Reorder / View Inventory",
+    "more_items": "more items",
+    "critical_stock": "Critical Stock"
   },
   "patients": {
     "title": "Patients",

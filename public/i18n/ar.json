@@ -146,7 +146,13 @@
     "status": "الحالة",
     "scheduled": "مجدول",
     "completed": "مكتمل",
-    "cancelled": "ملغي"
+    "cancelled": "ملغي",
+    "low_stock_badge": "تنبيه نقص المخزون",
+    "low_stock_alert_title": "تنبيه حرج لإعادة طلب الأصناف المنخفضة",
+    "low_stock_alert_desc": "وصلت بعض أصناف المخزون إلى الحد الأدنى لإعادة الطلب أو قلّت عنه. يُوصى بسرعة إعادة التوريد.",
+    "reorder_inventory": "إعادة الطلب / مراجعة المخزون",
+    "more_items": "أصناف أخرى",
+    "critical_stock": "مخزون حرج"
   },
   "patients": {
     "title": "المرضى",

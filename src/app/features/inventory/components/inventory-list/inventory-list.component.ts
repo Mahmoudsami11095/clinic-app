@@ -9,6 +9,8 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { InventoryFormComponent } from '../inventory-form/inventory-form.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
+import { ActivatedRoute } from '@angular/router';
+
 @Component({
   selector: 'app-inventory-list',
   standalone: true,
@@ -17,7 +19,8 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
   styleUrls: ['./inventory-list.component.scss']
 })
 export class InventoryListComponent implements OnInit {
-    private destroyRef = inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
+  private route = inject(ActivatedRoute, { optional: true });
   materials: Material[] = [];
   doctorId: string = '';
   activeClinicId: string = 'all';
@@ -108,6 +111,15 @@ export class InventoryListComponent implements OnInit {
       this.error = 'Unassigned Account. You must be assigned to at least one clinic to access this data.';
       this.loading = false;
       return;
+    }
+
+    if (this.route) {
+      this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+        const filter = params['filter'];
+        if (filter && ['all', 'low', 'out', 'healthy'].includes(filter)) {
+          this.activeFilter = filter as 'all' | 'low' | 'out' | 'healthy';
+        }
+      });
     }
 
     if (this.doctorId) {
