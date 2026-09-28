@@ -11,6 +11,7 @@ import { PrescriptionPrintModalComponent } from '../../../prescriptions/componen
 import { InvoicePrintModalComponent } from '../../../billing/components/invoice-print-modal/invoice-print-modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalService, DentalLog, ToothStatus, ConsumedMaterial } from '../../../../core/services/dental.service';
+import { DentalNotationService } from '../../../../core/services/dental-notation.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
@@ -625,8 +626,30 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                       class="px-2.5 py-1 text-xs font-bold rounded-lg border"
                       [class]="isChild() ? 'bg-cyan-50 text-cyan-600 border-cyan-200/60' : 'bg-indigo-50 text-indigo-600 border-indigo-200/60'"
                     >
-                      {{ isChild() ? 'CHILD CHART (A - T)' : 'ADULT CHART (1 - 32)' }}
+                      {{ isChild() ? (notationService.notation() === 'UNIVERSAL' ? 'CHILD CHART (A - T)' : 'CHILD CHART (51 - 85)') : (notationService.notation() === 'UNIVERSAL' ? 'ADULT CHART (1 - 32)' : 'ADULT CHART (11 - 48)') }}
                     </span>
+
+                    <!-- Dual Notation Standard Switcher (BR-DEN-01) -->
+                    <div class="inline-flex p-0.5 bg-slate-100 rounded-lg border border-slate-200/60 text-xs font-semibold">
+                      <button
+                        type="button"
+                        (click)="notationService.setNotation('FDI')"
+                        class="px-2.5 py-1 rounded-md transition-all duration-200 cursor-pointer border-none"
+                        [class]="notationService.notation() === 'FDI' ? 'bg-white text-indigo-700 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 bg-transparent'"
+                        title="{{ 'dental_chart.fdi_system_label' | translate }}"
+                      >
+                        {{ 'dental_chart.notation_fdi_short' | translate }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="notationService.setNotation('UNIVERSAL')"
+                        class="px-2.5 py-1 rounded-md transition-all duration-200 cursor-pointer border-none"
+                        [class]="notationService.notation() === 'UNIVERSAL' ? 'bg-white text-indigo-700 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 bg-transparent'"
+                        title="{{ 'dental_chart.universal_system_label' | translate }}"
+                      >
+                        {{ 'dental_chart.notation_universal_short' | translate }}
+                      </button>
+                    </div>
                   </div>
                   
                   <!-- Status Legend -->
@@ -734,9 +757,9 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                               type="button"
                               (click)="selectTooth(toothNum)"
                               [class]="getToothClasses(toothNum)"
-                              [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
+                              [title]="('dental.tooth' | translate) + ' ' + formatToothNumber(toothNum) + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
                             >
-                              <span class="text-[10px] leading-none opacity-60 mt-0.5">{{ toothNum }}</span>
+                              <span class="text-[10px] leading-none opacity-60 mt-0.5">{{ formatToothNumber(toothNum) }}</span>
                               <span class="w-8 h-8 flex items-center justify-center">
                                 <svg class="w-8 h-8 mx-auto" viewBox="0 0 40 40">
                                   @if (getToothLatestStatus(toothNum) === 'missing') {
@@ -824,7 +847,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                               type="button"
                               (click)="selectTooth(toothNum)"
                               [class]="getToothClasses(toothNum)"
-                              [title]="('dental.tooth' | translate) + ' ' + toothNum + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
+                              [title]="('dental.tooth' | translate) + ' ' + formatToothNumber(toothNum) + ' - ' + ('dental.' + getToothLatestStatus(toothNum) | translate)"
                             >
                               <span class="w-8 h-8 flex items-center justify-center">
                                 <svg class="w-8 h-8 mx-auto rotate-180" viewBox="0 0 40 40">
@@ -893,7 +916,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                                   }
                                 </svg>
                               </span>
-                              <span class="text-[10px] leading-none opacity-60 mb-0.5">{{ toothNum }}</span>
+                              <span class="text-[10px] leading-none opacity-60 mb-0.5">{{ formatToothNumber(toothNum) }}</span>
                             </button>
                           }
                         </div>
@@ -953,7 +976,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                         class="p-3 border border-slate-100 rounded-xl hover:border-indigo-500 hover:shadow-sm cursor-pointer transition-all flex items-start gap-3 bg-slate-50/50"
                       >
                         <div [class]="getBadgeClasses(item.status)" class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0">
-                          #{{ item.toothNumber }}
+                          #{{ formatToothNumber(item.toothNumber) }}
                         </div>
                         <div class="flex-1 min-w-0">
                           <div class="flex justify-between items-center gap-1.5">
@@ -1096,7 +1119,10 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                   <!-- Tooth History & Info -->
                   <div class="space-y-4">
                     <div>
-                      <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">History for Tooth #{{ selectedTooth() }}</h5>
+                      <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        History for Tooth #{{ formatToothNumber(selectedTooth()!) }}
+                        <span class="text-[10px] font-normal text-slate-500 ms-1">({{ notationService.getDualDisplay(selectedTooth()!) }})</span>
+                      </h5>
                       <div class="flex flex-wrap gap-1 items-center mb-3">
                         <span class="text-xs font-medium text-slate-500">Status:</span>
                         @for (st of getToothLatestStatuses(selectedTooth()!); track st) {
@@ -1588,7 +1614,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                     <table class="min-w-full divide-y divide-slate-200 text-start text-xs">
                       <thead class="bg-slate-100">
                         <tr>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Tooth #</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Tooth ({{ notationService.notation() }})</th>
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Anatomical Tooth</th>
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Diagnostic Status</th>
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Planned Procedure</th>
@@ -1599,7 +1625,10 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                       <tbody class="divide-y divide-slate-100 bg-white">
                         @for (log of getAllPlannedTreatments(); track log.id) {
                           <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 font-mono font-bold text-indigo-700">#{{ log.toothNumber }}</td>
+                            <td class="px-4 py-3 font-mono font-bold text-indigo-700">
+                              #{{ formatToothNumber(log.toothNumber) }}
+                              <span class="text-[10px] text-slate-400 block font-normal">({{ notationService.getDualDisplay(log.toothNumber) }})</span>
+                            </td>
                             <td class="px-4 py-3 font-medium text-slate-800">{{ getToothAnatomicalName(log.toothNumber) }}</td>
                             <td class="px-4 py-3">
                               <div class="flex flex-wrap gap-1">
@@ -1693,6 +1722,7 @@ export class PatientHistoryComponent implements OnInit {
   private materialsService = inject(MaterialsService);
   private allergyService = inject(AllergyConflictService);
   private patientDebtService = inject(PatientDebtService);
+  public notationService = inject(DentalNotationService);
 
   today = new Date();
   activeTab = signal<'future-visits' | 'past-visits' | 'prescriptions' | 'billing'>('future-visits');
@@ -2064,6 +2094,10 @@ export class PatientHistoryComponent implements OnInit {
       ? ['85', '84', '83', '82', '81', '71', '72', '73', '74', '75']
       : ['48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38'];
   });
+
+  formatToothNumber(toothNum: string | number): string {
+    return this.notationService.formatToothNumber(toothNum);
+  }
 
   // Map to speed up looking up the latest actual (completed) dental log per tooth
   toothLatestLogs = computed(() => {

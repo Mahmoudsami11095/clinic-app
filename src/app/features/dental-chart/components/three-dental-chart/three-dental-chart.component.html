@@ -87,7 +87,7 @@
         <!-- Panel Header -->
         <div class="panel-header">
           <div class="title-area">
-            <h2>{{ 'dental.tooth' | translate }} #{{ record.toothNumber }}</h2>
+            <h2>{{ 'dental.tooth' | translate }} #{{ formatToothNumber(record.toothNumber) }}</h2>
             <p>{{ record.toothName }}</p>
           </div>
           <button class="close-btn" (click)="resetView()" title="Close Inspector">
@@ -101,15 +101,37 @@
           <!-- Interactive Diagnosis Form -->
           <form (submit)="saveToothLog(); $event.preventDefault()">
             
-            <!-- FDI Mapping Block -->
+            <!-- FDI / Universal Dual Mapping Block (BR-DEN-01) -->
             <div class="metadata-grid card-block" style="margin-bottom: 1rem;">
-              <div class="meta-field">
-                <span>FDI System Notation</span>
-                <span>#{{ record.toothNumber }}</span>
+              <div 
+                class="meta-field" 
+                [style.background]="notationService.notation() === 'FDI' ? 'rgba(99, 102, 241, 0.15)' : null"
+                [style.border-color]="notationService.notation() === 'FDI' ? 'rgba(99, 102, 241, 0.4)' : null"
+                (click)="notationService.setNotation('FDI')" 
+                style="cursor: pointer;"
+                [title]="'dental.notation_fdi' | translate">
+                <span class="flex items-center gap-1 font-semibold">
+                  FDI System
+                  @if (notationService.notation() === 'FDI') {
+                    <i class="pi pi-check text-xs text-indigo-400"></i>
+                  }
+                </span>
+                <span class="font-bold">#{{ record.toothNumber }}</span>
               </div>
-              <div class="meta-field">
-                <span>Universal System</span>
-                <span>#{{ record.universalNumber }}</span>
+              <div 
+                class="meta-field" 
+                [style.background]="notationService.notation() === 'UNIVERSAL' ? 'rgba(99, 102, 241, 0.15)' : null"
+                [style.border-color]="notationService.notation() === 'UNIVERSAL' ? 'rgba(99, 102, 241, 0.4)' : null"
+                (click)="notationService.setNotation('UNIVERSAL')" 
+                style="cursor: pointer;"
+                [title]="'dental.notation_universal' | translate">
+                <span class="flex items-center gap-1 font-semibold">
+                  Universal System
+                  @if (notationService.notation() === 'UNIVERSAL') {
+                    <i class="pi pi-check text-xs text-indigo-400"></i>
+                  }
+                </span>
+                <span class="font-bold">#{{ record.universalNumber }}</span>
               </div>
             </div>
 

@@ -150,7 +150,7 @@
                 [attr.data-status]="getDominantStatus(status)"
                 [class.selected]="selectedToothNum() === num"
                 (click)="selectTooth(num)">
-                <span class="tooth-number">{{ num }}</span>
+                <span class="tooth-number">{{ formatToothNumber(num) }}</span>
                 <span class="tooth-svg-wrap">
                   <svg viewBox="0 0 40 40">
                     @if (status.includes('missing')) {
@@ -258,7 +258,7 @@
                     }
                   </svg>
                 </span>
-                <span class="tooth-number">{{ num }}</span>
+                <span class="tooth-number">{{ formatToothNumber(num) }}</span>
               </button>
             }
           </div>
@@ -469,13 +469,23 @@
       @if (selectedToothNum(); as num) {
         <div id="details-form-container">
           <div class="card-header" style="margin-bottom: 1.25rem;">
-            <div class="card-title">
-              <span style="color: #818cf8; font-weight: 800; font-family: 'Fira Code', monospace;">
-                {{ 'dental.tooth' | translate }} #{{ num }}
-              </span>
-              <span style="font-size: 0.75rem; color: #64748b; font-weight: 500; margin-left: 0.5rem; text-transform: uppercase;">
-                {{ getToothType(num) }}
-              </span>
+            <div>
+              <div class="card-title">
+                <span style="color: #818cf8; font-weight: 800; font-family: 'Fira Code', monospace; font-size: 1.1rem;">
+                  {{ 'dental.tooth' | translate }} #{{ formatToothNumber(num) }}
+                </span>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 500; margin-left: 0.5rem; text-transform: uppercase;">
+                  {{ getToothType(num) }}
+                </span>
+              </div>
+              <div class="dual-notation-badges" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.35rem;">
+                <span style="font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 0.4rem; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">
+                  {{ notationService.notation() }}: #{{ formatToothNumber(num) }}
+                </span>
+                <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 600;">
+                  {{ notationService.notation() === 'FDI' ? 'Universal: #' + notationService.toUniversal(num) : 'FDI: #' + num }}
+                </span>
+              </div>
             </div>
           </div>
 

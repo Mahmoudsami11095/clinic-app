@@ -25,6 +25,7 @@ import { gsap } from 'gsap';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalDataService, EndodonticRecord } from '../../services/dental-data.service';
 import { ToothStatus } from '../../../../core/services/dental.service';
+import { DentalNotationService } from '../../../../core/services/dental-notation.service';
 
 interface HistoricalLog {
   id: number;
@@ -42,10 +43,15 @@ interface HistoricalLog {
   styleUrl: './three-dental-chart.component.css'
 })
 export class ThreeDentalChartComponent implements OnInit, AfterViewInit, OnDestroy {
-    private destroyRef = inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
   @ViewChild('canvasContainer', { static: true }) canvasContainer!: ElementRef<HTMLDivElement>;
 
   private dentalDataService = inject(DentalDataService);
+  public notationService = inject(DentalNotationService);
+
+  formatToothNumber(fdi: string | number): string {
+    return this.notationService.formatToothNumber(fdi);
+  }
 
   @Input() set dentition(val: 'adult' | 'child') {
     this._dentition.set(val);
