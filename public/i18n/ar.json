@@ -477,7 +477,19 @@
     "reason_tolerated": "تحمل المريض هذا الدواء سابقاً دون أي مضاعفات",
     "cancel_change": "إلغاء وتعديل الأدوية",
     "confirm_override": "تأكيد وتوثيق التجاوز السريري",
-    "justification_required": "يرجى كتابة تبرير سريري صالح (٥ أحرف على الأقل) لتجاوز تنبيه الحساسية."
+    "justification_required": "يرجى كتابة تبرير سريري صالح (٥ أحرف على الأقل) لتجاوز تنبيه الحساسية.",
+    "pediatric_patient_badge": "مريض أطفال (أقل من ١٤ سنة)",
+    "pediatric_safety_title": "اشتراط أمان الجرعات للأطفال (BR-RX-03)",
+    "pediatric_safety_desc": "للمرضى الأقل من ١٤ عاماً، يُلزم النظام الطبيب بتسجيل وزن الجسم الحالي للتحقق من سلامة حساب الجرعات الدوائية.",
+    "patient_weight_label": "وزن الجسم الحالي (كجم)",
+    "patient_weight_required": "تسجيل وزن جسم المريض (كجم) إلزامي للأطفال دون سن ١٤ عاماً قبل إصدار الوصفة (BR-RX-03).",
+    "patient_weight_optional_hint": "يتم تسجيله للتوثيق السريري وحساب الجرعات",
+    "patient_weight_placeholder": "مثال: ٢٤.٥",
+    "patient_weight_unit": "كجم",
+    "pediatric_weight_verified": "تم تسجيل الوزن: {weight} كجم — فحص أمان الجرعات مفعّل",
+    "pediatric_weight_atypical": "وزن الجسم المسجل ({weight} كجم) غير معتاد بالنسبة لعمر المريض. يرجى التحقق.",
+    "pediatric_rx_print_badge": "طفل (العمر: {age} سنة • الوزن: {weight} كجم)",
+    "patient_weight_print_label": "الوزن"
   },
   "clinics": {
     "title": "العيادات",

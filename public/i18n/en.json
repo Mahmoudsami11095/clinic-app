@@ -477,7 +477,19 @@
     "reason_tolerated": "Patient previously tolerated this agent safely",
     "cancel_change": "Cancel & Modify Medications",
     "confirm_override": "Confirm & Document Clinical Override",
-    "justification_required": "Please provide a valid clinical justification (min. 5 characters) to override this allergy alert."
+    "justification_required": "Please provide a valid clinical justification (min. 5 characters) to override this allergy alert.",
+    "pediatric_patient_badge": "Pediatric Patient (Under 14)",
+    "pediatric_safety_title": "Pediatric Safety Dosing Prerequisite (BR-RX-03)",
+    "pediatric_safety_desc": "For patients under 14 years, recording current body weight is mandatory to ensure accurate pediatric dosage verification.",
+    "patient_weight_label": "Current Body Weight (kg)",
+    "patient_weight_required": "Current Body Weight (kg) is mandatory for patients under 14 years before prescribing (BR-RX-03).",
+    "patient_weight_optional_hint": "Recorded for clinical record and dosage calculations",
+    "patient_weight_placeholder": "e.g. 24.5",
+    "patient_weight_unit": "kg",
+    "pediatric_weight_verified": "Weight recorded: {weight} kg — Dosing safety check active",
+    "pediatric_weight_atypical": "Recorded body weight ({weight} kg) is atypical for patient age. Please verify.",
+    "pediatric_rx_print_badge": "Pediatric (Age: {age} yrs • Wt: {weight} kg)",
+    "patient_weight_print_label": "Body Weight"
   },
   "clinics": {
     "title": "Clinics",
