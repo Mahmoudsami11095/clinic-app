@@ -1,11 +1,13 @@
-import { Component, OnInit, inject, signal, effect, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DashboardService, DashboardStats, RecentAppointment, DashboardAnalytics } from './services/dashboard.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ClinicService } from '../../core/services/clinic.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ChartModule } from 'primeng/chart';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Material } from '../inventory/models/material.model';
 
 export interface StatCard {
   key: keyof DashboardStats;
@@ -16,12 +18,12 @@ export interface StatCard {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, TranslatePipe, ChartModule],
+  imports: [CommonModule, RouterLink, TranslatePipe, ChartModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class Dashboard implements OnInit {
-    private destroyRef = inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private clinicService = inject(ClinicService);
@@ -29,7 +31,15 @@ export class Dashboard implements OnInit {
   stats = signal<DashboardStats | null>(null);
   recentAppointments = signal<RecentAppointment[]>([]);
   analytics = signal<DashboardAnalytics | null>(null);
+  lowStockMaterials = signal<Material[]>([]);
+  dismissedLowStockAlert = signal(false);
   loading = signal(true);
+
+  canViewInventoryAlert = computed(() => {
+    return this.authService.isDoctor() || this.authService.isAssistant() || this.authService.isAdmin();
+  });
+
+  lowStockCount = computed(() => this.lowStockMaterials().length);
 
   statCards: StatCard[] = [];
   isDoctor = false;
@@ -76,16 +86,25 @@ export class Dashboard implements OnInit {
   loadDashboardData() {
     this.loading.set(true);
     this.dashboardService.getDashboardData().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ stats, recentAppointments, analytics }) => {
+      next: ({ stats, recentAppointments, analytics, lowStockMaterials }) => {
         this.stats.set(stats);
         this.recentAppointments.set(recentAppointments);
         this.analytics.set(analytics);
+        this.lowStockMaterials.set(lowStockMaterials || []);
         this.setupCharts(analytics);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
       complete: () => this.loading.set(false)
     });
+  }
+
+  dismissLowStock() {
+    this.dismissedLowStockAlert.set(true);
+  }
+
+  isOutOfStock(material: Material): boolean {
+    return material.quantity <= 0;
   }
 
   setupCharts(analytics: DashboardAnalytics) {

@@ -8,6 +8,7 @@ import { Doctor } from '../../doctors/models/doctor.model';
 import { Appointment } from '../../appointments/models/appointment.model';
 import { BillingRecord } from '../../billing/models/billing.model';
 import { RadiologyRecord } from '../../radiology/services/radiology.service';
+import { Material } from '../../inventory/models/material.model';
 
 export interface DashboardStats {
   totalPatients: number;
@@ -59,8 +60,11 @@ export class DashboardService {
       radiology: this.http.get<{ data: RadiologyRecord[] }>('/api/Radiology/records').pipe(
         catchError(() => of({ data: [] }))
       ),
+      lowStockMaterials: this.http.get<{ data: Material[] }>('/api/materials/low-stock').pipe(
+        catchError(() => of({ data: [] }))
+      ),
     }).pipe(
-      map(({ patients, appointments, doctors, billing, radiology }) => {
+      map(({ patients, appointments, doctors, billing, radiology, lowStockMaterials }) => {
         const doctorId = this.authService.isDoctor() ? this.authService.currentDoctorId() : undefined;
         
         let patientsList = patients.data;
@@ -70,11 +74,13 @@ export class DashboardService {
         let radList = radiology.data || [];
 
         // 1. Filter by Active Clinic (skipped for doctors — they see all assigned clinics)
+        let lowStockList = lowStockMaterials.data || [];
         if (this.clinicService.shouldFilterByActiveClinic() && activeClinicId !== 'all') {
           patientsList = patientsList.filter(p => p.clinicId === activeClinicId);
           doctorsList = doctorsList.filter(d => d.clinicIds?.includes(activeClinicId));
           apptsList = apptsList.filter(a => a.clinicId === activeClinicId);
           billsList = billsList.filter(b => b.clinicId === activeClinicId);
+          lowStockList = lowStockList.filter(m => !m.clinicId || m.clinicId === activeClinicId);
         }
 
         // 2. Filter by Doctor if logged in as doctor
@@ -89,6 +95,7 @@ export class DashboardService {
             return appointments.data.some(a => a.patientId === b.patientId && a.doctorId === doctorId);
           });
           radList = radList.filter(r => r.doctorId === doctorId);
+          lowStockList = lowStockList.filter(m => !m.doctorId || m.doctorId === doctorId);
         }
 
         const uniquePatientIds = new Set(apptsList.map(a => a.patientId));
@@ -192,7 +199,7 @@ export class DashboardService {
           profit: profitData
         };
 
-        return { stats, recentAppointments, analytics };
+        return { stats, recentAppointments, analytics, lowStockMaterials: lowStockList };
       })
     );
   }

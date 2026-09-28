@@ -7,6 +7,77 @@
     <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'dashboard.welcome' | translate }}</p>
   </div>
 
+  <!-- BR-INV-02: Low-Stock Threshold Trigger Alert Banner -->
+  @if (!loading() && canViewInventoryAlert() && lowStockCount() > 0 && !dismissedLowStockAlert()) {
+    <div class="relative overflow-hidden rounded-2xl border border-amber-300 dark:border-amber-600/40 bg-gradient-to-r from-amber-50 via-orange-50/60 to-amber-50/30 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-slate-900/40 p-5 sm:p-6 shadow-sm shadow-amber-500/5 transition-all">
+      <!-- Ambient background glow decoration -->
+      <div class="absolute -end-12 -top-12 w-48 h-48 rounded-full bg-amber-400/15 dark:bg-amber-500/10 blur-2xl pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Alert Info -->
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+            <i class="pi pi-exclamation-triangle text-2xl animate-pulse"></i>
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500 text-white shadow-sm">
+                {{ 'dashboard.low_stock_badge' | translate }}
+              </span>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
+                {{ 'dashboard.low_stock_alert_title' | translate }} ({{ lowStockCount() }})
+              </h2>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+              {{ 'dashboard.low_stock_alert_desc' | translate }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2.5 self-start md:self-center shrink-0">
+          <a [routerLink]="['/inventory']"
+             [queryParams]="{ filter: 'low' }"
+             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-md shadow-amber-600/20 transition-all cursor-pointer">
+            <i class="pi pi-box"></i>
+            <span>{{ 'dashboard.reorder_inventory' | translate }}</span>
+          </a>
+          <button (click)="dismissLowStock()"
+                  [title]="'common.close' | translate"
+                  class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white/80 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-all cursor-pointer">
+            <i class="pi pi-times text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick preview of top critical items -->
+      <div class="mt-4 pt-3.5 border-t border-amber-200/60 dark:border-amber-700/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+        @for (item of lowStockMaterials().slice(0, 4); track item.id || item.name) {
+          <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-white/70 dark:bg-slate-850/70 border border-amber-200/50 dark:border-amber-700/20 text-xs">
+            <div class="flex items-center gap-2 truncate">
+              <span class="w-2 h-2 rounded-full" [ngClass]="isOutOfStock(item) ? 'bg-rose-500' : 'bg-amber-500'"></span>
+              <span class="font-medium text-slate-800 dark:text-slate-200 truncate">{{ item.name }}</span>
+            </div>
+            <div class="shrink-0 flex items-center gap-1.5 ms-2 font-mono">
+              <span class="font-bold" [ngClass]="isOutOfStock(item) ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'">
+                {{ item.quantity }}
+              </span>
+              <span class="text-slate-400">/</span>
+              <span class="text-slate-500 dark:text-slate-400">{{ item.minStockAlert ?? 5 }} {{ item.unit || '' }}</span>
+            </div>
+          </div>
+        }
+        @if (lowStockMaterials().length > 4) {
+          <a [routerLink]="['/inventory']"
+             [queryParams]="{ filter: 'low' }"
+             class="flex items-center justify-center px-3 py-2 rounded-lg bg-amber-100/50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 text-xs font-semibold text-amber-800 dark:text-amber-300 transition-colors">
+            +{{ lowStockMaterials().length - 4 }} {{ 'dashboard.more_items' | translate }}
+          </a>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Stat Cards Grid -->
   @if (loading()) {
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
