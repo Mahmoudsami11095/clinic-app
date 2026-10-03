@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, inject, DestroyRef, signal } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, inject, DestroyRef, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { BillingService } from '../../services/billing.service';
@@ -54,6 +54,22 @@ export class BillingFormComponent implements OnInit {
   selectedAuthorizerId = signal('');
   enteredPin = signal('');
   pinErrorMessage = signal('');
+
+  // REQ-BIL-02: Multi-Method & Split Payments State
+  isSplitPayment = signal<boolean>(false);
+  splitPayments = signal<Array<{ amount: number; paymentMethod: string }>>([
+    { amount: 0, paymentMethod: 'Cash' },
+    { amount: 0, paymentMethod: 'Credit Card' }
+  ]);
+
+  totalSplitPaid = computed(() => {
+    return this.splitPayments().reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  });
+
+  splitRemainingBalance = computed(() => {
+    const net = Number(this.form.get('amount')?.value) || 0;
+    return Math.max(0, net - this.totalSplitPaid());
+  });
 
   readonly statusOptions = ['paid', 'partially_paid', 'pending', 'overdue'];
   readonly paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
@@ -248,6 +264,36 @@ export class BillingFormComponent implements OnInit {
     this.isAuthorizationRequired.set(false);
   }
 
+  // REQ-BIL-02: Split Payment Control Methods
+  toggleSplitPayment(): void {
+    this.isSplitPayment.update(v => !v);
+    if (this.isSplitPayment()) {
+      const net = Number(this.form.get('amount')?.value) || 0;
+      this.splitPayments.set([
+        { amount: net > 0 ? net : 0, paymentMethod: 'Cash' },
+        { amount: 0, paymentMethod: 'Credit Card' }
+      ]);
+    }
+  }
+
+  addSplitLine(): void {
+    this.splitPayments.update(list => [...list, { amount: 0, paymentMethod: 'Insurance' }]);
+  }
+
+  removeSplitLine(index: number): void {
+    if (this.splitPayments().length <= 1) return;
+    this.splitPayments.update(list => list.filter((_, i) => i !== index));
+  }
+
+  updateSplitAmount(index: number, val: any): void {
+    const num = Number(val) || 0;
+    this.splitPayments.update(list => list.map((item, i) => i === index ? { ...item, amount: num } : item));
+  }
+
+  updateSplitMethod(index: number, method: string): void {
+    this.splitPayments.update(list => list.map((item, i) => i === index ? { ...item, paymentMethod: method } : item));
+  }
+
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -259,7 +305,7 @@ export class BillingFormComponent implements OnInit {
     const discountPercentage = Number(formValue.discountPercentage) || 0;
     const discountAmount = Number(formValue.discountAmount) || 0;
     const amount = Number(formValue.amount) || (subtotal - discountAmount);
-    const status = formValue.status!;
+    let status = formValue.status!;
 
     // Enforce BR-FIN-01: Discounts exceeding 10% must have PIN authorization
     const userRole = this.authService.currentUser()?.role;
@@ -280,10 +326,37 @@ export class BillingFormComponent implements OnInit {
     this.submitting = true;
 
     let paidAmount = 0;
-    if (status === 'paid') {
-      paidAmount = amount;
-    } else if (status === 'partially_paid') {
-      paidAmount = Number(formValue.paidAmount);
+    let paymentMethod = formValue.paymentMethod || null;
+    let paymentsList: any[] = [];
+    const isoDate = new Date(formValue.dateIssued!).toISOString();
+
+    if (this.isSplitPayment()) {
+      paymentsList = this.splitPayments()
+        .filter(p => Number(p.amount) > 0)
+        .map(p => ({
+          amount: Number(p.amount),
+          date: isoDate,
+          paymentMethod: p.paymentMethod
+        }));
+      paidAmount = paymentsList.reduce((sum, p) => sum + p.amount, 0);
+      paymentMethod = paymentsList.length > 1 ? 'Split Payment' : (paymentsList[0]?.paymentMethod || 'Cash');
+      status = paidAmount >= amount ? 'paid' : (paidAmount > 0 ? 'partially_paid' : 'pending');
+    } else {
+      if (status === 'paid') {
+        paidAmount = amount;
+        paymentsList = [{
+          amount: paidAmount,
+          date: isoDate,
+          paymentMethod: paymentMethod || 'Cash'
+        }];
+      } else if (status === 'partially_paid') {
+        paidAmount = Number(formValue.paidAmount);
+        paymentsList = [{
+          amount: paidAmount,
+          date: isoDate,
+          paymentMethod: paymentMethod || 'Cash'
+        }];
+      }
     }
 
     const patient = this.patients.find(p => p.id === formValue.patientId);
@@ -298,8 +371,6 @@ export class BillingFormComponent implements OnInit {
       }
     }
 
-    const isoDate = new Date(formValue.dateIssued!).toISOString();
-
     const newRecord: BillingRecord = {
       id: (Math.floor(Math.random() * 90000) + 10000).toString(),
       patientId: formValue.patientId!,
@@ -313,9 +384,10 @@ export class BillingFormComponent implements OnInit {
       paidAmount: paidAmount,
       dateIssued: isoDate,
       status: status,
-      paymentMethod: formValue.paymentMethod || null,
+      paymentMethod: paymentMethod,
       description: formValue.description || undefined,
-      clinicId: clinicId !== 'all' ? clinicId : undefined
+      clinicId: clinicId !== 'all' ? clinicId : undefined,
+      payments: paymentsList
     };
 
     this.billingService.create(newRecord).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -362,5 +434,10 @@ export class BillingFormComponent implements OnInit {
     this.form.get('appointmentId')?.disable();
     this.filteredAppointments = [];
     this.isAuthorizationRequired.set(false);
+    this.isSplitPayment.set(false);
+    this.splitPayments.set([
+      { amount: 0, paymentMethod: 'Cash' },
+      { amount: 0, paymentMethod: 'Credit Card' }
+    ]);
   }
 }

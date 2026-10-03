@@ -51,5 +51,10 @@ export class BillingService {
   void(id: string, reason: string) {
     return this.http.put<{ message: string; data: BillingRecord }>(`/api/billing/${id}/void`, { reason });
   }
+
+  // REQ-BIL-02: Record a split payment or additional installment
+  addPayment(id: string, payment: { amount: number; paymentMethod: string; date?: string }) {
+    return this.http.post<{ message: string; data: BillingRecord }>(`/api/billing/${id}/payments`, payment);
+  }
 }
 
