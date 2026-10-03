@@ -6,6 +6,8 @@ import { AuthService } from '../auth/auth.service';
 
 export type ToothStatus = 'healthy' | 'caries' | 'filled' | 'under_treatment' | 'missing' | 'crown' | 'root_canal' | 'impacted' | 'fractured' | 'implant';
 
+export type DentalProcedureStage = 'proposed' | 'accepted' | 'in_progress' | 'completed' | 'invoiced';
+
 export interface ConsumedMaterial {
   materialId: string;
   quantity: number;
@@ -26,12 +28,18 @@ export interface DentalLog {
   isPlanned?: boolean;
   consumedMaterials?: ConsumedMaterial[];
   clinicId?: string;
+  stage?: DentalProcedureStage;
+  cost?: number;
+  invoiceId?: string;
 }
 
 export interface RawDentalLog extends Omit<DentalLog, 'status'> {
   status: ToothStatus | ToothStatus[];
   isPlanned?: boolean;
   consumedMaterials?: ConsumedMaterial[];
+  stage?: DentalProcedureStage;
+  cost?: number;
+  invoiceId?: string;
 }
 
 @Injectable({
@@ -46,11 +54,15 @@ export class DentalService {
     return this.http.get<{ data: RawDentalLog[] }>('/api/dental').pipe(
       map(res => (res.data || [])
         .filter(log => log.patientId === patientId)
-        .map(log => ({
-          ...log,
-          status: Array.isArray(log.status) ? (log.status as ToothStatus[]) : [log.status as ToothStatus]
-        }))
+        .map(log => this.mapRawLog(log))
       )
+    );
+  }
+
+  /** Get a single dental log by ID */
+  getLogById(id: string): Observable<DentalLog> {
+    return this.http.get<{ data: RawDentalLog }>(`/api/dental/${id}`).pipe(
+      map(res => this.mapRawLog(res.data))
     );
   }
 
@@ -65,11 +77,40 @@ export class DentalService {
       id: crypto.randomUUID(),
       date: new Date().toISOString(),
       doctorId: user.doctorId || user.id,
-      doctorName: user.name
+      doctorName: user.name,
+      stage: log.stage || (log.isPlanned ? 'proposed' : 'completed'),
+      cost: log.cost ?? 0
     };
 
-    return this.http.post<{ message: string; data: DentalLog }>('/api/dental', newLog).pipe(
-      map(res => res.data)
+    return this.http.post<{ message: string; data: RawDentalLog }>('/api/dental', newLog).pipe(
+      map(res => this.mapRawLog(res.data))
     );
+  }
+
+  /** Update procedure lifecycle stage (BR-DEN-02: strict sequential progression) */
+  updateStage(id: string, stage: DentalProcedureStage): Observable<DentalLog> {
+    return this.http.put<{ message: string; data: RawDentalLog }>(`/api/dental/${id}/stage`, { stage }).pipe(
+      map(res => this.mapRawLog(res.data))
+    );
+  }
+
+  /** Push a completed procedure to the billing module for cashier settlement (BR-DEN-02 guardrail) */
+  pushToBilling(id: string): Observable<{ data: DentalLog; invoice: any; message: string }> {
+    return this.http.post<{ message: string; data: RawDentalLog; invoice: any }>(`/api/dental/${id}/push-to-billing`, {}).pipe(
+      map(res => ({
+        message: res.message,
+        data: this.mapRawLog(res.data),
+        invoice: res.invoice
+      }))
+    );
+  }
+
+  private mapRawLog(raw: RawDentalLog): DentalLog {
+    return {
+      ...raw,
+      stage: (raw.stage || (raw.isPlanned ? 'proposed' : 'completed')) as DentalProcedureStage,
+      cost: raw.cost ?? 0,
+      status: Array.isArray(raw.status) ? (raw.status as ToothStatus[]) : [raw.status as ToothStatus]
+    };
   }
 }
