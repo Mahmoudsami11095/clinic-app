@@ -52,4 +52,36 @@ export class AppointmentService {
   delete(id: string) {
     return this.http.delete<{ message: string }>(`/api/appointments/${id}`);
   }
+
+  /**
+   * REQ-APT-02: Receptionist checks in arriving patient, moving to "waiting" status
+   * with arrival timestamp and queue ticket number.
+   */
+  checkIn(id: string) {
+    return this.http.post<{ message: string; data: Appointment }>(`/api/appointments/${id}/check-in`, {});
+  }
+
+  /**
+   * REQ-APT-02: Doctor calls patient into exam room, moving to "in_consultation".
+   */
+  startConsultation(id: string) {
+    return this.http.post<{ message: string; data: Appointment }>(`/api/appointments/${id}/start-consultation`, {});
+  }
+
+  /**
+   * REQ-APT-02: Doctor marks consultation complete.
+   */
+  completeConsultation(id: string) {
+    return this.http.post<{ message: string; data: Appointment }>(`/api/appointments/${id}/complete`, {});
+  }
+
+  /**
+   * REQ-APT-02: Retrieves live waiting room queue for today.
+   */
+  getLiveQueue(clinicId?: string, doctorId?: string) {
+    let params = '';
+    if (clinicId) params += `clinicId=${encodeURIComponent(clinicId)}&`;
+    if (doctorId) params += `doctorId=${encodeURIComponent(doctorId)}&`;
+    return this.http.get<{ data: Appointment[] }>(`/api/appointments/live-queue?${params}`);
+  }
 }

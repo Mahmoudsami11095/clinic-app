@@ -104,6 +104,22 @@ export class AppointmentListComponent implements OnInit {
     return result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   });
 
+  // REQ-APT-02: Live Waiting Room Queue Signals
+  waitingQueue = computed(() =>
+    this.filteredAppointments()
+      .filter(a => a.status === 'waiting')
+      .sort((a, b) => (a.queueNumber ?? 999) - (b.queueNumber ?? 999))
+  );
+
+  inConsultation = computed(() =>
+    this.filteredAppointments().filter(a => a.status === 'in_consultation')
+  );
+
+  scheduledToday = computed(() => {
+    const today = new Date().toISOString().substring(0, 10);
+    return this.filteredAppointments().filter(a => a.status === 'scheduled' && a.date.startsWith(today));
+  });
+
   ngOnInit() {
     if (this.authService.isUnassigned()) {
       this.loading.set(false);
@@ -153,10 +169,75 @@ export class AppointmentListComponent implements OnInit {
   getStatusClass(status: string): string {
     switch (status) {
       case 'completed': return 'bg-emerald-100 text-emerald-700 ring-emerald-200';
+      case 'in_consultation': return 'bg-purple-100 text-purple-700 ring-purple-200';
+      case 'waiting': return 'bg-amber-100 text-amber-800 ring-amber-200';
       case 'scheduled': return 'bg-blue-100 text-blue-700 ring-blue-200';
       case 'cancelled': return 'bg-red-100 text-red-700 ring-red-200';
       default: return 'bg-slate-100 text-slate-700 ring-slate-200';
     }
+  }
+
+  checkIn(appt: AppointmentWithDetails): void {
+    this.appointmentService.checkIn(appt.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.appointments.update(list =>
+          list.map(a => a.id === appt.id ? { ...a, status: 'waiting', arrivedAt: res.data.arrivedAt, queueNumber: res.data.queueNumber } : a)
+        );
+        this.toastr.success(
+          `Patient ${appt.patientName} checked in (Queue #${res.data.queueNumber || 1})`,
+          'Patient In Waiting Room'
+        );
+      },
+      error: () => {
+        this.toastr.error('Failed to check in patient.', 'Error');
+      }
+    });
+  }
+
+  startConsultation(appt: AppointmentWithDetails): void {
+    this.appointmentService.startConsultation(appt.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.appointments.update(list =>
+          list.map(a => a.id === appt.id ? { ...a, status: 'in_consultation', consultationStartedAt: res.data.consultationStartedAt } : a)
+        );
+        this.toastr.success(
+          `Consultation started for ${appt.patientName}`,
+          'In Consultation'
+        );
+      },
+      error: () => {
+        this.toastr.error('Failed to start consultation.', 'Error');
+      }
+    });
+  }
+
+  completeConsultation(appt: AppointmentWithDetails): void {
+    this.appointmentService.completeConsultation(appt.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.appointments.update(list =>
+          list.map(a => a.id === appt.id ? { ...a, status: 'completed', consultationEndedAt: res.data.consultationEndedAt } : a)
+        );
+        this.toastr.success(
+          `Consultation completed for ${appt.patientName}`,
+          'Visit Completed'
+        );
+      },
+      error: () => {
+        this.toastr.error('Failed to complete consultation.', 'Error');
+      }
+    });
+  }
+
+  getWaitingTime(arrivedAt?: string): string {
+    if (!arrivedAt) return '';
+    const arr = new Date(arrivedAt).getTime();
+    if (isNaN(arr)) return '';
+    const diffMins = Math.max(0, Math.floor((Date.now() - arr) / 60000));
+    if (diffMins < 1) return '< 1m';
+    if (diffMins < 60) return `${diffMins}m`;
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return `${hours}h ${mins}m`;
   }
 
   getAvatarColor(name: string): string {
