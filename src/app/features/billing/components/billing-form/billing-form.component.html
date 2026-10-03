@@ -336,6 +336,99 @@
         }
       </div>
     </div>
+
+    <!-- REQ-BIL-02: Multi-Method & Split Payments Section -->
+    <div class="pt-2">
+      <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60">
+        <div class="flex items-center gap-2.5">
+          <input
+            id="splitPaymentToggle"
+            type="checkbox"
+            [checked]="isSplitPayment()"
+            (change)="toggleSplitPayment()"
+            class="w-4 h-4 text-indigo-600 rounded cursor-pointer accent-indigo-600"
+          />
+          <div>
+            <label for="splitPaymentToggle" class="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 cursor-pointer block">
+              {{ 'billing.split_payment_toggle' | translate }}
+            </label>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              {{ 'billing.split_payment_desc' | translate }}
+            </p>
+          </div>
+        </div>
+
+        @if (isSplitPayment()) {
+          <button
+            type="button"
+            (click)="addSplitLine()"
+            class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-indigo-200 dark:border-indigo-800 flex items-center gap-1"
+          >
+            <i class="pi pi-plus text-[10px]"></i>
+            <span>{{ 'billing.add_payment_line' | translate }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Split Payment Lines Breakdown Table -->
+      @if (isSplitPayment()) {
+        <div class="mt-3 p-4 bg-slate-100/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 animate-fade-in">
+          <div class="space-y-2">
+            @for (line of splitPayments(); track $index) {
+              <div class="flex items-center gap-2.5">
+                <!-- Method selector -->
+                <div class="w-1/2">
+                  <select
+                    [value]="line.paymentMethod"
+                    (change)="updateSplitMethod($index, $any($event.target).value)"
+                    class="w-full rounded-xl border py-2 px-3 text-xs bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 dark:text-slate-200 font-medium"
+                  >
+                    @for (m of paymentMethods; track m) {
+                      <option [value]="m">{{ 'billing.method_' + m.toLowerCase().replace(' ', '_') | translate }}</option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Amount input -->
+                <div class="w-1/2 relative">
+                  <span class="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
+                  <input
+                    type="number"
+                    [value]="line.amount"
+                    (input)="updateSplitAmount($index, $any($event.target).value)"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    class="w-full rounded-xl border py-2 ps-6 pe-3 text-xs bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 dark:text-slate-200 font-bold"
+                  />
+                </div>
+
+                <!-- Remove line button -->
+                <button
+                  type="button"
+                  (click)="removeSplitLine($index)"
+                  [disabled]="splitPayments().length <= 1"
+                  class="p-2 text-slate-400 hover:text-rose-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  title="Remove line"
+                >
+                  <i class="pi pi-trash text-xs"></i>
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Split Summary Bar -->
+          <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-500 dark:text-slate-400">
+              {{ 'billing.total_split_paid' | translate }}: <strong class="text-slate-800 dark:text-slate-100 font-mono">{{ totalSplitPaid() | currency }}</strong>
+            </span>
+            <span [ngClass]="splitRemainingBalance() > 0 ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold'">
+              {{ 'billing.remaining_balance_label' | translate }}: {{ splitRemainingBalance() | currency }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Description -->
