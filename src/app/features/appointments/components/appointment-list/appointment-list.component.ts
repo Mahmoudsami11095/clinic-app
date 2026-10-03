@@ -66,6 +66,10 @@ export class AppointmentListComponent implements OnInit {
   prescriptionToPrint = signal<Prescription | null>(null);
   appointmentForPrint = signal<AppointmentWithDetails | null>(null);
 
+  // REQ-NOTIF-02: Patient Appointment Reminders State
+  sendingReminderId = signal<string | null>(null);
+  sendingBatchReminders = signal<boolean>(false);
+
   filteredAppointments = computed(() => {
     let result = this.appointments();
     result = this.clinicService.filterByActiveClinic(result);
@@ -238,6 +242,84 @@ export class AppointmentListComponent implements OnInit {
     const hours = Math.floor(diffMins / 60);
     const mins = diffMins % 60;
     return `${hours}h ${mins}m`;
+  }
+
+  sendReminder(appt: AppointmentWithDetails): void {
+    this.sendingReminderId.set(appt.id);
+    this.appointmentService.sendReminder(appt.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.sendingReminderId.set(null);
+        this.appointments.update(list =>
+          list.map(a => a.id === appt.id ? {
+            ...a,
+            lastReminderSentAt: res.data.lastReminderSentAt,
+            reminderCount: res.data.reminderCount
+          } : a)
+        );
+        this.toastr.success(
+          `Reminder dispatched via WhatsApp/SMS to ${appt.patientName}.`,
+          'Reminder Sent'
+        );
+      },
+      error: () => {
+        this.sendingReminderId.set(null);
+        this.toastr.error('Failed to send reminder.', 'Error');
+      }
+    });
+  }
+
+  sendBatchReminders(): void {
+    this.sendingBatchReminders.set(true);
+    this.appointmentService.sendBatchReminders(this.clinicService.activeClinicId() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.sendingBatchReminders.set(false);
+          this.toastr.success(
+            `Dispatched ${res.count} automated reminders for upcoming appointments.`,
+            'Batch Reminders Sent'
+          );
+          this.appointmentService.getAllWithDetails().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
+            this.appointments.set(data);
+          });
+        },
+        error: () => {
+          this.sendingBatchReminders.set(false);
+          this.toastr.error('Failed to send batch reminders.', 'Error');
+        }
+      });
+  }
+
+  openWhatsAppDirect(appt: AppointmentWithDetails): void {
+    this.patientService.getById(appt.patientId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (patient) => {
+        const phone = patient?.contactNumber || '';
+        const url = this.appointmentService.generateWhatsAppReminderUrl(
+          phone,
+          appt.patientName,
+          appt.doctorName,
+          appt.date,
+          appt.type
+        );
+        window.open(url, '_blank');
+      },
+      error: () => {
+        this.toastr.error('Failed to retrieve patient contact number.', 'Error');
+      }
+    });
+  }
+
+  getReminderTimeAgo(sentAt?: string): string {
+    if (!sentAt) return '';
+    const sent = new Date(sentAt).getTime();
+    if (isNaN(sent)) return '';
+    const diffMins = Math.max(0, Math.floor((Date.now() - sent) / 60000));
+    if (diffMins < 1) return '< 1m ago';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const hours = Math.floor(diffMins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   }
 
   getAvatarColor(name: string): string {

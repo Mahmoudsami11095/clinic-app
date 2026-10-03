@@ -84,4 +84,35 @@ export class AppointmentService {
     if (doctorId) params += `doctorId=${encodeURIComponent(doctorId)}&`;
     return this.http.get<{ data: Appointment[] }>(`/api/appointments/live-queue?${params}`);
   }
+
+  /**
+   * REQ-NOTIF-02: Dispatches a WhatsApp / SMS appointment reminder to the patient.
+   */
+  sendReminder(id: string) {
+    return this.http.post<{ message: string; data: Appointment }>(`/api/appointments/${encodeURIComponent(id)}/send-reminder`, {});
+  }
+
+  /**
+   * REQ-NOTIF-02: Batch-dispatches automated reminders to all patients with upcoming visits in the next 24h.
+   */
+  sendBatchReminders(clinicId?: string) {
+    let params = '';
+    if (clinicId) params += `clinicId=${encodeURIComponent(clinicId)}`;
+    return this.http.post<{ message: string; count: number }>(`/api/appointments/send-batch-reminders?${params}`, {});
+  }
+
+  /**
+   * REQ-NOTIF-02: Generates a direct WhatsApp Web wa.me link with prefilled reminder template.
+   */
+  generateWhatsAppReminderUrl(patientPhone: string, patientName: string, doctorName: string, dateStr: string, type: string): string {
+    const cleanPhone = (patientPhone || '').replace(/[^0-9]/g, '');
+    const dateFormatted = new Date(dateStr).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const msg = `Dear ${patientName}, this is a gentle reminder for your upcoming appointment (${type}) with Dr. ${doctorName} on ${dateFormatted}. Please arrive 10 minutes prior to your scheduled time.`;
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+  }
 }

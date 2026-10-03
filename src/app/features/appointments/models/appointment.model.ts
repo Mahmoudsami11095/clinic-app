@@ -15,6 +15,10 @@ export interface Appointment {
   consultationStartedAt?: string;
   consultationEndedAt?: string;
   queueNumber?: number;
+
+  // REQ-NOTIF-02: Patient Appointment Reminders
+  lastReminderSentAt?: string;
+  reminderCount?: number;
 }
 
 export interface AppointmentWithDetails extends Appointment {
