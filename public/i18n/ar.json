@@ -978,5 +978,15 @@
     "confirm_upgrade": "تأكيد طلب الترقية",
     "cancel": "إلغاء",
     "upgrade_success": "تم تقديم طلب الترقية إلى باقة {tier} بنجاح! سيتم تفعيل الحصص الموسعة فوراً."
+  },
+  "consent": {
+    "signature_modal_title": "التوقيع الإلكتروني لموافقة المريض",
+    "signature_modal_subtitle": "توقيع المريض عبر شاشة اللمس، القلم الضوئي، أو الفأرة.",
+    "clear_signature": "مسح التوقيع",
+    "apply_signature": "اعتماد التوقيع",
+    "capture_signature": "تسجيل التوقيع",
+    "resign": "إعادة التوقيع",
+    "signed_verified": "موقع إلكترونياً ومعتمد",
+    "signature_saved_success": "تم حفظ التوقيع الإلكتروني لموافقة المريض بنجاح."
   }
 }

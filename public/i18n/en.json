@@ -977,5 +977,15 @@
     "confirm_upgrade": "Confirm Upgrade Request",
     "cancel": "Cancel",
     "upgrade_success": "Upgrade request to {tier} submitted successfully! A representative will activate your expanded quotas."
+  },
+  "consent": {
+    "signature_modal_title": "Patient Consent E-Signature",
+    "signature_modal_subtitle": "Draw patient signature using touchscreen, stylus pen, or mouse.",
+    "clear_signature": "Clear Signature",
+    "apply_signature": "Apply Signature",
+    "capture_signature": "Capture Signature",
+    "resign": "Re-sign",
+    "signed_verified": "Digitally Signed & Verified",
+    "signature_saved_success": "Patient consent digital signature saved successfully."
   }
 }

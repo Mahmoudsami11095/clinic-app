@@ -20,4 +20,8 @@ export interface Patient {
   allergies?: string;
   chronicDiseases?: string;
   pastIllnesses?: string;
+
+  // REQ-PAT-03: Patient Document & Consent E-Signatures
+  consentSignature?: string;
+  consentSignedAt?: string;
 }
