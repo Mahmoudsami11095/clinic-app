@@ -30,25 +30,5 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
     }
   }
 
-  if (user && user.role === 'doctor' && state.url.startsWith('/subscription')) {
-    const status = user.subscriptionStatus?.toLowerCase();
-    const isTrialExpired = user.trialEndDate ? new Date() > new Date(user.trialEndDate) : true;
-    const isSubscriptionExpired = user.subscriptionEndDate ? new Date() > new Date(user.subscriptionEndDate) : true;
-
-    let isLocked = false;
-    if (status === 'expired' || status === 'suspended' || !status) {
-      isLocked = true;
-    } else if (status === 'trial') {
-      isLocked = isTrialExpired;
-    } else if (status === 'active') {
-      isLocked = isSubscriptionExpired;
-    }
-      
-    if (!isLocked) {
-      router.navigate(['/dashboard']);
-      return false;
-    }
-  }
-
   return true;
 };

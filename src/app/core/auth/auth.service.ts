@@ -221,6 +221,10 @@ export class AuthService {
     return this.http.post<any>('/api/subscriptions/validate-promo', { code });
   }
 
+  upgradeTier(targetTier: string): Observable<{ message: string; targetTier: string }> {
+    return this.http.post<{ message: string; targetTier: string }>('/api/subscriptions/upgrade-tier', { targetTier });
+  }
+
   activateManual(code?: string): Observable<any> {
     return this.http.post<any>('/api/subscriptions/activate-manual', { code }).pipe(
       tap(res => {

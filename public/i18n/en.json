@@ -120,6 +120,7 @@
     "dental_chart": "3D Teeth Chart",
     "inventory": "Inventory",
     "radiology": "Radiology",
+    "subscription_plan": "Subscription & Quotas",
     "subscription_mgmt": "Subscriptions"
   },
   "dashboard": {
@@ -934,5 +935,40 @@
     "reset_view": "Reset View",
     "brightness": "Brightness",
     "contrast": "Contrast"
+  },
+  "subscription": {
+    "title": "Clinic Subscription & Quota Governance",
+    "subtitle": "Overview of your clinic subscription tier, physician seats, storage capacity, and renewal countdown.",
+    "active_plan": "Active Plan",
+    "billing_cycle": "Billing Cycle",
+    "annual": "Annual",
+    "monthly": "Monthly",
+    "expires_in": "Subscription Expiration",
+    "trial_expires_in": "Trial Period Expiration",
+    "doctor_seats": "Doctor Seats",
+    "doctor_seats_desc": "Licensed practicing physicians in your clinic",
+    "storage_capacity": "High-Res Storage Capacity",
+    "storage_capacity_desc": "Radiology scans, panoramic X-rays, and patient files",
+    "storage_advisory_alert": "Advisory: Storage has reached or exceeded 85% capacity. Archive historical files or upgrade your tier to prevent upload interruptions.",
+    "sms_whatsapp_credits": "SMS & WhatsApp Reminders",
+    "sms_whatsapp_desc": "Automated patient appointment confirmation & reminder messages",
+    "compliance_license": "Compliance & Medical Syndicate",
+    "compliance_desc": "ISO-26262 compliant audit logs & Syndicate accreditation verified",
+    "used": "Used",
+    "tier_comparison_title": "Subscription Plans & Available Upgrades",
+    "tier_comparison_subtitle": "Select a higher capacity tier or expand physician seats anytime.",
+    "current_plan": "Current Plan",
+    "upgrade_to": "Upgrade to",
+    "starter_tier": "Starter Tier",
+    "professional_tier": "Professional Tier",
+    "enterprise_tier": "Enterprise Tier",
+    "starter_desc": "Ideal for single-practitioner boutique clinics.",
+    "professional_desc": "Comprehensive practice management for busy group clinics.",
+    "enterprise_desc": "Multi-branch hospital clinics with customized integrations.",
+    "upgrade_modal_title": "Request Plan Upgrade",
+    "upgrade_modal_confirm": "Confirm plan upgrade request? Our team will review and invoice the prorated difference for tier:",
+    "confirm_upgrade": "Confirm Upgrade Request",
+    "cancel": "Cancel",
+    "upgrade_success": "Upgrade request to {tier} submitted successfully! A representative will activate your expanded quotas."
   }
 }

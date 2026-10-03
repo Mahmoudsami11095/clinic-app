@@ -4,12 +4,13 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ToastrService } from 'ngx-toastr';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-subscription',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './subscription.component.html',
   styleUrls: []
 })
@@ -24,6 +25,13 @@ export class SubscriptionComponent implements OnInit {
   isValidatingPromo = signal(false);
   isActivating = signal(false);
   pricingData = signal<any>(null);
+  tierQuota = signal<any>(null);
+  isLocked = signal<boolean>(false);
+
+  // Upgrade Modal State
+  isUpgradeModalOpen = signal<boolean>(false);
+  selectedUpgradeTier = signal<string>('Enterprise');
+  isSubmittingUpgrade = signal<boolean>(false);
 
   appliedCode = signal<string>('');
   discountType = signal<string>('');
@@ -36,7 +44,7 @@ export class SubscriptionComponent implements OnInit {
   isCheckingStatus = signal(false);
 
   checkLockedStatus(status: any) {
-    const statusLower = status.subscriptionStatus?.toLowerCase();
+    const statusLower = status?.subscriptionStatus?.toLowerCase();
     const isTrialExpired = statusLower === 'trial' && status.trialEndDate && new Date() > new Date(status.trialEndDate);
     const isSubExpired = statusLower === 'active' && status.subscriptionEndDate && new Date() > new Date(status.subscriptionEndDate);
     
@@ -53,14 +61,75 @@ export class SubscriptionComponent implements OnInit {
       code: ['', [Validators.required]]
     });
 
-    this.loadPricing();
+    this.loadSubscriptionData();
+  }
 
-    // Refresh subscription status from database on load
-    this.authService.refreshSubscriptionStatus().subscribe({
+  loadSubscriptionData() {
+    this.authService.getSubscriptionStatus().subscribe({
       next: (res) => {
-        if (!this.checkLockedStatus(res)) {
-          this.router.navigate(['/dashboard']);
+        this.pricingData.set(res);
+        this.tierQuota.set(res.tierQuota);
+        const locked = this.checkLockedStatus(res);
+        this.isLocked.set(locked);
+
+        if (res.pricing) {
+          const setupFee = res.isInitialFeePaid ? 0 : res.pricing.initialSetupFee;
+          this.finalAnnualFee.set(res.pricing.annualSubscriptionFee);
+          this.totalDue.set(setupFee + res.pricing.annualSubscriptionFee);
         }
+      },
+      error: () => {
+        this.toastr.error('Failed to load subscription details.');
+      }
+    });
+  }
+
+  getRemainingDays(): number {
+    const data = this.pricingData();
+    if (!data) return 0;
+    const targetDate = data.subscriptionEndDate || data.trialEndDate;
+    if (!targetDate) return 0;
+    const target = new Date(targetDate).getTime();
+    const now = Date.now();
+    return Math.max(0, Math.ceil((target - now) / (1000 * 60 * 60 * 24)));
+  }
+
+  getExpiryDateFormatted(): string {
+    const data = this.pricingData();
+    if (!data) return '';
+    const targetDate = data.subscriptionEndDate || data.trialEndDate;
+    if (!targetDate) return '';
+    return new Date(targetDate).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  openUpgradeModal(tierName: string) {
+    this.selectedUpgradeTier.set(tierName);
+    this.isUpgradeModalOpen.set(true);
+  }
+
+  closeUpgradeModal() {
+    this.isUpgradeModalOpen.set(false);
+  }
+
+  confirmUpgrade() {
+    const tier = this.selectedUpgradeTier();
+    this.isSubmittingUpgrade.set(true);
+    this.authService.upgradeTier(tier).subscribe({
+      next: () => {
+        this.isSubmittingUpgrade.set(false);
+        this.isUpgradeModalOpen.set(false);
+        this.toastr.success(
+          `Upgrade request to ${tier} submitted successfully! A representative will activate your expanded quotas.`,
+          'Tier Upgrade Requested'
+        );
+      },
+      error: () => {
+        this.isSubmittingUpgrade.set(false);
+        this.toastr.error('Failed to submit upgrade request.', 'Error');
       }
     });
   }
@@ -71,9 +140,10 @@ export class SubscriptionComponent implements OnInit {
       next: (res) => {
         this.isCheckingStatus.set(false);
         const isLocked = this.checkLockedStatus(res);
+        this.isLocked.set(isLocked);
         if (!isLocked) {
           this.toastr.success('Your subscription has been approved and activated! Welcome back.');
-          this.router.navigate(['/dashboard']);
+          this.loadSubscriptionData();
         } else {
           this.toastr.info('Subscription status checked. Still awaiting approval or action.');
         }
@@ -81,22 +151,6 @@ export class SubscriptionComponent implements OnInit {
       error: () => {
         this.isCheckingStatus.set(false);
         this.toastr.error('Failed to verify subscription status.');
-      }
-    });
-  }
-
-  loadPricing() {
-    this.authService.getSubscriptionStatus().subscribe({
-      next: (res) => {
-        this.pricingData.set(res);
-        if (res.pricing) {
-          const setupFee = res.isInitialFeePaid ? 0 : res.pricing.initialSetupFee;
-          this.finalAnnualFee.set(res.pricing.annualSubscriptionFee);
-          this.totalDue.set(setupFee + res.pricing.annualSubscriptionFee);
-        }
-      },
-      error: () => {
-        this.toastr.error('Failed to load subscription pricing data.');
       }
     });
   }
@@ -154,7 +208,7 @@ export class SubscriptionComponent implements OnInit {
       next: () => {
         this.isActivating.set(false);
         this.toastr.success('Payment simulated successfully! Welcome.');
-        this.router.navigate(['/dashboard']);
+        this.loadSubscriptionData();
       },
       error: (err) => {
         this.isActivating.set(false);
@@ -206,7 +260,6 @@ export class SubscriptionComponent implements OnInit {
         this.isUploadingReceipt.set(false);
         this.toastr.success('Transfer receipt uploaded successfully! Welcome.');
         
-        // Refresh local user status to update layout state to PendingApproval
         const user = this.authService.currentUser();
         if (user) {
           user.subscriptionStatus = res.subscriptionStatus;
@@ -214,7 +267,7 @@ export class SubscriptionComponent implements OnInit {
           this.authService.setCurrentUser(user);
         }
 
-        this.router.navigate(['/dashboard']);
+        this.loadSubscriptionData();
       },
       error: (err) => {
         this.isUploadingReceipt.set(false);
