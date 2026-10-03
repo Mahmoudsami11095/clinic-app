@@ -80,4 +80,16 @@ export class MaterialsService {
   delete(id: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.apiUrl}/${id}`);
   }
+
+  // REQ-INV-02: Receive stock inward shipment / purchase order delivery
+  receiveShipment(id: string, shipment: {
+    quantityReceived: number;
+    supplierName?: string;
+    purchaseOrderRef?: string;
+    batchNumber?: string;
+    expirationDate?: string;
+    unitCost?: number;
+  }): Observable<{ message: string; data: Material }> {
+    return this.http.post<{ message: string; data: Material }>(`${this.apiUrl}/${encodeURIComponent(id)}/inward-shipment`, shipment);
+  }
 }

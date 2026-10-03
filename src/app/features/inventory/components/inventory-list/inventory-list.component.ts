@@ -1,6 +1,7 @@
-import { Component, OnInit, effect, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, effect, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 import { MaterialsService } from '../../services/materials.service';
 import { Material } from '../../models/material.model';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -21,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 export class InventoryListComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute, { optional: true });
+  private toastr = inject(ToastrService);
   materials: Material[] = [];
   doctorId: string = '';
   activeClinicId: string = 'all';
@@ -32,6 +34,18 @@ export class InventoryListComponent implements OnInit {
   error: string = '';
   searchTerm: string = '';
   activeFilter: 'all' | 'low' | 'out' | 'healthy' | 'expired' = 'all';
+
+  // REQ-INV-02: Supplier & Purchase Order Workflow State
+  isReceiveModalOpen = signal<boolean>(false);
+  selectedMaterialForShipment = signal<Material | null>(null);
+  isSubmittingShipment = signal<boolean>(false);
+  shipmentMaterialId: string = '';
+  shipmentQty: number = 0;
+  shipmentSupplier: string = '';
+  shipmentPORef: string = '';
+  shipmentBatch: string = '';
+  shipmentExpiry: string = '';
+  shipmentUnitCost: number | null = null;
 
   get expiredCount(): number {
     return this.materials.filter(m => this.isExpired(m)).length;
@@ -197,5 +211,63 @@ export class InventoryListComponent implements OnInit {
         }
       });
     }
+  }
+
+  // REQ-INV-02: Supplier & Inward Shipment Actions
+  openReceiveShipmentModal(material?: Material): void {
+    if (material) {
+      this.selectedMaterialForShipment.set(material);
+      this.shipmentMaterialId = material.id || '';
+      this.shipmentSupplier = material.supplierName || '';
+      this.shipmentPORef = material.purchaseOrderRef || '';
+      this.shipmentUnitCost = material.unitCost || null;
+      this.shipmentBatch = material.batchNumber || '';
+    } else {
+      this.selectedMaterialForShipment.set(this.materials[0] || null);
+      this.shipmentMaterialId = this.materials[0]?.id || '';
+      this.shipmentSupplier = '';
+      this.shipmentPORef = '';
+      this.shipmentUnitCost = null;
+      this.shipmentBatch = '';
+    }
+    this.shipmentQty = 0;
+    this.shipmentExpiry = '';
+    this.isReceiveModalOpen.set(true);
+  }
+
+  closeReceiveShipmentModal(): void {
+    this.isReceiveModalOpen.set(false);
+    this.selectedMaterialForShipment.set(null);
+  }
+
+  confirmInwardShipment(): void {
+    if (!this.shipmentMaterialId || this.shipmentQty <= 0) {
+      this.toastr.warning('Please select a material and enter a valid quantity received.');
+      return;
+    }
+
+    this.isSubmittingShipment.set(true);
+    this.materialsService.receiveShipment(this.shipmentMaterialId, {
+      quantityReceived: Number(this.shipmentQty),
+      supplierName: this.shipmentSupplier || undefined,
+      purchaseOrderRef: this.shipmentPORef || undefined,
+      batchNumber: this.shipmentBatch || undefined,
+      expirationDate: this.shipmentExpiry || undefined,
+      unitCost: this.shipmentUnitCost ? Number(this.shipmentUnitCost) : undefined
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.isSubmittingShipment.set(false);
+        this.closeReceiveShipmentModal();
+        this.toastr.success(
+          `Received ${this.shipmentQty} units for ${res.data?.name || 'material'}.`,
+          'Inward Shipment Recorded'
+        );
+        this.loadMaterials();
+      },
+      error: () => {
+        this.isSubmittingShipment.set(false);
+        this.toastr.error('Failed to record inward shipment.', 'Error');
+      }
+    });
   }
 }

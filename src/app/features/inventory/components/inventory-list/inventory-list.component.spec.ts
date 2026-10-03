@@ -4,6 +4,7 @@ import { MaterialsService } from '../../services/materials.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { ToastrService } from 'ngx-toastr';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { Material } from '../../models/material.model';
@@ -49,7 +50,8 @@ describe('InventoryListComponent', () => {
         { provide: MaterialsService, useValue: mockMaterialsService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: ClinicService, useValue: mockClinicService },
-        { provide: LanguageService, useValue: mockLanguageService }
+        { provide: LanguageService, useValue: mockLanguageService },
+        { provide: ToastrService, useValue: { success: () => {}, error: () => {}, warning: () => {} } }
       ]
     }).compileComponents();
 

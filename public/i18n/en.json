@@ -844,7 +844,19 @@
     "filter_expired": "Expired / Quarantined",
     "batch_number": "Batch / Lot Number",
     "expiration_date": "Expiration Date",
-    "batch_placeholder": "e.g. LOT-2026-0451"
+    "batch_placeholder": "e.g. LOT-2026-0451",
+    "receive_shipment": "Receive Shipment",
+    "receive_shipment_title": "Receive Inward Stock Shipment",
+    "receive_shipment_subtitle": "Record inward delivery, increment stock, update supplier details & PO reference.",
+    "select_material": "Select Material",
+    "quantity_received": "Quantity Received",
+    "purchase_unit_cost": "Purchase Unit Cost ($)",
+    "supplier_name": "Supplier / Vendor Name",
+    "po_ref": "Purchase Order / Invoice Ref",
+    "batch_lot": "Batch / Lot Number",
+    "confirm_inward": "Confirm Inward Shipment",
+    "restock_action": "Restock / Receive Shipment",
+    "supplier_label": "Supplier"
   },
   "profile": {
     "profile_title": "Profile Title",
