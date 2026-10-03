@@ -20,6 +20,69 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
   imports: [CommonModule, FormsModule, PrescriptionPrintModalComponent, ModalComponent, TranslatePipe],
   template: `
     <form (ngSubmit)="submit()" class="space-y-6">
+      <!-- BR-RX-02: Prescription Immutability & Audit Lock Banner -->
+      @if (isRxFinalized) {
+        @if (isRxSuperseded) {
+          <div class="bg-amber-50/90 border border-amber-300 rounded-2xl p-4.5 flex items-center justify-between gap-4 text-amber-950 shadow-sm animate-fadeIn">
+            <div class="flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center font-bold flex-shrink-0">
+                <i class="pi pi-history text-lg"></i>
+              </div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-800">{{ 'prescriptions.superseded_badge' | translate }}</span>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 bg-amber-200 text-amber-800 rounded-full">Archived Revision</span>
+                </div>
+                <p class="text-xs text-amber-900 font-medium">
+                  {{ 'prescriptions.superseded_notice' | translate }}
+                  @if (prescription?.supersedeReason) {
+                    <span class="italic block text-amber-800 text-[11px] mt-0.5">"{{ prescription?.supersedeReason }}"</span>
+                  }
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="openPrintModal()"
+              class="px-3 py-1.5 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <i class="pi pi-print text-xs"></i>
+              <span>{{ 'prescriptions.print_rx' | translate }}</span>
+            </button>
+          </div>
+        } @else {
+          <div class="bg-emerald-50/90 border border-emerald-300 rounded-2xl p-4.5 flex items-center justify-between gap-4 text-emerald-950 shadow-sm animate-fadeIn">
+            <div class="flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-800 flex items-center justify-center font-bold flex-shrink-0">
+                <i class="pi pi-shield text-lg"></i>
+              </div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">{{ 'prescriptions.legal_lock_title' | translate }}</span>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 bg-emerald-200 text-emerald-800 rounded-full flex items-center gap-1">
+                    <i class="pi pi-lock text-[9px]"></i> Immutable
+                  </span>
+                </div>
+                <p class="text-xs font-semibold text-emerald-900">
+                  {{ prescription?.digitalSignature || ('Digitally Signed by Dr. ' + appointment.doctorName) }}
+                </p>
+                <p class="text-[11px] text-emerald-700 leading-tight">
+                  {{ 'prescriptions.immutability_regulatory_notice' | translate }}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="openPrintModal()"
+              class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <i class="pi pi-print text-xs"></i>
+              <span>{{ 'prescriptions.print_rx' | translate }}</span>
+            </button>
+          </div>
+        }
+      }
+
       <!-- Patient and Appointment Metadata Details -->
       <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">{{ 'prescriptions.consultation_details' | translate }}</h3>
@@ -185,7 +248,7 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
             <h4 class="text-base font-bold text-slate-800">{{ 'prescriptions.prescribed_medications' | translate }}</h4>
           </div>
           <button
-            *ngIf="!readOnly"
+            *ngIf="!effectiveReadOnly"
             type="button"
             (click)="addMedication()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition-all border border-indigo-100/40 cursor-pointer"
@@ -213,8 +276,8 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
                       [(ngModel)]="med.name"
                       (ngModelChange)="onMedicationChanged()"
                       name="medName-{{$index}}"
-                      [disabled]="readOnly"
-                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+                      [disabled]="effectiveReadOnly"
+                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500"
                       [placeholder]="'prescriptions.medication_placeholder' | translate"
                       required
                     />
@@ -227,8 +290,8 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
                       type="text"
                       [(ngModel)]="med.dosage"
                       name="medDosage-{{$index}}"
-                      [disabled]="readOnly"
-                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+                      [disabled]="effectiveReadOnly"
+                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500"
                       [placeholder]="'prescriptions.dosage_placeholder' | translate"
                       required
                     />
@@ -241,8 +304,8 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
                       type="text"
                       [(ngModel)]="med.frequency"
                       name="medFreq-{{$index}}"
-                      [disabled]="readOnly"
-                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+                      [disabled]="effectiveReadOnly"
+                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500"
                       [placeholder]="'prescriptions.frequency_placeholder' | translate"
                       required
                     />
@@ -255,8 +318,8 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
                       type="text"
                       [(ngModel)]="med.duration"
                       name="medDur-{{$index}}"
-                      [disabled]="readOnly"
-                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+                      [disabled]="effectiveReadOnly"
+                      class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500"
                       [placeholder]="'prescriptions.duration_placeholder' | translate"
                       required
                     />
@@ -264,7 +327,7 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
 
                   <!-- Delete Action -->
                   <button
-                    *ngIf="!readOnly"
+                    *ngIf="!effectiveReadOnly"
                     type="button"
                     (click)="removeMedication($index)"
                     class="mt-6 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent md:border-slate-200/40 md:bg-white flex items-center justify-center self-end md:self-auto cursor-pointer"
@@ -303,9 +366,9 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
           id="prescriptionNotes"
           [(ngModel)]="notes"
           name="notes"
-          [disabled]="readOnly"
+          [disabled]="effectiveReadOnly"
           rows="3"
-          class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400"
+          class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all text-slate-700 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500"
           [placeholder]="'prescriptions.notes_placeholder' | translate"
         ></textarea>
       </div>
@@ -329,15 +392,27 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
             (click)="cancelled.emit()"
             class="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
           >
-            {{ (readOnly ? 'common.close' : 'common.cancel') | translate }}
+            {{ (effectiveReadOnly ? 'common.close' : 'common.cancel') | translate }}
           </button>
-          <button
-            *ngIf="!readOnly"
-            type="submit"
-            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
-          >
-            {{ 'common.save_prescription' | translate }}
-          </button>
+          @if (isRxFinalized) {
+            <!-- BR-RX-02: Issue Superseding Revision Flow -->
+            <button
+              type="button"
+              (click)="openSupersedeModal()"
+              class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
+            >
+              <i class="pi pi-file-edit text-xs"></i>
+              <span>{{ 'prescriptions.supersede_btn' | translate }}</span>
+            </button>
+          } @else if (!readOnly) {
+            <button
+              type="submit"
+              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-emerald-500/20 flex items-center gap-2 cursor-pointer"
+            >
+              <i class="pi pi-lock text-xs"></i>
+              <span>{{ 'prescriptions.finalize_and_sign' | translate }}</span>
+            </button>
+          }
         </div>
       </div>
     </form>
@@ -455,6 +530,138 @@ import { PediatricSafetyService } from '../../../../core/services/pediatric-safe
         </div>
       </div>
     </app-modal>
+
+    <!-- BR-RX-02 Supersede Prescription Revision Modal -->
+    <app-modal
+      [isOpen]="isSupersedeModalOpen()"
+      [title]="'prescriptions.supersede_modal_title' | translate"
+      [subtitle]="'prescriptions.supersede_modal_subtitle' | translate"
+      (close)="closeSupersedeModal()"
+    >
+      <div class="space-y-5 text-start">
+        <!-- Notice banner -->
+        <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-start gap-2.5">
+          <i class="pi pi-info-circle text-amber-600 text-base mt-0.5 flex-shrink-0"></i>
+          <p class="leading-relaxed">
+            {{ 'prescriptions.superseding_audit_notice' | translate }}
+          </p>
+        </div>
+
+        <!-- Clinical Justification Reason (Required) -->
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+            {{ 'prescriptions.supersede_reason_label' | translate }} <span class="text-rose-500">*</span>
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              (click)="setSupersedeReason('Adverse drug reaction / intolerance observed')"
+              class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 rounded-lg transition-colors cursor-pointer"
+            >
+              Adverse reaction / allergy
+            </button>
+            <button
+              type="button"
+              (click)="setSupersedeReason('Dosage modification based on clinical evaluation')"
+              class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 rounded-lg transition-colors cursor-pointer"
+            >
+              Dosage adjustment
+            </button>
+            <button
+              type="button"
+              (click)="setSupersedeReason('Treatment plan updated / alternative agent indicated')"
+              class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 rounded-lg transition-colors cursor-pointer"
+            >
+              Alternative agent indicated
+            </button>
+          </div>
+          <textarea
+            [(ngModel)]="supersedeReason"
+            rows="3"
+            class="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            [placeholder]="'prescriptions.supersede_reason_placeholder' | translate"
+            required
+          ></textarea>
+        </div>
+
+        <!-- Superseding Medications List -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-700">
+              {{ 'prescriptions.prescribed_medications' | translate }} (Revision List)
+            </label>
+            <button
+              type="button"
+              (click)="addSupersedeMedication()"
+              class="px-2 py-1 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <i class="pi pi-plus text-[10px]"></i>
+              <span>{{ 'prescriptions.add_medication' | translate }}</span>
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+            @for (sMed of supersedeMeds; track $index) {
+              <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-2">
+                <input
+                  type="text"
+                  [(ngModel)]="sMed.name"
+                  placeholder="Drug Name"
+                  class="flex-1 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <input
+                  type="text"
+                  [(ngModel)]="sMed.dosage"
+                  placeholder="Dosage"
+                  class="w-24 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <input
+                  type="text"
+                  [(ngModel)]="sMed.frequency"
+                  placeholder="Frequency"
+                  class="w-28 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <input
+                  type="text"
+                  [(ngModel)]="sMed.duration"
+                  placeholder="Duration"
+                  class="w-24 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  (click)="removeSupersedeMedication($index)"
+                  class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer"
+                >
+                  <i class="pi pi-trash text-xs"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button
+            type="button"
+            (click)="closeSupersedeModal()"
+            class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          >
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button
+            type="button"
+            (click)="confirmSupersede()"
+            [disabled]="submittingSupersede() || !supersedeReason.trim() || supersedeMeds.length === 0"
+            class="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            @if (submittingSupersede()) {
+              <i class="pi pi-spin pi-spinner text-xs"></i>
+            }
+            <span>{{ 'prescriptions.confirm_supersede' | translate }}</span>
+          </button>
+        </div>
+      </div>
+    </app-modal>
   `
 })
 export class PrescriptionFormComponent implements OnInit {
@@ -487,6 +694,91 @@ export class PrescriptionFormComponent implements OnInit {
   weightInputTouched = false;
 
   isPrintModalOpen = signal(false);
+
+  // BR-RX-02 Immutability & Audit Lock State
+  isSupersedeModalOpen = signal(false);
+  supersedeReason = '';
+  supersedeMeds: MedicationItem[] = [];
+  submittingSupersede = signal(false);
+
+  get isRxFinalized(): boolean {
+    return !!(this.prescription?.isFinalized || this.prescription?.status === 'finalized' || this.prescription?.status === 'superseded');
+  }
+
+  get isRxSuperseded(): boolean {
+    return this.prescription?.status === 'superseded';
+  }
+
+  get effectiveReadOnly(): boolean {
+    return this.readOnly || this.isRxFinalized;
+  }
+
+  openSupersedeModal() {
+    this.supersedeReason = '';
+    this.supersedeMeds = this.medications.map(m => ({ ...m }));
+    if (this.supersedeMeds.length === 0) {
+      this.supersedeMeds = [{ name: '', dosage: '', frequency: '', duration: '' }];
+    }
+    this.isSupersedeModalOpen.set(true);
+  }
+
+  closeSupersedeModal() {
+    this.isSupersedeModalOpen.set(false);
+  }
+
+  setSupersedeReason(reason: string) {
+    this.supersedeReason = reason;
+  }
+
+  addSupersedeMedication() {
+    this.supersedeMeds.push({ name: '', dosage: '', frequency: '', duration: '' });
+  }
+
+  removeSupersedeMedication(idx: number) {
+    this.supersedeMeds.splice(idx, 1);
+  }
+
+  confirmSupersede() {
+    if (!this.prescription?.id) return;
+    const reason = this.supersedeReason.trim();
+    if (!reason || reason.length < 5) {
+      this.toastr.warning(
+        this.langService.translate('prescriptions.justification_required'),
+        this.langService.translate('toast.warning')
+      );
+      return;
+    }
+
+    const validMeds = this.supersedeMeds.filter(m => m.name && m.name.trim() !== '');
+    if (validMeds.length === 0) {
+      this.toastr.warning(
+        this.langService.translate('toast.prescription_min_med_error'),
+        this.langService.translate('toast.error')
+      );
+      return;
+    }
+
+    this.submittingSupersede.set(true);
+    this.prescriptionService.supersede(this.prescription.id, {
+      reason: reason,
+      newMedications: validMeds,
+      notes: this.notes
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.submittingSupersede.set(false);
+        this.closeSupersedeModal();
+        this.toastr.success(
+          this.langService.translate('prescriptions.supersede_success'),
+          this.langService.translate('toast.success')
+        );
+        this.saved.emit(res.data);
+      },
+      error: () => {
+        this.submittingSupersede.set(false);
+        this.toastr.error('Failed to issue superseding prescription revision.', 'Error');
+      }
+    });
+  }
 
   // BR-RX-03 Pediatric Safety Dosing & Age Computations
   get patientAge(): number | null {
@@ -692,16 +984,23 @@ export class PrescriptionFormComponent implements OnInit {
       }
     }
 
+    const rawDoctorName = this.appointment?.doctorName || 'Attending Physician';
+    const doctorName = rawDoctorName.startsWith('Dr.') ? rawDoctorName : `Dr. ${rawDoctorName}`;
+    const nowIso = new Date().toISOString();
     const newPrescription: Prescription = {
       id: this.prescription?.id || crypto.randomUUID(),
       appointmentId: this.appointment.id,
       patientId: this.appointment.patientId,
       doctorId: this.appointment.doctorId,
-      date: this.prescription?.date || new Date().toISOString(),
+      date: this.prescription?.date || nowIso,
       medications: validMeds,
       notes: this.notes,
       patientWeightKg: this.patientWeightKg || undefined,
-      isPediatric: this.isPediatric
+      isPediatric: this.isPediatric,
+      isFinalized: true,
+      status: 'finalized',
+      finalizedAt: this.prescription?.finalizedAt || nowIso,
+      digitalSignature: this.prescription?.digitalSignature || `Digitally Signed by ${doctorName} on ${nowIso.substring(0, 10)} (Verified)`
     };
 
     if (this.prescription) {

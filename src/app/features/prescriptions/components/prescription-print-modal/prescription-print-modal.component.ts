@@ -206,7 +206,14 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                       <span class="font-serif italic text-slate-600 text-sm">Dr. {{ appointment.doctorName }}</span>
                     </div>
                     <p class="font-bold text-slate-700 mt-2">{{ 'prescriptions.doctor_signature_stamp' | translate }}</p>
-                    <p class="text-[10px] text-slate-400">Licensed Physician & Surgeon</p>
+                    @if (prescription.digitalSignature) {
+                      <div class="mt-1 inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        <i class="pi pi-verified text-[9px] text-emerald-600"></i>
+                        <span>{{ prescription.digitalSignature }}</span>
+                      </div>
+                    } @else {
+                      <p class="text-[10px] text-slate-400">Licensed Physician & Surgeon</p>
+                    }
                   </div>
                   <div>
                     <div class="h-16 border border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-300 uppercase tracking-widest text-[10px]">
