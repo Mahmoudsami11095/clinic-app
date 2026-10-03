@@ -556,7 +556,21 @@
     "pediatric_weight_verified": "تم تسجيل الوزن: {weight} كجم — فحص أمان الجرعات مفعّل",
     "pediatric_weight_atypical": "وزن الجسم المسجل ({weight} كجم) غير معتاد بالنسبة لعمر المريض. يرجى التحقق.",
     "pediatric_rx_print_badge": "طفل (العمر: {age} سنة • الوزن: {weight} كجم)",
-    "patient_weight_print_label": "الوزن"
+    "patient_weight_print_label": "الوزن",
+    "legal_lock_title": "القفل القانوني للسجل الطبي مفعل (BR-RX-02)",
+    "immutability_regulatory_notice": "بمجرد الاعتماد والتوقيع الرقمي، تصبح الوصفة غير قابلة للتعديل أو الحذف قانونياً. يتطلب أي تغيير سريري إصدار مراجعة إلحاقية بديلة.",
+    "finalize_and_sign": "اعتماد وتوقيع رقمي",
+    "supersede_btn": "إصدار وصفة بديلة إلحاقية",
+    "superseded_badge": "وصفة مستبدلة (مؤرشفة)",
+    "superseded_notice": "تم استبدال هذه الوصفة الطبية بمراجعة إلحاقية أحدث.",
+    "supersede_modal_title": "إصدار مراجعة بديلة للوصفة الطبية",
+    "supersede_modal_subtitle": "يلزم تقديم تبرير سريري لاستبدال وصفة طبية معتمدة ومقفلة.",
+    "supersede_reason_label": "التبرير السريري لتعديل الوصفة",
+    "supersede_reason_placeholder": "مثال: ظهور أعراض حساسية، تعديل الجرعة بناءً على التحاليل المخبرية",
+    "superseding_audit_notice": "سيتم أرشفة الوصفة الأصلية كـ 'مستبدلة' مع حفظ هذا التبرير بشكل دائم، وإصدار الوصفة البديلة بتوقيع رسمي جديد.",
+    "confirm_supersede": "تأكيد وإصدار الوصفة البديلة",
+    "finalized_success": "تم اعتماد الوصفة الطبية وتوقيعها رقمياً بنجاح.",
+    "supersede_success": "تم إصدار الوصفة البديلة بنجاح وأرشفة الوصفة السابقة."
   },
   "clinics": {
     "title": "العيادات",

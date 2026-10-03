@@ -16,6 +16,24 @@ export interface Prescription {
   notes?: string;
   patientWeightKg?: number; // BR-RX-03: Body weight (kg) for pediatric safety dosage verification
   isPediatric?: boolean;    // BR-RX-03: Flag indicating patient was under 14 years
+  // BR-RX-02: Prescription Immutability & Audit Lock
+  isFinalized?: boolean;
+  status?: 'draft' | 'finalized' | 'superseded';
+  finalizedAt?: string;
+  digitalSignature?: string;
+  supersedesPrescriptionId?: string;
+  supersededById?: string;
+  supersedeReason?: string;
+}
+
+export interface FinalizePrescriptionPayload {
+  doctorName?: string;
+}
+
+export interface SupersedePrescriptionPayload {
+  reason: string;
+  newMedications: MedicationItem[];
+  notes?: string;
 }
 
 export interface PrescriptionWithDetails extends Prescription {

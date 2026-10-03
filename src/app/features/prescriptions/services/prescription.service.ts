@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, forkJoin, Observable } from 'rxjs';
-import { Prescription, PrescriptionWithDetails } from '../models/prescription.model';
+import { Prescription, PrescriptionWithDetails, FinalizePrescriptionPayload, SupersedePrescriptionPayload } from '../models/prescription.model';
 import { PatientService } from '../../patients/services/patient.service';
 import { DoctorService } from '../../doctors/services/doctor.service';
 import { AppointmentService } from '../../appointments/services/appointment.service';
@@ -49,5 +49,25 @@ export class PrescriptionService {
 
   update(prescription: Prescription) {
     return this.http.put<{ message: string; data: Prescription }>(`/api/prescriptions/${prescription.id}`, prescription);
+  }
+
+  /**
+   * BR-RX-02: Finalizes and digitally signs a prescription, locking it from editing.
+   */
+  finalize(id: string, payload?: FinalizePrescriptionPayload): Observable<Prescription> {
+    return this.http
+      .post<{ message: string; data: Prescription }>(`/api/prescriptions/${encodeURIComponent(id)}/finalize`, payload || {})
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * BR-RX-02: Issues a superseding prescription when medication change is required,
+   * archiving the original with a recorded clinical justification.
+   */
+  supersede(id: string, payload: SupersedePrescriptionPayload): Observable<{ data: Prescription; original: Prescription; message: string }> {
+    return this.http.post<{ message: string; data: Prescription; original: Prescription }>(
+      `/api/prescriptions/${encodeURIComponent(id)}/supersede`,
+      payload
+    );
   }
 }

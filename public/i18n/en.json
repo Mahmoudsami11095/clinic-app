@@ -556,7 +556,21 @@
     "pediatric_weight_verified": "Weight recorded: {weight} kg — Dosing safety check active",
     "pediatric_weight_atypical": "Recorded body weight ({weight} kg) is atypical for patient age. Please verify.",
     "pediatric_rx_print_badge": "Pediatric (Age: {age} yrs • Wt: {weight} kg)",
-    "patient_weight_print_label": "Body Weight"
+    "patient_weight_print_label": "Body Weight",
+    "legal_lock_title": "Legal Audit Lock Active (BR-RX-02)",
+    "immutability_regulatory_notice": "Once finalized and signed, this prescription is legally immutable. Clinical modifications require issuing a formal superseding revision.",
+    "finalize_and_sign": "Finalize & Digitally Sign",
+    "supersede_btn": "Issue Superseding Revision",
+    "superseded_badge": "Superseded Prescription (Archived)",
+    "superseded_notice": "This prescription was superseded and replaced by a revision.",
+    "supersede_modal_title": "Issue Superseding Prescription Revision",
+    "supersede_modal_subtitle": "Clinical justification is required to supersede a locked prescription.",
+    "supersede_reason_label": "Clinical Justification for Revision",
+    "supersede_reason_placeholder": "e.g., Patient developed adverse reaction; dosage adjustment based on lab results",
+    "superseding_audit_notice": "The original prescription will be archived as 'Superseded' with this justification permanently preserved. A new legally signed revision will be issued.",
+    "confirm_supersede": "Issue & Sign Revision",
+    "finalized_success": "Prescription finalized and digitally signed successfully.",
+    "supersede_success": "Superseding prescription revision issued successfully."
   },
   "clinics": {
     "title": "Clinics",
