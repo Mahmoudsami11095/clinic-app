@@ -29,6 +29,7 @@ export class Sidebar {
     { labelKey: 'sidebar.inventory', route: '/inventory', icon: 'pi pi-box', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.doctors', route: '/doctors', icon: 'pi pi-user-plus', roles: ['admin'] },
     { labelKey: 'sidebar.profile', route: '/profile', icon: 'pi pi-user', roles: ['admin', 'doctor', 'assistant', 'patient'] },
+    { labelKey: 'sidebar.subscription_plan', route: '/subscription', icon: 'pi pi-id-card', roles: ['doctor'] },
     { labelKey: 'sidebar.subscription_mgmt', route: '/admin/subscription-management', icon: 'pi pi-percentage', roles: ['admin'] },
   ];
 
