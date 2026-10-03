@@ -161,6 +161,29 @@ describe('BR-RX-03 / BR-MED-01 - Medical Record Immutability & Amendment Trail',
     });
   });
 
+  describe('Receptionist Medical Privacy & Confidential Masking (REQ-SEC-01 / UAT-SEC-01)', () => {
+    it('should NOT query or expose clinical notes when user is an Assistant / Receptionist', () => {
+      (component['authService'] as any).isDoctor = () => false;
+      (component['authService'] as any).isAdmin = () => false;
+      (component['authService'] as any).isAssistant = () => true;
+
+      component.loadPatientHistory();
+
+      expect(mockClinicalNotesService.getNotes).not.toHaveBeenCalled();
+      expect(component.clinicalNotes()).toEqual([]);
+    });
+
+    it('should query clinical notes when user is a Doctor', () => {
+      (component['authService'] as any).isDoctor = () => true;
+      (component['authService'] as any).isAdmin = () => false;
+
+      component.loadPatientHistory();
+
+      expect(mockClinicalNotesService.getNotes).toHaveBeenCalledWith('pt-101');
+      expect(component.clinicalNotes().length).toBe(2);
+    });
+  });
+
   describe('Add Clinical Encounter Note Workflow', () => {
     it('should open and close the Add Note modal', () => {
       component.openAddNoteModal();

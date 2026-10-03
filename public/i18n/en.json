@@ -235,7 +235,10 @@
     "category_diagnostic_finding": "Diagnostic Finding",
     "enter_note_content": "Enter objective findings, complaints, or diagnosis...",
     "enter_amendment_content": "Enter amendment text or clinical addendum...",
-    "enter_amendment_reason": "e.g., Follow-up diagnosis, lab results received, correction"
+    "enter_amendment_reason": "e.g., Follow-up diagnosis, lab results received, correction",
+    "confidential_medical_record": "Confidential Clinical Medical Record",
+    "receptionist_privacy_notice": "Doctor diagnostic consultation notes and clinical records are restricted to attending physicians and clinic administrators (REQ-SEC-01 / UAT-SEC-01).",
+    "privacy_role_restricted": "Front-Desk Privacy Protected"
   },
   "appointments": {
     "title": "Appointments",
