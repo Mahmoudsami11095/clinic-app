@@ -15,6 +15,7 @@ import { DentalService, DentalLog, ToothStatus, ConsumedMaterial, DentalProcedur
 import { DentalNotationService } from '../../../../core/services/dental-notation.service';
 import { ClinicalNotesService, ClinicalNote, ClinicalNoteAmendment } from '../../../../core/services/clinical-notes.service';
 import { ScanViewerModalComponent } from '../../../../shared/components/scan-viewer-modal/scan-viewer-modal.component';
+import { SignaturePadModalComponent } from '../../../../shared/components/signature-pad-modal/signature-pad-modal.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
@@ -70,7 +71,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
 
 @Component({
   selector: 'app-patient-history',
-  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent],
+  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent, SignaturePadModalComponent],
   template: `
     <div class="space-y-6">
       <!-- Top Row: Summary Info Grid (4 Cards - BR-FIN-02) -->
@@ -1921,15 +1922,47 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                 </div>
 
                 <div class="grid grid-cols-2 gap-12 pt-4">
+                  <!-- Patient Consent Digital Signature Block -->
                   <div class="text-start">
-                    <div class="border-b border-slate-400 pb-1 h-12 flex items-end">
-                      <span class="text-[10px] text-slate-300 italic">Signature</span>
+                    <div class="border-b border-slate-400 pb-1 h-16 flex items-end justify-center bg-slate-50/50 rounded-t-lg overflow-hidden">
+                      @if (patient.consentSignature) {
+                        <img [src]="patient.consentSignature" alt="Patient Signature" class="max-h-14 object-contain" />
+                      } @else {
+                        <button
+                          type="button"
+                          (click)="openSignaturePad()"
+                          class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 transition-colors flex items-center gap-1 cursor-pointer no-print mb-1"
+                        >
+                          <i class="pi pi-pencil text-[10px]"></i>
+                          <span>{{ 'consent.capture_signature' | translate }}</span>
+                        </button>
+                      }
                     </div>
-                    <p class="text-xs font-bold text-slate-800 mt-2">{{ 'dental.patient_signature' | translate }}</p>
-                    <p class="text-[10px] text-slate-400">Date: ________________________</p>
+                    <div class="flex items-center justify-between mt-2">
+                      <p class="text-xs font-bold text-slate-800">{{ 'dental.patient_signature' | translate }}</p>
+                      @if (patient.consentSignature) {
+                        <button
+                          type="button"
+                          (click)="openSignaturePad()"
+                          class="text-[10px] text-indigo-600 hover:underline font-semibold cursor-pointer no-print"
+                        >
+                          {{ 'consent.resign' | translate }}
+                        </button>
+                      }
+                    </div>
+                    @if (patient.consentSignedAt) {
+                      <p class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+                        <i class="pi pi-check-circle text-[9px]"></i>
+                        <span>{{ 'consent.signed_verified' | translate }} ({{ patient.consentSignedAt | date:'mediumDate' }})</span>
+                      </p>
+                    } @else {
+                      <p class="text-[10px] text-slate-400">Date: ________________________</p>
+                    }
                   </div>
+
+                  <!-- Doctor Signature Block -->
                   <div class="text-start">
-                    <div class="border-b border-slate-400 pb-1 h-12 flex items-end">
+                    <div class="border-b border-slate-400 pb-1 h-16 flex items-end">
                       <span class="text-[10px] text-slate-300 italic">Signature & Clinic Stamp</span>
                     </div>
                     <p class="text-xs font-bold text-slate-800 mt-2">{{ 'dental.doctor_signature' | translate }}</p>
@@ -2160,6 +2193,13 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
         (close)="closeScanViewer()"
         (download)="downloadFile($event)"
       ></app-scan-viewer-modal>
+
+      <!-- REQ-PAT-03: Patient Document & Consent E-Signature Modal -->
+      <app-signature-pad-modal
+        [isOpen]="isSignaturePadOpen()"
+        (signatureSaved)="onConsentSignatureSaved($event)"
+        (close)="closeSignaturePad()"
+      ></app-signature-pad-modal>
     </div>
   `
 })
@@ -2295,6 +2335,9 @@ export class PatientHistoryComponent implements OnInit {
   isScanViewerOpen = signal<boolean>(false);
   selectedScanUrl = signal<string | null>(null);
   selectedScanName = signal<string>('');
+
+  // REQ-PAT-03: Patient Document & Consent E-Signature State
+  isSignaturePadOpen = signal<boolean>(false);
   loadingData = signal(true);
   // Dental interactive chart signals and state
   selectedTooth = signal<number | string | null>(null);
@@ -2910,6 +2953,34 @@ export class PatientHistoryComponent implements OnInit {
     this.selectedScanUrl.set(null);
     this.selectedScanName.set('');
     this.isScanViewerOpen.set(false);
+  }
+
+  // REQ-PAT-03: Patient Document & Consent E-Signatures
+  openSignaturePad(): void {
+    this.isSignaturePadOpen.set(true);
+  }
+
+  closeSignaturePad(): void {
+    this.isSignaturePadOpen.set(false);
+  }
+
+  onConsentSignatureSaved(signatureDataUrl: string): void {
+    if (!this.patient?.id) return;
+    this.patientService.saveConsentSignature(this.patient.id, signatureDataUrl)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res: any) => {
+          this.patient.consentSignature = signatureDataUrl;
+          this.patient.consentSignedAt = res?.data?.consentSignedAt || new Date().toISOString();
+          this.toastr.success(
+            'Patient consent digital signature saved successfully.',
+            'Consent Recorded'
+          );
+        },
+        error: () => {
+          this.toastr.error('Failed to save digital consent signature.', 'Error');
+        }
+      });
   }
 
   deleteFile(fileName: string) {

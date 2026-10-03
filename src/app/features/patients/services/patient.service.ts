@@ -58,4 +58,9 @@ export class PatientService {
   deleteFile(patientId: string, fileName: string) {
     return this.http.delete<{ message: string }>(`/api/patients/${patientId}/files/${fileName}`);
   }
+
+  // REQ-PAT-03: Save patient digital consent signature
+  saveConsentSignature(patientId: string, signature: string) {
+    return this.http.post<{ message: string; data: Patient }>(`/api/patients/${encodeURIComponent(patientId)}/consent-signature`, { signature });
+  }
 }
