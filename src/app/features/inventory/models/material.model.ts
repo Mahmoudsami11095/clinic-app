@@ -6,6 +6,9 @@ export interface Material {
   quantity: number;
   unit?: string;
   minStockAlert?: number;
+  expirationDate?: string;
+  batchNumber?: string;
+  isExpired?: boolean;
 }
 
 export interface ConsumedMaterial {

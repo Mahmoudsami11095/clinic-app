@@ -31,18 +31,26 @@ export class InventoryListComponent implements OnInit {
   loading: boolean = true;
   error: string = '';
   searchTerm: string = '';
-  activeFilter: 'all' | 'low' | 'out' | 'healthy' = 'all';
+  activeFilter: 'all' | 'low' | 'out' | 'healthy' | 'expired' = 'all';
+
+  get expiredCount(): number {
+    return this.materials.filter(m => this.isExpired(m)).length;
+  }
 
   get lowStockCount(): number {
-    return this.materials.filter(m => this.isLowStock(m)).length;
+    return this.materials.filter(m => this.isLowStock(m) && !this.isExpired(m)).length;
   }
 
   get outOfStockCount(): number {
-    return this.materials.filter(m => this.isOutOfStock(m)).length;
+    return this.materials.filter(m => this.isOutOfStock(m) && !this.isExpired(m)).length;
   }
 
   get totalAlertCount(): number {
-    return this.lowStockCount + this.outOfStockCount;
+    return this.expiredCount + this.lowStockCount + this.outOfStockCount;
+  }
+
+  isExpired(material: Material): boolean {
+    return this.materialsService.isExpired(material);
   }
 
   isLowStock(material: Material): boolean {
@@ -54,24 +62,27 @@ export class InventoryListComponent implements OnInit {
     return material.quantity <= 0;
   }
 
-  getStockStatus(material: Material): 'out' | 'low' | 'healthy' {
+  getStockStatus(material: Material): 'expired' | 'out' | 'low' | 'healthy' {
+    if (this.isExpired(material)) return 'expired';
     if (this.isOutOfStock(material)) return 'out';
     if (this.isLowStock(material)) return 'low';
     return 'healthy';
   }
 
-  setFilter(filter: 'all' | 'low' | 'out' | 'healthy'): void {
+  setFilter(filter: 'all' | 'low' | 'out' | 'healthy' | 'expired'): void {
     this.activeFilter = filter;
   }
 
   get filteredMaterials(): Material[] {
     let list = this.materials;
-    if (this.activeFilter === 'low') {
+    if (this.activeFilter === 'expired') {
+      list = list.filter(m => this.isExpired(m));
+    } else if (this.activeFilter === 'low') {
       list = list.filter(m => this.isLowStock(m));
     } else if (this.activeFilter === 'out') {
       list = list.filter(m => this.isOutOfStock(m));
     } else if (this.activeFilter === 'healthy') {
-      list = list.filter(m => !this.isLowStock(m) && !this.isOutOfStock(m));
+      list = list.filter(m => !this.isLowStock(m) && !this.isOutOfStock(m) && !this.isExpired(m));
     }
 
     if (!this.searchTerm.trim()) {
@@ -116,8 +127,8 @@ export class InventoryListComponent implements OnInit {
     if (this.route) {
       this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
         const filter = params['filter'];
-        if (filter && ['all', 'low', 'out', 'healthy'].includes(filter)) {
-          this.activeFilter = filter as 'all' | 'low' | 'out' | 'healthy';
+        if (filter && ['all', 'low', 'out', 'healthy', 'expired'].includes(filter)) {
+          this.activeFilter = filter as 'all' | 'low' | 'out' | 'healthy' | 'expired';
         }
       });
     }
