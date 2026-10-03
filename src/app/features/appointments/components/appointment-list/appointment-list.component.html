@@ -56,7 +56,7 @@
 
         <!-- Status Filter Tabs -->
         <div class="flex overflow-x-auto hide-scrollbar whitespace-nowrap items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 w-full sm:w-auto">
-          @for (option of ['all', 'scheduled', 'completed', 'cancelled']; track option) {
+          @for (option of ['all', 'waiting', 'in_consultation', 'scheduled', 'completed', 'cancelled']; track option) {
             <button
               (click)="onStatusFilter(option)"
               [class]="selectedStatus() === option
@@ -71,6 +71,97 @@
 
     </div>
   </div>
+
+  <!-- REQ-APT-02: Live Waiting Room Queue Dashboard Section (Doctors & Staff) -->
+  @if (!authService.isPatient() && (waitingQueue().length > 0 || inConsultation().length > 0)) {
+    <div class="bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 rounded-2xl border border-amber-200/80 p-5 shadow-sm space-y-4 animate-fadeIn">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-xs">
+            <i class="pi pi-users text-sm"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span>{{ 'appointments.live_queue_title' | translate }}</span>
+              <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">
+                LIVE
+              </span>
+            </h3>
+            <p class="text-xs text-slate-500 font-medium">Real-time patient waiting room queue</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-semibold">
+          <span class="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-lg">
+            {{ inConsultation().length }} In Consultation
+          </span>
+          <span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg">
+            {{ waitingQueue().length }} Waiting
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Active Consultation Cards -->
+        @for (cAppt of inConsultation(); track cAppt.id) {
+          <div class="p-4 bg-white border-2 border-purple-300 rounded-xl shadow-xs space-y-2 relative overflow-hidden text-start">
+            <div class="absolute top-0 end-0 bg-purple-600 text-white text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-bl-lg">
+              In Exam
+            </div>
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+                {{ cAppt.patientName.charAt(0) }}
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-800">{{ cAppt.patientName }}</p>
+                <p class="text-xs text-slate-500">Dr. {{ cAppt.doctorName }}</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+              <span class="text-slate-400 font-medium">{{ cAppt.type }}</span>
+              @if (authService.isDoctor()) {
+                <button
+                  type="button"
+                  (click)="completeConsultation(cAppt)"
+                  class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                >
+                  {{ 'appointments.complete_consultation_btn' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Waiting Patient Cards -->
+        @for (wAppt of waitingQueue(); track wAppt.id) {
+          <div class="p-4 bg-white border border-amber-200/90 rounded-xl shadow-xs space-y-2 text-start">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 bg-amber-500 text-white text-xs font-black rounded-lg">
+                  #{{ wAppt.queueNumber || 1 }}
+                </span>
+                <p class="text-sm font-bold text-slate-800">{{ wAppt.patientName }}</p>
+              </div>
+              <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+                <i class="pi pi-clock text-[10px]"></i> {{ getWaitingTime(wAppt.arrivedAt) }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+              <span class="text-slate-500 font-medium text-[11px]">Dr. {{ wAppt.doctorName }} • {{ wAppt.type }}</span>
+              @if (authService.isDoctor()) {
+                <button
+                  type="button"
+                  (click)="startConsultation(wAppt)"
+                  class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                >
+                  {{ 'appointments.start_consultation_btn' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
 
   <!-- Appointments List -->
   <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -190,10 +281,23 @@
 
                 <!-- Status -->
                 <td class="py-4 px-6">
-                  <span class="px-3 py-1 text-xs font-bold rounded-full ring-1 ring-inset inline-flex items-center gap-1"
-                        [ngClass]="getStatusClass(appt.status)">
-                    {{ 'appointments.status_' + appt.status | translate }}
-                  </span>
+                  <div class="flex flex-col items-start gap-1">
+                    <span class="px-3 py-1 text-xs font-bold rounded-full ring-1 ring-inset inline-flex items-center gap-1.5"
+                          [ngClass]="getStatusClass(appt.status)">
+                      @if (appt.status === 'waiting') {
+                        <i class="pi pi-clock text-[9px]"></i>
+                      } @else if (appt.status === 'in_consultation') {
+                        <i class="pi pi-spin pi-spinner text-[9px]"></i>
+                      }
+                      {{ 'appointments.status_' + appt.status | translate }}
+                    </span>
+                    @if (appt.status === 'waiting' && appt.arrivedAt) {
+                      <span class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1">
+                        <span class="bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 px-1.5 py-0.2 rounded font-bold">#{{ appt.queueNumber || 1 }}</span>
+                        <span>{{ getWaitingTime(appt.arrivedAt) }}</span>
+                      </span>
+                    }
+                  </div>
                 </td>
 
                 <!-- Notes -->
@@ -279,7 +383,42 @@
 
   <!-- Shared Action Buttons Template -->
   <ng-template #actionButtons let-appt="appt">
-    <div class="flex items-center justify-end gap-2">
+    <div class="flex items-center justify-end gap-2 flex-wrap">
+      <!-- REQ-APT-02: Live Queue Workflow Action Buttons -->
+      @if (appt.status === 'scheduled' && canManageAppointments()) {
+        <button
+          type="button"
+          (click)="checkIn(appt)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
+          [title]="'appointments.check_in_btn' | translate"
+        >
+          <i class="pi pi-sign-in text-[10px]"></i>
+          <span class="hidden sm:inline">{{ 'appointments.check_in_btn' | translate }}</span>
+        </button>
+      }
+      @if (appt.status === 'waiting' && authService.isDoctor()) {
+        <button
+          type="button"
+          (click)="startConsultation(appt)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
+          [title]="'appointments.start_consultation_btn' | translate"
+        >
+          <i class="pi pi-play text-[10px]"></i>
+          <span class="hidden sm:inline">{{ 'appointments.start_consultation_btn' | translate }}</span>
+        </button>
+      }
+      @if (appt.status === 'in_consultation' && authService.isDoctor()) {
+        <button
+          type="button"
+          (click)="completeConsultation(appt)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
+          [title]="'appointments.complete_consultation_btn' | translate"
+        >
+          <i class="pi pi-check text-[10px]"></i>
+          <span class="hidden sm:inline">{{ 'appointments.complete_consultation_btn' | translate }}</span>
+        </button>
+      }
+
       <!-- For Doctor and Assistant -->
       @if (canManageAppointments()) {
         <button
