@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnDestroy, inject, signal, computed, ElementR
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Patient } from '../../models/patient.model';
 import { PatientService } from '../../services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
@@ -12,6 +13,7 @@ import { InvoicePrintModalComponent } from '../../../billing/components/invoice-
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalService, DentalLog, ToothStatus, ConsumedMaterial, DentalProcedureStage } from '../../../../core/services/dental.service';
 import { DentalNotationService } from '../../../../core/services/dental-notation.service';
+import { ClinicalNotesService, ClinicalNote, ClinicalNoteAmendment } from '../../../../core/services/clinical-notes.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
@@ -517,47 +519,140 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
               </div>
             </div>
 
-            <!-- Notes Card - Hidden for now -->
-            @if (false) {
+            <!-- Clinical Encounter Notes Card (BR-RX-03 / BR-MED-01 Immutability & Amendment Trail) -->
             <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-start animate-fade-in">
               <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <i class="pi pi-paperclip text-slate-500"></i>
-                  <span>{{ 'patients.patient_notes' | translate }}</span>
-                </h4>
-                <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 rounded-full text-slate-500">{{ 'patients.notes_count' | translate }}</span>
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                    <i class="pi pi-file-edit text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <span>{{ 'patients.clinical_encounter_notes' | translate }}</span>
+                    </h4>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                      <i class="pi pi-lock text-[9px]"></i> {{ 'patients.immutable_record_notice' | translate }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 rounded-full text-slate-500">
+                    {{ clinicalNotes().length }} {{ 'patients.notes_count' | translate }}
+                  </span>
+                  <button
+                    type="button"
+                    (click)="openAddNoteModal()"
+                    class="px-2.5 py-1 text-xs font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <i class="pi pi-plus text-[10px]"></i>
+                    <span>{{ 'patients.add_note_btn' | translate }}</span>
+                  </button>
+                </div>
               </div>
-              
+
               <div class="space-y-4">
-                <div class="border-s-2 border-slate-100 ps-3.5 space-y-1 py-0.5 text-start relative">
-                  <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-[10px] text-slate-400 font-semibold">Jun 10, 2026</span>
-                    <button type="button" (click)="downloadNote('1')" class="text-[10px] text-indigo-500 hover:underline font-semibold cursor-pointer">{{ 'patients.export' | translate }}</button>
+                @if (clinicalNotes().length === 0) {
+                  <div class="text-center py-6">
+                    <div class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 mx-auto flex items-center justify-center mb-2">
+                      <i class="pi pi-book text-base"></i>
+                    </div>
+                    <p class="text-xs text-slate-400">{{ 'patients.no_notes_recorded' | translate }}</p>
                   </div>
-                  <p class="text-xs text-slate-600">{{ 'patients.reported_pain' | translate }}</p>
-                </div>
+                } @else {
+                  @for (note of clinicalNotes(); track note.id) {
+                    <div class="border border-slate-100 rounded-xl p-3.5 bg-slate-50/40 hover:bg-slate-50 transition-colors space-y-2 text-start">
+                      <!-- Note Header -->
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-xs font-bold text-slate-800">{{ note.title || 'Clinical Note' }}</span>
+                          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                            {{ note.category || 'Consultation' }}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <button
+                            type="button"
+                            (click)="openAmendModal(note)"
+                            class="px-2.5 py-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-1 cursor-pointer border border-indigo-200/60"
+                            title="Append legal amendment"
+                          >
+                            <i class="pi pi-file-edit text-[10px]"></i>
+                            <span>{{ 'patients.amend' | translate }}</span>
+                          </button>
+                          <!-- BR-RX-03 Immutability: No delete button for clinical notes -->
+                        </div>
+                      </div>
 
-                <div class="border-s-2 border-slate-100 ps-3.5 space-y-1 py-0.5 text-start relative">
-                  <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-[10px] text-slate-400 font-semibold">May 15, 2026</span>
-                    <button type="button" (click)="downloadNote('2')" class="text-[10px] text-indigo-500 hover:underline font-semibold cursor-pointer">{{ 'patients.export' | translate }}</button>
-                  </div>
-                  <p class="text-xs text-slate-600">{{ 'patients.scaling_polishing' | translate }}</p>
-                </div>
+                      <!-- Author and Timestamp -->
+                      <div class="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                        <span class="flex items-center gap-1 text-slate-600 font-semibold">
+                          <i class="pi pi-user text-[9px]"></i> {{ note.doctorName }}
+                        </span>
+                        <span>•</span>
+                        <span>{{ formatNoteDate(note.createdAt) }}</span>
+                        <span class="ms-auto inline-flex items-center gap-1 text-[9px] text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200/60">
+                          <i class="pi pi-shield text-[8px] text-emerald-500"></i> Locked
+                        </span>
+                      </div>
 
-                <div class="border-s-2 border-slate-100 ps-3.5 space-y-1 py-0.5 text-start relative">
-                  <div class="absolute w-2 h-2 rounded-full bg-slate-300 -start-[5px] top-2"></div>
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-[10px] text-slate-400 font-semibold">May 15, 2026</span>
-                    <button type="button" (click)="downloadNote('3')" class="text-[10px] text-indigo-500 hover:underline font-semibold cursor-pointer">{{ 'patients.export' | translate }}</button>
-                  </div>
-                  <p class="text-xs text-slate-600">{{ 'patients.follow_up_6m' | translate }}</p>
-                </div>
+                      <!-- Original Note Content (IMMUTABLE) -->
+                      <div class="bg-white rounded-lg p-2.5 border border-slate-200/60">
+                        <span class="text-[10px] font-semibold text-slate-400 block mb-1 uppercase tracking-wide">
+                          {{ 'patients.original_record' | translate }}
+                        </span>
+                        <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">{{ note.notes }}</p>
+                      </div>
+
+                      <!-- Amendment Trail Accordion -->
+                      @if (note.amendments && note.amendments.length > 0) {
+                        <div class="mt-2 pt-2 border-t border-slate-200/60">
+                          <button
+                            type="button"
+                            (click)="toggleNoteExpanded(note.id)"
+                            class="w-full flex items-center justify-between text-xs font-semibold text-amber-700 hover:text-amber-800 py-1 cursor-pointer"
+                          >
+                            <span class="flex items-center gap-1.5">
+                              <i class="pi pi-history text-xs"></i>
+                              <span>{{ 'patients.amendment_history' | translate }}</span>
+                              <span class="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                {{ note.amendments.length }}
+                              </span>
+                            </span>
+                            <i class="pi text-[10px]" [class.pi-chevron-down]="!isNoteExpanded(note.id)" [class.pi-chevron-up]="isNoteExpanded(note.id)"></i>
+                          </button>
+
+                          @if (isNoteExpanded(note.id)) {
+                            <div class="mt-2 space-y-2 border-s-2 border-amber-300 ps-3 ms-1 animate-fade-in">
+                              @for (amend of note.amendments; track amend.id; let idx = $index) {
+                                <div class="relative text-xs space-y-1 bg-amber-50/50 border border-amber-200/60 rounded-lg p-2.5">
+                                  <div class="absolute -start-[17px] top-3 w-2 h-2 rounded-full bg-amber-400 border border-white"></div>
+                                  <div class="flex items-center justify-between text-[10px] text-slate-500">
+                                    <span class="font-bold text-amber-900">
+                                      {{ 'patients.amendment_details' | translate }} #{{ idx + 1 }}
+                                    </span>
+                                    <span>{{ formatNoteDate(amend.timestamp) }}</span>
+                                  </div>
+                                  <div class="text-[10px] text-slate-500">
+                                    <span>{{ 'patients.amended_by' | translate }}:</span>
+                                    <strong class="text-slate-700 ms-1">{{ amend.authorName }}</strong>
+                                    @if (amend.reason) {
+                                      <span class="ms-1 italic text-slate-400">({{ amend.reason }})</span>
+                                    }
+                                  </div>
+                                  <p class="text-xs text-slate-800 whitespace-pre-wrap leading-relaxed mt-1">
+                                    {{ amend.amendedText }}
+                                  </p>
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                }
               </div>
             </div>
-            }
           </div>
         </div>
 
@@ -1829,6 +1924,202 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
         [bill]="selectedInvoiceToPrint()"
         (close)="closeInvoicePrint()"
       ></app-invoice-print-modal>
+
+      <!-- Add Clinical Note Modal (BR-RX-03 / BR-MED-01) -->
+      @if (isAddNoteModalOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden text-start">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <i class="pi pi-file-edit text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-slate-800">{{ 'patients.add_clinical_note' | translate }}</h3>
+                  <p class="text-xs text-slate-400 font-medium">Record permanent encounter notes</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="closeAddNoteModal()"
+                class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <i class="pi pi-times text-sm"></i>
+              </button>
+            </div>
+
+            <div class="p-5 space-y-4">
+              <!-- Legal immutability disclaimer -->
+              <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-800 text-xs flex items-start gap-2">
+                <i class="pi pi-shield text-emerald-600 mt-0.5 flex-shrink-0"></i>
+                <div>
+                  <strong class="block font-semibold">{{ 'patients.immutable_record_notice' | translate }}</strong>
+                  <span class="text-[11px] text-emerald-700">{{ 'patients.delete_not_permitted' | translate }}</span>
+                </div>
+              </div>
+
+              <!-- Title / Category selection -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    {{ 'patients.type' | translate }} / Category
+                  </label>
+                  <select
+                    [ngModel]="newNoteCategory()"
+                    (ngModelChange)="newNoteCategory.set($event)"
+                    class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    <option value="Consultation">{{ 'patients.category_consultation' | translate }}</option>
+                    <option value="Follow-up">{{ 'patients.category_follow_up' | translate }}</option>
+                    <option value="Procedure">{{ 'patients.category_procedure_note' | translate }}</option>
+                    <option value="Diagnostic">{{ 'patients.category_diagnostic_finding' | translate }}</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    {{ 'patients.note_title' | translate }}
+                  </label>
+                  <input
+                    type="text"
+                    [ngModel]="newNoteTitle()"
+                    (ngModelChange)="newNoteTitle.set($event)"
+                    placeholder="e.g. Clinical Examination"
+                    class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <!-- Note Content Textarea -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  {{ 'patients.note_content' | translate }} <span class="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows="5"
+                  [ngModel]="newNoteContent()"
+                  (ngModelChange)="newNoteContent.set($event)"
+                  placeholder="{{ 'patients.enter_note_content' | translate }}"
+                  class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                (click)="closeAddNoteModal()"
+                class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                (click)="submitClinicalNote()"
+                [disabled]="savingNote() || !newNoteContent().trim()"
+                class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                @if (savingNote()) {
+                  <i class="pi pi-spin pi-spinner text-xs"></i>
+                }
+                <span>{{ 'patients.save_note' | translate }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Amend Note Modal (BR-RX-03 / BR-MED-01) -->
+      @if (isAmendNoteModalOpen() && selectedNoteForAmend()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden text-start">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <i class="pi pi-history text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-slate-800">{{ 'patients.amend_note' | translate }}</h3>
+                  <p class="text-xs text-slate-400 font-medium">Append timestamped amendment with author identity</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="closeAmendModal()"
+                class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <i class="pi pi-times text-sm"></i>
+              </button>
+            </div>
+
+            <div class="p-5 space-y-4">
+              <!-- Original Note Excerpt -->
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs space-y-1">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                  {{ 'patients.original_record' | translate }} ({{ selectedNoteForAmend()?.title }})
+                </span>
+                <p class="text-xs text-slate-700 italic line-clamp-3">
+                  "{{ selectedNoteForAmend()?.notes }}"
+                </p>
+              </div>
+
+              <!-- Immutability Notice -->
+              <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-200/80 text-blue-800 text-xs flex items-start gap-2">
+                <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+                <span>This amendment will be permanently appended to the clinical audit trail preserving your signature. The original entry is not modified.</span>
+              </div>
+
+              <!-- Reason Input -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  {{ 'patients.amendment_reason' | translate }}
+                </label>
+                <input
+                  type="text"
+                  [ngModel]="amendmentReason()"
+                  (ngModelChange)="amendmentReason.set($event)"
+                  placeholder="{{ 'patients.enter_amendment_reason' | translate }}"
+                  class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <!-- Amendment Text Textarea -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  {{ 'patients.amendment_text' | translate }} <span class="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows="4"
+                  [ngModel]="amendmentText()"
+                  (ngModelChange)="amendmentText.set($event)"
+                  placeholder="{{ 'patients.enter_amendment_content' | translate }}"
+                  class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                (click)="closeAmendModal()"
+                class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                (click)="submitAmendment()"
+                [disabled]="submittingAmendment() || !amendmentText().trim()"
+                class="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                @if (submittingAmendment()) {
+                  <i class="pi pi-spin pi-spinner text-xs"></i>
+                }
+                <span>{{ 'patients.submit_amendment' | translate }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `
 })
@@ -1842,6 +2133,7 @@ export class PatientHistoryComponent implements OnInit {
   private billingService = inject(BillingService);
   private dentalService = inject(DentalService);
   private patientService = inject(PatientService);
+  public clinicalNotesService = inject(ClinicalNotesService);
   protected authService = inject(AuthService);
   public clinicService = inject(ClinicService);
   private toastr = inject(ToastrService);
@@ -1946,6 +2238,18 @@ export class PatientHistoryComponent implements OnInit {
   billingRecords = signal<any[]>([]);
   dentalLogs = signal<DentalLog[]>([]);
   filesList = signal<any[]>([]);
+  clinicalNotes = signal<ClinicalNote[]>([]);
+  isAddNoteModalOpen = signal<boolean>(false);
+  isAmendNoteModalOpen = signal<boolean>(false);
+  selectedNoteForAmend = signal<ClinicalNote | null>(null);
+  expandedNoteIds = signal<Set<string>>(new Set<string>());
+  newNoteTitle = signal<string>('Clinical Encounter');
+  newNoteCategory = signal<string>('Consultation');
+  newNoteContent = signal<string>('');
+  amendmentText = signal<string>('');
+  amendmentReason = signal<string>('');
+  savingNote = signal<boolean>(false);
+  submittingAmendment = signal<boolean>(false);
   loadingData = signal(true);
   // Dental interactive chart signals and state
   selectedTooth = signal<number | string | null>(null);
@@ -2452,13 +2756,14 @@ export class PatientHistoryComponent implements OnInit {
   loadPatientHistory() {
     this.loadingData.set(true);
     forkJoin({
-            appointments: this.appointmentService.getAllWithDetails(),
-            prescriptions: this.prescriptionService.getAllWithDetails(),
-            billing: this.billingService.getAllWithDetails(),
-            dental: this.dentalService.getLogs(this.patient.id),
-            files: this.patientService.getFiles(this.patient.id)
-          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ appointments, prescriptions, billing, dental, files }) => {
+      appointments: this.appointmentService.getAllWithDetails(),
+      prescriptions: this.prescriptionService.getAllWithDetails(),
+      billing: this.billingService.getAllWithDetails(),
+      dental: this.dentalService.getLogs(this.patient.id),
+      files: this.patientService.getFiles(this.patient.id),
+      clinicalNotes: this.clinicalNotesService.getNotes(this.patient.id).pipe(catchError(() => of([])))
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ appointments, prescriptions, billing, dental, files, clinicalNotes }) => {
         // Filter appointments for this patient
         const filteredAppts = appointments.filter(a => a.patientId === this.patient.id);
         this.appointments.set(filteredAppts);
@@ -2476,6 +2781,9 @@ export class PatientHistoryComponent implements OnInit {
 
         // Set patient files
         this.filesList.set(files || []);
+
+        // Set clinical encounter notes (BR-RX-03 / BR-MED-01)
+        this.clinicalNotes.set(clinicalNotes || []);
 
         this.loadingData.set(false);
       },
@@ -2538,6 +2846,120 @@ export class PatientHistoryComponent implements OnInit {
         }
       });
     }
+  }
+
+  formatNoteDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  isNoteExpanded(noteId: string): boolean {
+    return this.expandedNoteIds().has(noteId);
+  }
+
+  toggleNoteExpanded(noteId: string): void {
+    const current = new Set(this.expandedNoteIds());
+    if (current.has(noteId)) {
+      current.delete(noteId);
+    } else {
+      current.add(noteId);
+    }
+    this.expandedNoteIds.set(current);
+  }
+
+  openAddNoteModal(): void {
+    this.newNoteTitle.set('Clinical Encounter');
+    this.newNoteCategory.set('Consultation');
+    this.newNoteContent.set('');
+    this.isAddNoteModalOpen.set(true);
+  }
+
+  closeAddNoteModal(): void {
+    this.isAddNoteModalOpen.set(false);
+    this.newNoteContent.set('');
+  }
+
+  submitClinicalNote(): void {
+    const content = this.newNoteContent().trim();
+    if (!content) {
+      this.toastr.error('Please enter note content', 'Validation Error');
+      return;
+    }
+    if (!this.patient?.id) return;
+
+    this.savingNote.set(true);
+    this.clinicalNotesService.createNote({
+      patientId: this.patient.id,
+      title: this.newNoteTitle().trim() || 'Clinical Encounter',
+      category: this.newNoteCategory(),
+      notes: content,
+      clinicId: this.patient.clinicId || this.clinicService.activeClinicId()
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (createdNote) => {
+        this.clinicalNotes.update(notes => [createdNote, ...notes]);
+        this.savingNote.set(false);
+        this.closeAddNoteModal();
+        this.toastr.success('Clinical encounter note recorded successfully', 'Medical Record Saved');
+      },
+      error: (err) => {
+        this.savingNote.set(false);
+        this.toastr.error(extractErrorMessage(err), 'Failed to save note');
+      }
+    });
+  }
+
+  openAmendModal(note: ClinicalNote): void {
+    this.selectedNoteForAmend.set(note);
+    this.amendmentText.set('');
+    this.amendmentReason.set('');
+    this.isAmendNoteModalOpen.set(true);
+  }
+
+  closeAmendModal(): void {
+    this.isAmendNoteModalOpen.set(false);
+    this.selectedNoteForAmend.set(null);
+    this.amendmentText.set('');
+    this.amendmentReason.set('');
+  }
+
+  submitAmendment(): void {
+    const note = this.selectedNoteForAmend();
+    const text = this.amendmentText().trim();
+    if (!note || !text) {
+      this.toastr.error('Please enter amendment text', 'Validation Error');
+      return;
+    }
+
+    this.submittingAmendment.set(true);
+    this.clinicalNotesService.amendNote(note.id, {
+      amendedText: text,
+      reason: this.amendmentReason().trim() || undefined
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (updatedNote) => {
+        this.clinicalNotes.update(notes => 
+          notes.map(n => n.id === updatedNote.id ? updatedNote : n)
+        );
+        const currentExpanded = new Set(this.expandedNoteIds());
+        currentExpanded.add(updatedNote.id);
+        this.expandedNoteIds.set(currentExpanded);
+
+        this.submittingAmendment.set(false);
+        this.closeAmendModal();
+        this.toastr.success('Amendment appended to audit trail', 'Record Amended');
+      },
+      error: (err) => {
+        this.submittingAmendment.set(false);
+        this.toastr.error(extractErrorMessage(err), 'Failed to amend note');
+      }
+    });
   }
 
   downloadNote(noteId: string) {
