@@ -22,7 +22,8 @@ describe('InventoryListComponent', () => {
 
   const mockMaterialsService = {
     getByDoctor: jasmine.createSpy('getByDoctor').and.returnValue(of({ data: mockMaterials })),
-    delete: jasmine.createSpy('delete').and.returnValue(of({ success: true }))
+    delete: jasmine.createSpy('delete').and.returnValue(of({ success: true })),
+    isExpired: jasmine.createSpy('isExpired').and.callFake((m: Material) => !!m.isExpired)
   };
 
   const mockAuthService = {

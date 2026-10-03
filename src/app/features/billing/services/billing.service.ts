@@ -46,4 +46,10 @@ export class BillingService {
   update(record: BillingRecord) {
     return this.http.put<{ message: string; data: BillingRecord }>(`/api/billing/${record.id}`, record);
   }
+
+  // BR-FIN-03: Void an invoice with a mandatory recorded reason (no permanent deletion)
+  void(id: string, reason: string) {
+    return this.http.put<{ message: string; data: BillingRecord }>(`/api/billing/${id}/void`, { reason });
+  }
 }
+
