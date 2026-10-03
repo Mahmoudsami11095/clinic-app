@@ -9,6 +9,12 @@ export interface Material {
   expirationDate?: string;
   batchNumber?: string;
   isExpired?: boolean;
+
+  // REQ-INV-02: Supplier & Purchase Order Workflow
+  supplierName?: string;
+  unitCost?: number;
+  lastRestockedAt?: string;
+  purchaseOrderRef?: string;
 }
 
 export interface ConsumedMaterial {

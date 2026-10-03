@@ -845,7 +845,19 @@
     "filter_expired": "منتهي الصلاحية / محجوز",
     "batch_number": "رقم الدفعة / التشغيلة",
     "expiration_date": "تاريخ انتهاء الصلاحية",
-    "batch_placeholder": "مثال: LOT-2026-0451"
+    "batch_placeholder": "مثال: LOT-2026-0451",
+    "receive_shipment": "استلام شحنة بضاعة",
+    "receive_shipment_title": "استلام شحنة وتوريد مخزون",
+    "receive_shipment_subtitle": "تسجيل توريد جديد، زيادة المخزون، وتحديث بيانات المورد وأمر الشراء.",
+    "select_material": "اختر الصنف / المادة",
+    "quantity_received": "الكمية المستلمة",
+    "purchase_unit_cost": "سعر شراء الوحدة ($)",
+    "supplier_name": "اسم المورد / الشركة",
+    "po_ref": "رقم أمر الشراء / فاتورة التوريد",
+    "batch_lot": "رقم التشغيلة / الدفعة (Batch)",
+    "confirm_inward": "تأكيد التوريد وزيادة المخزون",
+    "restock_action": "توريد / استلام شحنة",
+    "supplier_label": "المورد"
   },
   "profile": {
     "profile_title": "المسمى الوظيفي",
