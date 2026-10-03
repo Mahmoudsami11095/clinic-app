@@ -235,7 +235,10 @@
     "category_diagnostic_finding": "نتيجة تشخيصية",
     "enter_note_content": "أدخل الملاحظات والشكوى والتشخيص السريري...",
     "enter_amendment_content": "أدخل نص التعديل أو الملحق السريري...",
-    "enter_amendment_reason": "مثال: نتائج تحاليل إضافية، تحديث تشخيص، تصحيح"
+    "enter_amendment_reason": "مثال: نتائج تحاليل إضافية، تحديث تشخيص، تصحيح",
+    "confidential_medical_record": "سجل طبي سريري سري ومحمي",
+    "receptionist_privacy_notice": "ملاحظات الاستشارة والتشخيص السريري للطبيب مقتصرة على الأطباء المعالجين وإدارة العيادة لضمان خصوصية المريض (REQ-SEC-01 / UAT-SEC-01).",
+    "privacy_role_restricted": "محمي بخصوصية الاستقبال"
   },
   "appointments": {
     "title": "المواعيد",

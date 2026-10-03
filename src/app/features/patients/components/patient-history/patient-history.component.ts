@@ -519,6 +519,8 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
               </div>
             </div>
 
+            <!-- REQ-SEC-01 / REQ-SEC-02 / UAT-SEC-01: Confidential Clinical Notes Guard -->
+            @if (authService.isDoctor() || authService.isAdmin()) {
             <!-- Clinical Encounter Notes Card (BR-RX-03 / BR-MED-01 Immutability & Amendment Trail) -->
             <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-start animate-fade-in">
               <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -653,6 +655,24 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                 }
               </div>
             </div>
+            } @else {
+            <!-- REQ-SEC-01 / REQ-SEC-02 / UAT-SEC-01 Receptionist Medical Privacy Masking Card -->
+            <div class="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm text-center animate-fade-in space-y-3">
+              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 mx-auto flex items-center justify-center">
+                <i class="pi pi-lock text-xl text-slate-500"></i>
+              </div>
+              <div class="space-y-1">
+                <h4 class="text-sm font-bold text-slate-800">{{ 'patients.confidential_medical_record' | translate }}</h4>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto leading-relaxed">{{ 'patients.receptionist_privacy_notice' | translate }}</p>
+              </div>
+              <div class="pt-1">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-semibold border border-slate-200">
+                  <i class="pi pi-shield text-[9px] text-slate-500"></i>
+                  <span>{{ 'patients.privacy_role_restricted' | translate }}</span>
+                </span>
+              </div>
+            </div>
+            }
           </div>
         </div>
 
@@ -2761,7 +2781,9 @@ export class PatientHistoryComponent implements OnInit {
       billing: this.billingService.getAllWithDetails(),
       dental: this.dentalService.getLogs(this.patient.id),
       files: this.patientService.getFiles(this.patient.id),
-      clinicalNotes: this.clinicalNotesService.getNotes(this.patient.id).pipe(catchError(() => of([])))
+      clinicalNotes: (this.authService.isDoctor() || this.authService.isAdmin())
+        ? this.clinicalNotesService.getNotes(this.patient.id).pipe(catchError(() => of([])))
+        : of([])
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ appointments, prescriptions, billing, dental, files, clinicalNotes }) => {
         // Filter appointments for this patient
