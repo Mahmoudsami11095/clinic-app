@@ -14,6 +14,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalService, DentalLog, ToothStatus, ConsumedMaterial, DentalProcedureStage } from '../../../../core/services/dental.service';
 import { DentalNotationService } from '../../../../core/services/dental-notation.service';
 import { ClinicalNotesService, ClinicalNote, ClinicalNoteAmendment } from '../../../../core/services/clinical-notes.service';
+import { ScanViewerModalComponent } from '../../../../shared/components/scan-viewer-modal/scan-viewer-modal.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
@@ -69,7 +70,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
 
 @Component({
   selector: 'app-patient-history',
-  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent],
+  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent],
   template: `
     <div class="space-y-6">
       <!-- Top Row: Summary Info Grid (4 Cards - BR-FIN-02) -->
@@ -496,6 +497,16 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                         </div>
                       </div>
                       <div class="flex items-center gap-1">
+                        @if (isViewableImage(file.name)) {
+                          <button
+                            type="button"
+                            (click)="openScanViewer(file.name)"
+                            class="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                            [title]="'radiology.view_scan' | translate"
+                          >
+                            <i class="pi pi-eye text-xs"></i>
+                          </button>
+                        }
                         <button
                           type="button"
                           (click)="downloadFile(file.name)"
@@ -2140,6 +2151,15 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
           </div>
         </div>
       }
+
+      <!-- REQ-RAD-02: High-Resolution Radiograph / Scan Viewer Modal -->
+      <app-scan-viewer-modal
+        [isOpen]="isScanViewerOpen()"
+        [fileUrl]="selectedScanUrl()"
+        [fileName]="selectedScanName()"
+        (close)="closeScanViewer()"
+        (download)="downloadFile($event)"
+      ></app-scan-viewer-modal>
     </div>
   `
 })
@@ -2270,6 +2290,11 @@ export class PatientHistoryComponent implements OnInit {
   amendmentReason = signal<string>('');
   savingNote = signal<boolean>(false);
   submittingAmendment = signal<boolean>(false);
+
+  // REQ-RAD-02: High-Resolution Scan Viewer State
+  isScanViewerOpen = signal<boolean>(false);
+  selectedScanUrl = signal<string | null>(null);
+  selectedScanName = signal<string>('');
   loadingData = signal(true);
   // Dental interactive chart signals and state
   selectedTooth = signal<number | string | null>(null);
@@ -2853,6 +2878,38 @@ export class PatientHistoryComponent implements OnInit {
         }
       });
     }
+  }
+
+  isViewableImage(fileName: string): boolean {
+    if (!fileName) return false;
+    const lower = fileName.toLowerCase();
+    return lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') ||
+           lower.endsWith('.webp') || lower.endsWith('.bmp') || lower.endsWith('.pdf');
+  }
+
+  openScanViewer(fileName: string): void {
+    if (!this.patient?.id) return;
+    this.selectedScanName.set(fileName);
+    this.patientService.downloadFile(this.patient.id, fileName).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (blob: any) => {
+        const objectUrl = window.URL.createObjectURL(blob);
+        this.selectedScanUrl.set(objectUrl);
+        this.isScanViewerOpen.set(true);
+      },
+      error: () => {
+        this.toastr.error('Failed to load radiograph image for viewing.', 'Scan Viewer');
+      }
+    });
+  }
+
+  closeScanViewer(): void {
+    const url = this.selectedScanUrl();
+    if (url && url.startsWith('blob:')) {
+      window.URL.revokeObjectURL(url);
+    }
+    this.selectedScanUrl.set(null);
+    this.selectedScanName.set('');
+    this.isScanViewerOpen.set(false);
   }
 
   deleteFile(fileName: string) {
