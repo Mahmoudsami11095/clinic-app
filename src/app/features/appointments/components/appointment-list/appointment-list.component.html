@@ -10,6 +10,24 @@
         {{ (authService.isPatient() ? 'appointments.my_appointments_sub' : 'appointments.manage_appointments_sub') | translate }}
       </p>
     </div>
+  <div class="flex items-center gap-3">
+    @if (canManageAppointments()) {
+      <button
+        type="button"
+        (click)="sendBatchReminders()"
+        [disabled]="sendingBatchReminders()"
+        class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+        [title]="'appointments.send_24h_reminders' | translate"
+      >
+        @if (sendingBatchReminders()) {
+          <i class="pi pi-spin pi-spinner text-xs"></i>
+        } @else {
+          <i class="pi pi-bell text-xs"></i>
+        }
+        <span>{{ 'appointments.send_24h_reminders' | translate }}</span>
+      </button>
+    }
+
     <button
       (click)="openModal()"
       class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
@@ -297,6 +315,12 @@
                         <span>{{ getWaitingTime(appt.arrivedAt) }}</span>
                       </span>
                     }
+                    @if (appt.lastReminderSentAt) {
+                      <span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        <i class="pi pi-check-circle text-[9px] text-emerald-600"></i>
+                        <span>{{ 'appointments.reminder_sent_badge' | translate }} ({{ getReminderTimeAgo(appt.lastReminderSentAt) }})</span>
+                      </span>
+                    }
                   </div>
                 </td>
 
@@ -394,6 +418,31 @@
         >
           <i class="pi pi-sign-in text-[10px]"></i>
           <span class="hidden sm:inline">{{ 'appointments.check_in_btn' | translate }}</span>
+        </button>
+
+        <!-- REQ-NOTIF-02: Patient Appointment Reminder Actions -->
+        <button
+          type="button"
+          (click)="sendReminder(appt)"
+          [disabled]="sendingReminderId() === appt.id"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer border border-emerald-200 dark:border-emerald-800/60 disabled:opacity-50"
+          [title]="'appointments.send_reminder_btn' | translate"
+        >
+          @if (sendingReminderId() === appt.id) {
+            <i class="pi pi-spin pi-spinner text-[10px]"></i>
+          } @else {
+            <i class="pi pi-send text-[10px]"></i>
+          }
+          <span class="hidden md:inline">{{ 'appointments.send_reminder_btn' | translate }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="openWhatsAppDirect(appt)"
+          class="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors cursor-pointer border border-slate-200/60 dark:border-slate-700"
+          [title]="'appointments.direct_whatsapp_tip' | translate"
+        >
+          <i class="pi pi-whatsapp text-xs text-emerald-600"></i>
         </button>
       }
       @if (appt.status === 'waiting' && authService.isDoctor()) {
