@@ -735,7 +735,12 @@
     "filter_low": "مخزون منخفض",
     "filter_out": "نفد المخزون",
     "filter_healthy": "مخزون كافٍ",
-    "reorder_needed": "مطلوب إعادة طلب"
+    "reorder_needed": "مطلوب إعادة طلب",
+    "quarantined_expired": "محجوز (منتهي الصلاحية)",
+    "filter_expired": "منتهي الصلاحية / محجوز",
+    "batch_number": "رقم الدفعة / التشغيلة",
+    "expiration_date": "تاريخ انتهاء الصلاحية",
+    "batch_placeholder": "مثال: LOT-2026-0451"
   },
   "profile": {
     "profile_title": "المسمى الوظيفي",
