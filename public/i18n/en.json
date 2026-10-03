@@ -915,6 +915,16 @@
     "amount_paid_req": "Amount Paid ($) *",
     "date_req": "Date *",
     "notes": "Notes",
-    "save_log": "Save Log"
+    "save_log": "Save Log",
+    "view_scan": "View Scan / Radiograph",
+    "scan_viewer_title": "High-Resolution Radiograph Viewer",
+    "zoom_in": "Zoom In (+25%)",
+    "zoom_out": "Zoom Out (-25%)",
+    "rotate_left": "Rotate Left (-90°)",
+    "rotate_right": "Rotate Right (+90°)",
+    "invert_colors": "Invert (Negative X-Ray)",
+    "reset_view": "Reset View",
+    "brightness": "Brightness",
+    "contrast": "Contrast"
   }
 }
