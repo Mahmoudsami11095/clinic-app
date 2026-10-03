@@ -14,6 +14,7 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { MaterialsService } from '../../../inventory/services/materials.service';
+import { ClinicalNotesService } from '../../../../core/services/clinical-notes.service';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { Patient } from '../../models/patient.model';
@@ -21,6 +22,7 @@ import { Patient } from '../../models/patient.model';
 describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
   let component: PatientHistoryComponent;
   let mockDentalService: any;
+  let mockClinicalNotesService: any;
 
   const mockPatient: Patient = {
     id: 'pt-101',
@@ -88,6 +90,12 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
       }))
     };
 
+    mockClinicalNotesService = {
+      getNotes: jasmine.createSpy('getNotes').and.returnValue(of([])),
+      createNote: jasmine.createSpy('createNote').and.returnValue(of({})),
+      amendNote: jasmine.createSpy('amendNote').and.returnValue(of({}))
+    };
+
     TestBed.configureTestingModule({
       providers: [
         PatientHistoryComponent,
@@ -96,6 +104,7 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
         { provide: PrescriptionService, useValue: { getAllWithDetails: () => of([]) } },
         { provide: BillingService, useValue: { getAllWithDetails: () => of([]) } },
         { provide: DentalService, useValue: mockDentalService },
+        { provide: ClinicalNotesService, useValue: mockClinicalNotesService },
         { provide: AuthService, useValue: { currentUser: signal({ id: 'doc-1', name: 'Dr. Mahmoud', role: 'doctor' }), isDoctor: () => true, isAdmin: () => false } },
         { 
           provide: ClinicService, 
