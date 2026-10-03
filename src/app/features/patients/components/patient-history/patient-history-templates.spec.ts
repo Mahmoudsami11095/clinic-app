@@ -20,6 +20,7 @@ import { Patient } from '../../models/patient.model';
 
 describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
   let component: PatientHistoryComponent;
+  let mockDentalService: any;
 
   const mockPatient: Patient = {
     id: 'pt-101',
@@ -76,6 +77,17 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
   ];
 
   beforeEach(() => {
+    mockDentalService = {
+      getLogs: jasmine.createSpy('getLogs').and.returnValue(of(mockPlannedLogs)),
+      addLog: jasmine.createSpy('addLog').and.callFake((log: any) => of({ ...log, id: 'new-log-1', date: new Date().toISOString() })),
+      updateStage: jasmine.createSpy('updateStage').and.callFake((id: string, stage: string) => of({ ...mockPlannedLogs[0], id, stage })),
+      pushToBilling: jasmine.createSpy('pushToBilling').and.callFake((id: string) => of({
+        message: 'Success',
+        data: { ...mockPlannedLogs[0], id, stage: 'invoiced', invoiceId: 'inv-999' },
+        invoice: { id: 'inv-999', patientId: 'pt-101', totalAmount: 450, status: 'unpaid' }
+      }))
+    };
+
     TestBed.configureTestingModule({
       providers: [
         PatientHistoryComponent,
@@ -83,8 +95,8 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
         { provide: AppointmentService, useValue: { getAllWithDetails: () => of([]) } },
         { provide: PrescriptionService, useValue: { getAllWithDetails: () => of([]) } },
         { provide: BillingService, useValue: { getAllWithDetails: () => of([]) } },
-        { provide: DentalService, useValue: { getLogs: () => of(mockPlannedLogs) } },
-        { provide: AuthService, useValue: { currentUser: signal({ id: 'doc-1', name: 'Dr. Mahmoud', role: 'doctor' }), isDoctor: () => true } },
+        { provide: DentalService, useValue: mockDentalService },
+        { provide: AuthService, useValue: { currentUser: signal({ id: 'doc-1', name: 'Dr. Mahmoud', role: 'doctor' }), isDoctor: () => true, isAdmin: () => false } },
         { 
           provide: ClinicService, 
           useValue: { 
@@ -146,7 +158,8 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
       category: 'restorative',
       status: 'filled',
       suggestedMedication: 'Normal post-op care',
-      materialNameMatch: 'Composite'
+      materialNameMatch: 'Composite',
+      suggestedCost: 450
     };
 
     component.applyTreatmentTemplate(template);
@@ -154,6 +167,7 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
     expect(component.treatment()).toBe('Composite Restoration (Occlusal)');
     expect(component.medication()).toBe('Normal post-op care');
     expect(component.dentalStatus()).toContain('filled');
+    expect(component.cost()).toBe(450);
     // Consumed materials auto-populated with matching material
     expect(component.consumedMaterialsForm().length).toBe(1);
     expect(component.consumedMaterialsForm()[0].materialId).toBe('m1');
@@ -190,5 +204,128 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
     expect(component.isTreatmentPlanPrintOpen()).toBeTrue();
     component.closeTreatmentPlanModal();
     expect(component.isTreatmentPlanPrintOpen()).toBeFalse();
+  });
+
+  // BR-DEN-02 Procedure Lifecycle State Machine Tests
+  describe('BR-DEN-02: Procedure Lifecycle State Machine & Billing Guardrail', () => {
+    it('should return appropriate badge classes and icons for each lifecycle stage', () => {
+      expect(component.getStageBadgeClasses('proposed')).toContain('bg-slate-100');
+      expect(component.getStageBadgeClasses('accepted')).toContain('bg-blue-50');
+      expect(component.getStageBadgeClasses('in_progress')).toContain('bg-amber-50');
+      expect(component.getStageBadgeClasses('completed')).toContain('bg-emerald-50');
+      expect(component.getStageBadgeClasses('invoiced')).toContain('bg-purple-50');
+
+      expect(component.getStageIcon('proposed')).toBe('pi pi-file-edit');
+      expect(component.getStageIcon('accepted')).toBe('pi pi-check');
+      expect(component.getStageIcon('in_progress')).toBe('pi pi-spin pi-sync');
+      expect(component.getStageIcon('completed')).toBe('pi pi-check-circle');
+      expect(component.getStageIcon('invoiced')).toBe('pi pi-receipt');
+    });
+
+    it('should advance procedure stage strictly through lifecycle', () => {
+      const testLog: DentalLog = {
+        id: 'log-adv-1',
+        patientId: 'pt-101',
+        doctorId: 'doc-1',
+        doctorName: 'Dr. Mahmoud',
+        toothNumber: 16,
+        status: ['caries'],
+        painLevel: 0,
+        date: '2026-09-28T10:00:00Z',
+        stage: 'proposed',
+        isPlanned: true
+      };
+      component.dentalLogs.set([testLog]);
+
+      // proposed -> accepted
+      mockDentalService.updateStage.and.returnValue(of({ ...testLog, stage: 'accepted' }));
+      component.advanceProcedureStage(testLog, 'accepted');
+
+      expect(mockDentalService.updateStage).toHaveBeenCalledWith('log-adv-1', 'accepted');
+      const updatedLog = component.dentalLogs().find(l => l.id === 'log-adv-1');
+      expect(updatedLog?.stage).toBe('accepted');
+    });
+
+    it('should enforce billing guardrail: reject pushing non-completed procedure to billing', () => {
+      const toastr = TestBed.inject(ToastrService);
+      const proposedLog: DentalLog = {
+        id: 'log-prop-1',
+        patientId: 'pt-101',
+        doctorId: 'doc-1',
+        doctorName: 'Dr. Mahmoud',
+        toothNumber: 16,
+        status: ['caries'],
+        painLevel: 0,
+        date: '2026-09-28T10:00:00Z',
+        stage: 'proposed',
+        isPlanned: true
+      };
+
+      component.pushProcedureToBilling(proposedLog);
+
+      // Must be rejected at guardrail: pushToBilling should NOT be called
+      expect(mockDentalService.pushToBilling).not.toHaveBeenCalled();
+      expect(toastr.error).toHaveBeenCalled();
+    });
+
+    it('should push completed procedure to billing module and record invoice', () => {
+      spyOn(window, 'confirm').and.returnValue(true);
+      const toastr = TestBed.inject(ToastrService);
+
+      const completedLog: DentalLog = {
+        id: 'log-comp-1',
+        patientId: 'pt-101',
+        doctorId: 'doc-1',
+        doctorName: 'Dr. Mahmoud',
+        toothNumber: 16,
+        status: ['filled'],
+        painLevel: 0,
+        date: '2026-09-28T10:00:00Z',
+        stage: 'completed',
+        cost: 450,
+        isPlanned: false
+      };
+      component.dentalLogs.set([completedLog]);
+
+      component.pushProcedureToBilling(completedLog);
+
+      expect(mockDentalService.pushToBilling).toHaveBeenCalledWith('log-comp-1');
+      const invoicedLog = component.dentalLogs().find(l => l.id === 'log-comp-1');
+      expect(invoicedLog?.stage).toBe('invoiced');
+      expect(invoicedLog?.invoiceId).toBe('inv-999');
+      // Verifies invoice added to billingRecords signal
+      expect(component.billingRecords().length).toBeGreaterThan(0);
+      expect(component.billingRecords()[0].id).toBe('inv-999');
+      expect(toastr.success).toHaveBeenCalled();
+    });
+
+    it('should initialize stage to proposed for planned logs and completed for direct logs', () => {
+      component.selectedTooth.set(16);
+      component.cost.set(600);
+
+      // 1. Planned procedure
+      component.isPlannedForm.set(true);
+      component.submitDentalLog();
+
+      expect(mockDentalService.addLog).toHaveBeenCalledWith(jasmine.objectContaining({
+        stage: 'proposed',
+        isPlanned: true,
+        cost: 600
+      }));
+
+      // Cost reset after submit
+      expect(component.cost()).toBe(0);
+
+      // 2. Direct completed procedure
+      component.cost.set(350);
+      component.isPlannedForm.set(false);
+      component.submitDentalLog();
+
+      expect(mockDentalService.addLog).toHaveBeenCalledWith(jasmine.objectContaining({
+        stage: 'completed',
+        isPlanned: false,
+        cost: 350
+      }));
+    });
   });
 });

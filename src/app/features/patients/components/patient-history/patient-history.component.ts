@@ -10,7 +10,7 @@ import { BillingService } from '../../../billing/services/billing.service';
 import { PrescriptionPrintModalComponent } from '../../../prescriptions/components/prescription-print-modal/prescription-print-modal.component';
 import { InvoicePrintModalComponent } from '../../../billing/components/invoice-print-modal/invoice-print-modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { DentalService, DentalLog, ToothStatus, ConsumedMaterial } from '../../../../core/services/dental.service';
+import { DentalService, DentalLog, ToothStatus, ConsumedMaterial, DentalProcedureStage } from '../../../../core/services/dental.service';
 import { DentalNotationService } from '../../../../core/services/dental-notation.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
@@ -35,33 +35,34 @@ export interface TreatmentTemplate {
   status: ToothStatus;
   suggestedMedication?: string;
   materialNameMatch?: string;
+  suggestedCost?: number;
 }
 
 export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
   // Restorative
-  { id: 't_comp_occ', name: 'Composite Restoration (Occlusal)', category: 'restorative', status: 'filled', suggestedMedication: 'Normal post-op care; avoid hard chewing for 2 hrs', materialNameMatch: 'Composite' },
-  { id: 't_comp_mod', name: 'Composite Restoration (MOD Class II)', category: 'restorative', status: 'filled', suggestedMedication: 'Warm salt water rinses as needed', materialNameMatch: 'Composite' },
-  { id: 't_gi', name: 'Glass Ionomer Cement Restoration', category: 'restorative', status: 'filled', materialNameMatch: 'Glass Ionomer' },
+  { id: 't_comp_occ', name: 'Composite Restoration (Occlusal)', category: 'restorative', status: 'filled', suggestedMedication: 'Normal post-op care; avoid hard chewing for 2 hrs', materialNameMatch: 'Composite', suggestedCost: 450 },
+  { id: 't_comp_mod', name: 'Composite Restoration (MOD Class II)', category: 'restorative', status: 'filled', suggestedMedication: 'Warm salt water rinses as needed', materialNameMatch: 'Composite', suggestedCost: 550 },
+  { id: 't_gi', name: 'Glass Ionomer Cement Restoration', category: 'restorative', status: 'filled', materialNameMatch: 'Glass Ionomer', suggestedCost: 350 },
 
   // Endodontics
-  { id: 't_rct_single', name: 'Root Canal Treatment (Single Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID, Amoxicillin 500mg TID if symptomatic' },
-  { id: 't_rct_molar', name: 'Root Canal Treatment (Molar Multi-Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID + Paracetamol 500mg PRN' },
-  { id: 't_pulp_cap', name: 'Direct/Indirect Pulp Capping', category: 'endodontics', status: 'under_treatment', suggestedMedication: 'Analgesics PRN for mild sensitivity' },
+  { id: 't_rct_single', name: 'Root Canal Treatment (Single Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID, Amoxicillin 500mg TID if symptomatic', suggestedCost: 1200 },
+  { id: 't_rct_molar', name: 'Root Canal Treatment (Molar Multi-Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID + Paracetamol 500mg PRN', suggestedCost: 1800 },
+  { id: 't_pulp_cap', name: 'Direct/Indirect Pulp Capping', category: 'endodontics', status: 'under_treatment', suggestedMedication: 'Analgesics PRN for mild sensitivity', suggestedCost: 400 },
 
   // Preventive & Perio
-  { id: 't_scale', name: 'Full Mouth Scaling & Prophylaxis', category: 'preventive', status: 'healthy', suggestedMedication: 'Chlorhexidine 0.12% oral rinse BID for 7 days' },
-  { id: 't_deep_plan', name: 'Subgingival Deep Scaling & Root Planing', category: 'preventive', status: 'under_treatment', suggestedMedication: 'Warm saline rinses; Chlorhexidine mouthwash' },
-  { id: 't_fluoride', name: 'Topical Fluoride Varnish Application', category: 'preventive', status: 'healthy', suggestedMedication: 'No eating or drinking hot fluids for 30 minutes' },
+  { id: 't_scale', name: 'Full Mouth Scaling & Prophylaxis', category: 'preventive', status: 'healthy', suggestedMedication: 'Chlorhexidine 0.12% oral rinse BID for 7 days', suggestedCost: 500 },
+  { id: 't_deep_plan', name: 'Subgingival Deep Scaling & Root Planing', category: 'preventive', status: 'under_treatment', suggestedMedication: 'Warm saline rinses; Chlorhexidine mouthwash', suggestedCost: 800 },
+  { id: 't_fluoride', name: 'Topical Fluoride Varnish Application', category: 'preventive', status: 'healthy', suggestedMedication: 'No eating or drinking hot fluids for 30 minutes', suggestedCost: 300 },
 
   // Prosthodontics
-  { id: 't_zir_crown', name: 'Zirconia Full Ceramic Crown', category: 'prosthodontics', status: 'crown', suggestedMedication: 'Check occlusion; gentle flossing' },
-  { id: 't_pfm_crown', name: 'Porcelain-Fused-to-Metal (PFM) Crown', category: 'prosthodontics', status: 'crown' },
-  { id: 't_post_core', name: 'Prefabricated Post & Core Buildup', category: 'prosthodontics', status: 'crown' },
+  { id: 't_zir_crown', name: 'Zirconia Full Ceramic Crown', category: 'prosthodontics', status: 'crown', suggestedMedication: 'Check occlusion; gentle flossing', suggestedCost: 3000 },
+  { id: 't_pfm_crown', name: 'Porcelain-Fused-to-Metal (PFM) Crown', category: 'prosthodontics', status: 'crown', suggestedCost: 2000 },
+  { id: 't_post_core', name: 'Prefabricated Post & Core Buildup', category: 'prosthodontics', status: 'crown', suggestedCost: 800 },
 
   // Oral Surgery
-  { id: 't_ext_simple', name: 'Routine Simple Dental Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Bite gauze firmly 30 mins; Paracetamol 500mg TID, Amoxicillin 500mg' },
-  { id: 't_ext_surg', name: 'Surgical Transalveolar Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Ice pack 15m intervals; Ibuprofen 400mg + Amoxicillin 500mg x 5 days' },
-  { id: 't_impaction', name: 'Surgical Wisdom Tooth Disimpaction', category: 'surgery', status: 'missing', suggestedMedication: 'Post-op surgical protocol; Antibiotics + Anti-inflammatory' }
+  { id: 't_ext_simple', name: 'Routine Simple Dental Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Bite gauze firmly 30 mins; Paracetamol 500mg TID, Amoxicillin 500mg', suggestedCost: 400 },
+  { id: 't_ext_surg', name: 'Surgical Transalveolar Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Ice pack 15m intervals; Ibuprofen 400mg + Amoxicillin 500mg x 5 days', suggestedCost: 1000 },
+  { id: 't_impaction', name: 'Surgical Wisdom Tooth Disimpaction', category: 'surgery', status: 'missing', suggestedMedication: 'Post-op surgical protocol; Antibiotics + Anti-inflammatory', suggestedCost: 1500 }
 ];
 
 @Component({
@@ -1147,12 +1148,21 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                             @for (log of getSelectedToothHistory(); track log.id) {
                               <div class="border-s-2 border-emerald-300 ps-3.5 space-y-1.5 py-1 text-start relative">
                                 <div class="absolute w-2 h-2 rounded-full bg-emerald-400 -start-[5px] top-2"></div>
-                                <div class="flex items-center justify-between gap-2">
-                                  <div class="flex flex-wrap gap-1">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                  <div class="flex flex-wrap items-center gap-1">
                                     @let logStatuses = log.status || [];
                                     @for (st of logStatuses; track st) {
                                       <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
                                         {{ 'dental.' + st | translate }}
+                                      </span>
+                                    }
+                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize inline-flex items-center gap-1 shadow-2xs" [class]="getStageBadgeClasses(log.stage)">
+                                      <i [class]="getStageIcon(log.stage)" class="text-[8px]"></i>
+                                      <span>{{ 'dental.stage_' + (log.stage || 'completed') | translate }}</span>
+                                    </span>
+                                    @if (log.cost && log.cost > 0) {
+                                      <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                        {{ log.cost | currency:'EGP':'symbol':'1.0-0' }}
                                       </span>
                                     }
                                   </div>
@@ -1183,9 +1193,52 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                                     </p>
                                   }
                                 </div>
-                                <p class="text-[10px] text-slate-400">
-                                  {{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}
-                                </p>
+                                <div class="flex items-center justify-between text-[10px] text-slate-400">
+                                  <span>{{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}</span>
+                                  @if (log.invoiceId) {
+                                    <span class="font-mono text-purple-600 font-bold bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200">
+                                      {{ 'dental.invoice_ref' | translate }} {{ log.invoiceId | slice:0:6 | uppercase }}
+                                    </span>
+                                  }
+                                </div>
+
+                                <!-- BR-DEN-02 Procedure Lifecycle Actions -->
+                                @if (authService.isDoctor() || authService.isAdmin()) {
+                                  <div class="flex items-center gap-1.5 pt-1 mt-1 border-t border-slate-100">
+                                    @if (log.stage === 'in_progress') {
+                                      <button
+                                        type="button"
+                                        (click)="advanceProcedureStage(log, 'completed')"
+                                        [disabled]="advancingLogId() === log.id"
+                                        class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white flex items-center gap-1 shadow-2xs transition-colors cursor-pointer border-none"
+                                      >
+                                        <i class="pi pi-check-circle text-[9px]"></i>
+                                        <span>{{ 'dental.action_complete' | translate }}</span>
+                                      </button>
+                                    }
+                                    @if (log.stage === 'completed') {
+                                      <button
+                                        type="button"
+                                        (click)="pushProcedureToBilling(log)"
+                                        [disabled]="pushingBillingLogId() === log.id"
+                                        class="text-[10px] font-bold px-2.5 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white flex items-center gap-1 shadow-2xs transition-colors cursor-pointer border-none"
+                                      >
+                                        @if (pushingBillingLogId() === log.id) {
+                                          <div class="animate-spin rounded-full h-2 w-2 border border-white border-t-transparent"></div>
+                                        } @else {
+                                          <i class="pi pi-receipt text-[9px]"></i>
+                                        }
+                                        <span>{{ 'dental.action_push_billing' | translate }}</span>
+                                      </button>
+                                    }
+                                    @if (log.stage === 'invoiced') {
+                                      <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800 flex items-center gap-1">
+                                        <i class="pi pi-check-circle text-[9px] text-purple-600"></i>
+                                        <span>{{ 'dental.invoiced_badge' | translate }}</span>
+                                      </span>
+                                    }
+                                  </div>
+                                }
                               </div>
                             }
                           }
@@ -1196,7 +1249,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                       <div class="mb-4">
                         <h6 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                           <i class="pi pi-calendar text-indigo-500"></i>
-                          <span>Planned Treatments (Future)</span>
+                          <span>{{ 'dental.planned_procedures' | translate }}</span>
                         </h6>
                         <div class="space-y-3 max-h-[140px] overflow-y-auto pe-1">
                           @if (getSelectedToothPlanned().length === 0) {
@@ -1207,12 +1260,21 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                             @for (log of getSelectedToothPlanned(); track log.id) {
                               <div class="border-s-2 border-indigo-300 ps-3.5 space-y-1.5 py-1 text-start relative">
                                 <div class="absolute w-2 h-2 rounded-full bg-indigo-400 -start-[5px] top-2"></div>
-                                <div class="flex items-center justify-between gap-2">
-                                  <div class="flex flex-wrap gap-1">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                  <div class="flex flex-wrap items-center gap-1">
                                     @let logStatuses = log.status || [];
                                     @for (st of logStatuses; track st) {
                                       <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
                                         {{ 'dental.' + st | translate }}
+                                      </span>
+                                    }
+                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize inline-flex items-center gap-1 shadow-2xs" [class]="getStageBadgeClasses(log.stage)">
+                                      <i [class]="getStageIcon(log.stage)" class="text-[8px]"></i>
+                                      <span>{{ 'dental.stage_' + (log.stage || 'proposed') | translate }}</span>
+                                    </span>
+                                    @if (log.cost && log.cost > 0) {
+                                      <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                        {{ log.cost | currency:'EGP':'symbol':'1.0-0' }}
                                       </span>
                                     }
                                   </div>
@@ -1246,6 +1308,45 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                                 <p class="text-[10px] text-slate-400">
                                   {{ 'dental.recorded_by' | translate }}: {{ log.doctorName }}
                                 </p>
+
+                                <!-- BR-DEN-02 Procedure Lifecycle Progression Buttons -->
+                                @if (authService.isDoctor() || authService.isAdmin()) {
+                                  <div class="flex items-center gap-1.5 pt-1 mt-1 border-t border-slate-100">
+                                    @if (log.stage === 'proposed') {
+                                      <button
+                                        type="button"
+                                        (click)="advanceProcedureStage(log, 'accepted')"
+                                        [disabled]="advancingLogId() === log.id"
+                                        class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white flex items-center gap-1 shadow-2xs transition-colors cursor-pointer border-none"
+                                      >
+                                        <i class="pi pi-check text-[9px]"></i>
+                                        <span>{{ 'dental.action_accept' | translate }}</span>
+                                      </button>
+                                    }
+                                    @if (log.stage === 'accepted') {
+                                      <button
+                                        type="button"
+                                        (click)="advanceProcedureStage(log, 'in_progress')"
+                                        [disabled]="advancingLogId() === log.id"
+                                        class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white flex items-center gap-1 shadow-2xs transition-colors cursor-pointer border-none"
+                                      >
+                                        <i class="pi pi-play text-[9px]"></i>
+                                        <span>{{ 'dental.action_start' | translate }}</span>
+                                      </button>
+                                    }
+                                    @if (log.stage === 'in_progress') {
+                                      <button
+                                        type="button"
+                                        (click)="advanceProcedureStage(log, 'completed')"
+                                        [disabled]="advancingLogId() === log.id"
+                                        class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white flex items-center gap-1 shadow-2xs transition-colors cursor-pointer border-none"
+                                      >
+                                        <i class="pi pi-check-circle text-[9px]"></i>
+                                        <span>{{ 'dental.action_complete' | translate }}</span>
+                                      </button>
+                                    }
+                                  </div>
+                                }
                               </div>
                             }
                           }
@@ -1411,6 +1512,21 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                               (ngModelChange)="treatment.set($event)"
                               name="treatment"
                               [placeholder]="'dental.treatment' | translate"
+                              class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
+                            />
+                          </div>
+
+                          <!-- Cost / Fee (BR-DEN-02) -->
+                          <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{{ 'dental.cost' | translate }} (EGP)</label>
+                            <input
+                              type="number"
+                              [ngModel]="cost()"
+                              (ngModelChange)="cost.set(+$event)"
+                              name="cost"
+                              min="0"
+                              step="50"
+                              [placeholder]="'dental.cost_placeholder' | translate"
                               class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 placeholder:font-normal"
                             />
                           </div>
@@ -1618,6 +1734,8 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Anatomical Tooth</th>
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Diagnostic Status</th>
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Planned Procedure</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">{{ 'dental.stage' | translate }}</th>
+                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-end">{{ 'dental.cost' | translate }}</th>
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-center">Est. Visits</th>
                           <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-end">Scheduled</th>
                         </tr>
@@ -1644,6 +1762,15 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                               @if (log.medication) {
                                 <span class="block text-[10px] font-normal text-slate-500 italic mt-0.5">Rx: {{ log.medication }}</span>
                               }
+                            </td>
+                            <td class="px-4 py-3">
+                              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize inline-flex items-center gap-1 shadow-2xs" [class]="getStageBadgeClasses(log.stage)">
+                                <i [class]="getStageIcon(log.stage)" class="text-[8px]"></i>
+                                <span>{{ 'dental.stage_' + (log.stage || 'proposed') | translate }}</span>
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-end font-mono font-semibold text-slate-800">
+                              {{ (log.cost || 0) | currency:'EGP':'symbol':'1.0-0' }}
                             </td>
                             <td class="px-4 py-3 font-medium text-slate-700 text-center">{{ getEstimatedVisits(log) }} visit(s)</td>
                             <td class="px-4 py-3 text-slate-500 text-end whitespace-nowrap">{{ log.date | date:'shortDate' }}</td>
@@ -1829,6 +1956,9 @@ export class PatientHistoryComponent implements OnInit {
   medication = signal<string>('');
   submittingDentalLog = signal<boolean>(false);
   isPlannedForm = signal<boolean>(false);
+  cost = signal<number>(0);
+  advancingLogId = signal<string | null>(null);
+  pushingBillingLogId = signal<string | null>(null);
   availableMaterials = signal<Material[]>([]);
   consumedMaterialsForm = signal<{materialId: string, quantity: number, maxQuantity: number}[]>([]);
 
@@ -2222,6 +2352,9 @@ export class PatientHistoryComponent implements OnInit {
     if (tpl.status) {
       this.toggleStatus(tpl.status);
     }
+    if (tpl.suggestedCost) {
+      this.cost.set(tpl.suggestedCost);
+    }
     // If completed log, look for matching consumable
     if (!this.isPlannedForm() && tpl.materialNameMatch) {
       const match = this.availableMaterials().find(m => 
@@ -2237,7 +2370,7 @@ export class PatientHistoryComponent implements OnInit {
 
   getAllPlannedTreatments(): DentalLog[] {
     return this.dentalLogs()
-      .filter(log => log.isPlanned)
+      .filter(log => log.isPlanned && log.stage !== 'completed' && log.stage !== 'invoiced')
       .sort((a, b) => Number(a.toothNumber) - Number(b.toothNumber));
   }
 
@@ -2448,7 +2581,7 @@ export class PatientHistoryComponent implements OnInit {
     if (num === null) return [];
     const numStr = num.toString();
     return this.dentalLogs()
-      .filter(log => log.toothNumber.toString() === numStr && !log.isPlanned)
+      .filter(log => log.toothNumber.toString() === numStr && (!log.isPlanned || log.stage === 'completed' || log.stage === 'invoiced'))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
@@ -2457,8 +2590,114 @@ export class PatientHistoryComponent implements OnInit {
     if (num === null) return [];
     const numStr = num.toString();
     return this.dentalLogs()
-      .filter(log => log.toothNumber.toString() === numStr && log.isPlanned)
+      .filter(log => log.toothNumber.toString() === numStr && (log.isPlanned && log.stage !== 'completed' && log.stage !== 'invoiced'))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  getStageBadgeClasses(stage?: string): string {
+    switch (stage) {
+      case 'proposed':
+        return 'bg-slate-100 text-slate-700 ring-1 ring-slate-300/80';
+      case 'accepted':
+        return 'bg-blue-50 text-blue-700 ring-1 ring-blue-300/80';
+      case 'in_progress':
+        return 'bg-amber-50 text-amber-700 ring-1 ring-amber-300/80';
+      case 'completed':
+        return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-300/80';
+      case 'invoiced':
+        return 'bg-purple-50 text-purple-700 ring-1 ring-purple-300/80';
+      default:
+        return 'bg-slate-100 text-slate-700 ring-1 ring-slate-300/80';
+    }
+  }
+
+  getStageIcon(stage?: string): string {
+    switch (stage) {
+      case 'proposed': return 'pi pi-file-edit';
+      case 'accepted': return 'pi pi-check';
+      case 'in_progress': return 'pi pi-spin pi-sync';
+      case 'completed': return 'pi pi-check-circle';
+      case 'invoiced': return 'pi pi-receipt';
+      default: return 'pi pi-circle';
+    }
+  }
+
+  advanceProcedureStage(log: DentalLog, targetStage: DentalProcedureStage): void {
+    if (!log.id || this.advancingLogId()) return;
+
+    this.advancingLogId.set(log.id);
+    this.dentalService.updateStage(log.id, targetStage)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updatedLog) => {
+          this.dentalLogs.update(logs => logs.map(l => l.id === updatedLog.id ? updatedLog : l));
+          this.advancingLogId.set(null);
+          this.toastr.success(
+            this.langService.translate('dental.stage_advancement_success', `Procedure stage updated to ${targetStage}`),
+            this.langService.translate('toast.success')
+          );
+          if (this.selectedTooth() !== null) {
+            this.selectTooth(this.selectedTooth()!);
+          }
+        },
+        error: (err) => {
+          console.error('Error advancing procedure stage:', err);
+          this.advancingLogId.set(null);
+          this.toastr.error(
+            extractErrorMessage(err, (k) => this.langService.translate(k)),
+            this.langService.translate('toast.error')
+          );
+        }
+      });
+  }
+
+  pushProcedureToBilling(log: DentalLog): void {
+    if (!log.id || this.pushingBillingLogId()) return;
+
+    // BR-DEN-02 Guardrail: Only procedures in completed status can be pushed to billing
+    if (log.stage !== 'completed') {
+      this.toastr.error(
+        this.langService.translate('dental.push_billing_guardrail_error', 'Only completed procedures can be pushed to billing.'),
+        this.langService.translate('toast.error')
+      );
+      return;
+    }
+
+    const confirmMsg = this.langService.translate(
+      'dental.push_billing_confirm',
+      'Push this completed procedure to billing module for cashier settlement?'
+    );
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
+    this.pushingBillingLogId.set(log.id);
+    this.dentalService.pushToBilling(log.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.dentalLogs.update(logs => logs.map(l => l.id === res.data.id ? res.data : l));
+          if (res.invoice) {
+            this.billingRecords.update(records => [res.invoice, ...records]);
+          }
+          this.pushingBillingLogId.set(null);
+          this.toastr.success(
+            this.langService.translate('dental.push_billing_success', 'Procedure successfully pushed to billing! Invoice created.'),
+            this.langService.translate('toast.success')
+          );
+          if (this.selectedTooth() !== null) {
+            this.selectTooth(this.selectedTooth()!);
+          }
+        },
+        error: (err) => {
+          console.error('Error pushing procedure to billing:', err);
+          this.pushingBillingLogId.set(null);
+          this.toastr.error(
+            extractErrorMessage(err, (k) => this.langService.translate(k)),
+            this.langService.translate('toast.error')
+          );
+        }
+      });
   }
 
   submitDentalLog() {
@@ -2480,6 +2719,8 @@ export class PatientHistoryComponent implements OnInit {
       treatment: this.treatment().trim() || undefined,
       medication: this.medication().trim() || undefined,
       isPlanned: this.isPlannedForm(),
+      stage: this.isPlannedForm() ? ('proposed' as DentalProcedureStage) : ('completed' as DentalProcedureStage),
+      cost: this.cost() > 0 ? this.cost() : 0,
       consumedMaterials: consumedMaterialsList.length > 0 ? consumedMaterialsList : undefined,
       clinicId: (this.clinicService.activeClinicId() && this.clinicService.activeClinicId() !== 'all') 
         ? this.clinicService.activeClinicId() 
@@ -2495,7 +2736,8 @@ export class PatientHistoryComponent implements OnInit {
           this.langService.translate('toast.success')
         );
         this.selectTooth(toothNum);
-        // Reset consumed materials
+        // Reset cost & consumed materials
+        this.cost.set(0);
         this.consumedMaterialsForm.set([]);
         // Reload materials to reflect new stock
         this.loadDoctorMaterials();
