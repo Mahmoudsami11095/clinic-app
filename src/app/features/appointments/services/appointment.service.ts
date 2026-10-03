@@ -62,10 +62,12 @@ export class AppointmentService {
   }
 
   /**
-   * REQ-APT-02: Doctor calls patient into exam room, moving to "in_consultation".
+   * REQ-APT-02 & REQ-CLI-03: Doctor calls patient into exam room, moving to "in_consultation".
    */
-  startConsultation(id: string) {
-    return this.http.post<{ message: string; data: Appointment }>(`/api/appointments/${id}/start-consultation`, {});
+  startConsultation(id: string, roomNumber?: string) {
+    let url = `/api/appointments/${encodeURIComponent(id)}/start-consultation`;
+    if (roomNumber) url += `?roomNumber=${encodeURIComponent(roomNumber)}`;
+    return this.http.post<{ message: string; data: Appointment }>(url, {});
   }
 
   /**

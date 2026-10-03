@@ -19,6 +19,9 @@ export interface Appointment {
   // REQ-NOTIF-02: Patient Appointment Reminders
   lastReminderSentAt?: string;
   reminderCount?: number;
+
+  // REQ-CLI-03: Multi-Branch & Multi-Room Management
+  roomNumber?: string;
 }
 
 export interface AppointmentWithDetails extends Appointment {

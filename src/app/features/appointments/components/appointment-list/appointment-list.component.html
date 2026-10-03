@@ -122,8 +122,10 @@
         <!-- Active Consultation Cards -->
         @for (cAppt of inConsultation(); track cAppt.id) {
           <div class="p-4 bg-white border-2 border-purple-300 rounded-xl shadow-xs space-y-2 relative overflow-hidden text-start">
-            <div class="absolute top-0 end-0 bg-purple-600 text-white text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-bl-lg">
-              In Exam
+            <div class="absolute top-0 end-0 bg-purple-600 text-white text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-bl-lg flex items-center gap-1">
+              <span>{{ cAppt.roomNumber || 'Chair 1' }}</span>
+              <span>•</span>
+              <span>In Exam</span>
             </div>
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
@@ -158,6 +160,11 @@
                   #{{ wAppt.queueNumber || 1 }}
                 </span>
                 <p class="text-sm font-bold text-slate-800">{{ wAppt.patientName }}</p>
+                @if (wAppt.roomNumber) {
+                  <span class="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-200/60">
+                    {{ wAppt.roomNumber }}
+                  </span>
+                }
               </div>
               <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
                 <i class="pi pi-clock text-[10px]"></i> {{ getWaitingTime(wAppt.arrivedAt) }}
@@ -319,6 +326,12 @@
                       <span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
                         <i class="pi pi-check-circle text-[9px] text-emerald-600"></i>
                         <span>{{ 'appointments.reminder_sent_badge' | translate }} ({{ getReminderTimeAgo(appt.lastReminderSentAt) }})</span>
+                      </span>
+                    }
+                    @if (appt.roomNumber) {
+                      <span class="text-[10px] text-purple-700 dark:text-purple-400 font-semibold flex items-center gap-1">
+                        <i class="pi pi-map-marker text-[9px] text-purple-600"></i>
+                        <span>{{ appt.roomNumber }}</span>
                       </span>
                     }
                   </div>

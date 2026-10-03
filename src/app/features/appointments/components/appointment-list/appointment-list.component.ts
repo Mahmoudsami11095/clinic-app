@@ -198,14 +198,24 @@ export class AppointmentListComponent implements OnInit {
     });
   }
 
-  startConsultation(appt: AppointmentWithDetails): void {
-    this.appointmentService.startConsultation(appt.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => {
+  startConsultation(appt: AppointmentWithDetails, roomNumber?: string): void {
+    const room = roomNumber || appt.roomNumber;
+    const call$ = room 
+      ? this.appointmentService.startConsultation(appt.id, room)
+      : this.appointmentService.startConsultation(appt.id);
+
+    call$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res: any) => {
         this.appointments.update(list =>
-          list.map(a => a.id === appt.id ? { ...a, status: 'in_consultation', consultationStartedAt: res.data.consultationStartedAt } : a)
+          list.map(a => a.id === appt.id ? {
+            ...a,
+            status: 'in_consultation',
+            consultationStartedAt: res.data.consultationStartedAt,
+            roomNumber: res.data.roomNumber || room
+          } : a)
         );
         this.toastr.success(
-          `Consultation started for ${appt.patientName}`,
+          `Consultation started for ${appt.patientName}` + (room ? ` in ${room}` : ''),
           'In Consultation'
         );
       },
