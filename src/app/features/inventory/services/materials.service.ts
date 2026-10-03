@@ -32,6 +32,34 @@ export class MaterialsService {
     return this.http.get<{ data: Material[] }>(`${this.apiUrl}/low-stock${query}`);
   }
 
+  getExpired(clinicId?: string, doctorId?: string): Observable<{ data: Material[] }> {
+    const params: string[] = [];
+    if (clinicId && clinicId !== 'all') {
+      params.push(`clinicId=${encodeURIComponent(clinicId)}`);
+    }
+    if (doctorId) {
+      params.push(`doctorId=${encodeURIComponent(doctorId)}`);
+    }
+    const query = params.length > 0 ? `?${params.join('&')}` : '';
+    return this.http.get<{ data: Material[] }>(`${this.apiUrl}/expired${query}`);
+  }
+
+  isExpired(material: Material): boolean {
+    if (material.isExpired !== undefined) {
+      return material.isExpired;
+    }
+    if (!material.expirationDate) {
+      return false;
+    }
+    const exp = new Date(material.expirationDate);
+    if (isNaN(exp.getTime())) {
+      return false;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return exp < today;
+  }
+
   isLowStock(material: Material): boolean {
     const threshold = material.minStockAlert ?? 5;
     return material.quantity > 0 && material.quantity <= threshold;

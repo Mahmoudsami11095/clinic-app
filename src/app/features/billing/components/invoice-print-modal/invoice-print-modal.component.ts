@@ -102,11 +102,24 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
                 <div class="border-b border-dashed border-slate-400 my-2"></div>
 
+                <!-- Voided Alert Banner if Voided -->
+                @if (bill.status === 'voided') {
+                  <div class="my-2 p-2 border-2 border-dashed border-red-600 bg-red-50 text-center rounded">
+                    <div class="text-xs font-black text-red-600 uppercase tracking-widest">*** VOIDED INVOICE ***</div>
+                    <div class="text-[10px] text-red-700 font-semibold mt-0.5" *ngIf="bill.voidReason">Reason: {{ bill.voidReason }}</div>
+                    <div class="text-[9px] text-red-500 font-mono mt-0.5" *ngIf="bill.voidedAt">{{ bill.voidedAt | date:'short' }}</div>
+                  </div>
+                }
+
                 <!-- Metadata Info -->
                 <div class="text-[11px] space-y-1">
                   <div class="flex justify-between">
                     <span class="text-slate-500">{{ 'billing.date' | translate }}:</span>
                     <span class="font-semibold">{{ bill.dateIssued | date:'short' }}</span>
+                  </div>
+                  <div class="flex justify-between" *ngIf="bill.invoiceNumber">
+                    <span class="text-slate-500">{{ 'billing.invoice_no' | translate }}:</span>
+                    <span class="font-mono font-bold text-slate-900">{{ bill.invoiceNumber }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-slate-500">{{ 'billing.receipt_no' | translate }}:</span>
@@ -265,16 +278,18 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                   </div>
 
                   <div class="text-end">
-                    <span class="inline-block px-3 py-1 bg-slate-900 text-white font-mono text-sm font-bold rounded-lg uppercase tracking-wider">
-                      TAX INVOICE
+                    <span class="inline-block px-3 py-1 bg-slate-900 text-white font-mono text-sm font-bold rounded-lg uppercase tracking-wider"
+                          [class.bg-rose-700]="bill.status === 'voided'">
+                      {{ bill.status === 'voided' ? 'VOIDED INVOICE' : 'TAX INVOICE' }}
                     </span>
                     <div class="mt-3 text-xs text-slate-600 space-y-1">
-                      <p><span class="font-semibold text-slate-800">Invoice No:</span> <span class="font-mono font-bold text-slate-900">INV-{{ formatId(bill.id) }}</span></p>
+                      <p><span class="font-semibold text-slate-800">Invoice No:</span> <span class="font-mono font-bold text-slate-900">{{ bill.invoiceNumber || ('INV-' + formatId(bill.id)) }}</span></p>
                       <p><span class="font-semibold text-slate-800">Date:</span> {{ bill.dateIssued | date:'mediumDate' }}</p>
                       <p><span class="font-semibold text-slate-800">Status:</span> 
                         <span class="font-bold uppercase ms-1"
                               [class.text-emerald-600]="bill.status === 'paid'"
                               [class.text-amber-600]="bill.status === 'partially_paid'"
+                              [class.text-rose-600]="bill.status === 'voided'"
                               [class.text-red-600]="bill.status === 'pending' || bill.status === 'overdue'">
                           {{ bill.status }}
                         </span>
@@ -282,6 +297,24 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                     </div>
                   </div>
                 </div>
+
+                <!-- Voided Alert Banner for A4 Invoice -->
+                @if (bill.status === 'voided') {
+                  <div class="mb-6 p-4 border-2 border-red-600 bg-red-50/80 rounded-xl flex items-center justify-between text-red-700">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-lg bg-red-600 text-white flex items-center justify-center font-black text-xl">
+                        !
+                      </div>
+                      <div>
+                        <div class="font-black text-base uppercase tracking-wider text-red-800">INVOICE VOIDED (INVALID)</div>
+                        <div class="text-xs text-red-700 font-medium" *ngIf="bill.voidReason">Reason: {{ bill.voidReason }}</div>
+                      </div>
+                    </div>
+                    <div class="text-end text-xs font-mono text-red-600" *ngIf="bill.voidedAt">
+                      Voided: {{ bill.voidedAt | date:'medium' }}
+                    </div>
+                  </div>
+                }
 
                 <!-- Patient & Consultation Details Cards -->
                 <div class="grid grid-cols-2 gap-6 mb-8 text-xs">

@@ -48,17 +48,23 @@ export class BillingListComponent implements OnInit {
   payDate = signal<string>(new Date().toISOString().split('T')[0]);
   paymentMethods = ['Credit Card', 'Cash', 'Insurance', 'Bank Transfer', 'Mobile Payment'];
 
+  // BR-FIN-03: Void Modal State (no permanent deletion)
+  isVoidModalOpen = signal(false);
+  selectedRecordToVoid = signal<BillingRecordWithDetails | null>(null);
+  voidReason = signal('');
+  isVoiding = signal(false);
+
   // Print Modal State
   isPrintModalOpen = signal(false);
   selectedInvoiceToPrint = signal<BillingRecordWithDetails | null>(null);
 
   expandedInvoiceId = signal<string | null>(null);
 
-  // Derived Stats
+  // Derived Stats — excluding voided invoices from financial calculations
   totalOutstanding = computed(() => {
     return this.clinicService.filterByActiveClinic(this.billingRecords())
       .reduce((sum, b) => {
-        if (b.status === 'paid') return sum;
+        if (b.status === 'paid' || b.status === 'voided') return sum;
         const paid = b.paidAmount !== undefined ? b.paidAmount : 0;
         return sum + (b.amount - paid);
       }, 0);
@@ -67,6 +73,7 @@ export class BillingListComponent implements OnInit {
   totalCollected = computed(() => {
     return this.clinicService.filterByActiveClinic(this.billingRecords())
       .reduce((sum, b) => {
+        if (b.status === 'voided') return sum;
         if (b.status === 'paid') {
           return sum + (b.paidAmount !== undefined ? b.paidAmount : b.amount);
         }
@@ -84,6 +91,7 @@ export class BillingListComponent implements OnInit {
       result = result.filter(b => 
         b.patientName.toLowerCase().includes(query) ||
         b.id.includes(query) ||
+        (b.invoiceNumber && b.invoiceNumber.toLowerCase().includes(query)) ||
         (b.paymentMethod && b.paymentMethod.toLowerCase().includes(query))
       );
     }
@@ -165,6 +173,7 @@ export class BillingListComponent implements OnInit {
       case 'partially_paid': return 'bg-cyan-100 text-cyan-700 ring-cyan-200';
       case 'pending': return 'bg-amber-100 text-amber-700 ring-amber-200';
       case 'overdue': return 'bg-red-100 text-red-700 ring-red-200';
+      case 'voided': return 'bg-rose-50 text-rose-600 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:ring-rose-800 line-through';
       default: return 'bg-slate-100 text-slate-700 ring-slate-200';
     }
   }
@@ -296,4 +305,66 @@ export class BillingListComponent implements OnInit {
     this.isPrintModalOpen.set(false);
     this.selectedInvoiceToPrint.set(null);
   }
+
+  // BR-FIN-03: Helper for displaying sequential gapless invoice number
+  getInvoiceNumber(bill: BillingRecord): string {
+    return bill.invoiceNumber || `INV-${bill.id.padStart(4, '0')}`;
+  }
+
+  // BR-FIN-03: Void Modal actions (mandatory reason, no permanent deletion)
+  openVoidModal(bill: BillingRecordWithDetails) {
+    this.selectedRecordToVoid.set(bill);
+    this.voidReason.set('');
+    this.isVoidModalOpen.set(true);
+  }
+
+  closeVoidModal() {
+    this.isVoidModalOpen.set(false);
+    this.selectedRecordToVoid.set(null);
+    this.voidReason.set('');
+  }
+
+  submitVoid() {
+    const record = this.selectedRecordToVoid();
+    if (!record) return;
+
+    const reason = this.voidReason().trim();
+    if (!reason) {
+      this.toastr.warning(
+        this.langService.translate('toast.void_reason_required'),
+        this.langService.translate('toast.error')
+      );
+      return;
+    }
+
+    this.isVoiding.set(true);
+    this.billingService.void(record.id, reason).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.isVoiding.set(false);
+        const updatedRecord: BillingRecordWithDetails = {
+          ...record,
+          status: 'voided',
+          voidReason: reason,
+          voidedAt: res.data?.voidedAt || new Date().toISOString(),
+          paidAmount: 0
+        };
+
+        this.billingRecords.update(records =>
+          records.map(r => r.id === record.id ? updatedRecord : r)
+        );
+
+        this.toastr.success(
+          this.langService.translate('toast.invoice_voided'),
+          this.langService.translate('toast.success')
+        );
+        this.closeVoidModal();
+      },
+      error: (err) => {
+        this.isVoiding.set(false);
+        const msg = err?.error?.message || this.langService.translate('toast.invoice_void_error');
+        this.toastr.error(msg, this.langService.translate('toast.error'));
+      }
+    });
+  }
 }
+

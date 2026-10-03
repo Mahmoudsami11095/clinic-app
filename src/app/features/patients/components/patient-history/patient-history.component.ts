@@ -1467,8 +1467,8 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                                       >
                                         <option value="" disabled>Select Material</option>
                                         @for (mat of availableMaterials(); track mat.id) {
-                                          <option [value]="mat.id" [disabled]="mat.quantity <= 0">
-                                            {{ mat.quantity <= 0 ? '❌ ' + mat.name + ' (Out of stock)' : (mat.quantity <= (mat.minStockAlert ?? 5) ? '⚠️ ' + mat.name + ' (Low: ' + mat.quantity + ' ' + (mat.unit || '') + ')' : mat.name + ' (' + mat.quantity + ' in stock)') }}
+                                          <option [value]="mat.id" [disabled]="mat.quantity <= 0 || isMaterialExpired(mat)">
+                                            {{ isMaterialExpired(mat) ? '🚫 ' + mat.name + ' (EXPIRED - Quarantined)' : (mat.quantity <= 0 ? '❌ ' + mat.name + ' (Out of stock)' : (mat.quantity <= (mat.minStockAlert ?? 5) ? '⚠️ ' + mat.name + ' (Low: ' + mat.quantity + ' ' + (mat.unit || '') + ')' : mat.name + ' (' + mat.quantity + ' in stock)')) }}
                                           </option>
                                         }
                                       </select>
@@ -2175,9 +2175,28 @@ export class PatientHistoryComponent implements OnInit {
     this.consumedMaterialsForm.update(form => form.filter((_, i) => i !== index));
   }
 
+  isMaterialExpired(mat: Material): boolean {
+    if (mat.isExpired !== undefined) return mat.isExpired;
+    if (!mat.expirationDate) return false;
+    const exp = new Date(mat.expirationDate);
+    if (isNaN(exp.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return exp < today;
+  }
+
   onMaterialSelect(index: number, materialId: string) {
     const material = this.availableMaterials().find(m => m.id === materialId);
     if (material) {
+      if (this.isMaterialExpired(material)) {
+        alert(`Material '${material.name}' has expired and is quarantined from clinical procedures.`);
+        this.consumedMaterialsForm.update(form => {
+          const newForm = [...form];
+          newForm[index] = { ...newForm[index], materialId: '', maxQuantity: 0 };
+          return newForm;
+        });
+        return;
+      }
       this.consumedMaterialsForm.update(form => {
         const newForm = [...form];
         newForm[index] = { ...newForm[index], materialId, maxQuantity: material.quantity };
@@ -2205,7 +2224,11 @@ export class PatientHistoryComponent implements OnInit {
     }
     // If completed log, look for matching consumable
     if (!this.isPlannedForm() && tpl.materialNameMatch) {
-      const match = this.availableMaterials().find(m => m.name.toLowerCase().includes(tpl.materialNameMatch!.toLowerCase()) && m.quantity > 0);
+      const match = this.availableMaterials().find(m => 
+        m.name.toLowerCase().includes(tpl.materialNameMatch!.toLowerCase()) && 
+        m.quantity > 0 && 
+        !this.isMaterialExpired(m)
+      );
       if (match && this.consumedMaterialsForm().every(cm => cm.materialId !== match.id)) {
         this.consumedMaterialsForm.update(list => [...list, { materialId: match.id!, quantity: 1, maxQuantity: match.quantity }]);
       }

@@ -319,13 +319,13 @@ export class BillingFormComponent implements OnInit {
     };
 
     this.billingService.create(newRecord).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
+      next: (res) => {
         this.submitting = false;
         this.toastr.success(
           this.langService.translate('toast.invoice_created'),
           this.langService.translate('toast.success')
         );
-        this.saved.emit(newRecord);
+        this.saved.emit(res?.data || newRecord);
         this.resetForm();
       },
       error: () => {

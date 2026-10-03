@@ -37,6 +37,11 @@ export class PatientDebtService {
 
     for (const record of records) {
       if (record.patientId === patientId) {
+        // BR-FIN-03: Voided invoices are nullified and do not constitute outstanding debt
+        if (record.status?.toLowerCase() === 'voided') {
+          continue;
+        }
+
         const isPaid = record.status?.toLowerCase() === 'paid';
         const amount = Number(record.amount) || 0;
         const paidAmount = record.paidAmount !== undefined && record.paidAmount !== null

@@ -122,6 +122,27 @@ describe('PatientDebtService (BR-FIN-02)', () => {
       expect(service.calculatePatientDebt('', mockRecords).totalDebt).toBe(0);
       expect(service.calculatePatientDebt('pat-1', []).totalDebt).toBe(0);
     });
+
+    it('should exclude voided invoices from total debt and unpaid count (BR-FIN-03)', () => {
+      const recordsWithVoided: BillingRecord[] = [
+        ...mockRecords,
+        {
+          id: 'inv-void-1',
+          patientId: 'pat-1',
+          amount: 2500,
+          paidAmount: 0,
+          status: 'voided',
+          voidReason: 'Treatment canceled before start',
+          dateIssued: '2026-09-22',
+          paymentMethod: null
+        }
+      ];
+
+      const result = service.calculatePatientDebt('pat-1', recordsWithVoided);
+      expect(result.totalDebt).toBe(1100);
+      expect(result.unpaidCount).toBe(2);
+      expect(result.unpaidInvoices.every(inv => inv.invoice.status !== 'voided')).toBeTrue();
+    });
   });
 
   describe('buildDebtMap', () => {
