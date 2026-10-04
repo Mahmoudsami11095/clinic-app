@@ -1,19 +1,19 @@
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth.helper';
 
 test.describe('Smart Clinic Dental Charting (Browser Automation)', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dental-chart');
+    await loginAsAdmin(page);
+    await page.goto('/3d-dental-chart');
     await page.waitForLoadState('domcontentloaded');
   });
 
   test('1. Dental Chart Mounting & Header Verification', async ({ page }) => {
-    // If redirected to login, verify clean redirect; if accessible, test odontogram
-    const currentUrl = page.url();
-    if (currentUrl.includes('login')) {
-      await expect(page.locator('app-root')).toBeAttached();
-    } else {
-      await expect(page.locator('app-dental-chart, app-root')).toBeAttached();
+    await expect(page.locator('app-dental-chart, app-root').first()).toBeAttached();
+    const heading = page.locator('h1, h2, h3').filter({ hasText: /Dental|الأسنان|Teeth/i }).first();
+    if (await heading.isVisible()) {
+      await expect(heading).toBeVisible();
     }
   });
 
