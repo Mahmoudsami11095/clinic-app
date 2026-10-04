@@ -326,10 +326,6 @@ export class PatientFormComponent implements OnInit {
         },
         error: (err) => {
           this.submitting = false;
-          this.toastr.error(
-            extractErrorMessage(err, (k) => this.langService.translate(k)),
-            this.langService.translate('toast.error')
-          );
         }
       });
     } else {
@@ -429,10 +425,6 @@ export class PatientFormComponent implements OnInit {
         },
         error: (err) => {
           this.submitting = false;
-          this.toastr.error(
-            extractErrorMessage(err, (k) => this.langService.translate(k)),
-            this.langService.translate('toast.error')
-          );
         }
       });
     }

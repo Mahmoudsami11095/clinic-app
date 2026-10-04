@@ -32,9 +32,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       try {
         const languageService = injector.get(LanguageService);
         errorMessage = extractErrorMessage(err, (k) => languageService.translate(k));
-        errorTitle = languageService.translate('toast.error');
+        const baseTitle = languageService.translate('toast.error') || 'Error';
+        errorTitle = err.status && err.status > 0 ? `${baseTitle} (${err.status})` : baseTitle;
       } catch (e) {
         errorMessage = extractErrorMessage(err, (k) => k);
+        errorTitle = err.status && err.status > 0 ? `Error (${err.status})` : 'Error';
       }
 
       // Extend the error object with the extracted message
@@ -62,10 +64,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      if (err.status === 0 || err.status === 400 || err.status === 401 || err.status === 403 || err.status === 402 || err.status >= 500) {
+      if (err.status === 0 || err.status === 400 || err.status === 401 || err.status === 403 || err.status === 404 || err.status === 402 || err.status >= 500) {
         const isUnassignedClinicError = err.status === 403 && req.method === 'GET' && errorMessage.toLowerCase().includes('assigned to at least one clinic');
         if (!isUnassignedClinicError) {
-          toastr.error(errorMessage, errorTitle);
+          toastr.error(errorMessage || 'An unexpected error occurred. Please try again.', errorTitle || 'Error');
         }
       }
 
