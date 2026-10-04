@@ -53,10 +53,10 @@ export class DashboardService {
     const activeClinicId = this.clinicService.activeClinicId();
 
     return forkJoin({
-      patients: this.http.get<{ data: Patient[] }>('/api/patients'),
-      appointments: this.http.get<{ data: Appointment[] }>('/api/appointments'),
-      doctors: this.http.get<{ data: Doctor[] }>('/api/doctors'),
-      billing: this.http.get<{ data: BillingRecord[] }>('/api/billing'),
+      patients: this.http.get<{ data: Patient[] }>('/api/patients').pipe(catchError(() => of({ data: [] }))),
+      appointments: this.http.get<{ data: Appointment[] }>('/api/appointments').pipe(catchError(() => of({ data: [] }))),
+      doctors: this.http.get<{ data: Doctor[] }>('/api/doctors').pipe(catchError(() => of({ data: [] }))),
+      billing: this.http.get<{ data: BillingRecord[] }>('/api/billing').pipe(catchError(() => of({ data: [] }))),
       radiology: this.http.get<{ data: RadiologyRecord[] }>('/api/Radiology/records').pipe(
         catchError(() => of({ data: [] }))
       ),
