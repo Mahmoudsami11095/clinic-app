@@ -1,0 +1,11 @@
+{
+  "title": "Smart Clinic Management System - Frontend Architecture & Component Documentation",
+  "name": "ClinicApp",
+  "output": "documentation",
+  "theme": "gitbook",
+  "toggleMenuItems": ["all"],
+  "disableSourceCode": false,
+  "disableCoverage": false,
+  "disableLifeCycleHooks": false,
+  "language": "en-US"
+}
