@@ -1031,5 +1031,13 @@
     "action_discharge_sterilize": "Discharge & Sterilize",
     "action_mark_ready": "Complete Cleaning",
     "action_return_to_service": "Return to Service"
+  },
+  "command_palette": {
+    "placeholder": "Type a command, patient, doctor, or operatory... (Ctrl + K)",
+    "no_results": "No commands or records found",
+    "no_results_sub": "Try searching for a patient name, doctor, operatory room, or quick action",
+    "navigate": "Navigate",
+    "select": "Select",
+    "close": "Close"
   }
 }
