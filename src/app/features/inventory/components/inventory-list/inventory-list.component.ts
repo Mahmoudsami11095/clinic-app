@@ -508,4 +508,39 @@ export class InventoryListComponent implements OnInit {
   closeImagePreview(): void {
     this.previewImageUrl.set(null);
   }
+
+  getMaterialImage(material: Material): string {
+    if (material.imageUrl) {
+      return material.imageUrl;
+    }
+    const cat = (material.category || '').toLowerCase();
+    const name = (material.name || '').toLowerCase();
+
+    // 1. Anesthesia & Injection tools ("بنج", syringes, needles, carpules)
+    if (cat === 'anesthesia' || name.includes('بنج') || name.includes('anesthe') || name.includes('needle') || name.includes('syringe')) {
+      return '/images/materials/anesthetic.jpg';
+    }
+    // 2. Restorative & Matrix (composites, filling, bond, strips, core)
+    if (cat === 'restorative' || cat === 'matrix' || name.includes('composite') || name.includes('filling') || name.includes('resin') || name.includes('matrix')) {
+      return '/images/materials/composite.jpg';
+    }
+    // 3. Disposables & PPE (gloves, masks, sponges, pouches, bibs)
+    if (cat === 'disposables' || name.includes('glove') || name.includes('mask') || name.includes('pouch') || name.includes('sponge') || name.includes('gauze') || name.includes('shield')) {
+      return '/images/materials/gloves.jpg';
+    }
+    // 4. Clinical Hand Instruments (forceps, mirrors, probes, pliers, tweezers, excavators, carvers, spatulas)
+    if (cat === 'instruments' || name.includes('tweezer') || name.includes('probe') || name.includes('plier') || name.includes('knife') || name.includes('carver') || name.includes('spatula') || name.includes('excavator') || name.includes('forcep') || name.includes('scissor') || name.includes('handle')) {
+      return '/images/materials/instruments.jpg';
+    }
+    // 5. Impression Materials & Trays (alginate, silicone, impression tray)
+    if (cat === 'impression' || name.includes('impression') || name.includes('alginate') || name.includes('silicone') || name.includes('tray')) {
+      return '/images/materials/impression.jpg';
+    }
+    // 6. Rotary Burs & Accessories (burs, bur holder, diamond, carbide)
+    if (cat === 'burs' || name.includes('bur') || name.includes('stone') || name.includes('disc') || name.includes('polishing') || name.includes('wheel')) {
+      return '/images/materials/burs.jpg';
+    }
+    // 7. General fallback for clinical tools
+    return '/images/materials/composite.jpg';
+  }
 }

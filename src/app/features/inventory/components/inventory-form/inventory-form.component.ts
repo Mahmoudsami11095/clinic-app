@@ -62,16 +62,25 @@ export class InventoryFormComponent implements OnInit {
     this.error = '';
 
     const formValue = this.materialForm.value;
+    
+    // Preserve existing valid clinicId if present, or use active clinic if not 'all'
+    const resolvedClinicId = (this.material?.clinicId && this.material.clinicId !== 'all')
+      ? this.material.clinicId
+      : (this.clinicId && this.clinicId !== 'all' ? this.clinicId : undefined);
+
+    // Preserve existing doctorId if present, or fallback to current doctorId
+    const resolvedDoctorId = this.material?.doctorId || this.doctorId || undefined;
+
     const materialData: Material = {
       id: this.material?.id,
-      doctorId: this.doctorId,
-      clinicId: this.clinicId,
-      name: formValue.name,
+      doctorId: resolvedDoctorId,
+      clinicId: resolvedClinicId,
+      name: formValue.name?.trim(),
       category: formValue.category?.trim() || undefined,
       isDefault: this.material?.isDefault ?? false,
       quantity: Number(formValue.quantity),
       minStockAlert: Number(formValue.minStockAlert),
-      unit: formValue.unit,
+      unit: formValue.unit?.trim() || undefined,
       batchNumber: formValue.batchNumber?.trim() || undefined,
       expirationDate: formValue.expirationDate ? new Date(formValue.expirationDate).toISOString() : undefined,
       imageUrl: formValue.imageUrl?.trim() || undefined
