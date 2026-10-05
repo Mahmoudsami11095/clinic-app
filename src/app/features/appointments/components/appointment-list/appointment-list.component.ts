@@ -11,6 +11,7 @@ import { PrescriptionService } from '../../../prescriptions/services/prescriptio
 import { Prescription } from '../../../prescriptions/models/prescription.model';
 import { PrescriptionFormComponent } from '../../../prescriptions/components/prescription-form/prescription-form.component';
 import { PrescriptionPrintModalComponent } from '../../../prescriptions/components/prescription-print-modal/prescription-print-modal.component';
+import { WhatsappReminderModalComponent } from '../whatsapp-reminder-modal/whatsapp-reminder-modal.component';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
@@ -24,7 +25,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-appointment-list',
-  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent, PrescriptionFormComponent, PrescriptionPrintModalComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, ModalComponent, AppointmentFormComponent, PrescriptionFormComponent, PrescriptionPrintModalComponent, WhatsappReminderModalComponent, TranslatePipe],
   templateUrl: './appointment-list.component.html',
   styleUrl: './appointment-list.component.css'
 })
@@ -69,6 +70,33 @@ export class AppointmentListComponent implements OnInit {
   // REQ-NOTIF-02: Patient Appointment Reminders State
   sendingReminderId = signal<string | null>(null);
   sendingBatchReminders = signal<boolean>(false);
+
+  // Interactive WhatsApp Hub Modal State
+  isWhatsAppModalOpen = signal(false);
+  selectedAppointmentForWhatsApp = signal<AppointmentWithDetails | null>(null);
+  selectedPatientForWhatsApp = signal<Patient | null>(null);
+
+  activeClinicName = computed(() => {
+    const activeId = this.clinicService.activeClinicId();
+    const clinic = this.clinicService.clinics().find(c => c.id === activeId);
+    return clinic?.name || 'MedClinic Dental Center';
+  });
+
+  eligible24hRemindersCount = computed(() => {
+    const list = this.filteredAppointments();
+    const now = Date.now();
+    const next24h = now + 24 * 3600 * 1000;
+    return list.filter(a => {
+      if (a.status !== 'scheduled') return false;
+      const apptTime = new Date(a.date).getTime();
+      if (isNaN(apptTime) || apptTime < now || apptTime > next24h) return false;
+      if (a.lastReminderSentAt) {
+        const lastSent = new Date(a.lastReminderSentAt).getTime();
+        if (now - lastSent < 12 * 3600 * 1000) return false;
+      }
+      return true;
+    }).length;
+  });
 
   filteredAppointments = computed(() => {
     let result = this.appointments();
@@ -301,22 +329,72 @@ export class AppointmentListComponent implements OnInit {
   }
 
   openWhatsAppDirect(appt: AppointmentWithDetails): void {
-    this.patientService.getById(appt.patientId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (patient) => {
-        const phone = patient?.contactNumber || '';
-        const url = this.appointmentService.generateWhatsAppReminderUrl(
-          phone,
-          appt.patientName,
-          appt.doctorName,
-          appt.date,
-          appt.type
+    this.openWhatsAppPreviewModal(appt);
+  }
+
+  openWhatsAppPreviewModal(appt: AppointmentWithDetails): void {
+    this.selectedAppointmentForWhatsApp.set(appt);
+    this.selectedPatientForWhatsApp.set(null);
+    this.isWhatsAppModalOpen.set(true);
+
+    if (appt.patientId) {
+      this.patientService.getById(appt.patientId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (p) => {
+          if (p) this.selectedPatientForWhatsApp.set(p);
+        }
+      });
+    }
+  }
+
+  closeWhatsAppModal(): void {
+    this.isWhatsAppModalOpen.set(false);
+    this.selectedAppointmentForWhatsApp.set(null);
+    this.selectedPatientForWhatsApp.set(null);
+  }
+
+  dispatchWhatsAppFromModal(): void {
+    const appt = this.selectedAppointmentForWhatsApp();
+    if (!appt) return;
+    this.sendingReminderId.set(appt.id);
+    this.appointmentService.sendReminder(appt.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.sendingReminderId.set(null);
+        this.appointments.update(list =>
+          list.map(a => a.id === appt.id ? {
+            ...a,
+            lastReminderSentAt: res.data.lastReminderSentAt,
+            reminderCount: res.data.reminderCount
+          } : a)
         );
-        window.open(url, '_blank');
+        this.toastr.success(
+          `WhatsApp reminder dispatched successfully to ${appt.patientName}.`,
+          'WhatsApp Dispatched'
+        );
+        this.closeWhatsAppModal();
       },
       error: () => {
-        this.toastr.error('Failed to retrieve patient contact number.', 'Error');
+        this.sendingReminderId.set(null);
+        this.toastr.error('Failed to dispatch WhatsApp message via Cloud API.', 'Dispatch Error');
       }
     });
+  }
+
+  handleDirectWhatsAppFromModal(event: { message: string, phone: string }): void {
+    const cleanPhone = (event.phone || '').replace(/[^0-9]/g, '');
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(event.message)}`;
+    window.open(url, '_blank');
+
+    const appt = this.selectedAppointmentForWhatsApp();
+    if (appt) {
+      const nowIso = new Date().toISOString();
+      this.appointments.update(list =>
+        list.map(a => a.id === appt.id ? {
+          ...a,
+          lastReminderSentAt: nowIso,
+          reminderCount: (a.reminderCount || 0) + 1
+        } : a)
+      );
+    }
   }
 
   getReminderTimeAgo(sentAt?: string): string {
