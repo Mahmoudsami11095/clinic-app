@@ -6,10 +6,11 @@ import { Header } from '../header/header.component';
 import { AuthService } from '../../auth/auth.service';
 import { LayoutService } from '../layout.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { CommandPaletteComponent } from '../../components/command-palette/command-palette.component';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [CommonModule, RouterOutlet, Sidebar, Header, TranslatePipe],
+  imports: [CommonModule, RouterOutlet, Sidebar, Header, TranslatePipe, CommandPaletteComponent],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css'
 })

@@ -1,0 +1,173 @@
+@if (paletteService.isOpen()) {
+  <div 
+    class="palette-backdrop fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-md flex items-start justify-center pt-16 sm:pt-24 px-4 pb-6 overflow-y-auto animate-in fade-in duration-150"
+    (click)="onBackdropClick($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Universal Command Palette">
+    
+    <div 
+      class="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col transform transition-all duration-200 animate-in zoom-in-95"
+      (click)="$event.stopPropagation()">
+
+      <!-- Search Input Header -->
+      <div class="relative flex items-center px-4 py-3.5 border-b border-slate-200/70 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60">
+        <!-- Search Icon / Busy Spinner -->
+        <div class="w-6 h-6 flex items-center justify-center me-3 text-slate-400 dark:text-slate-500">
+          @if (paletteService.isSearchingBackend()) {
+            <i class="pi pi-spin pi-spinner text-indigo-500 text-lg"></i>
+          } @else {
+            <i class="pi pi-search text-lg"></i>
+          }
+        </div>
+
+        <input 
+          #searchInput
+          type="text" 
+          [ngModel]="paletteService.query()" 
+          (ngModelChange)="paletteService.setQuery($event)"
+          [placeholder]="'command_palette.placeholder' | translate"
+          class="flex-1 bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-base font-medium focus:outline-none"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Search commands, patients, doctors, operatories" />
+
+        <!-- Esc Badge / Close Button -->
+        <div class="flex items-center gap-1.5 ms-2">
+          @if (paletteService.query()) {
+            <button 
+              (click)="paletteService.setQuery('')" 
+              class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
+              title="Clear">
+              <i class="pi pi-times text-xs"></i>
+            </button>
+          }
+          <kbd class="hidden sm:inline-flex items-center px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-xs">
+            ESC
+          </kbd>
+        </div>
+      </div>
+
+      <!-- Results List -->
+      <div class="max-h-96 overflow-y-auto p-2 divide-y divide-slate-100/50 dark:divide-slate-800/50 scroll-smooth">
+        @if (paletteService.filteredCommands().length > 0) {
+          @for (cmd of paletteService.filteredCommands(); track cmd.id; let idx = $index) {
+            <button
+              type="button"
+              (click)="paletteService.executeCommand(cmd)"
+              (mouseenter)="paletteService.activeIndex.set(idx)"
+              class="w-full text-start flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer group"
+              [class.bg-indigo-600]="paletteService.activeIndex() === idx"
+              [class.text-white]="paletteService.activeIndex() === idx"
+              [class.text-slate-800]="paletteService.activeIndex() !== idx"
+              [class.dark:text-slate-200]="paletteService.activeIndex() !== idx"
+              [class.hover:bg-slate-100]="paletteService.activeIndex() !== idx"
+              [class.dark:hover:bg-slate-800/60]="paletteService.activeIndex() !== idx">
+              
+              <div class="flex items-center gap-3 min-w-0">
+                <!-- Icon badge -->
+                <div 
+                  class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                  [class.bg-white/20]="paletteService.activeIndex() === idx"
+                  [class.text-white]="paletteService.activeIndex() === idx"
+                  [class.bg-slate-100]="paletteService.activeIndex() !== idx"
+                  [class.dark:bg-slate-800]="paletteService.activeIndex() !== idx"
+                  [class.text-indigo-600]="paletteService.activeIndex() !== idx"
+                  [class.dark:text-indigo-400]="paletteService.activeIndex() !== idx">
+                  <i [class]="cmd.icon" class="text-sm"></i>
+                </div>
+
+                <div class="min-w-0 flex flex-col">
+                  <span class="text-sm font-semibold truncate leading-tight">
+                    {{ getItemTitle(cmd) }}
+                  </span>
+                  @if (cmd.subtext) {
+                    <span 
+                      class="text-xs truncate mt-0.5"
+                      [class.text-indigo-100]="paletteService.activeIndex() === idx"
+                      [class.text-slate-500]="paletteService.activeIndex() !== idx"
+                      [class.dark:text-slate-400]="paletteService.activeIndex() !== idx">
+                      {{ cmd.subtext }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 flex-shrink-0 ms-2">
+                @if (cmd.badge) {
+                  <span 
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                    [class.bg-white/20]="paletteService.activeIndex() === idx"
+                    [class.text-white]="paletteService.activeIndex() === idx"
+                    [class.bg-indigo-50]="paletteService.activeIndex() !== idx"
+                    [class.dark:bg-indigo-950/50]="paletteService.activeIndex() !== idx"
+                    [class.text-indigo-600]="paletteService.activeIndex() !== idx"
+                    [class.dark:text-indigo-400]="paletteService.activeIndex() !== idx">
+                    {{ cmd.badge }}
+                  </span>
+                }
+
+                @if (cmd.shortcut) {
+                  <kbd 
+                    class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded shadow-xs"
+                    [class.bg-white/20]="paletteService.activeIndex() === idx"
+                    [class.text-white]="paletteService.activeIndex() === idx"
+                    [class.bg-slate-100]="paletteService.activeIndex() !== idx"
+                    [class.dark:bg-slate-800]="paletteService.activeIndex() !== idx"
+                    [class.text-slate-500]="paletteService.activeIndex() !== idx"
+                    [class.dark:text-slate-400]="paletteService.activeIndex() !== idx">
+                    {{ cmd.shortcut }}
+                  </kbd>
+                }
+
+                <i 
+                  class="pi pi-arrow-right text-xs transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+                  [class.text-white]="paletteService.activeIndex() === idx"
+                  [class.text-slate-400]="paletteService.activeIndex() !== idx">
+                </i>
+              </div>
+            </button>
+          }
+        } @else {
+          <!-- Empty State -->
+          <div class="py-12 px-4 text-center">
+            <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
+              <i class="pi pi-search text-xl"></i>
+            </div>
+            <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">
+              {{ 'command_palette.no_results' | translate }}
+            </h4>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">
+              {{ 'command_palette.no_results_sub' | translate }}
+            </p>
+          </div>
+        }
+      </div>
+
+      <!-- Footer Quick Shortcuts Bar -->
+      <div class="px-4 py-2.5 bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1">
+            <kbd class="px-1.5 py-0.5 font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-xs text-[10px]">↑</kbd>
+            <kbd class="px-1.5 py-0.5 font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-xs text-[10px]">↓</kbd>
+            <span class="hidden sm:inline ms-0.5">{{ 'command_palette.navigate' | translate }}</span>
+          </span>
+          <span class="inline-flex items-center gap-1">
+            <kbd class="px-1.5 py-0.5 font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-xs text-[10px]">↵</kbd>
+            <span class="hidden sm:inline ms-0.5">{{ 'command_palette.select' | translate }}</span>
+          </span>
+          <span class="inline-flex items-center gap-1">
+            <kbd class="px-1.5 py-0.5 font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-xs text-[10px]">esc</kbd>
+            <span class="hidden sm:inline ms-0.5">{{ 'command_palette.close' | translate }}</span>
+          </span>
+        </div>
+
+        <div class="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
+          <i class="pi pi-bolt text-xs"></i>
+          <span>MedClinic Spotlight</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}

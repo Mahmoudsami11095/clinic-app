@@ -1032,5 +1032,13 @@
     "action_discharge_sterilize": "إنهاء وبدء التعقيم",
     "action_mark_ready": "اكتمال التعقيم",
     "action_return_to_service": "إعادة للخدمة"
+  },
+  "command_palette": {
+    "placeholder": "اكتب أمرًا، اسم مريض، طبيب، أو عيادة... (Ctrl + K)",
+    "no_results": "لم يتم العثور على أوامر أو سجلات مطابقة",
+    "no_results_sub": "جرّب البحث باسم المريض، الطبيب، رقم الغرفة، أو إجراء سريع",
+    "navigate": "تنقل",
+    "select": "اختيار",
+    "close": "إغلاق"
   }
 }
