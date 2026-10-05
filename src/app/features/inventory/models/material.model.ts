@@ -1,7 +1,7 @@
 export interface Material {
   id?: string;
   clinicId?: string;
-  doctorId: string;
+  doctorId?: string;
   name: string;
   category?: string;
   isDefault?: boolean;
