@@ -74,8 +74,8 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
   imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent, SignaturePadModalComponent],
   template: `
     <div class="space-y-6">
-      <!-- Top Row: Summary Info Grid (4 Cards - BR-FIN-02) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Top Row: Summary Info Grid (3 Cards - Anamnesis temporarily hidden) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Card 1: Identity Card -->
         <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex items-center gap-4 text-start">
           <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xl uppercase shadow-inner flex-shrink-0">
@@ -119,7 +119,8 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
           </div>
         </div>
 
-        <!-- Card 3: Anamnesis -->
+        <!-- Card 3: Anamnesis (Temporarily hidden until restored in the future) -->
+        <!--
         <div class="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-start">
           <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{{ 'patients.anamnesis' | translate }}</h4>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
@@ -144,6 +145,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
             </div>
           </div>
         </div>
+        -->
 
         <!-- Card 4: Financial Status & Debt Warning (BR-FIN-02) -->
         <div class="border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-start flex flex-col justify-between"
