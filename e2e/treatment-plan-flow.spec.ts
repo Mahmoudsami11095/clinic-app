@@ -11,13 +11,10 @@ test.describe('Multi-Stage Treatment Plans & Cost Estimator - Level 3 (Customer/
   });
 
   test('1. Open Patient Profile and Launch Multi-Stage Treatment Plan Modal', async ({ page }) => {
-    // Click on the first patient row to navigate to patient detail
-    const patientRow = page.locator('table tbody tr').first();
-    await patientRow.waitFor({ state: 'visible', timeout: 15000 });
-    
-    // Click the patient link/row to open profile
-    const patientLink = patientRow.locator('a[href*="/patients/"], button:has-text("View"), td:first-child').first();
-    await patientLink.click();
+    // Click on the first patient card to navigate to patient detail
+    const patientCard = page.locator('div[class*="cursor-pointer"]:has(h3), table tbody tr').first();
+    await patientCard.waitFor({ state: 'visible', timeout: 15000 });
+    await patientCard.click();
     await page.waitForURL(/\/patients\/[a-zA-Z0-9_-]+/, { timeout: 15000 });
     await page.waitForTimeout(1000);
 
@@ -44,10 +41,9 @@ test.describe('Multi-Stage Treatment Plans & Cost Estimator - Level 3 (Customer/
 
   test('2. Multi-Stage Roadmap, Cost Estimator, and Formal Consent Document', async ({ page }) => {
     // Navigate to first patient
-    const patientRow = page.locator('table tbody tr').first();
-    await patientRow.waitFor({ state: 'visible', timeout: 15000 });
-    const patientLink = patientRow.locator('a[href*="/patients/"], td:first-child').first();
-    await patientLink.click();
+    const patientCard = page.locator('div[class*="cursor-pointer"]:has(h3), table tbody tr').first();
+    await patientCard.waitFor({ state: 'visible', timeout: 15000 });
+    await patientCard.click();
     await page.waitForURL(/\/patients\/[a-zA-Z0-9_-]+/, { timeout: 15000 });
     await page.waitForTimeout(1000);
 
