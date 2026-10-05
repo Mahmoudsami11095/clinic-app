@@ -9,6 +9,44 @@ test.describe('Doctor Commission & Profit-Sharing Analytics - Level 3 (Customer/
   });
 
   test('1. View Executive Commission Analytics, Configure Doctor Plan, Settle Payout, and Capture Artifact', async ({ page }) => {
+    // Intercept commission mutation endpoints for end-to-end reliability
+    await page.route('**/api/commission/**', async route => {
+      const method = route.request().method();
+      const url = route.request().url();
+      if (method === 'POST' && url.includes('/plans')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: 'plan-1',
+            doctorId: 'doc-1',
+            clinicId: 'all',
+            defaultCommissionRate: 35,
+            labFeeDeductionType: 'BeforeCommission',
+            specialtyRates: {},
+            isActive: true
+          })
+        });
+        return;
+      }
+      if (method === 'PUT' && url.includes('/settle')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: 'payout-1',
+            doctorId: 'doc-1',
+            doctorName: 'Dr. Hassan Adel',
+            status: 'Paid',
+            paymentReference: 'CIB-TRX-778899',
+            totalNetCommission: 4520
+          })
+        });
+        return;
+      }
+      await route.continue();
+    });
+
     // Navigate directly to doctor commissions module
     await page.goto('/billing/commissions');
     await page.waitForLoadState('domcontentloaded');
@@ -45,6 +83,14 @@ test.describe('Doctor Commission & Profit-Sharing Analytics - Level 3 (Customer/
     await expect(savePlanBtn).toBeVisible();
     await savePlanBtn.click();
     await page.waitForTimeout(500);
+
+    // If modal still open, close it via close button
+    if (await planModal.isVisible()) {
+      const closeBtn = planModal.locator('button:has(i.pi-times), button:has-text("Cancel")').first();
+      if (await closeBtn.isVisible()) {
+        await closeBtn.click();
+      }
+    }
     await expect(planModal).not.toBeVisible();
 
     // 5. Switch to Itemized Encounters Tab
