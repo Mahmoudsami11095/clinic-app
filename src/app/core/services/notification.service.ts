@@ -24,6 +24,7 @@ export class NotificationService {
   
   public notifications = signal<Notification[]>([]);
   public unreadCount = signal<number>(0);
+  public chairStatusUpdated = signal<any | null>(null);
 
   constructor() {
     effect(() => {
@@ -60,6 +61,16 @@ export class NotificationService {
       this.notifications.update(n => [notification, ...n]);
       this.updateUnreadCount();
     });
+
+    this.hubConnection.on('ReceiveChairStatusUpdate', (chair: any) => {
+      this.chairStatusUpdated.set(chair);
+    });
+  }
+
+  public joinClinicRoom(clinicId: string) {
+    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      this.hubConnection.invoke('JoinClinicRoom', clinicId).catch(err => console.warn('SignalR join room failed', err));
+    }
   }
 
   private stopConnection() {
