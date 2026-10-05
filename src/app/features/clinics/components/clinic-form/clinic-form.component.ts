@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, OnInit, DestroyRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit, OnChanges, SimpleChanges, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicService } from '../../../../core/services/clinic.service';
@@ -21,8 +21,8 @@ import { WhatsappConnectionComponent } from '../whatsapp-connection/whatsapp-con
   templateUrl: './clinic-form.component.html',
   styleUrl: './clinic-form.component.css'
 })
-export class ClinicFormComponent implements OnInit {
-    private destroyRef = inject(DestroyRef);
+export class ClinicFormComponent implements OnInit, OnChanges {
+  private destroyRef = inject(DestroyRef);
   @Input() clinic?: Clinic;
   @Output() saved = new EventEmitter<Clinic>();
   @Output() cancelled = new EventEmitter<void>();
@@ -56,13 +56,23 @@ export class ClinicFormComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.populateForm();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['clinic']) {
+      this.populateForm();
+    }
+  }
+
+  private populateForm() {
     if (this.clinic) {
-      const phoneData = splitPhoneNumber(this.clinic.phone);
+      const phoneData = splitPhoneNumber(this.clinic.phone || '');
       this.form.patchValue({
-        name: this.clinic.name,
-        address: this.clinic.address,
-        countryCode: phoneData.countryCode,
-        phoneNumber: phoneData.phoneNumber,
+        name: this.clinic.name || '',
+        address: this.clinic.address || '',
+        countryCode: phoneData.countryCode || '+20',
+        phoneNumber: phoneData.phoneNumber || '',
         availabilityHours: this.clinic.availabilityHours || '09:00-17:00',
         availabilityDays: this.clinic.availabilityDays || JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
       });
@@ -72,7 +82,35 @@ export class ClinicFormComponent implements OnInit {
         } catch (e) {
           this.selectedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         }
+      } else {
+        this.selectedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
       }
+
+      if (this.clinic.latitude && this.clinic.longitude) {
+        this.locationData = {
+          address: this.clinic.address || '',
+          lat: this.clinic.latitude,
+          lng: this.clinic.longitude,
+          city: this.clinic.city,
+          state: this.clinic.state,
+          country: this.clinic.country
+        };
+      } else {
+        this.locationData = undefined;
+      }
+      this.selectedPlace = null;
+    } else {
+      this.form.reset({
+        name: '',
+        address: '',
+        countryCode: '+20',
+        phoneNumber: '',
+        availabilityHours: '09:00-17:00',
+        availabilityDays: JSON.stringify(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
+      });
+      this.selectedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+      this.locationData = undefined;
+      this.selectedPlace = null;
     }
   }
 

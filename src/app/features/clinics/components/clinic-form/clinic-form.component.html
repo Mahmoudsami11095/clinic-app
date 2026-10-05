@@ -35,6 +35,10 @@
     </div>
     <app-location-map 
       [place]="selectedPlace" 
+      [lat]="clinic?.latitude"
+      [lng]="clinic?.longitude"
+      [initialAddress]="clinic?.address"
+      height="320px"
       (locationPicked)="onMapLocationPicked($event)">
     </app-location-map>
     @if (isInvalid('address')) {

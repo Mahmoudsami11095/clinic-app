@@ -11,6 +11,8 @@ import {
   Output, 
   SimpleChanges, 
   ViewChild, 
+  HostListener,
+  ChangeDetectorRef,
   inject 
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -25,12 +27,13 @@ import * as L from 'leaflet';
 })
 export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
   private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
 
   @Input() place: any = null;
   @Input() lat?: number;
   @Input() lng?: number;
   @Input() initialAddress?: string | null;
-  @Input() height: string = '400px';
+  @Input() height: string = '320px';
   @Input() readOnly: boolean = false;
   @Output() locationPicked = new EventEmitter<{
     address: string;
@@ -45,6 +48,7 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
 
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
+  private resizeObserver?: ResizeObserver;
 
   currentLat?: number;
   currentLng?: number;
@@ -54,6 +58,7 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
   manualAddress: string = '';
   searchQuery: string = '';
   isSearching: boolean = false;
+  isLocating: boolean = false;
   isGeocoding: boolean = false;
 
   // Default coordinates (Cairo, Egypt)
@@ -61,21 +66,44 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
 
   ngOnInit() {
     this.manualAddress = this.initialAddress || '';
+    if (this.initialAddress) {
+      this.searchQuery = this.initialAddress;
+    }
     if (this.lat) this.currentLat = this.lat;
     if (this.lng) this.currentLng = this.lng;
   }
 
   ngAfterViewInit() {
-    this.initMap();
+    setTimeout(() => {
+      this.initMap();
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ((changes['place'] || changes['lat'] || changes['lng']) && this.map) {
+    if (changes['initialAddress'] && this.initialAddress && !this.manualAddress) {
+      this.manualAddress = this.initialAddress;
+      if (!this.searchQuery) {
+        this.searchQuery = this.initialAddress;
+      }
+    }
+    if ((changes['place'] || changes['lat'] || changes['lng'] || changes['initialAddress']) && this.map) {
       this.updateMapFromInputs();
     }
   }
 
+  @HostListener('window:resize')
+  onWindowResize() {
+    if (this.map) {
+      this.map.invalidateSize();
+    }
+  }
+
   ngOnDestroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = undefined;
+    }
     if (this.map) {
       this.map.remove();
       this.map = null;
@@ -127,7 +155,7 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
 
     this.map = L.map(this.mapContainer.nativeElement, {
       center: initialCoords,
-      zoom: hasCoords ? 15 : 11,
+      zoom: hasCoords ? 15 : 12,
       zoomControl: !this.readOnly,
       dragging: !this.readOnly,
       touchZoom: !this.readOnly,
@@ -144,16 +172,14 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
 
     if (hasCoords) {
       this.setMarker(initialCoords[0], initialCoords[1]);
-    } else if (navigator.geolocation && !this.readOnly) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          if (this.map && !this.currentLat) {
-            const userCoords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-            this.map.setView(userCoords, 14);
-          }
-        },
-        () => {}
-      );
+    } else if (!this.readOnly) {
+      if (this.initialAddress) {
+        this.searchQuery = this.initialAddress;
+        this.onSearchLocation();
+      } else {
+        // Empty text input / initial state: auto-detect current location
+        this.useCurrentLocation();
+      }
     }
 
     if (!this.readOnly) {
@@ -162,10 +188,28 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
       });
     }
 
-    // Ensure map tiles render accurately inside dynamic containers
-    setTimeout(() => {
-      this.map?.invalidateSize();
-    }, 250);
+    // Schedule staggered invalidateSize calls to ensure flawless rendering during modal transitions
+    [50, 150, 300, 500, 800].forEach(delay => {
+      setTimeout(() => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
+      }, delay);
+    });
+
+    // ResizeObserver ensures map tile rendering adapts whenever modal size or orientation changes
+    if (typeof ResizeObserver !== 'undefined' && this.mapContainer?.nativeElement) {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0 && this.map) {
+            this.ngZone.runOutsideAngular(() => {
+              this.map?.invalidateSize();
+            });
+          }
+        }
+      });
+      this.resizeObserver.observe(this.mapContainer.nativeElement);
+    }
   }
 
   private extractCoordsFromPlace(place: any): [number, number] | null {
@@ -213,13 +257,25 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
     let coords: [number, number] | null = null;
     if (this.lat && this.lng) {
       coords = [this.lat, this.lng];
+      this.currentLat = this.lat;
+      this.currentLng = this.lng;
     } else if (this.place) {
       coords = this.extractCoordsFromPlace(this.place);
+      if (coords) {
+        this.currentLat = coords[0];
+        this.currentLng = coords[1];
+      }
     }
 
     if (coords && this.map) {
       this.map.setView(coords, 15);
       this.setMarker(coords[0], coords[1]);
+      setTimeout(() => this.map?.invalidateSize(), 150);
+    } else if (this.initialAddress && !this.readOnly) {
+      this.searchQuery = this.initialAddress;
+      this.onSearchLocation();
+    } else if (!this.readOnly && !this.currentLat) {
+      this.useCurrentLocation();
     }
   }
 
@@ -228,9 +284,63 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
     this.reverseGeocode(latlng.lat, latlng.lng);
   }
 
+  /**
+   * Set map to current GPS / browser location and reverse-geocode address
+   */
+  useCurrentLocation() {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      console.warn('Geolocation is not supported by this browser.');
+      return;
+    }
+
+    this.isLocating = true;
+    this.cdr.markForCheck();
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.ngZone.run(() => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          this.currentLat = lat;
+          this.currentLng = lng;
+
+          if (this.map) {
+            this.map.setView([lat, lng], 16);
+            this.setMarker(lat, lng);
+            this.map.invalidateSize();
+          }
+
+          this.reverseGeocode(lat, lng);
+          this.isLocating = false;
+          this.cdr.markForCheck();
+        });
+      },
+      (err) => {
+        console.warn('Geolocation error / permission denied:', err);
+        this.ngZone.run(() => {
+          this.isLocating = false;
+          this.cdr.markForCheck();
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.useCurrentLocation();
+  }
+
   async onSearchLocation() {
     const query = this.searchQuery?.trim();
-    if (!query) return;
+    if (!query) {
+      // Empty text input -> set map to current location as requested!
+      this.useCurrentLocation();
+      return;
+    }
 
     this.isSearching = true;
     try {
@@ -256,8 +366,9 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
             this.manualAddress = item.display_name;
 
             if (this.map) {
-              this.map.setView([lat, lng], 15);
+              this.map.setView([lat, lng], 16);
               this.setMarker(lat, lng);
+              this.map.invalidateSize();
             }
             this.emitLocation();
           });
