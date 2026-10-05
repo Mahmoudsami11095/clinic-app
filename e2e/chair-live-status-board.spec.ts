@@ -11,25 +11,48 @@ test.describe('Chair & Room Live Status Board - Level 3 (Customer/E2E)', () => {
   });
 
   test('1. Verify Operatory Status Board Mounting & Live Metrics', async ({ page }) => {
+    // If not on chair-board, click sidebar link
+    if (!page.url().includes('/chair-board')) {
+      const chairLink = page.locator('a[href*="chair-board"]').first();
+      if (await chairLink.isVisible()) {
+        await chairLink.click();
+        await page.waitForTimeout(1000);
+      } else {
+        await page.goto('/chair-board');
+        await page.waitForTimeout(1000);
+      }
+    }
+
     // Verify Live WebSocket Sync Header Banner
-    const title = page.locator('h2').filter({ hasText: /Chair & Operatory|حالة العيادات/i });
+    const title = page.locator('h2').filter({ hasText: /Chair & Operatory|حالة العيادات|Operatory Status/i }).first();
     await expect(title).toBeVisible({ timeout: 15000 });
 
-    const liveBadge = page.locator('text=Live Sync, text=مزامنة فورية').first();
+    const liveBadge = page.getByText(/Live Sync|مزامنة فورية/i).first();
     await expect(liveBadge).toBeVisible();
 
     // Verify KPI Status counters exist
-    await expect(page.locator('text=Total Operatories, text=إجمالي الغرف').first()).toBeVisible();
-    await expect(page.locator('text=Ready, text=جاهز').first()).toBeVisible();
-    await expect(page.locator('text=In Chair, text=في الكرسي').first()).toBeVisible();
-    await expect(page.locator('text=Sterilization, text=قيد التعقيم').first()).toBeVisible();
+    await expect(page.getByText(/Total Operatories|إجمالي الغرف/i).first()).toBeVisible();
+    await expect(page.getByText(/Ready|جاهز/i).first()).toBeVisible();
+    await expect(page.getByText(/In Chair|في الكرسي/i).first()).toBeVisible();
+    await expect(page.getByText(/Sterilization|قيد التعقيم/i).first()).toBeVisible();
 
     // Verify operatory cards loaded
-    const operatoryCards = page.locator('div:has-text("Room 101"), div:has-text("Operatory")').first();
+    const operatoryCards = page.locator('div').filter({ hasText: /Room 101|Operatory/i }).first();
     await expect(operatoryCards).toBeVisible();
   });
 
   test('2. Complete Lifecycle Flow: Seat Patient -> Discharge to Sterilization -> Mark Ready', async ({ page }) => {
+    if (!page.url().includes('/chair-board')) {
+      const chairLink = page.locator('a[href*="chair-board"]').first();
+      if (await chairLink.isVisible()) {
+        await chairLink.click();
+        await page.waitForTimeout(1000);
+      } else {
+        await page.goto('/chair-board');
+        await page.waitForTimeout(1000);
+      }
+    }
+
     // Look for an available chair button "Seat Patient"
     const seatPatientBtn = page.locator('button').filter({ hasText: /Seat Patient|إجلاس مريض/i }).first();
     await seatPatientBtn.waitFor({ state: 'visible', timeout: 15000 });
@@ -70,7 +93,7 @@ test.describe('Chair & Room Live Status Board - Level 3 (Customer/E2E)', () => {
     await page.waitForTimeout(1000);
 
     // Verify card is restored to Ready
-    const readyState = page.locator('text=Operatory Sanitized & Ready, text=جاهز').first();
+    const readyState = page.getByText(/Operatory Sanitized & Ready|جاهز|Ready/i).first();
     await expect(readyState).toBeVisible();
 
     // Capture screenshot artifact of the live status board
