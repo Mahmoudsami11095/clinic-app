@@ -34,6 +34,11 @@ import { PatientDebtService, PatientDebtSummary } from '../../../../core/service
 import { TreatmentPlanModalComponent } from '../treatment-plan-modal/treatment-plan-modal.component';
 import { TreatmentPlanItem } from '../../models/treatment-plan.model';
 
+export interface RecipeMaterialItem {
+  keyword: string;
+  quantity: number;
+}
+
 export interface TreatmentTemplate {
   id: string;
   name: string;
@@ -41,22 +46,94 @@ export interface TreatmentTemplate {
   status: ToothStatus;
   suggestedMedication?: string;
   materialNameMatch?: string;
+  materialsRequired?: RecipeMaterialItem[];
   suggestedCost?: number;
 }
 
 export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
   // Restorative
-  { id: 't_comp_occ', name: 'Composite Restoration (Occlusal)', category: 'restorative', status: 'filled', suggestedMedication: 'Normal post-op care; avoid hard chewing for 2 hrs', materialNameMatch: 'Composite', suggestedCost: 450 },
-  { id: 't_comp_mod', name: 'Composite Restoration (MOD Class II)', category: 'restorative', status: 'filled', suggestedMedication: 'Warm salt water rinses as needed', materialNameMatch: 'Composite', suggestedCost: 550 },
-  { id: 't_gi', name: 'Glass Ionomer Cement Restoration', category: 'restorative', status: 'filled', materialNameMatch: 'Glass Ionomer', suggestedCost: 350 },
+  { 
+    id: 't_comp_occ', 
+    name: 'Composite Restoration (Occlusal)', 
+    category: 'restorative', 
+    status: 'filled', 
+    suggestedMedication: 'Normal post-op care; avoid hard chewing for 2 hrs', 
+    materialNameMatch: 'Composite',
+    materialsRequired: [
+      { keyword: 'Composite', quantity: 1 },
+      { keyword: 'Bond', quantity: 1 },
+      { keyword: 'Etch', quantity: 1 }
+    ],
+    suggestedCost: 450 
+  },
+  { 
+    id: 't_comp_mod', 
+    name: 'Composite Restoration (MOD Class II)', 
+    category: 'restorative', 
+    status: 'filled', 
+    suggestedMedication: 'Warm salt water rinses as needed', 
+    materialNameMatch: 'Composite',
+    materialsRequired: [
+      { keyword: 'Composite', quantity: 1 },
+      { keyword: 'Bond', quantity: 1 },
+      { keyword: 'Etch', quantity: 1 }
+    ],
+    suggestedCost: 550 
+  },
+  { 
+    id: 't_gi', 
+    name: 'Glass Ionomer Cement Restoration', 
+    category: 'restorative', 
+    status: 'filled', 
+    materialNameMatch: 'Glass Ionomer',
+    materialsRequired: [
+      { keyword: 'Glass Ionomer', quantity: 1 }
+    ],
+    suggestedCost: 350 
+  },
 
   // Endodontics
-  { id: 't_rct_single', name: 'Root Canal Treatment (Single Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID, Amoxicillin 500mg TID if symptomatic', suggestedCost: 1200 },
-  { id: 't_rct_molar', name: 'Root Canal Treatment (Molar Multi-Canal)', category: 'endodontics', status: 'root_canal', suggestedMedication: 'Ibuprofen 400mg TID + Paracetamol 500mg PRN', suggestedCost: 1800 },
+  { 
+    id: 't_rct_single', 
+    name: 'Root Canal Treatment (Single Canal)', 
+    category: 'endodontics', 
+    status: 'root_canal', 
+    suggestedMedication: 'Ibuprofen 400mg TID, Amoxicillin 500mg TID if symptomatic',
+    materialsRequired: [
+      { keyword: 'Gutta', quantity: 1 },
+      { keyword: 'Sealer', quantity: 1 },
+      { keyword: 'Anesthetic', quantity: 1 }
+    ],
+    suggestedCost: 1200 
+  },
+  { 
+    id: 't_rct_molar', 
+    name: 'Root Canal Treatment (Molar Multi-Canal)', 
+    category: 'endodontics', 
+    status: 'root_canal', 
+    suggestedMedication: 'Ibuprofen 400mg TID + Paracetamol 500mg PRN',
+    materialsRequired: [
+      { keyword: 'Gutta', quantity: 2 },
+      { keyword: 'Sealer', quantity: 1 },
+      { keyword: 'Anesthetic', quantity: 1 }
+    ],
+    suggestedCost: 1800 
+  },
   { id: 't_pulp_cap', name: 'Direct/Indirect Pulp Capping', category: 'endodontics', status: 'under_treatment', suggestedMedication: 'Analgesics PRN for mild sensitivity', suggestedCost: 400 },
 
   // Preventive & Perio
-  { id: 't_scale', name: 'Full Mouth Scaling & Prophylaxis', category: 'preventive', status: 'healthy', suggestedMedication: 'Chlorhexidine 0.12% oral rinse BID for 7 days', suggestedCost: 500 },
+  { 
+    id: 't_scale', 
+    name: 'Full Mouth Scaling & Prophylaxis', 
+    category: 'preventive', 
+    status: 'healthy', 
+    suggestedMedication: 'Chlorhexidine 0.12% oral rinse BID for 7 days',
+    materialsRequired: [
+      { keyword: 'Paste', quantity: 1 },
+      { keyword: 'Prophy', quantity: 1 }
+    ],
+    suggestedCost: 500 
+  },
   { id: 't_deep_plan', name: 'Subgingival Deep Scaling & Root Planing', category: 'preventive', status: 'under_treatment', suggestedMedication: 'Warm saline rinses; Chlorhexidine mouthwash', suggestedCost: 800 },
   { id: 't_fluoride', name: 'Topical Fluoride Varnish Application', category: 'preventive', status: 'healthy', suggestedMedication: 'No eating or drinking hot fluids for 30 minutes', suggestedCost: 300 },
 
@@ -66,8 +143,30 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
   { id: 't_post_core', name: 'Prefabricated Post & Core Buildup', category: 'prosthodontics', status: 'crown', suggestedCost: 800 },
 
   // Oral Surgery
-  { id: 't_ext_simple', name: 'Routine Simple Dental Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Bite gauze firmly 30 mins; Paracetamol 500mg TID, Amoxicillin 500mg', suggestedCost: 400 },
-  { id: 't_ext_surg', name: 'Surgical Transalveolar Extraction', category: 'surgery', status: 'missing', suggestedMedication: 'Ice pack 15m intervals; Ibuprofen 400mg + Amoxicillin 500mg x 5 days', suggestedCost: 1000 },
+  { 
+    id: 't_ext_simple', 
+    name: 'Routine Simple Dental Extraction', 
+    category: 'surgery', 
+    status: 'missing', 
+    suggestedMedication: 'Bite gauze firmly 30 mins; Paracetamol 500mg TID, Amoxicillin 500mg',
+    materialsRequired: [
+      { keyword: 'Anesthetic', quantity: 1 },
+      { keyword: 'Gauze', quantity: 1 }
+    ],
+    suggestedCost: 400 
+  },
+  { 
+    id: 't_ext_surg', 
+    name: 'Surgical Transalveolar Extraction', 
+    category: 'surgery', 
+    status: 'missing', 
+    suggestedMedication: 'Ice pack 15m intervals; Ibuprofen 400mg + Amoxicillin 500mg x 5 days',
+    materialsRequired: [
+      { keyword: 'Anesthetic', quantity: 2 },
+      { keyword: 'Gauze', quantity: 2 }
+    ],
+    suggestedCost: 1000 
+  },
   { id: 't_impaction', name: 'Surgical Wisdom Tooth Disimpaction', category: 'surgery', status: 'missing', suggestedMedication: 'Post-op surgical protocol; Antibiotics + Anti-inflammatory', suggestedCost: 1500 }
 ];
 
@@ -1485,8 +1584,8 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                       </div>
                     </div>
 
-                    <!-- Add Log Form (Only for Doctors) -->
-                    @if (authService.isDoctor()) {
+                    <!-- Add Log Form (For Clinicians & Admins) -->
+                    @if (authService.isDoctor() || authService.isAdmin()) {
                       <div class="border-t border-slate-100 pt-4 space-y-4">
                         <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ 'dental.add_log' | translate }}</h5>
                         
@@ -1703,36 +1802,44 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                               @if (consumedMaterialsForm().length === 0) {
                                 <p class="text-[10px] text-slate-400 italic">No materials used.</p>
                               } @else {
-                                <div class="space-y-2 max-h-[120px] overflow-y-auto pe-1">
+                                <div class="space-y-2 max-h-[140px] overflow-y-auto pe-1">
                                   @for (cm of consumedMaterialsForm(); track $index) {
-                                    <div class="flex items-center gap-2">
-                                      <select
-                                        [ngModel]="cm.materialId"
-                                        (ngModelChange)="onMaterialSelect($index, $event)"
-                                        name="materialId_{{$index}}"
-                                        class="flex-1 text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                      >
-                                        <option value="" disabled>Select Material</option>
-                                        @for (mat of availableMaterials(); track mat.id) {
-                                          <option [value]="mat.id" [disabled]="mat.quantity <= 0 || isMaterialExpired(mat)">
-                                            {{ isMaterialExpired(mat) ? '🚫 ' + mat.name + ' (EXPIRED - Quarantined)' : (mat.quantity <= 0 ? '❌ ' + mat.name + ' (Out of stock)' : (mat.quantity <= (mat.minStockAlert ?? 5) ? '⚠️ ' + mat.name + ' (Low: ' + mat.quantity + ' ' + (mat.unit || '') + ')' : mat.name + ' (' + mat.quantity + ' in stock)')) }}
-                                          </option>
-                                        }
-                                      </select>
-                                      
-                                      <input
-                                        type="number"
-                                        [(ngModel)]="cm.quantity"
-                                        name="quantity_{{$index}}"
-                                        min="1"
-                                        [max]="cm.maxQuantity > 0 ? cm.maxQuantity : 1"
-                                        class="w-16 text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-center"
-                                        placeholder="Qty"
-                                      />
-                                      
-                                      <button type="button" (click)="removeConsumedMaterial($index)" class="text-slate-400 hover:text-rose-500 focus:outline-none bg-transparent border-none cursor-pointer p-1">
-                                        <i class="pi pi-times text-[10px]"></i>
-                                      </button>
+                                    <div class="p-1.5 rounded-lg bg-white border border-slate-200/80 shadow-xs">
+                                      <div class="flex items-center gap-2">
+                                        <select
+                                          [ngModel]="cm.materialId"
+                                          (ngModelChange)="onMaterialSelect($index, $event)"
+                                          name="materialId_{{$index}}"
+                                          class="flex-1 text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                        >
+                                          <option value="" disabled>Select Material</option>
+                                          @for (mat of availableMaterials(); track mat.id) {
+                                            <option [value]="mat.id" [disabled]="mat.quantity <= 0 || isMaterialExpired(mat)">
+                                              {{ isMaterialExpired(mat) ? '🚫 ' + mat.name + ' (EXPIRED - Quarantined)' : (mat.quantity <= 0 ? '❌ ' + mat.name + ' (Out of stock)' : (mat.quantity <= (mat.minStockAlert ?? 5) ? '⚠️ ' + mat.name + ' (Low: ' + mat.quantity + ' ' + (mat.unit || '') + ')' : mat.name + ' (' + mat.quantity + ' in stock)')) }}
+                                            </option>
+                                          }
+                                        </select>
+                                        
+                                        <input
+                                          type="number"
+                                          [(ngModel)]="cm.quantity"
+                                          name="quantity_{{$index}}"
+                                          min="1"
+                                          [max]="cm.maxQuantity > 0 ? cm.maxQuantity : 1"
+                                          class="w-16 text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-center"
+                                          placeholder="Qty"
+                                        />
+                                        
+                                        <button type="button" (click)="removeConsumedMaterial($index)" class="text-slate-400 hover:text-rose-500 focus:outline-none bg-transparent border-none cursor-pointer p-1">
+                                          <i class="pi pi-times text-[10px]"></i>
+                                        </button>
+                                      </div>
+                                      @if (isMaterialLowStock(cm.materialId)) {
+                                        <div class="flex items-center gap-1.5 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 mt-1">
+                                          <i class="pi pi-exclamation-triangle text-amber-500 text-[10px]"></i>
+                                          <span>Low Stock Alert: Only {{ getMaterialRemaining(cm.materialId) }} units left in inventory!</span>
+                                        </div>
+                                      }
                                     </div>
                                   }
                                 </div>
@@ -2555,17 +2662,39 @@ export class PatientHistoryComponent implements OnInit {
     if (tpl.suggestedCost) {
       this.cost.set(tpl.suggestedCost);
     }
-    // If completed log, look for matching consumable
-    if (!this.isPlannedForm() && tpl.materialNameMatch) {
-      const match = this.availableMaterials().find(m => 
-        m.name.toLowerCase().includes(tpl.materialNameMatch!.toLowerCase()) && 
-        m.quantity > 0 && 
-        !this.isMaterialExpired(m)
-      );
-      if (match && this.consumedMaterialsForm().every(cm => cm.materialId !== match.id)) {
-        this.consumedMaterialsForm.update(list => [...list, { materialId: match.id!, quantity: 1, maxQuantity: match.quantity }]);
+    // If completed log, look for matching consumables from recipe
+    if (!this.isPlannedForm()) {
+      const itemsToMatch: { keyword: string; quantity: number }[] = [];
+      if (tpl.materialsRequired && tpl.materialsRequired.length > 0) {
+        itemsToMatch.push(...tpl.materialsRequired);
+      } else if (tpl.materialNameMatch) {
+        itemsToMatch.push({ keyword: tpl.materialNameMatch, quantity: 1 });
+      }
+
+      for (const item of itemsToMatch) {
+        const kw = item.keyword.toLowerCase();
+        const match = this.availableMaterials().find(m => 
+          (m.name.toLowerCase().includes(kw) || (kw === 'anesthetic' && m.name.includes('بنج'))) && 
+          m.quantity > 0 && 
+          !this.isMaterialExpired(m)
+        );
+        if (match && this.consumedMaterialsForm().every(cm => cm.materialId !== match.id)) {
+          const qty = Math.min(item.quantity, match.quantity);
+          this.consumedMaterialsForm.update(list => [...list, { materialId: match.id!, quantity: qty, maxQuantity: match.quantity }]);
+        }
       }
     }
+  }
+
+  isMaterialLowStock(materialId: string): boolean {
+    if (!materialId) return false;
+    const mat = this.availableMaterials().find(m => m.id === materialId);
+    return !!mat && mat.quantity <= (mat.minStockAlert ?? 5);
+  }
+
+  getMaterialRemaining(materialId: string): number {
+    const mat = this.availableMaterials().find(m => m.id === materialId);
+    return mat ? mat.quantity : 0;
   }
 
   getAllPlannedTreatments(): DentalLog[] {
