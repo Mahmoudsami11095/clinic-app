@@ -163,7 +163,7 @@ export interface RulerPoint {
                 title="Invert radiograph colors for bone and caries inspection"
               >
                 <i class="pi pi-circle-fill text-[8px]"></i>
-                <span>Invert</span>
+                <span>{{ 'radiology.invert_colors' | translate }}</span>
               </button>
             </div>
 
@@ -176,9 +176,9 @@ export interface RulerPoint {
                   (click)="toggleRuler()"
                   [class]="isRulerActive() ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-300 hover:bg-slate-700'"
                   class="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Measurement Ruler / Caliper (mm)">
+                  [title]="'radiology.ruler_tool' | translate">
                   <i class="pi pi-arrows-v text-xs"></i>
-                  <span>Ruler</span>
+                  <span>{{ 'radiology.ruler' | translate }}</span>
                   @if (rulerDistanceMm()) {
                     <span class="ms-1 px-1.5 py-0.5 bg-cyan-950 text-cyan-200 text-[10px] rounded font-mono font-bold">
                       {{ rulerDistanceMm() }}
@@ -190,7 +190,7 @@ export interface RulerPoint {
                     type="button"
                     (click)="clearRuler()"
                     class="p-1 hover:bg-slate-700 text-slate-400 hover:text-rose-400 rounded-lg text-xs transition-colors"
-                    title="Clear Measurement">
+                    [title]="'radiology.clear_measurement' | translate">
                     <i class="pi pi-times text-[10px]"></i>
                   </button>
                 }
@@ -202,9 +202,9 @@ export interface RulerPoint {
                 (click)="toggleCompare()"
                 [class]="isCompareMode() ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'"
                 class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-700/60 transition-colors cursor-pointer"
-                title="Before & After Comparison (Split View)">
+                [title]="'radiology.compare_mode' | translate">
                 <i class="pi pi-clone text-xs"></i>
-                <span>Compare Mode</span>
+                <span>{{ 'radiology.compare_mode' | translate }}</span>
               </button>
 
               <!-- Reset Button -->
@@ -212,10 +212,10 @@ export interface RulerPoint {
                 type="button"
                 (click)="resetAll()"
                 class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 border border-slate-700 cursor-pointer"
-                title="Reset Zoom, Rotation, and Filters"
+                [title]="'radiology.reset_view' | translate"
               >
                 <i class="pi pi-replay text-xs"></i>
-                <span>Reset</span>
+                <span>{{ 'radiology.reset_view' | translate }}</span>
               </button>
             </div>
           </div>

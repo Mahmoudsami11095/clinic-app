@@ -51,6 +51,13 @@ describe('LanguageService', () => {
     expect(document.documentElement.getAttribute('lang')).toBe('en');
   });
 
+  it('should update isRtl computed signal when switching language', () => {
+    service.setLanguage('ar');
+    expect(service.isRtl()).toBeTrue();
+    service.setLanguage('en');
+    expect(service.isRtl()).toBeFalse();
+  });
+
   it('should return fallback if key translation is not loaded and key contains dots', () => {
     spyOn(translateService, 'instant').and.returnValue('auth.login_title');
     const result = service.translate('auth.login_title', 'Welcome Back');

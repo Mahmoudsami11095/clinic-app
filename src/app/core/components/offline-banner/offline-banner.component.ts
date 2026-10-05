@@ -19,11 +19,11 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
           </span>
           <i class="pi pi-wifi text-sm flex-shrink-0"></i>
           <span class="truncate">
-            <strong class="font-bold">Offline Mode Active</strong> — Browsing cached clinic records. Mutations will synchronize when connectivity returns.
+            <strong class="font-bold">{{ 'offline.title' | translate }}</strong> — {{ 'offline.description' | translate }}
           </span>
           @if (offlineService.pendingActions().length > 0) {
             <span class="px-2 py-0.5 bg-black/30 rounded-full text-[10px] font-mono">
-              {{ offlineService.pendingActions().length }} changes queued
+              {{ offlineService.pendingActions().length }} {{ 'offline.changes_queued' | translate }}
             </span>
           }
         </div>
@@ -33,7 +33,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
           (click)="offlineService.checkConnection()"
           class="ms-3 px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0">
           <i class="pi pi-refresh text-[10px]"></i>
-          <span>Retry Connection</span>
+          <span>{{ 'offline.retry' | translate }}</span>
         </button>
       </div>
     } @else if (offlineService.isReconnected()) {
@@ -43,7 +43,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
         <div class="flex items-center gap-2">
           <i class="pi pi-check-circle text-sm"></i>
           <span>
-            <strong class="font-bold">Back Online!</strong> — Connected to MedClinic Cloud. Local state is synchronized.
+            <strong class="font-bold">{{ 'offline.reconnected_title' | translate }}</strong> — {{ 'offline.reconnected_description' | translate }}
           </span>
         </div>
         <button 

@@ -24,7 +24,16 @@
     "day_thursday": "خميس",
     "day_friday": "جمعة",
     "day_saturday": "سبت",
-    "day_sunday": "أحد"
+    "day_sunday": "أحد",
+    "notifications_title": "الإشعارات",
+    "mark_all_read": "تحديد الكل كمقروء",
+    "no_notifications": "لا توجد إشعارات حالياً.",
+    "install_app": "تثبيت التطبيق",
+    "subscription_active": "الاشتراك نشط",
+    "trial_remaining": "يوم متبقٍ في الفترة التجريبية",
+    "subscription_suspended": "الاشتراك معلق",
+    "subscription_expired": "انتهت صلاحية الاشتراك",
+    "subscription_pending": "الاشتراك بانتظار الاعتماد"
   },
   "auth": {
     "login_title": "مرحباً بعودتك",
@@ -107,22 +116,21 @@
     "specialization_label": "التخصص"
   },
   "sidebar": {
-    "dashboard": "لوحة التحكم",
-    "patients": "المرضى",
-    "appointments": "المواعيد",
-    "doctors": "الأطباء",
-    "billing": "الفواتير",
+    "dashboard": "لوحة القيادة",
     "clinics": "العيادات",
-    "my_portal": "بوابتي الخاصة",
-    "my_bills": "فواتيري",
-    "profile": "الملف الشخصي",
-    "dental_history": "سجل الأسنان",
-    "dental_chart": "مخطط الأسنان ثلاثي الأبعاد",
-    "inventory": "المخزون",
-    "equipment": "الأجهزة والمعدات",
+    "patients": "المرضى",
+    "chair_board": "حالة العيادات والغرف",
+    "appointments": "المواعيد",
     "radiology": "الأشعة",
-    "subscription_plan": "الاشتراك وحصص العيادة",
-    "subscription_mgmt": "الاشتراكات"
+    "billing": "الفواتير",
+    "inventory": "المخزون",
+    "equipment": "المعدات والأجهزة",
+    "doctors": "الأطباء",
+    "profile": "الملف الشخصي",
+    "subscription_plan": "خطة الاشتراك",
+    "subscription_mgmt": "إدارة الاشتراكات",
+    "my_portal": "بوابتي",
+    "my_bills": "فواتيري"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -861,7 +869,7 @@
     "supplier_label": "المورد"
   },
   "profile": {
-    "profile_title": "المسمى الوظيفي",
+    "profile_title": "لقب الملف الشخصي",
     "title_gp": "طبيب عام",
     "title_specialist": "أخصائي",
     "title_consultant": "استشاري",
@@ -883,7 +891,6 @@
     "verified": "تم التحقق",
     "resend": "إعادة إرسال",
     "after_entering_code": "بعد إدخال الرمز، انقر على \"تأكيد الرمز\" للتحقق منه.",
-    "profile_title": "لقب الملف الشخصي",
     "user_role": "دور المستخدم",
     "professional_details": "التفاصيل المهنية",
     "specialization": "التخصص",
@@ -955,7 +962,15 @@
     "invert_colors": "عكس الألوان (أشعة سالبة)",
     "reset_view": "إعادة ضبط العرض",
     "brightness": "السطوع",
-    "contrast": "التباين"
+    "contrast": "التباين",
+    "ruler_tool": "مسطرة القياس / الميكرومتر (مم)",
+    "ruler": "المسطرة",
+    "clear_measurement": "مسح القياس",
+    "compare_mode": "مقارنة قبل وبعد العلاج",
+    "pre_op_baseline": "الصورة الأولية (قبل)",
+    "post_op_current": "الصورة الحالية (بعد)",
+    "split_view": "عرض منقسم",
+    "launch_advanced_viewer": "فتح عارض الأشعة المتقدم"
   },
   "subscription": {
     "title": "اشتراك العيادة وحوكمة الحصص",
@@ -1002,23 +1017,6 @@
     "signed_verified": "موقع إلكترونياً ومعتمد",
     "signature_saved_success": "تم حفظ التوقيع الإلكتروني لموافقة المريض بنجاح."
   },
-  "sidebar": {
-    "dashboard": "لوحة القيادة",
-    "clinics": "العيادات",
-    "patients": "المرضى",
-    "chair_board": "حالة العيادات والغرف",
-    "appointments": "المواعيد",
-    "radiology": "الأشعة",
-    "billing": "الفواتير",
-    "inventory": "المخزون",
-    "equipment": "المعدات والأجهزة",
-    "doctors": "الأطباء",
-    "profile": "الملف الشخصي",
-    "subscription_plan": "خطة الاشتراك",
-    "subscription_mgmt": "إدارة الاشتراكات",
-    "my_portal": "بوابتي",
-    "my_bills": "فواتيري"
-  },
   "chairs": {
     "title": "لوحة حالة الغرف وكراسي الأسنان المباشرة",
     "subtitle": "تتبع فوري لتواجد المرضى في الكراسي وجلسات التعقيم والتطهير",
@@ -1040,5 +1038,35 @@
     "navigate": "تنقل",
     "select": "اختيار",
     "close": "إغلاق"
+  },
+  "offline": {
+    "title": "وضع عدم الاتصال نشط",
+    "description": "تصفح السجلات المحفوظة محلياً. ستتم مزامنة التعديلات فور عودة الاتصال.",
+    "changes_queued": "تعديلات في قائمة الانتظار",
+    "retry": "إعادة محاولة الاتصال",
+    "reconnected_title": "تمت استعادة الاتصال بنجاح!",
+    "reconnected_description": "متصل بسحابة MedClinic. تمت مزامنة السجلات المحلية بالكامل."
+  },
+  "treatment_plans": {
+    "title": "خطة العلاج متعددة المراحل وحاسبة التكلفة",
+    "ref": "المرجع",
+    "planned_procedures": "إجراءات علاجية مخططة",
+    "phases_roadmap": "المراحل وخريطة العلاج",
+    "cost_estimator": "حاسبة التكلفة والخصم",
+    "document_consent": "الوثيقة والموافقة الموقعة",
+    "gross_total": "الإجمالي قبل الخصم",
+    "discount": "الخصم",
+    "net_total": "صافي التكلفة المقدرة",
+    "deposit_required": "الدفعة المقدمة المطلوبة",
+    "remaining_balance": "المتبقي بعد الدفعة المقدمة",
+    "generate_invoice": "إنشاء فاتورة الدفعة المقدمة",
+    "patient_signature": "إقرار وموافقة المريض والتوقيع",
+    "currency": "ج.م",
+    "phase_urgent": "حالات الطوارئ وتسكين الألم",
+    "phase_preventive": "الوقاية وعلاج اللثة",
+    "phase_restorative": "الحشوات وعلاج الجذور",
+    "phase_prosthodontic": "التركيبات والتأهيل السني",
+    "phase_maintenance": "المتابعة والمراجعة الدورية",
+    "subtotal": "المجموع الفرعي"
   }
 }

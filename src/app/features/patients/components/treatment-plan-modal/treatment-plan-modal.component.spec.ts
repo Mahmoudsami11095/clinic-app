@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideTranslateService } from '@ngx-translate/core';
 import { TreatmentPlanModalComponent } from './treatment-plan-modal.component';
 import { DentalLog } from '../../../../core/services/dental.service';
 import { Patient } from '../../models/patient.model';
@@ -82,7 +84,11 @@ describe('TreatmentPlanModalComponent - Milestone 2 Level 1 (SW/Unit)', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TreatmentPlanModalComponent]
+      imports: [TreatmentPlanModalComponent],
+      providers: [
+        provideHttpClient(),
+        provideTranslateService({ fallbackLang: 'en' })
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TreatmentPlanModalComponent);

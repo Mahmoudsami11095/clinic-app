@@ -24,7 +24,16 @@
     "day_thursday": "Thu",
     "day_friday": "Fri",
     "day_saturday": "Sat",
-    "day_sunday": "Sun"
+    "day_sunday": "Sun",
+    "notifications_title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "no_notifications": "No notifications yet.",
+    "install_app": "Install App",
+    "subscription_active": "Subscription Active",
+    "trial_remaining": "Days Remaining in Trial",
+    "subscription_suspended": "Subscription Suspended",
+    "subscription_expired": "Subscription Expired",
+    "subscription_pending": "Subscription Pending Approval"
   },
   "auth": {
     "login_title": "Welcome Back",
@@ -108,21 +117,20 @@
   },
   "sidebar": {
     "dashboard": "Dashboard",
-    "patients": "Patients",
-    "appointments": "Appointments",
-    "doctors": "Doctors",
-    "billing": "Billing",
     "clinics": "Clinics",
-    "my_portal": "My Portal",
-    "my_bills": "My Bills",
-    "profile": "My Profile",
-    "dental_history": "Dental History",
-    "dental_chart": "3D Teeth Chart",
-    "inventory": "Inventory",
-    "equipment": "Equipment & Devices",
+    "patients": "Patients",
+    "chair_board": "Operatory Status",
+    "appointments": "Appointments",
     "radiology": "Radiology",
-    "subscription_plan": "Subscription & Quotas",
-    "subscription_mgmt": "Subscriptions"
+    "billing": "Billing",
+    "inventory": "Inventory",
+    "equipment": "Equipment",
+    "doctors": "Doctors",
+    "profile": "Profile",
+    "subscription_plan": "Subscription Plan",
+    "subscription_mgmt": "Subscription Mgmt",
+    "my_portal": "My Portal",
+    "my_bills": "My Invoices"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -807,7 +815,8 @@
     "Email verification code is required to update email": "Email verification code is required to update email",
     "Contact number cannot be empty": "Contact number cannot be empty",
     "Phone number is already in use by another account": "Phone number is already in use by another account",
-    "WhatsApp verification code is required to update phone number": "WhatsApp verification code is required to update phone number"
+    "WhatsApp verification code is required to update phone number": "WhatsApp verification code is required to update phone number",
+    "An unexpected server error occurred.": "An unexpected server error occurred."
   },
   "inventory": {
     "title": "Material Inventory",
@@ -882,7 +891,6 @@
     "verified": "Verified",
     "resend": "Resend",
     "after_entering_code": "After entering the code, click \"Confirm OTP\" to verify it.",
-    "profile_title": "Profile Title",
     "user_role": "User Role",
     "professional_details": "Professional Details",
     "specialization": "Specialization",
@@ -954,7 +962,15 @@
     "invert_colors": "Invert (Negative X-Ray)",
     "reset_view": "Reset View",
     "brightness": "Brightness",
-    "contrast": "Contrast"
+    "contrast": "Contrast",
+    "ruler_tool": "Measurement Ruler / Caliper (mm)",
+    "ruler": "Ruler",
+    "clear_measurement": "Clear Measurement",
+    "compare_mode": "Before & After Compare",
+    "pre_op_baseline": "Pre-Op Baseline",
+    "post_op_current": "Post-Op Current",
+    "split_view": "Split View",
+    "launch_advanced_viewer": "Launch Advanced X-Ray Viewer"
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",
@@ -1001,23 +1017,6 @@
     "signed_verified": "Digitally Signed & Verified",
     "signature_saved_success": "Patient consent digital signature saved successfully."
   },
-  "sidebar": {
-    "dashboard": "Dashboard",
-    "clinics": "Clinics",
-    "patients": "Patients",
-    "chair_board": "Operatory Status",
-    "appointments": "Appointments",
-    "radiology": "Radiology",
-    "billing": "Billing",
-    "inventory": "Inventory",
-    "equipment": "Equipment",
-    "doctors": "Doctors",
-    "profile": "Profile",
-    "subscription_plan": "Subscription Plan",
-    "subscription_mgmt": "Subscription Mgmt",
-    "my_portal": "My Portal",
-    "my_bills": "My Invoices"
-  },
   "chairs": {
     "title": "Chair & Operatory Live Status Board",
     "subtitle": "Real-time room availability, patient occupancy, and sterilization tracking",
@@ -1039,5 +1038,35 @@
     "navigate": "Navigate",
     "select": "Select",
     "close": "Close"
+  },
+  "offline": {
+    "title": "Offline Mode Active",
+    "description": "Browsing cached clinic records. Mutations will synchronize when connectivity returns.",
+    "changes_queued": "changes queued",
+    "retry": "Retry Connection",
+    "reconnected_title": "Back Online!",
+    "reconnected_description": "Connected to MedClinic Cloud. Local state is synchronized."
+  },
+  "treatment_plans": {
+    "title": "Multi-Stage Treatment Plan & Cost Estimator",
+    "ref": "Ref",
+    "planned_procedures": "Planned Procedure(s)",
+    "phases_roadmap": "Phases & Roadmap",
+    "cost_estimator": "Cost Estimator",
+    "document_consent": "Document & Consent",
+    "gross_total": "Gross Total",
+    "discount": "Discount",
+    "net_total": "Net Estimated Total",
+    "deposit_required": "Required Deposit",
+    "remaining_balance": "Remaining Balance",
+    "generate_invoice": "Generate Initial Deposit Invoice",
+    "patient_signature": "Patient Acceptance & Signature",
+    "currency": "EGP",
+    "phase_urgent": "Emergency & Pain Relief",
+    "phase_preventive": "Preventive & Periodontal",
+    "phase_restorative": "Restorative & Endodontics",
+    "phase_prosthodontic": "Prosthodontics & Rehabilitation",
+    "phase_maintenance": "Maintenance & Recalls",
+    "subtotal": "Subtotal"
   }
 }
