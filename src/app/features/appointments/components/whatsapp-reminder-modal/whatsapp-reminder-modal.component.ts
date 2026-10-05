@@ -12,7 +12,7 @@ export type ReminderTemplateType = 'reminder_24h' | 'confirmation' | 'pre_visit'
 @Component({
   selector: 'app-whatsapp-reminder-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, ModalComponent],
   template: `
     <app-modal
       [isOpen]="isOpen"

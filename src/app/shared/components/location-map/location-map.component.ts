@@ -17,7 +17,15 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import * as L from 'leaflet';
+import type * as L from 'leaflet';
+
+let leafletPromise: Promise<typeof import('leaflet')> | null = null;
+function loadLeaflet(): Promise<typeof import('leaflet')> {
+  if (!leafletPromise) {
+    leafletPromise = import('leaflet').then((m: any) => m.default || m);
+  }
+  return leafletPromise;
+}
 
 @Component({
   selector: 'app-location-map',
@@ -46,6 +54,7 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
 
   @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef<HTMLDivElement>;
 
+  private L: typeof import('leaflet') | null = null;
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
   private resizeObserver?: ResizeObserver;
@@ -73,11 +82,9 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
     if (this.lng) this.currentLng = this.lng;
   }
 
-  ngAfterViewInit() {
-    setTimeout(() => {
-      this.initMap();
-      this.cdr.markForCheck();
-    }, 0);
+  async ngAfterViewInit() {
+    await this.initMap();
+    this.cdr.markForCheck();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -111,7 +118,8 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
   }
 
   private createPinIcon(): L.DivIcon {
-    return L.divIcon({
+    if (!this.L) return {} as any;
+    return this.L.divIcon({
       className: 'custom-map-marker',
       html: `
         <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));">
@@ -136,8 +144,14 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
     });
   }
 
-  private initMap() {
+  private async initMap() {
     if (this.map) return;
+    if (!this.mapContainer?.nativeElement) return;
+    if ((this.mapContainer.nativeElement as any)._leaflet_id) return;
+
+    if (!this.L) {
+      this.L = await loadLeaflet();
+    }
 
     let initialCoords: [number, number] = this.defaultLocation;
     let hasCoords = false;
@@ -153,7 +167,7 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
       }
     }
 
-    this.map = L.map(this.mapContainer.nativeElement, {
+    this.map = this.L.map(this.mapContainer.nativeElement, {
       center: initialCoords,
       zoom: hasCoords ? 15 : 12,
       zoomControl: !this.readOnly,
@@ -165,7 +179,7 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
       keyboard: !this.readOnly
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    this.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
@@ -232,12 +246,12 @@ export class LocationMapComponent implements OnInit, AfterViewInit, OnChanges, O
   }
 
   private setMarker(lat: number, lng: number) {
-    if (!this.map) return;
+    if (!this.map || !this.L) return;
 
     if (this.marker) {
       this.marker.setLatLng([lat, lng]);
     } else {
-      this.marker = L.marker([lat, lng], {
+      this.marker = this.L.marker([lat, lng], {
         icon: this.createPinIcon(),
         draggable: !this.readOnly
       }).addTo(this.map);
