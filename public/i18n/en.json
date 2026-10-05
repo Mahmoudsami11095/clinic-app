@@ -1068,5 +1068,21 @@
     "phase_prosthodontic": "Prosthodontics & Rehabilitation",
     "phase_maintenance": "Maintenance & Recalls",
     "subtotal": "Subtotal"
+  },
+  "voice_scribe": {
+    "title": "AI Chair-side Voice Scribe",
+    "subtitle": "Continuous speech-to-text dictation with automatic SOAP notes and prescription extraction",
+    "listening": "Listening actively...",
+    "start_recording": "Start Dictation",
+    "stop_recording": "Stop Dictation",
+    "sim_demo": "Load Dental Dictation Sample",
+    "subjective": "Subjective (Symptoms)",
+    "objective": "Objective (Examination)",
+    "assessment": "Assessment (Diagnosis)",
+    "plan": "Plan (Treatment & Rx)",
+    "prescriptions_detected": "Prescriptions Detected",
+    "insert_note": "Apply to Clinical Note",
+    "close": "Close",
+    "audio_placeholder": "Speak or dictation text will appear here in real-time..."
   }
 }

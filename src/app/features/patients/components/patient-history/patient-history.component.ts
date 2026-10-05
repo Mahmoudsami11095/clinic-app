@@ -33,6 +33,8 @@ import { AllergyConflictService, AllergyConflictResult } from '../../../../core/
 import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
 import { TreatmentPlanModalComponent } from '../treatment-plan-modal/treatment-plan-modal.component';
 import { TreatmentPlanItem } from '../../models/treatment-plan.model';
+import { VoiceScribeModalComponent } from '../../../../core/components/voice-scribe-modal/voice-scribe-modal.component';
+import { PrescriptionSuggestion } from '../../../../core/services/voice-scribe.service';
 
 export interface RecipeMaterialItem {
   keyword: string;
@@ -172,7 +174,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
 
 @Component({
   selector: 'app-patient-history',
-  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent, SignaturePadModalComponent, TreatmentPlanModalComponent],
+  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent, SignaturePadModalComponent, TreatmentPlanModalComponent, VoiceScribeModalComponent],
   template: `
     <div class="space-y-6">
       <!-- Top Row: Summary Info Grid (3 Cards - Anamnesis temporarily hidden) -->
@@ -1968,11 +1970,20 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
                 </div>
               </div>
 
-              <!-- Note Content Textarea -->
+              <!-- Note Content Textarea with AI Voice Scribe Launcher -->
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                  {{ 'patients.note_content' | translate }} <span class="text-rose-500">*</span>
-                </label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-700">
+                    {{ 'patients.note_content' | translate }} <span class="text-rose-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    (click)="isVoiceScribeOpen.set(true)"
+                    class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-indigo-200/60 dark:border-indigo-800 shadow-2xs">
+                    <i class="pi pi-microphone text-xs text-indigo-600 dark:text-indigo-400 animate-pulse"></i>
+                    <span>{{ 'voice_scribe.title' | translate }}</span>
+                  </button>
+                </div>
                 <textarea
                   rows="5"
                   [ngModel]="newNoteContent()"
@@ -2115,6 +2126,14 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
         (signatureSaved)="onConsentSignatureSaved($event)"
         (close)="closeSignaturePad()"
       ></app-signature-pad-modal>
+
+      <!-- Milestone 9: AI Chair-side Voice Scribe Modal -->
+      <app-voice-scribe-modal
+        [isOpen]="isVoiceScribeOpen()"
+        (close)="isVoiceScribeOpen.set(false)"
+        (insertNote)="onVoiceNoteInserted($event)"
+        (insertPrescriptions)="onVoicePrescriptionsInserted($event)">
+      </app-voice-scribe-modal>
     </div>
   `
 })
@@ -2122,6 +2141,22 @@ export class PatientHistoryComponent implements OnInit {
     private destroyRef = inject(DestroyRef);
   @Input({ required: true }) patient!: Patient;
   @Input() initialTab?: 'future-visits' | 'past-visits' | 'prescriptions' | 'billing' | 'dental';
+
+  readonly isVoiceScribeOpen = signal<boolean>(false);
+
+  onVoiceNoteInserted(noteText: string): void {
+    if (!this.newNoteTitle() || this.newNoteTitle().trim() === '') {
+      this.newNoteTitle.set('Clinical Scribe Encounter (SOAP)');
+    }
+    this.newNoteContent.set(noteText);
+  }
+
+  onVoicePrescriptionsInserted(rxs: PrescriptionSuggestion[]): void {
+    if (rxs && rxs.length > 0) {
+      const names = rxs.map(r => `${r.medicineName} (${r.dosage})`).join(', ');
+      this.toastr.info(`AI Voice Scribe extracted ${rxs.length} medications: ${names}`, 'AI Prescriptions Detected');
+    }
+  }
 
   private appointmentService = inject(AppointmentService);
   private prescriptionService = inject(PrescriptionService);
