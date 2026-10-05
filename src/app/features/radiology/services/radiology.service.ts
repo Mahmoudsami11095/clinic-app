@@ -37,6 +37,7 @@ export interface RadiologyRecord {
   amountPaid: number;
   date: string;
   notes?: string;
+  fileUrl?: string;
 }
 
 export interface CreateRadiologyRecord {

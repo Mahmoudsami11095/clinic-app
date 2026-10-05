@@ -178,4 +178,81 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       expect(component.download.emit).toHaveBeenCalledWith('bitewing_xray.png');
     });
   });
+
+  describe('Milestone 6: Measurement Caliper (Ruler Tool)', () => {
+    it('should toggle ruler mode and clear on deactivation', () => {
+      expect(component.isRulerActive()).toBeFalse();
+
+      component.toggleRuler();
+      expect(component.isRulerActive()).toBeTrue();
+
+      component.rulerStart.set({ x: 50, y: 50 });
+      component.rulerEnd.set({ x: 150, y: 50 });
+
+      component.toggleRuler();
+      expect(component.isRulerActive()).toBeFalse();
+      expect(component.rulerStart()).toBeNull();
+      expect(component.rulerEnd()).toBeNull();
+    });
+
+    it('should calculate millimeter distance with clinical calibration (0.1 mm/px)', () => {
+      // Horizontal 150px distance at 100% zoom -> 15.0 mm
+      component.zoom.set(100);
+      component.rulerStart.set({ x: 100, y: 200 });
+      component.rulerEnd.set({ x: 250, y: 200 });
+
+      expect(component.rulerDistanceMm()).toBe('15.0 mm');
+    });
+
+    it('should adjust millimeter distance accurately according to zoom scale', () => {
+      // 150px measured on screen at 200% zoom corresponds to 75px unscaled -> 7.5 mm
+      component.zoom.set(200);
+      component.rulerStart.set({ x: 100, y: 200 });
+      component.rulerEnd.set({ x: 250, y: 200 });
+
+      expect(component.rulerDistanceMm()).toBe('7.5 mm');
+    });
+
+    it('should compute midpoint coordinates for distance label', () => {
+      component.rulerStart.set({ x: 100, y: 100 });
+      component.rulerEnd.set({ x: 200, y: 300 });
+
+      const mid = component.rulerMidpoint();
+      expect(mid.x).toBe(150);
+      expect(mid.y).toBe(200);
+    });
+
+    it('should clear ruler measurement points via clearRuler()', () => {
+      component.rulerStart.set({ x: 10, y: 20 });
+      component.rulerEnd.set({ x: 30, y: 40 });
+
+      component.clearRuler();
+
+      expect(component.rulerStart()).toBeNull();
+      expect(component.rulerEnd()).toBeNull();
+      expect(component.rulerDistanceMm()).toBeNull();
+    });
+  });
+
+  describe('Milestone 6: Before & After Comparison Mode', () => {
+    it('should toggle compare mode on and off', () => {
+      expect(component.isCompareMode()).toBeFalse();
+
+      component.toggleCompare();
+      expect(component.isCompareMode()).toBeTrue();
+
+      component.toggleCompare();
+      expect(component.isCompareMode()).toBeFalse();
+    });
+
+    it('should resolve compareEffectiveUrl fallback when compareFileUrl is not explicitly provided', () => {
+      component.compareFileUrl = null;
+      component.fileUrl = 'blob:http://localhost:4200/post-op.png';
+
+      expect(component.compareEffectiveUrl()).toBe('blob:http://localhost:4200/post-op.png');
+
+      component.compareFileUrl = 'blob:http://localhost:4200/pre-op.png';
+      expect(component.compareEffectiveUrl()).toBe('blob:http://localhost:4200/pre-op.png');
+    });
+  });
 });
