@@ -17,6 +17,7 @@ export interface Material {
   unitCost?: number;
   lastRestockedAt?: string;
   purchaseOrderRef?: string;
+  imageUrl?: string;
 }
 
 export interface ConsumedMaterial {

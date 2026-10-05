@@ -63,6 +63,10 @@ export class InventoryListComponent implements OnInit {
   csvFileName = signal<string>('');
   bulkTargetClinicId: string = '';
 
+  // Image Preview Lightbox State
+  previewImageUrl = signal<string | null>(null);
+  previewImageTitle = signal<string>('');
+
   get expiredCount(): number {
     return this.materials.filter(m => this.isExpired(m)).length;
   }
@@ -410,6 +414,7 @@ export class InventoryListComponent implements OnInit {
     const batchIdx = headerParts.findIndex(h => h.includes('batch') || h.includes('lot'));
     const expiryIdx = headerParts.findIndex(h => h.includes('exp') || h.includes('date'));
     const supplierIdx = headerParts.findIndex(h => h.includes('supplier') || h.includes('vendor'));
+    const imgIdx = headerParts.findIndex(h => h.includes('image') || h.includes('photo') || h.includes('pic'));
 
     if (nameIdx === -1) {
       errors.push('Missing required column "Name" in CSV header.');
@@ -447,7 +452,8 @@ export class InventoryListComponent implements OnInit {
         unitCost: costIdx !== -1 && !isNaN(Number(cells[costIdx])) ? Number(cells[costIdx]) : undefined,
         batchNumber: batchIdx !== -1 && cells[batchIdx] ? cells[batchIdx] : undefined,
         expirationDate: expiryIdx !== -1 && cells[expiryIdx] ? cells[expiryIdx] : undefined,
-        supplierName: supplierIdx !== -1 && cells[supplierIdx] ? cells[supplierIdx] : undefined
+        supplierName: supplierIdx !== -1 && cells[supplierIdx] ? cells[supplierIdx] : undefined,
+        imageUrl: imgIdx !== -1 && cells[imgIdx] ? cells[imgIdx] : undefined
       };
 
       rows.push(item);
@@ -489,5 +495,17 @@ export class InventoryListComponent implements OnInit {
           this.toastr.error(msg, 'Import Failed');
         }
       });
+  }
+
+  // Image Lightbox Handlers
+  openImagePreview(url?: string, name?: string): void {
+    if (url) {
+      this.previewImageUrl.set(url);
+      this.previewImageTitle.set(name || 'Tool / Supply Image');
+    }
+  }
+
+  closeImagePreview(): void {
+    this.previewImageUrl.set(null);
   }
 }

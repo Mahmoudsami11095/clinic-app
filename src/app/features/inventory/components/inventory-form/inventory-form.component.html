@@ -111,6 +111,36 @@
               formControlName="expirationDate">
           </div>
         </div>
+
+        <div class="mb-6">
+          <label class="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-2" for="imageUrl">
+            Tool / Supply Image URL <span class="text-slate-400 font-normal">({{ 'inventory.optional' | translate }})</span>
+          </label>
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+              <img *ngIf="materialForm.get('imageUrl')?.value" [src]="materialForm.get('imageUrl')?.value" alt="Preview" class="w-full h-full object-cover" />
+              <i *ngIf="!materialForm.get('imageUrl')?.value" class="fas fa-image text-slate-400 text-lg"></i>
+            </div>
+            <input 
+              class="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:text-white placeholder-slate-400 text-sm" 
+              id="imageUrl" 
+              type="text" 
+              formControlName="imageUrl" 
+              placeholder="e.g. /images/materials/composite.jpg or https://...">
+          </div>
+          <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+            <span class="text-[11px] text-slate-400 font-medium">Presets:</span>
+            <button type="button" (click)="materialForm.patchValue({ imageUrl: '/images/materials/anesthetic.jpg' })" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+              Anesthetic
+            </button>
+            <button type="button" (click)="materialForm.patchValue({ imageUrl: '/images/materials/composite.jpg' })" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+              Composite
+            </button>
+            <button type="button" (click)="materialForm.patchValue({ imageUrl: '/images/materials/gloves.jpg' })" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+              Nitrile Gloves
+            </button>
+          </div>
+        </div>
         
         <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-8">
           <button 

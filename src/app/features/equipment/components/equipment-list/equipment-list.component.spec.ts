@@ -187,7 +187,7 @@ describe('EquipmentListComponent', () => {
     it('should call seedDefaults and display success toast', () => {
       component.seedDefaultEquipment();
       expect(mockEquipmentService.seedDefaults).toHaveBeenCalledWith('clinic-1');
-      expect(mockToastr.success).toHaveBeenCalledWith(jasmine.stringMatching(/seeded/i));
+      expect(mockToastr.success).toHaveBeenCalledWith(jasmine.stringMatching(/seeded/i), jasmine.any(String));
     });
   });
 });

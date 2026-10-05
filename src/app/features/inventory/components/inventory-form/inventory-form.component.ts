@@ -44,7 +44,8 @@ export class InventoryFormComponent implements OnInit {
       minStockAlert: [this.material?.minStockAlert ?? 5, [Validators.required, Validators.min(1)]],
       unit: [this.material?.unit || ''],
       batchNumber: [this.material?.batchNumber || ''],
-      expirationDate: [this.material?.expirationDate ? this.formatDateForInput(this.material.expirationDate) : '']
+      expirationDate: [this.material?.expirationDate ? this.formatDateForInput(this.material.expirationDate) : ''],
+      imageUrl: [this.material?.imageUrl || '']
     });
   }
 
@@ -72,7 +73,8 @@ export class InventoryFormComponent implements OnInit {
       minStockAlert: Number(formValue.minStockAlert),
       unit: formValue.unit,
       batchNumber: formValue.batchNumber?.trim() || undefined,
-      expirationDate: formValue.expirationDate ? new Date(formValue.expirationDate).toISOString() : undefined
+      expirationDate: formValue.expirationDate ? new Date(formValue.expirationDate).toISOString() : undefined,
+      imageUrl: formValue.imageUrl?.trim() || undefined
     };
 
     const request$ = this.material?.id 

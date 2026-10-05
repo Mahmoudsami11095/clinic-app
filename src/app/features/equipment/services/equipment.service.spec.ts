@@ -20,7 +20,7 @@ describe('EquipmentService', () => {
     roomOrChair: 'Sterilization Room',
     status: 'Operational',
     purchaseCost: 7500,
-    maintenanceIntervalDays: 90
+    maintenanceNotes: 'Quarterly maintenance schedule'
   };
 
   beforeEach(() => {

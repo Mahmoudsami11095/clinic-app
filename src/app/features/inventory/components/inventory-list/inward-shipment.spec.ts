@@ -37,6 +37,7 @@ describe('REQ-INV-02: Supplier & Inward Shipment Workflow', () => {
 
     mockMaterialsService = {
       getAll: jasmine.createSpy('getAll').and.returnValue(of(mockMaterials)),
+      getMaterials: jasmine.createSpy('getMaterials').and.returnValue(of({ data: mockMaterials })),
       getByDoctor: jasmine.createSpy('getByDoctor').and.returnValue(of({ data: mockMaterials })),
       getByDoctorAndClinic: jasmine.createSpy('getByDoctorAndClinic').and.returnValue(of(mockMaterials)),
       isExpired: () => false,
@@ -57,7 +58,7 @@ describe('REQ-INV-02: Supplier & Inward Shipment Workflow', () => {
       providers: [
         InventoryListComponent,
         { provide: MaterialsService, useValue: mockMaterialsService },
-        { provide: AuthService, useValue: { currentUser: signal({ id: 'u1', role: 'doctor' }), isDoctor: () => true, isAssistant: () => false } },
+        { provide: AuthService, useValue: { currentUser: signal({ id: 'u1', role: 'doctor' }), isDoctor: () => true, isAssistant: () => false, isUnassigned: () => false } },
         { provide: ClinicService, useValue: { activeClinicId: signal('c1'), allowedClinics: signal([{ id: 'c1' }]), setActiveClinicId: () => {} } },
         { provide: LanguageService, useValue: { translate: (k: string) => k, isLoaded: signal(true) } },
         { provide: ToastrService, useValue: mockToastr }
@@ -65,6 +66,8 @@ describe('REQ-INV-02: Supplier & Inward Shipment Workflow', () => {
     });
 
     component = TestBed.inject(InventoryListComponent);
+    component.doctorId = 'u1';
+    component.isDoctor = true;
     component.materials = [...mockMaterials];
   });
 
