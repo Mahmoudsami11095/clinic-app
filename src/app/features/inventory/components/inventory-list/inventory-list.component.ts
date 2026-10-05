@@ -55,6 +55,14 @@ export class InventoryListComponent implements OnInit {
   shipmentExpiry: string = '';
   shipmentUnitCost: number | null = null;
 
+  // REQ-INV-03: Bulk CSV Import State
+  isBulkImportModalOpen = signal<boolean>(false);
+  isImportingCsv = signal<boolean>(false);
+  parsedCsvRows = signal<Partial<Material>[]>([]);
+  csvParseErrors = signal<string[]>([]);
+  csvFileName = signal<string>('');
+  bulkTargetClinicId: string = '';
+
   get expiredCount(): number {
     return this.materials.filter(m => this.isExpired(m)).length;
   }
@@ -331,5 +339,155 @@ export class InventoryListComponent implements OnInit {
         this.toastr.error('Failed to record inward shipment.', 'Error');
       }
     });
+  }
+
+  // REQ-INV-03: Bulk CSV Import Handlers
+  openBulkImportModal(): void {
+    this.bulkTargetClinicId = this.activeClinicId !== 'all' 
+      ? this.activeClinicId 
+      : (this.clinicService.allowedClinics()[0]?.id || '');
+    this.parsedCsvRows.set([]);
+    this.csvParseErrors.set([]);
+    this.csvFileName.set('');
+    this.isBulkImportModalOpen.set(true);
+  }
+
+  closeBulkImportModal(): void {
+    this.isBulkImportModalOpen.set(false);
+    this.parsedCsvRows.set([]);
+    this.csvParseErrors.set([]);
+    this.csvFileName.set('');
+  }
+
+  downloadCsvTemplate(): void {
+    this.materialsService.downloadCsvTemplate();
+  }
+
+  onCsvFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    this.csvFileName.set(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      this.parseCsvContent(text);
+    };
+    reader.readAsText(file, 'UTF-8');
+    input.value = '';
+  }
+
+  parseCsvContent(text: string): void {
+    const errors: string[] = [];
+    const rows: Partial<Material>[] = [];
+
+    if (!text || !text.trim()) {
+      errors.push('Uploaded CSV file is empty.');
+      this.csvParseErrors.set(errors);
+      this.parsedCsvRows.set([]);
+      return;
+    }
+
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length < 2) {
+      errors.push('CSV file must have a header row and at least one data row.');
+      this.csvParseErrors.set(errors);
+      this.parsedCsvRows.set([]);
+      return;
+    }
+
+    // Strip optional BOM and quotes
+    const cleanHeaderLine = lines[0].replace(/^\uFEFF/, '');
+    const headerParts = cleanHeaderLine.split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+
+    const nameIdx = headerParts.findIndex(h => h === 'name' || h === 'item name' || h === 'material name');
+    const catIdx = headerParts.findIndex(h => h === 'category');
+    const qtyIdx = headerParts.findIndex(h => h === 'quantity' || h === 'qty' || h === 'stock');
+    const unitIdx = headerParts.findIndex(h => h === 'unit');
+    const minAlertIdx = headerParts.findIndex(h => h.includes('min') || h.includes('threshold') || h.includes('alert'));
+    const costIdx = headerParts.findIndex(h => h.includes('cost') || h.includes('price'));
+    const batchIdx = headerParts.findIndex(h => h.includes('batch') || h.includes('lot'));
+    const expiryIdx = headerParts.findIndex(h => h.includes('exp') || h.includes('date'));
+    const supplierIdx = headerParts.findIndex(h => h.includes('supplier') || h.includes('vendor'));
+
+    if (nameIdx === -1) {
+      errors.push('Missing required column "Name" in CSV header.');
+      this.csvParseErrors.set(errors);
+      this.parsedCsvRows.set([]);
+      return;
+    }
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      // Regex CSV splitter handling quoted commas
+      const matches = line.match(/(?:^|,)("(?:[^"]|"")*"|[^,]*)/g);
+      if (!matches) continue;
+
+      const cells = matches.map(cell => {
+        let val = cell.replace(/^,/, '').trim();
+        if (val.startsWith('"') && val.endsWith('"')) {
+          val = val.substring(1, val.length - 1).replace(/""/g, '"');
+        }
+        return val.trim();
+      });
+
+      const name = cells[nameIdx] || '';
+      if (!name) {
+        errors.push(`Row ${i + 1}: Name is empty and was skipped.`);
+        continue;
+      }
+
+      const item: Partial<Material> = {
+        name,
+        category: catIdx !== -1 && cells[catIdx] ? cells[catIdx] : 'General',
+        quantity: qtyIdx !== -1 && !isNaN(Number(cells[qtyIdx])) ? Math.max(0, Number(cells[qtyIdx])) : 0,
+        unit: unitIdx !== -1 && cells[unitIdx] ? cells[unitIdx] : 'Pieces',
+        minStockAlert: minAlertIdx !== -1 && !isNaN(Number(cells[minAlertIdx])) ? Math.max(1, Number(cells[minAlertIdx])) : 5,
+        unitCost: costIdx !== -1 && !isNaN(Number(cells[costIdx])) ? Number(cells[costIdx]) : undefined,
+        batchNumber: batchIdx !== -1 && cells[batchIdx] ? cells[batchIdx] : undefined,
+        expirationDate: expiryIdx !== -1 && cells[expiryIdx] ? cells[expiryIdx] : undefined,
+        supplierName: supplierIdx !== -1 && cells[supplierIdx] ? cells[supplierIdx] : undefined
+      };
+
+      rows.push(item);
+    }
+
+    this.parsedCsvRows.set(rows);
+    this.csvParseErrors.set(errors);
+  }
+
+  confirmBulkImport(): void {
+    const items = this.parsedCsvRows();
+    if (items.length === 0) {
+      this.toastr.warning('No valid rows found to import.');
+      return;
+    }
+
+    const clinicId = this.bulkTargetClinicId || (this.activeClinicId !== 'all' ? this.activeClinicId : this.clinicService.allowedClinics()[0]?.id);
+    if (!clinicId) {
+      this.toastr.error('Please select a target clinic for the imported items.');
+      return;
+    }
+
+    this.isImportingCsv.set(true);
+    this.materialsService.bulkImport(clinicId, items)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.isImportingCsv.set(false);
+          this.closeBulkImportModal();
+          this.toastr.success(res.message || `Successfully imported ${items.length} materials.`, 'Import Complete');
+          if (this.activeClinicId === 'all') {
+            this.clinicService.setActiveClinicId(clinicId);
+          }
+          this.loadMaterials();
+        },
+        error: (err) => {
+          this.isImportingCsv.set(false);
+          const msg = err.error?.message || 'Failed to import materials.';
+          this.toastr.error(msg, 'Import Failed');
+        }
+      });
   }
 }

@@ -15,6 +15,14 @@
         <span>{{ isSeeding() ? 'Seeding...' : 'Seed Defaults' }}</span>
       </button>
 
+      <button 
+        class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer" 
+        (click)="openBulkImportModal()"
+        [title]="'Bulk import materials from CSV'">
+        <i class="fas fa-file-import"></i>
+        <span>Bulk Import</span>
+      </button>
+
       <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer" (click)="openReceiveShipmentModal()">
         <i class="fas fa-truck-loading"></i>
         <span>{{ 'inventory.receive_shipment' | translate }}</span>
@@ -472,6 +480,157 @@
       >
         <span *ngIf="isSubmittingShipment()"><i class="fas fa-spinner fa-spin mr-1"></i></span>
         {{ 'inventory.confirm_inward' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk CSV Import Modal -->
+<div
+  *ngIf="isBulkImportModalOpen()"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+>
+  <div
+    class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 max-h-[90vh] overflow-y-auto"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fas fa-file-csv text-violet-600"></i>
+          Bulk Import Materials
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Upload a CSV file to add or update clinic inventory supplies.
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="closeBulkImportModal()"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Target Clinic Selector (if on 'all') -->
+    <div *ngIf="clinicService.allowedClinics().length > 1" class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200 dark:border-slate-700">
+      <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+        Target Clinic Branch
+      </label>
+      <select
+        [(ngModel)]="bulkTargetClinicId"
+        class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-xs dark:text-slate-200"
+      >
+        <option *ngFor="let c of clinicService.allowedClinics()" [value]="c.id">
+          {{ c.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Template Download Banner -->
+    <div class="flex items-center justify-between bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 rounded-2xl p-3.5">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+          <i class="fas fa-table text-base"></i>
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-violet-950 dark:text-violet-200">Standard CSV Template</h4>
+          <p class="text-[11px] text-violet-700 dark:text-violet-400">Columns: Name, Category, Quantity, Unit, MinStockAlert, UnitCost, BatchNumber, ExpirationDate, SupplierName</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="downloadCsvTemplate()"
+        class="shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
+      >
+        <i class="fas fa-download"></i>
+        <span>Download CSV</span>
+      </button>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center hover:border-violet-400 transition-colors bg-slate-50/50 dark:bg-slate-800/30">
+      <input
+        type="file"
+        id="bulkCsvInput"
+        accept=".csv,text/csv"
+        (change)="onCsvFileSelected($event)"
+        class="hidden"
+      />
+      <label for="bulkCsvInput" class="cursor-pointer block">
+        <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto mb-2 text-xl">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <span class="text-xs font-bold text-slate-800 dark:text-white block mb-0.5">
+          {{ csvFileName() ? csvFileName() : 'Click or drag a .csv file here' }}
+        </span>
+        <span class="text-[11px] text-slate-400">Supports UTF-8 and Excel CSV files</span>
+      </label>
+    </div>
+
+    <!-- Warnings / Errors -->
+    <div *ngIf="csvParseErrors().length > 0" class="rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+      <div class="font-bold flex items-center gap-1.5">
+        <i class="fas fa-exclamation-circle text-amber-600"></i> Parsing Notes:
+      </div>
+      <ul class="list-disc list-inside text-[11px] max-h-24 overflow-y-auto space-y-0.5">
+        <li *ngFor="let err of csvParseErrors()">{{ err }}</li>
+      </ul>
+    </div>
+
+    <!-- Preview Table -->
+    <div *ngIf="parsedCsvRows().length > 0" class="space-y-2">
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-bold text-slate-700 dark:text-slate-300">
+          Ready to Import: <span class="text-emerald-600 font-extrabold">{{ parsedCsvRows().length }}</span> materials
+        </span>
+      </div>
+
+      <div class="max-h-48 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-left text-[11px]">
+          <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 font-semibold sticky top-0">
+            <tr>
+              <th class="p-2">Name</th>
+              <th class="p-2">Category</th>
+              <th class="p-2">Stock</th>
+              <th class="p-2">Unit</th>
+              <th class="p-2">Min Alert</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tr *ngFor="let row of parsedCsvRows().slice(0, 10)">
+              <td class="p-2 font-medium text-slate-900 dark:text-slate-100">{{ row.name }}</td>
+              <td class="p-2 text-slate-500">{{ row.category || 'General' }}</td>
+              <td class="p-2 text-slate-700 dark:text-slate-300 font-bold">{{ row.quantity || 0 }}</td>
+              <td class="p-2 text-slate-500">{{ row.unit || 'Pieces' }}</td>
+              <td class="p-2 text-slate-500">{{ row.minStockAlert || 5 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="parsedCsvRows().length > 10" class="text-right text-[10px] text-slate-400">
+        Showing first 10 of {{ parsedCsvRows().length }} items
+      </div>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+      <button
+        type="button"
+        (click)="closeBulkImportModal()"
+        class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold cursor-pointer transition-colors"
+      >
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        (click)="confirmBulkImport()"
+        [disabled]="isImportingCsv() || parsedCsvRows().length === 0"
+        class="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-violet-600/20"
+      >
+        <span *ngIf="isImportingCsv()"><i class="fas fa-spinner fa-spin mr-1"></i></span>
+        Upload & Import ({{ parsedCsvRows().length }})
       </button>
     </div>
   </div>

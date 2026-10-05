@@ -111,4 +111,31 @@ export class MaterialsService {
       {}
     );
   }
+
+  bulkImport(clinicId: string, materials: Partial<Material>[]): Observable<{ message: string; count: number; data: Material[] }> {
+    return this.http.post<{ message: string; count: number; data: Material[] }>(
+      `${this.apiUrl}/bulk-import?clinicId=${encodeURIComponent(clinicId)}`,
+      materials
+    );
+  }
+
+  downloadCsvTemplate(): void {
+    const headers = 'Name,Category,Quantity,Unit,MinStockAlert,UnitCost,BatchNumber,ExpirationDate,SupplierName';
+    const sampleRows = [
+      'Dental Anesthetic (Articaine),Anesthesia,50,Cartridges,10,35.00,LOT-2026-A1,2027-12-31,Pharma Dental',
+      'Latex Examination Gloves (M),Disposables,20,Boxes,5,150.00,LOT-GLV-01,2028-06-30,CleanMed',
+      'Composite Resin (A2),Restorative,5,Syringes,2,220.00,LOT-CR-99,2027-08-15,3M Oral Care',
+      'Cotton Rolls (#2),Disposables,15,Packs,5,45.00,,,'
+    ];
+    const csvContent = '\uFEFF' + [headers, ...sampleRows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'clinic_materials_import_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 }
