@@ -336,5 +336,48 @@ describe('PatientHistoryComponent - Treatment Templates & Plan Engine', () => {
         cost: 350
       }));
     });
+
+    it('should auto-match multi-item procedure recipe to available inventory consumables', () => {
+      component.availableMaterials.set([
+        { id: 'mat-comp', doctorId: 'doc-1', name: 'Composite Resin Shade A2', quantity: 15, minStockAlert: 5, unit: 'Syringe' },
+        { id: 'mat-bond', doctorId: 'doc-1', name: 'Dental Bonding Adhesive Prime & Bond', quantity: 8, minStockAlert: 2, unit: 'Bottle' },
+        { id: 'mat-etch', doctorId: 'doc-1', name: 'Phosphoric Acid Etchant Gel 37%', quantity: 1, minStockAlert: 3, unit: 'Syringe' } // Low stock!
+      ]);
+      component.isPlannedForm.set(false);
+
+      const compositeTpl = DENTAL_TREATMENT_TEMPLATES.find(t => t.id === 't_comp_occ')!;
+      component.applyTreatmentTemplate(compositeTpl);
+
+      const consumed = component.consumedMaterialsForm();
+      expect(consumed.length).toBe(3);
+      expect(consumed.find(c => c.materialId === 'mat-comp')?.quantity).toBe(1);
+      expect(consumed.find(c => c.materialId === 'mat-bond')?.quantity).toBe(1);
+      expect(consumed.find(c => c.materialId === 'mat-etch')?.quantity).toBe(1);
+
+      // Verify low-stock warning detection
+      expect(component.isMaterialLowStock('mat-comp')).toBeFalse();
+      expect(component.isMaterialLowStock('mat-etch')).toBeTrue();
+      expect(component.getMaterialRemaining('mat-etch')).toBe(1);
+    });
+
+    it('should cap recipe requested quantity by available inventory stock', () => {
+      component.availableMaterials.set([
+        { id: 'mat-gp', doctorId: 'doc-1', name: 'Gutta Percha Points #25', quantity: 1, minStockAlert: 5, unit: 'Pack' }, // Only 1 available, recipe requests 2
+        { id: 'mat-sealer', doctorId: 'doc-1', name: 'AH Plus Root Canal Sealer', quantity: 5, minStockAlert: 2, unit: 'Tube' },
+        { id: 'mat-anes', doctorId: 'doc-1', name: 'بنج اسنان موضعي Articaine 4%', quantity: 20, minStockAlert: 5, unit: 'Ampoule' }
+      ]);
+      component.isPlannedForm.set(false);
+
+      const rctMolarTpl = DENTAL_TREATMENT_TEMPLATES.find(t => t.id === 't_rct_molar')!;
+      component.applyTreatmentTemplate(rctMolarTpl);
+
+      const consumed = component.consumedMaterialsForm();
+      expect(consumed.length).toBe(3);
+      const gp = consumed.find(c => c.materialId === 'mat-gp');
+      expect(gp).toBeDefined();
+      expect(gp?.quantity).toBe(1); // Capped to 1 because only 1 in stock
+      expect(gp?.maxQuantity).toBe(1);
+    });
   });
 });
+
