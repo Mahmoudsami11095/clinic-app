@@ -14,11 +14,12 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-billing-list',
-  imports: [CommonModule, FormsModule, ModalComponent, BillingFormComponent, InvoicePrintModalComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterModule, ModalComponent, BillingFormComponent, InvoicePrintModalComponent, TranslatePipe],
   templateUrl: './billing-list.component.html',
   styleUrl: './billing-list.component.css'
 })
