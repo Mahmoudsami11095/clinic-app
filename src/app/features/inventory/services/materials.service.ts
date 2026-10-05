@@ -12,6 +12,18 @@ export class MaterialsService {
 
   constructor(private http: HttpClient) {}
 
+  getMaterials(clinicId?: string, doctorId?: string): Observable<{ data: Material[] }> {
+    const params: string[] = [];
+    if (clinicId && clinicId !== 'all') {
+      params.push(`clinicId=${encodeURIComponent(clinicId)}`);
+    }
+    if (doctorId) {
+      params.push(`doctorId=${encodeURIComponent(doctorId)}`);
+    }
+    const query = params.length > 0 ? `?${params.join('&')}` : '';
+    return this.http.get<{ data: Material[] }>(`${this.apiUrl}${query}`);
+  }
+
   getByDoctor(doctorId: string, clinicId?: string): Observable<{ data: Material[] }> {
     let url = `${this.apiUrl}/doctor/${doctorId}`;
     if (clinicId) {
@@ -91,5 +103,12 @@ export class MaterialsService {
     unitCost?: number;
   }): Observable<{ message: string; data: Material }> {
     return this.http.post<{ message: string; data: Material }>(`${this.apiUrl}/${encodeURIComponent(id)}/inward-shipment`, shipment);
+  }
+
+  seedDefaults(clinicId: string): Observable<{ message: string; data: Material[] }> {
+    return this.http.post<{ message: string; data: Material[] }>(
+      `${this.apiUrl}/seed-defaults?clinicId=${encodeURIComponent(clinicId)}`,
+      {}
+    );
   }
 }

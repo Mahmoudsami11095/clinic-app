@@ -30,9 +30,16 @@ export class InventoryFormComponent implements OnInit {
     private materialsService: MaterialsService
   ) {}
 
+  categories = [
+    'Impression', 'Restorative', 'Matrix', 'Endodontic',
+    'Isolation', 'Instruments', 'Anesthesia', 'Finishing',
+    'Lab', 'Burs', 'Disposables', 'Diagnostic'
+  ];
+
   ngOnInit(): void {
     this.materialForm = this.fb.group({
       name: [this.material?.name || '', [Validators.required]],
+      category: [this.material?.category || ''],
       quantity: [this.material?.quantity ?? 0, [Validators.required, Validators.min(0)]],
       minStockAlert: [this.material?.minStockAlert ?? 5, [Validators.required, Validators.min(1)]],
       unit: [this.material?.unit || ''],
@@ -59,6 +66,8 @@ export class InventoryFormComponent implements OnInit {
       doctorId: this.doctorId,
       clinicId: this.clinicId,
       name: formValue.name,
+      category: formValue.category?.trim() || undefined,
+      isDefault: this.material?.isDefault ?? false,
       quantity: Number(formValue.quantity),
       minStockAlert: Number(formValue.minStockAlert),
       unit: formValue.unit,

@@ -3,6 +3,8 @@ export interface Material {
   clinicId?: string;
   doctorId: string;
   name: string;
+  category?: string;
+  isDefault?: boolean;
   quantity: number;
   unit?: string;
   minStockAlert?: number;
