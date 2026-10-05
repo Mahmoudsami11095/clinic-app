@@ -75,6 +75,12 @@ export const routes: Routes = [
         data: { roles: ['admin', 'doctor', 'assistant'] }
       },
       {
+        path: 'equipment',
+        loadChildren: () => import('./features/equipment/equipment.routes').then(m => m.equipmentRoutes),
+        canActivate: [roleGuard, subscriptionGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
+      },
+      {
         path: 'radiology',
         loadChildren: () => import('./features/radiology/radiology.routes').then(m => m.radiologyRoutes),
         canActivate: [roleGuard, subscriptionGuard],
