@@ -27,4 +27,5 @@ export interface Appointment {
 export interface AppointmentWithDetails extends Appointment {
   patientName: string;
   doctorName: string;
+  patientPhone?: string;
 }

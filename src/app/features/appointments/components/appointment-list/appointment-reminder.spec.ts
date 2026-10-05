@@ -132,25 +132,56 @@ describe('REQ-NOTIF-02: Patient Appointment Reminders (WhatsApp & SMS)', () => {
     });
   });
 
-  describe('Direct WhatsApp Quick-Link', () => {
-    it('should retrieve patient phone and open generated WhatsApp reminder URL', () => {
+  describe('Interactive WhatsApp Hub Modal Workflow', () => {
+    it('should open WhatsApp preview modal and fetch patient data', () => {
+      const appt = mockAppts[0];
+      component.openWhatsAppPreviewModal(appt);
+
+      expect(component.isWhatsAppModalOpen()).toBe(true);
+      expect(component.selectedAppointmentForWhatsApp()).toBe(appt);
+      expect(mockPatientService.getById).toHaveBeenCalledWith('pat-10');
+      expect(component.selectedPatientForWhatsApp()?.firstName).toBe('Omar');
+    });
+
+    it('should close WhatsApp modal cleanly', () => {
+      component.openWhatsAppPreviewModal(mockAppts[0]);
+      component.closeWhatsAppModal();
+
+      expect(component.isWhatsAppModalOpen()).toBe(false);
+      expect(component.selectedAppointmentForWhatsApp()).toBeNull();
+      expect(component.selectedPatientForWhatsApp()).toBeNull();
+    });
+
+    it('should dispatch WhatsApp from modal via API and close modal on success', () => {
+      const appt = mockAppts[0];
+      component.openWhatsAppPreviewModal(appt);
+      component.dispatchWhatsAppFromModal();
+
+      expect(mockAppointmentService.sendReminder).toHaveBeenCalledWith('apt-rem-1');
+      expect(mockToastr.success).toHaveBeenCalledWith(
+        jasmine.stringMatching(/WhatsApp reminder dispatched successfully/),
+        jasmine.any(String)
+      );
+      expect(component.isWhatsAppModalOpen()).toBe(false);
+    });
+
+    it('should launch direct WhatsApp URL via handleDirectWhatsAppFromModal and update appointment state', () => {
       spyOn(window, 'open');
       const appt = mockAppts[0];
+      component.openWhatsAppPreviewModal(appt);
 
-      component.openWhatsAppDirect(appt);
+      component.handleDirectWhatsAppFromModal({
+        phone: '+20 10 1234 5678',
+        message: 'Custom reminder text'
+      });
 
-      expect(mockPatientService.getById).toHaveBeenCalledWith('pat-10');
-      expect(mockAppointmentService.generateWhatsAppReminderUrl).toHaveBeenCalledWith(
-        '+20 10 1234 5678',
-        'Omar Khaled',
-        'Dr. Mahmoud Samy',
-        appt.date,
-        'Dental Cleaning'
-      );
       expect(window.open).toHaveBeenCalledWith(
-        jasmine.stringMatching(/https:\/\/wa\.me\//),
+        jasmine.stringMatching(/^https:\/\/wa\.me\/201012345678\?text=Custom/),
         '_blank'
       );
+      const updated = component.appointments().find(a => a.id === appt.id);
+      expect(updated?.reminderCount).toBe(1);
+      expect(updated?.lastReminderSentAt).toBeDefined();
     });
   });
 

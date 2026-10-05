@@ -31,6 +31,7 @@ export class AppointmentService {
           return {
             ...appt,
             patientName: formatPersonName(patient) || 'Unknown Patient',
+            patientPhone: patient?.contactNumber || '',
             doctorName: formatPersonName(doctor, 'Dr.') || 'Unknown Doctor'
           };
         });
