@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, signal } from '@angular/core';
+import { Component, input, model, output, ViewChild, ElementRef, AfterViewInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -7,7 +7,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   standalone: true,
   imports: [CommonModule, TranslatePipe],
   template: `
-    @if (isOpen) {
+    @if (isOpen()) {
       <div
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in"
         (keydown.escape)="onClose()"
@@ -21,7 +21,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
                 <i class="pi pi-pencil text-base"></i>
               </div>
               <div>
-                <h3 class="text-base font-bold">{{ title || ('consent.signature_modal_title' | translate) }}</h3>
+                <h3 class="text-base font-bold">{{ title() || ('consent.signature_modal_title' | translate) }}</h3>
                 <p class="text-xs text-slate-400">{{ 'consent.signature_modal_subtitle' | translate }}</p>
               </div>
             </div>
@@ -91,11 +91,11 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   `
 })
 export class SignaturePadModalComponent implements AfterViewInit {
-  @Input() isOpen = false;
-  @Input() title: string = '';
+  isOpen = model<boolean>(false);
+  title = input<string>('');
 
-  @Output() signatureSaved = new EventEmitter<string>();
-  @Output() close = new EventEmitter<void>();
+  signatureSaved = output<string>();
+  close = output<void>();
 
   @ViewChild('sigCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -180,7 +180,7 @@ export class SignaturePadModalComponent implements AfterViewInit {
 
   onClose(): void {
     this.clearSignature();
-    this.isOpen = false;
+    this.isOpen.set(false);
     this.close.emit();
   }
 }

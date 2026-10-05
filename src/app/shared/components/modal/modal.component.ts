@@ -1,16 +1,17 @@
-import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, input, output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-modal',
+  standalone: true,
   imports: [CommonModule],
   template: `
     <div
       class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      [class.hidden]="!isOpen"
+      [class.hidden]="!isOpen()"
       role="dialog"
       aria-modal="true"
-      [attr.aria-label]="title"
+      [attr.aria-label]="title()"
     >
       <!-- Backdrop -->
       <div
@@ -22,16 +23,16 @@ import { CommonModule } from '@angular/common';
       <div
         class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-slate-950/50 flex flex-col max-h-[90vh] overflow-hidden
           transform transition-all duration-300"
-        [class.scale-100]="isOpen"
-        [class.opacity-100]="isOpen"
-        [class.scale-95]="!isOpen"
-        [class.opacity-0]="!isOpen"
+        [class.scale-100]="isOpen()"
+        [class.opacity-100]="isOpen()"
+        [class.scale-95]="!isOpen()"
+        [class.opacity-0]="!isOpen()"
       >
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ title }}</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ subtitle }}</p>
+            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ title() }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ subtitle() }}</p>
           </div>
           <button
             (click)="close.emit()"
@@ -51,14 +52,14 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class ModalComponent {
-  @Input() isOpen = false;
-  @Input() title = '';
-  @Input() subtitle = '';
-  @Output() close = new EventEmitter<void>();
+  isOpen = input<boolean>(false);
+  title = input<string>('');
+  subtitle = input<string>('');
+  close = output<void>();
 
   @HostListener('document:keydown.escape')
   onEscapeKey() {
-    if (this.isOpen) this.close.emit();
+    if (this.isOpen()) this.close.emit();
   }
 
   onBackdropClick() {

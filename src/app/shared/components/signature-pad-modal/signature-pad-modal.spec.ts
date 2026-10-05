@@ -23,7 +23,7 @@ describe('REQ-PAT-03: Digital Signature Pad Modal', () => {
 
     fixture = TestBed.createComponent(SignaturePadModalComponent);
     component = fixture.componentInstance;
-    component.isOpen = true;
+    component.isOpen.set(true);
     fixture.detectChanges();
   });
 
@@ -40,7 +40,7 @@ describe('REQ-PAT-03: Digital Signature Pad Modal', () => {
   it('should emit close event on modal dismissal', () => {
     spyOn(component.close, 'emit');
     component.onClose();
-    expect(component.isOpen).toBeFalse();
+    expect(component.isOpen()).toBeFalse();
     expect(component.close.emit).toHaveBeenCalled();
   });
 

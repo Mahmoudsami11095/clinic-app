@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, input, model, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,41 +8,29 @@ import { CommonModule } from '@angular/common';
   templateUrl: './otp-input-field.component.html'
 })
 export class OtpInputFieldComponent {
-  @Input() length: number = 6;
-  @Input() disabled: boolean = false;
+  length = input<number>(6);
+  disabled = input<boolean>(false);
+  code = model<string>('');
   
-  @Input() set code(val: string) {
-    if (val !== undefined && val !== null) {
-      this.value.set(val);
-    } else {
-      this.value.set('');
-    }
-  }
-  
-  @Output() codeChange = new EventEmitter<string>();
-  @Output() otpComplete = new EventEmitter<string>();
+  otpComplete = output<string>();
 
-  value = signal<string>('');
   isFocused = signal<boolean>(false);
 
-  get lengthArray() {
-    return Array.from({ length: this.length }, (_, i) => i);
-  }
+  lengthArray = computed(() => Array.from({ length: this.length() }, (_, i) => i));
 
   onInput(event: Event) {
     const input = event.target as HTMLInputElement;
     let val = input.value.replace(/[^0-9]/g, '');
-    if (val.length > this.length) {
-      val = val.substring(0, this.length);
+    const maxLen = this.length();
+    if (val.length > maxLen) {
+      val = val.substring(0, maxLen);
     }
     
     // Always sync the dom element's value
     input.value = val;
+    this.code.set(val);
     
-    this.value.set(val);
-    this.codeChange.emit(val);
-    
-    if (val.length === this.length) {
+    if (val.length === maxLen) {
       setTimeout(() => this.otpComplete.emit(val), 0);
     }
   }
