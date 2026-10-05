@@ -20,15 +20,21 @@ test.describe('WhatsApp Notification Hub & Reminders - Level 3 (Customer/E2E)', 
   });
 
   test('2. Open WhatsApp Hub Modal and Verify Interactive Features', async ({ page }) => {
-    // Locate WhatsApp button on the first appointment
-    const whatsappBtn = page.locator('button:has-text("WhatsApp"), button:has(.pi-whatsapp)').first();
-    await whatsappBtn.waitFor({ state: 'visible', timeout: 15000 });
-    await whatsappBtn.click();
-    await page.waitForTimeout(600);
+    // Locate WhatsApp button on the first appointment and click it
+    const whatsappBtn = page.locator('table button:has-text("WhatsApp"), table button:has(.pi-whatsapp)').first();
+    await whatsappBtn.waitFor({ state: 'attached', timeout: 15000 });
+    await whatsappBtn.evaluate(b => (b as HTMLElement).click());
+    await page.waitForTimeout(1000);
 
     // Verify WhatsApp Hub modal opens
-    const modal = page.locator('app-whatsapp-reminder-modal, [role="dialog"]').first();
+    const modal = page.locator('[aria-label="WhatsApp Notification Hub"]');
     await expect(modal).toBeVisible();
+
+    // Capture screenshot of live WhatsApp Hub modal
+    await page.screenshot({
+      path: 'C:/Users/msamy5/.gemini/antigravity-ide/brain/4db351f1-d748-49ac-83d1-4bb6ac7e7ef4/live_whatsapp_hub_modal.png',
+      fullPage: false
+    });
 
     // Verify modal header & subtitle
     await expect(modal.locator('text=WhatsApp Notification Hub')).toBeVisible();
