@@ -158,31 +158,22 @@ export class PatientFormComponent implements OnInit {
         }
       });
       if (valid) {
-        this.currentStage.set(2);
-      } else {
-        this.toastr.error('Please fill all required fields correctly.', 'Validation Error');
-      }
-    } else if (this.currentStage() === 2) {
-      const fields = ['bloodGroup', 'allergies', 'chronicDiseases', 'pastIllnesses'];
-      let valid = true;
-      fields.forEach(f => {
-        const ctrl = this.form.get(f);
-        if (ctrl && ctrl.invalid) valid = false;
-      });
-      if (valid) {
         if (this.patient) {
-          // Edit mode skips stage 3 (appointment booking)
+          // Editing patient: Stage 1 is the complete form, save directly
           this.onSubmit();
         } else {
-          this.currentStage.set(3);
+          // New patient: proceed to appointment stage (Stage 2)
+          this.currentStage.set(2);
         }
+      } else {
+        this.toastr.error('Please fill all required fields correctly.', 'Validation Error');
       }
     }
   }
 
   prevStage() {
     if (this.currentStage() > 1) {
-      this.currentStage.update(s => s - 1);
+      this.currentStage.set(1);
     }
   }
 
@@ -298,12 +289,12 @@ export class PatientFormComponent implements OnInit {
         countryCode: rawValue.countryCode!,
         phoneNumber: rawValue.phoneNumber!,
         email: rawValue.email || '',
-        bloodGroup: rawValue.bloodGroup || '',
+        bloodGroup: rawValue.bloodGroup || this.patient.bloodGroup || 'O+',
         address: rawValue.address!,
         clinicId: clinicId,
-        allergies: rawValue.allergies || '',
-        chronicDiseases: rawValue.chronicDiseases || '',
-        pastIllnesses: rawValue.pastIllnesses || ''
+        allergies: rawValue.allergies !== undefined && rawValue.allergies !== null ? (rawValue.allergies || this.patient.allergies || '') : (this.patient.allergies || ''),
+        chronicDiseases: rawValue.chronicDiseases !== undefined && rawValue.chronicDiseases !== null ? (rawValue.chronicDiseases || this.patient.chronicDiseases || '') : (this.patient.chronicDiseases || ''),
+        pastIllnesses: rawValue.pastIllnesses !== undefined && rawValue.pastIllnesses !== null ? (rawValue.pastIllnesses || this.patient.pastIllnesses || '') : (this.patient.pastIllnesses || '')
       };
 
       if (this.locationData) {
@@ -341,7 +332,7 @@ export class PatientFormComponent implements OnInit {
         countryCode: rawValue.countryCode!,
         phoneNumber: rawValue.phoneNumber!,
         email: rawValue.email || '',
-        bloodGroup: rawValue.bloodGroup || '',
+        bloodGroup: rawValue.bloodGroup || 'O+',
         address: rawValue.address!,
         clinicId: clinicId,
         allergies: rawValue.allergies || '',

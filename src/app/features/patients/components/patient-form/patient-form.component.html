@@ -1,11 +1,11 @@
-<!-- Step Progress Indicator -->
-<div class="flex items-center justify-between mb-8 max-w-md mx-auto relative px-4 text-start select-none">
+<!-- Step Progress Indicator (Shown only when registering new patient with appointment stage) -->
+<div *ngIf="!patient" class="flex items-center justify-between mb-8 max-w-xs mx-auto relative px-4 text-start select-none">
   <!-- Background progress line -->
   <div class="absolute top-1/2 left-4 right-4 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0"></div>
   <div class="absolute top-1/2 left-4 h-0.5 bg-indigo-600 -translate-y-1/2 z-0 transition-all duration-300"
-       [style.width.%]="(currentStage() - 1) * (patient ? 100 : 50)"></div>
+       [style.width.%]="(currentStage() - 1) * 100"></div>
 
-  <!-- Step 1 Circle -->
+  <!-- Step 1 Circle: General -->
   <div class="relative z-10 flex flex-col items-center">
     <div [class]="currentStage() >= 1 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
          class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
@@ -15,21 +15,11 @@
     <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">General</span>
   </div>
 
-  <!-- Step 2 Circle -->
+  <!-- Step 2 Circle: Appointment (New Patient) -->
   <div class="relative z-10 flex flex-col items-center">
-    <div [class]="currentStage() >= 2 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
+    <div [class]="currentStage() === 2 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
          class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
-      <i *ngIf="currentStage() > 2" class="pi pi-check text-[10px]"></i>
-      <span *ngIf="currentStage() <= 2">2</span>
-    </div>
-    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Anamnesis</span>
-  </div>
-
-  <!-- Step 3 Circle (Only shown when adding new patient, hidden during edit) -->
-  <div *ngIf="!patient" class="relative z-10 flex flex-col items-center">
-    <div [class]="currentStage() === 3 ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'"
-         class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300">
-      <span>3</span>
+      <span>2</span>
     </div>
     <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider">Appointment</span>
   </div>
@@ -180,16 +170,15 @@
     </div>
   </div>
 
-  <!-- STAGE 2: Patient Anamnesis -->
-  <div *ngIf="currentStage() === 2" class="space-y-6 animate-in fade-in duration-200 text-start">
+  <!-- STAGE 2: Patient Anamnesis (Temporarily hidden until restored in the future) -->
+  <!--
+  <div *ngIf="false" class="space-y-6 animate-in fade-in duration-200 text-start">
     <div>
       <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
-        <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">3</span>
+        <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
         Medical Anamnesis
       </h3>
-
       <div class="grid grid-cols-1 gap-5">
-        <!-- Blood Group Selection -->
         <div>
           <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
             {{ 'patients.blood_group' | translate }}
@@ -209,42 +198,19 @@
             }
           </div>
         </div>
-
-        <!-- Allergies input -->
-        <app-input-field
-          [formGroup]="form"
-          controlName="allergies"
-          label="patients.allergies"
-          type="textarea"
-          placeholder="e.g. Peanut allergy, dust mites"
-        ></app-input-field>
-
-        <!-- Chronic Diseases input -->
-        <app-input-field
-          [formGroup]="form"
-          controlName="chronicDiseases"
-          label="patients.chronic_diseases"
-          type="textarea"
-          placeholder="e.g. Asthma, Diabetes, Hypertension"
-        ></app-input-field>
-
-        <!-- Past Illnesses input -->
-        <app-input-field
-          [formGroup]="form"
-          controlName="pastIllnesses"
-          label="patients.past_illnesses"
-          type="textarea"
-          placeholder="e.g. COVID-19, Chickenpox"
-        ></app-input-field>
+        <app-input-field [formGroup]="form" controlName="allergies" label="patients.allergies" type="textarea" placeholder="e.g. Peanut allergy, dust mites"></app-input-field>
+        <app-input-field [formGroup]="form" controlName="chronicDiseases" label="patients.chronic_diseases" type="textarea" placeholder="e.g. Asthma, Diabetes, Hypertension"></app-input-field>
+        <app-input-field [formGroup]="form" controlName="pastIllnesses" label="patients.past_illnesses" type="textarea" placeholder="e.g. COVID-19, Chickenpox"></app-input-field>
       </div>
     </div>
   </div>
+  -->
 
-  <!-- STAGE 3: Book Appointment (Optional) -->
-  <div *ngIf="currentStage() === 3 && !patient" class="space-y-6 animate-in fade-in duration-200 text-start">
+  <!-- STAGE 2: Book Appointment (Optional - shown only when adding new patient) -->
+  <div *ngIf="currentStage() === 2 && !patient" class="space-y-6 animate-in fade-in duration-200 text-start">
     <div>
       <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
-        <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">4</span>
+        <span class="w-5 h-5 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
         Schedule Initial Appointment (Optional)
       </h3>
 
@@ -275,27 +241,30 @@
       {{ 'common.cancel' | translate }}
     </button>
     
+    <!-- Back Button (Only on Stage 2 when creating new patient) -->
     <button
       type="button"
-      *ngIf="currentStage() > 1"
+      *ngIf="currentStage() === 2 && !patient"
       (click)="prevStage()"
       class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors cursor-pointer"
     >
       Back
     </button>
 
+    <!-- Next Button (Only on Stage 1 when creating new patient) -->
     <button
       type="button"
-      *ngIf="currentStage() < (patient ? 2 : 3)"
+      *ngIf="currentStage() === 1 && !patient"
       (click)="nextStage()"
       class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-500/20 cursor-pointer"
     >
       Next
     </button>
 
+    <!-- Save Profile Button (When editing existing patient directly on Stage 1) -->
     <button
       type="submit"
-      *ngIf="currentStage() === (patient ? 2 : 3)"
+      *ngIf="patient"
       [disabled]="submitting"
       class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
     >
@@ -304,7 +273,23 @@
         {{ 'common.loading' | translate }}
       } @else {
         <i class="pi pi-check text-xs"></i>
-        <span>{{ patient ? 'Save Profile' : 'Complete Registration' }}</span>
+        <span>Save Profile</span>
+      }
+    </button>
+
+    <!-- Complete Registration Button (When creating new patient on Stage 2) -->
+    <button
+      type="submit"
+      *ngIf="currentStage() === 2 && !patient"
+      [disabled]="submitting"
+      class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+    >
+      @if (submitting) {
+        <i class="pi pi-spin pi-spinner text-xs"></i>
+        {{ 'common.loading' | translate }}
+      } @else {
+        <i class="pi pi-check text-xs"></i>
+        <span>Complete Registration</span>
       }
     </button>
   </div>
