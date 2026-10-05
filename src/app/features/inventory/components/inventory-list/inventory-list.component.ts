@@ -280,7 +280,7 @@ export class InventoryListComponent implements OnInit {
     if (material) {
       this.selectedMaterialForShipment.set(material);
       this.shipmentMaterialId = material.id || '';
-      this.shipmentSupplier = material.supplierName || '';
+      this.shipmentSupplier = material.supplierName && material.supplierName !== 'Dr MAHDY' ? material.supplierName : '';
       this.shipmentPORef = material.purchaseOrderRef || '';
       this.shipmentUnitCost = material.unitCost || null;
       this.shipmentBatch = material.batchNumber || '';

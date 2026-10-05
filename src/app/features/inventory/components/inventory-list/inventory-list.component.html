@@ -247,14 +247,14 @@
                   Default
                 </span>
               </div>
-              <div *ngIf="material.batchNumber || material.expirationDate || material.supplierName" class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+              <div *ngIf="material.batchNumber || material.expirationDate || (material.supplierName && material.supplierName !== 'Dr MAHDY')" class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
                 <span *ngIf="material.batchNumber" class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">
                   Lot: {{ material.batchNumber }}
                 </span>
                 <span *ngIf="material.expirationDate" [class.text-red-600]="isExpired(material)" [class.dark:text-red-400]="isExpired(material)" [class.font-bold]="isExpired(material)">
                   <i class="far fa-calendar-alt text-[10px] mr-0.5"></i> Exp: {{ material.expirationDate | date:'yyyy-MM-dd' }}
                 </span>
-                <span *ngIf="material.supplierName" class="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
+                <span *ngIf="material.supplierName && material.supplierName !== 'Dr MAHDY'" class="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
                   <i class="fas fa-building text-[9px]"></i> {{ material.supplierName }}
                 </span>
               </div>
