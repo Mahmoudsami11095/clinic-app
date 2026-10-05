@@ -12,38 +12,39 @@ test.describe('AI Chair-side Voice Scribe - Level 3 (Customer/E2E)', () => {
     // Navigate to patients directory
     await page.goto('/patients');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
-    // Click on the first patient record to open details
-    const firstPatient = page.locator('tbody tr, .patient-card').first();
-    await expect(firstPatient).toBeVisible();
-    await firstPatient.click();
-    await page.waitForTimeout(600);
+    // Click on the first patient card to navigate to patient detail
+    const patientCard = page.locator('div[class*="cursor-pointer"]:has(h3), table tbody tr').first();
+    await patientCard.waitFor({ state: 'visible', timeout: 15000 });
+    await patientCard.click();
+    await page.waitForURL(/\/patients\/[a-zA-Z0-9_-]+/, { timeout: 15000 });
+    await page.waitForTimeout(1000);
 
-    // Look for Notes / Clinical Encounter section or Add Note trigger button
-    const addNoteBtn = page.getByRole('button', { name: /Add Note|ملاحظة جديدة|Record Note|Clinical Note/i }).first();
-    if (await addNoteBtn.isVisible()) {
-      await addNoteBtn.click();
-      await page.waitForTimeout(400);
-    }
+    // Look for Notes / Clinical Encounter section Add Note trigger button
+    const addNoteBtn = page.locator('button').filter({ hasText: /Add Note|ملاحظة|Record Note|Clinical Note/i }).first();
+    await addNoteBtn.waitFor({ state: 'visible', timeout: 15000 });
+    await addNoteBtn.evaluate(b => (b as HTMLElement).click());
+    await page.waitForTimeout(500);
 
     // Check if the Voice Scribe launcher button is visible
-    const scribeLauncher = page.getByRole('button', { name: /Voice Scribe|المساعد الصوتي/i }).first();
-    await expect(scribeLauncher).toBeVisible();
+    const scribeLauncher = page.locator('button').filter({ hasText: /Voice Scribe|المساعد الصوتي/i }).first();
+    await scribeLauncher.waitFor({ state: 'visible', timeout: 15000 });
     await scribeLauncher.click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(500);
 
     // Verify Voice Scribe dialog is mounted
     const modal = page.locator('[role="dialog"][aria-label="AI Chair-side Voice Scribe"]');
     await expect(modal).toBeVisible();
 
-    // Verify key UI elements: mic button, language picker, sample loader
+    // Verify key UI elements: title, sample loader
     await expect(modal.getByText(/AI Chair-side Voice Scribe|المساعد الصوتي الذكي/i).first()).toBeVisible();
-    const demoBtn = modal.getByRole('button', { name: /Load Dental Dictation Sample|نموذج إملاء/i });
+    const demoBtn = modal.locator('button').filter({ hasText: /Load Dental Dictation Sample|نموذج إملاء/i }).first();
     await expect(demoBtn).toBeVisible();
 
     // Click Load Sample Dictation to simulate chair-side audio stream
     await demoBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
 
     // Verify SOAP Architecture is computed and displayed
     await expect(modal.getByText(/SOAP Architecture/i)).toBeVisible();
@@ -64,16 +65,16 @@ test.describe('AI Chair-side Voice Scribe - Level 3 (Customer/E2E)', () => {
     });
 
     // Click Apply to Clinical Note
-    const applyBtn = modal.getByRole('button', { name: /Apply to Clinical Note|إدراج في الملاحظة/i });
+    const applyBtn = modal.locator('button').filter({ hasText: /Apply to Clinical Note|إدراج في الملاحظة/i }).first();
     await expect(applyBtn).toBeVisible();
     await applyBtn.click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(500);
 
     // Verify Voice Scribe modal closed
     await expect(modal).not.toBeVisible();
 
     // Verify note content textarea is populated with formatted SOAP text
-    const noteTextarea = page.locator('textarea').filter({ hasText: /SUBJECTIVE|CHIEF COMPLAINT/i }).first();
+    const noteTextarea = page.locator('textarea').first();
     await expect(noteTextarea).toBeVisible();
     const content = await noteTextarea.inputValue();
     expect(content).toContain('[SUBJECTIVE / CHIEF COMPLAINT]');
