@@ -94,6 +94,13 @@ export class DentalService {
     );
   }
 
+  /** Update an existing dental log (e.g. updated cost, notes) */
+  updateLog(log: DentalLog): Observable<DentalLog> {
+    return this.http.put<{ message: string; data: RawDentalLog }>(`/api/dental/${log.id}`, log).pipe(
+      map(res => this.mapRawLog(res.data))
+    );
+  }
+
   /** Push a completed procedure to the billing module for cashier settlement (BR-DEN-02 guardrail) */
   pushToBilling(id: string): Observable<{ data: DentalLog; invoice: any; message: string }> {
     return this.http.post<{ message: string; data: RawDentalLog; invoice: any }>(`/api/dental/${id}/push-to-billing`, {}).pipe(

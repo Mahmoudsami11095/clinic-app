@@ -31,6 +31,8 @@ import { gsap } from 'gsap';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { AllergyConflictService, AllergyConflictResult } from '../../../../core/services/allergy-conflict.service';
 import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
+import { TreatmentPlanModalComponent } from '../treatment-plan-modal/treatment-plan-modal.component';
+import { TreatmentPlanItem } from '../../models/treatment-plan.model';
 
 export interface TreatmentTemplate {
   id: string;
@@ -71,7 +73,7 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
 
 @Component({
   selector: 'app-patient-history',
-  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent, SignaturePadModalComponent],
+  imports: [CommonModule, TranslatePipe, FormsModule, PrescriptionPrintModalComponent, InvoicePrintModalComponent, ScanViewerModalComponent, SignaturePadModalComponent, TreatmentPlanModalComponent],
   template: `
     <div class="space-y-6">
       <!-- Top Row: Summary Info Grid (3 Cards - Anamnesis temporarily hidden) -->
@@ -1765,217 +1767,21 @@ export const DENTAL_TREATMENT_TEMPLATES: TreatmentTemplate[] = [
         </div>
       }
 
-      <!-- Dental Treatment Plan & Progress Report Modal -->
-      @if (isTreatmentPlanPrintOpen()) {
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" (click)="closeTreatmentPlanModal()">
-          <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
-            <!-- Modal Header (Web Controls, hidden on print) -->
-            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 no-print">
-              <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
-                  <i class="pi pi-file-edit text-base"></i>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-slate-900">{{ 'dental.treatment_plan_title' | translate }}</h3>
-                  <p class="text-[11px] text-slate-500">Formal A4 Patient Consent & Clinical Schedule</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  (click)="printTreatmentPlan()"
-                  class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition-all flex items-center gap-1.5 cursor-pointer border-none"
-                >
-                  <i class="pi pi-print"></i>
-                  <span>{{ 'dental.print_plan' | translate }}</span>
-                </button>
-                <button
-                  type="button"
-                  (click)="closeTreatmentPlanModal()"
-                  class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition-colors"
-                >
-                  <i class="pi pi-times text-xs"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- Modal Body: Printable Formal Document (Isolates nicely for A4 printing) -->
-            <div class="p-6 sm:p-8 overflow-y-auto flex-1 printable-document-content">
-              <!-- Clinic Letterhead Header -->
-              <div class="border-b-2 border-slate-900 pb-5 mb-6 flex justify-between items-start">
-                <div>
-                  <h2 class="text-2xl font-black text-slate-900 tracking-tight uppercase">
-                    {{ getActiveClinicInfo().name }}
-                  </h2>
-                  <p class="text-xs text-slate-500 font-medium mt-0.5">Comprehensive Oral Health & Maxillofacial Care</p>
-                  <div class="mt-2 text-[11px] text-slate-600 space-y-0.5">
-                    <p><i class="pi pi-map-marker text-[10px] text-indigo-600 mr-1"></i> {{ getActiveClinicInfo().address }}</p>
-                    <p><i class="pi pi-phone text-[10px] text-indigo-600 mr-1"></i> {{ getActiveClinicInfo().phone }}</p>
-                  </div>
-                </div>
-                <div class="text-end">
-                  <div class="inline-block px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-2">
-                    {{ 'dental.treatment_plan' | translate }}
-                  </div>
-                  <p class="text-xs font-bold text-slate-700">Date: {{ today | date:'mediumDate' }}</p>
-                  <p class="text-[11px] text-slate-500 font-mono">Plan Ref: DTP-{{ patient.id | slice:0:6 | uppercase }}</p>
-                </div>
-              </div>
-
-              <!-- Patient Profile Grid -->
-              <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-start">
-                <div>
-                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Patient Full Name</span>
-                  <span class="text-xs font-bold text-slate-900 mt-0.5 block">{{ patient.firstName }} {{ patient.lastName }}</span>
-                </div>
-                <div>
-                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Age & Gender</span>
-                  <span class="text-xs font-semibold text-slate-800 mt-0.5 block">{{ getAge(patient.dateOfBirth) }} y.o. • {{ patient.gender | uppercase }}</span>
-                </div>
-                <div>
-                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Patient ID / File</span>
-                  <span class="text-xs font-mono font-bold text-slate-800 mt-0.5 block">{{ patient.id | slice:0:8 | uppercase }}</span>
-                </div>
-                <div>
-                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Attending Doctor</span>
-                  <span class="text-xs font-bold text-indigo-700 mt-0.5 block">{{ authService.currentUser()?.name || 'Dr. Attending' }}</span>
-                </div>
-              </div>
-
-              <!-- Planned Procedures Table -->
-              <div class="mb-6">
-                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center justify-between">
-                  <span>{{ 'dental.treatment_procedure' | translate }}</span>
-                  <span class="text-indigo-600 font-mono text-[11px]">{{ getAllPlannedTreatments().length }} Planned Item(s)</span>
-                </h4>
-
-                @if (getAllPlannedTreatments().length === 0) {
-                  <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200/60">
-                    <i class="pi pi-calendar-plus text-3xl text-slate-300 mb-2 block"></i>
-                    <p class="text-xs text-slate-500 font-medium">{{ 'dental.no_planned_treatments' | translate }}</p>
-                  </div>
-                } @else {
-                  <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-                    <table class="min-w-full divide-y divide-slate-200 text-start text-xs">
-                      <thead class="bg-slate-100">
-                        <tr>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Tooth ({{ notationService.notation() }})</th>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Anatomical Tooth</th>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Diagnostic Status</th>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">Planned Procedure</th>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px]">{{ 'dental.stage' | translate }}</th>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-end">{{ 'dental.cost' | translate }}</th>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-center">Est. Visits</th>
-                          <th class="px-4 py-2.5 font-bold text-slate-700 uppercase text-[10px] text-end">Scheduled</th>
-                        </tr>
-                      </thead>
-                      <tbody class="divide-y divide-slate-100 bg-white">
-                        @for (log of getAllPlannedTreatments(); track log.id) {
-                          <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 font-mono font-bold text-indigo-700">
-                              #{{ formatToothNumber(log.toothNumber) }}
-                              <span class="text-[10px] text-slate-400 block font-normal">({{ notationService.getDualDisplay(log.toothNumber) }})</span>
-                            </td>
-                            <td class="px-4 py-3 font-medium text-slate-800">{{ getToothAnatomicalName(log.toothNumber) }}</td>
-                            <td class="px-4 py-3">
-                              <div class="flex flex-wrap gap-1">
-                                @for (st of log.status; track st) {
-                                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize" [class]="getBadgeClasses(st)">
-                                    {{ 'dental.' + st | translate }}
-                                  </span>
-                                }
-                              </div>
-                            </td>
-                            <td class="px-4 py-3 font-semibold text-slate-900">
-                              {{ log.treatment || 'Consultation / Evaluation' }}
-                              @if (log.medication) {
-                                <span class="block text-[10px] font-normal text-slate-500 italic mt-0.5">Rx: {{ log.medication }}</span>
-                              }
-                            </td>
-                            <td class="px-4 py-3">
-                              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded capitalize inline-flex items-center gap-1 shadow-2xs" [class]="getStageBadgeClasses(log.stage)">
-                                <i [class]="getStageIcon(log.stage)" class="text-[8px]"></i>
-                                <span>{{ 'dental.stage_' + (log.stage || 'proposed') | translate }}</span>
-                              </span>
-                            </td>
-                            <td class="px-4 py-3 text-end font-mono font-semibold text-slate-800">
-                              {{ (log.cost || 0) | currency:'EGP':'symbol':'1.0-0' }}
-                            </td>
-                            <td class="px-4 py-3 font-medium text-slate-700 text-center">{{ getEstimatedVisits(log) }} visit(s)</td>
-                            <td class="px-4 py-3 text-slate-500 text-end whitespace-nowrap">{{ log.date | date:'shortDate' }}</td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                }
-              </div>
-
-              <!-- Consent Clause & Dual Signatures -->
-              <div class="mt-8 pt-6 border-t border-slate-200">
-                <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-4 mb-8">
-                  <h5 class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <i class="pi pi-shield text-indigo-600"></i>
-                    <span>{{ 'dental.patient_consent' | translate }}</span>
-                  </h5>
-                  <p class="text-xs text-indigo-950 leading-relaxed">
-                    {{ 'dental.consent_clause' | translate }}
-                  </p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-12 pt-4">
-                  <!-- Patient Consent Digital Signature Block -->
-                  <div class="text-start">
-                    <div class="border-b border-slate-400 pb-1 h-16 flex items-end justify-center bg-slate-50/50 rounded-t-lg overflow-hidden">
-                      @if (patient.consentSignature) {
-                        <img [src]="patient.consentSignature" alt="Patient Signature" class="max-h-14 object-contain" />
-                      } @else {
-                        <button
-                          type="button"
-                          (click)="openSignaturePad()"
-                          class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 transition-colors flex items-center gap-1 cursor-pointer no-print mb-1"
-                        >
-                          <i class="pi pi-pencil text-[10px]"></i>
-                          <span>{{ 'consent.capture_signature' | translate }}</span>
-                        </button>
-                      }
-                    </div>
-                    <div class="flex items-center justify-between mt-2">
-                      <p class="text-xs font-bold text-slate-800">{{ 'dental.patient_signature' | translate }}</p>
-                      @if (patient.consentSignature) {
-                        <button
-                          type="button"
-                          (click)="openSignaturePad()"
-                          class="text-[10px] text-indigo-600 hover:underline font-semibold cursor-pointer no-print"
-                        >
-                          {{ 'consent.resign' | translate }}
-                        </button>
-                      }
-                    </div>
-                    @if (patient.consentSignedAt) {
-                      <p class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-                        <i class="pi pi-check-circle text-[9px]"></i>
-                        <span>{{ 'consent.signed_verified' | translate }} ({{ patient.consentSignedAt | date:'mediumDate' }})</span>
-                      </p>
-                    } @else {
-                      <p class="text-[10px] text-slate-400">Date: ________________________</p>
-                    }
-                  </div>
-
-                  <!-- Doctor Signature Block -->
-                  <div class="text-start">
-                    <div class="border-b border-slate-400 pb-1 h-16 flex items-end">
-                      <span class="text-[10px] text-slate-300 italic">Signature & Clinic Stamp</span>
-                    </div>
-                    <p class="text-xs font-bold text-slate-800 mt-2">{{ 'dental.doctor_signature' | translate }}</p>
-                    <p class="text-[10px] text-slate-400">{{ authService.currentUser()?.name }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
+      <!-- Multi-Stage Dental Treatment Plan & Cost Estimator Modal -->
+      <app-treatment-plan-modal
+        [isOpen]="isTreatmentPlanPrintOpen()"
+        [patient]="patient"
+        [clinicName]="getActiveClinicInfo().name"
+        [clinicAddress]="getActiveClinicInfo().address"
+        [clinicPhone]="getActiveClinicInfo().phone"
+        [attendingDoctorName]="authService.currentUser()?.name || ''"
+        [plannedLogs]="getAllPlannedTreatments()"
+        [isGeneratingInvoice]="isGeneratingPlanInvoice()"
+        (close)="closeTreatmentPlanModal()"
+        (saveChanges)="onSaveTreatmentPlan($event)"
+        (generateDepositInvoice)="onGenerateTreatmentPlanDepositInvoice($event)"
+        (updateItemStageEvent)="onTreatmentPlanStageUpdate($event)"
+      ></app-treatment-plan-modal>
 
       <!-- Print Modals -->
       <app-prescription-print-modal
@@ -2778,6 +2584,67 @@ export class PatientHistoryComponent implements OnInit {
 
   printTreatmentPlan(): void {
     window.print();
+  }
+
+  isGeneratingPlanInvoice = signal<boolean>(false);
+
+  onSaveTreatmentPlan(items: TreatmentPlanItem[]): void {
+    let updateCount = 0;
+    for (const item of items) {
+      const existing = this.dentalLogs().find(l => l.id === item.id);
+      if (existing && existing.cost !== item.cost) {
+        existing.cost = item.cost;
+        this.dentalService.updateLog(existing).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: (updated) => {
+            this.dentalLogs.update(logs => logs.map(l => l.id === updated.id ? updated : l));
+          }
+        });
+        updateCount++;
+      }
+    }
+    this.toastr.success(
+      updateCount > 0 ? `Updated ${updateCount} procedure(s) in treatment plan.` : 'Treatment plan reviewed.',
+      'Treatment Plan'
+    );
+  }
+
+  onGenerateTreatmentPlanDepositInvoice(event: { amount: number; description: string }): void {
+    this.isGeneratingPlanInvoice.set(true);
+    const clinicId = this.clinicService.activeClinicId() || this.patient.clinicId || '';
+
+    this.billingService.create({
+      id: '',
+      patientId: this.patient.id,
+      amount: event.amount,
+      subtotal: event.amount,
+      status: 'pending',
+      dateIssued: new Date().toISOString().split('T')[0],
+      paymentMethod: null,
+      description: event.description,
+      clinicId: clinicId || undefined
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.isGeneratingPlanInvoice.set(false);
+        if (res && res.data) {
+          this.billingRecords.update(records => [res.data, ...records]);
+        }
+        this.toastr.success(
+          `Deposit invoice of ${event.amount} EGP registered in billing ledger.`,
+          'Deposit Invoice Generated'
+        );
+      },
+      error: (err) => {
+        this.isGeneratingPlanInvoice.set(false);
+        this.toastr.error('Failed to create deposit invoice: ' + (err?.message || 'Server error'), 'Error');
+      }
+    });
+  }
+
+  onTreatmentPlanStageUpdate(event: { item: TreatmentPlanItem; stage: DentalProcedureStage }): void {
+    const existing = this.dentalLogs().find(l => l.id === event.item.id);
+    if (existing) {
+      this.advanceProcedureStage(existing, event.stage);
+    }
   }
 
   getToothAnatomicalName(toothNum: number | string): string {
