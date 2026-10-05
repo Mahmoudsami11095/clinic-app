@@ -84,25 +84,24 @@ test.describe('Bilingual RTL Parity & Localization Polish - Level 3 (Customer/E2
     await page.goto('/chair-board');
     await page.waitForLoadState('domcontentloaded');
 
-    // Switch to Arabic
-    const toArabicBtn = page.locator('header button').filter({ hasText: /العربية/i }).first();
-    if (await toArabicBtn.isVisible()) {
-      await toArabicBtn.click();
+    const html = page.locator('html');
+    const currentDir = await html.getAttribute('dir');
+    if (currentDir !== 'rtl') {
+      const globeBtn = page.locator('header button').filter({ has: page.locator('.pi-globe') }).first();
+      await globeBtn.click();
       await page.waitForTimeout(500);
     }
 
-    const html = page.locator('html');
     await expect(html).toHaveAttribute('dir', 'rtl');
 
     // Verify translated chair board headers
     await expect(page.getByText(/لوحة حالة الغرف وكراسي الأسنان المباشرة|مزامنة فورية/i).first()).toBeVisible();
 
     // Switch back to English for cleanup
-    const toEnglishBtn = page.locator('header button').filter({ hasText: /English/i }).first();
-    if (await toEnglishBtn.isVisible()) {
-      await toEnglishBtn.click();
-      await page.waitForTimeout(300);
-    }
+    const englishGlobeBtn = page.locator('header button').filter({ has: page.locator('.pi-globe') }).first();
+    await englishGlobeBtn.click();
+    await page.waitForTimeout(400);
+
     await expect(html).toHaveAttribute('dir', 'ltr');
   });
 });
