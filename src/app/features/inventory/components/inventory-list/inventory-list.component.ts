@@ -34,6 +34,14 @@ export class InventoryListComponent implements OnInit {
   error: string = '';
   searchTerm: string = '';
   activeFilter: 'all' | 'low' | 'out' | 'healthy' | 'expired' = 'all';
+  selectedCategory: string = 'all';
+  isSeeding = signal<boolean>(false);
+
+  categories: string[] = [
+    'Impression', 'Restorative', 'Matrix', 'Endodontic',
+    'Isolation', 'Instruments', 'Anesthesia', 'Finishing',
+    'Lab', 'Burs', 'Disposables', 'Diagnostic'
+  ];
 
   // REQ-INV-02: Supplier & Purchase Order Workflow State
   isReceiveModalOpen = signal<boolean>(false);
@@ -63,6 +71,10 @@ export class InventoryListComponent implements OnInit {
     return this.expiredCount + this.lowStockCount + this.outOfStockCount;
   }
 
+  get hasDefaultMaterials(): boolean {
+    return this.materials.some(m => m.isDefault);
+  }
+
   isExpired(material: Material): boolean {
     return this.materialsService.isExpired(material);
   }
@@ -87,8 +99,13 @@ export class InventoryListComponent implements OnInit {
     this.activeFilter = filter;
   }
 
+  setCategory(category: string): void {
+    this.selectedCategory = category;
+  }
+
   get filteredMaterials(): Material[] {
     let list = this.materials;
+
     if (this.activeFilter === 'expired') {
       list = list.filter(m => this.isExpired(m));
     } else if (this.activeFilter === 'low') {
@@ -99,12 +116,22 @@ export class InventoryListComponent implements OnInit {
       list = list.filter(m => !this.isLowStock(m) && !this.isOutOfStock(m) && !this.isExpired(m));
     }
 
+    if (this.selectedCategory !== 'all') {
+      list = list.filter(m => m.category === this.selectedCategory);
+    }
+
     if (!this.searchTerm.trim()) {
       return list;
     }
     const term = this.searchTerm.toLowerCase().trim();
-    return list.filter(m => m.name.toLowerCase().includes(term));
+    return list.filter(m => 
+      m.name.toLowerCase().includes(term) ||
+      (m.category && m.category.toLowerCase().includes(term)) ||
+      (m.supplierName && m.supplierName.toLowerCase().includes(term))
+    );
   }
+
+  isAdmin: boolean = false;
 
   constructor(
     private materialsService: MaterialsService,
@@ -114,7 +141,7 @@ export class InventoryListComponent implements OnInit {
     // Automatically reload materials when active clinic changes
     effect(() => {
       this.activeClinicId = this.clinicService.activeClinicId();
-      if (this.doctorId) {
+      if (this.doctorId || this.isAdmin || this.isAssistant) {
         this.loadMaterials();
       }
     });
@@ -123,7 +150,9 @@ export class InventoryListComponent implements OnInit {
   ngOnInit(): void {
     const user = this.authService.currentUser();
     if (user) {
-      if (user.role === 'doctor') {
+      if (user.role === 'admin') {
+        this.isAdmin = true;
+      } else if (user.role === 'doctor') {
         this.isDoctor = true;
         this.doctorId = user.doctorId || user.id;
       } else if (user.role === 'assistant') {
@@ -147,19 +176,25 @@ export class InventoryListComponent implements OnInit {
       });
     }
 
-    if (this.doctorId) {
+    if (this.doctorId || this.isAdmin || this.isAssistant) {
       this.loadMaterials();
     } else {
-      this.error = 'No doctor context found to load inventory.';
+      this.error = 'No doctor or clinic context found to load inventory.';
       this.loading = false;
     }
   }
 
   loadMaterials(): void {
     this.loading = true;
-    this.materialsService.getByDoctor(this.doctorId, this.activeClinicId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.error = '';
+
+    const request$ = this.doctorId
+      ? this.materialsService.getByDoctor(this.doctorId, this.activeClinicId)
+      : this.materialsService.getMaterials(this.activeClinicId);
+
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
-        this.materials = res.data;
+        this.materials = res.data || [];
         this.loading = false;
       },
       error: (err) => {
@@ -168,6 +203,33 @@ export class InventoryListComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  seedDefaultMaterials(clinicIdToSeed?: string): void {
+    const clinicId = clinicIdToSeed || (this.activeClinicId !== 'all' ? this.activeClinicId : this.clinicService.allowedClinics()[0]?.id);
+    if (!clinicId) {
+      this.toastr.warning('Please select a specific clinic to seed default materials.', 'Select Clinic');
+      return;
+    }
+
+    this.isSeeding.set(true);
+    this.materialsService.seedDefaults(clinicId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.isSeeding.set(false);
+          this.toastr.success(res.message || 'Default dental materials seeded successfully.', 'Catalog Initialized');
+          if (this.activeClinicId === 'all') {
+            this.clinicService.setActiveClinicId(clinicId);
+          }
+          this.loadMaterials();
+        },
+        error: (err) => {
+          this.isSeeding.set(false);
+          const msg = err.error?.message || 'Failed to seed default materials.';
+          this.toastr.error(msg, 'Seeding Failed');
+        }
+      });
   }
 
   openAddForm(): void {

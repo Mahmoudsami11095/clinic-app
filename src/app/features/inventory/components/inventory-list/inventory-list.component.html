@@ -4,7 +4,17 @@
       <h2 class="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">{{ 'inventory.title' | translate }}</h2>
       <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Monitor clinical supplies, thresholds, and consumption alerts</p>
     </div>
-    <div class="flex items-center gap-2.5">
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button 
+        *ngIf="clinicService.allowedClinics().length > 0"
+        [disabled]="isSeeding()"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
+        (click)="seedDefaultMaterials()"
+        [title]="'Seed standard dental materials (stock 0)'">
+        <i class="fas fa-magic" [class.fa-spin]="isSeeding()"></i>
+        <span>{{ isSeeding() ? 'Seeding...' : 'Seed Defaults' }}</span>
+      </button>
+
       <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer" (click)="openReceiveShipmentModal()">
         <i class="fas fa-truck-loading"></i>
         <span>{{ 'inventory.receive_shipment' | translate }}</span>
@@ -94,6 +104,24 @@
           <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
         </div>
       </div>
+
+      <div class="relative max-w-xs flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <i class="fas fa-tags text-gray-400 text-sm"></i>
+        </div>
+        <select 
+          [value]="selectedCategory"
+          (change)="setCategory($any($event.target).value)"
+          class="block w-full pl-10 pr-8 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors appearance-none shadow-sm cursor-pointer">
+          <option value="all">All Categories</option>
+          <option *ngFor="let cat of categories" [value]="cat">
+            {{ cat }}
+          </option>
+        </select>
+        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+          <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+        </div>
+      </div>
     </div>
 
     <!-- Quick Status Filter Pills -->
@@ -163,9 +191,30 @@
     {{ error }}
   </div>
 
-  <div *ngIf="!loading && !error && materials.length === 0" class="text-center py-12 text-gray-500 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-    <i class="fas fa-boxes text-4xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
-    <p class="font-medium">{{ 'inventory.no_materials' | translate }}</p>
+  <div *ngIf="!loading && !error && materials.length === 0" class="text-center py-12 px-6 text-gray-500 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 max-w-xl mx-auto my-6">
+    <div class="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4 text-2xl">
+      <i class="fas fa-boxes"></i>
+    </div>
+    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">{{ 'inventory.no_materials' | translate }}</h3>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+      You can seed this clinic's inventory with 59 standard dental supplies (impression, restorative, matrix, isolation, instruments) initialized with stock = 0, or add materials manually.
+    </p>
+    <div class="flex items-center justify-center gap-3 flex-wrap">
+      <button 
+        *ngIf="clinicService.allowedClinics().length > 0"
+        (click)="seedDefaultMaterials()" 
+        [disabled]="isSeeding()"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
+        <i class="fas fa-magic" [class.fa-spin]="isSeeding()"></i>
+        <span>{{ isSeeding() ? 'Seeding...' : 'Seed 59 Default Materials' }}</span>
+      </button>
+      <button 
+        (click)="openAddForm()" 
+        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+        <i class="fas fa-plus"></i>
+        <span>{{ 'inventory.add_material' | translate }}</span>
+      </button>
+    </div>
   </div>
 
   <div *ngIf="!loading && materials.length > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -188,9 +237,15 @@
               [class.dark:bg-red-950]="isExpired(material)">
             <!-- Material Name, Batch & Expiration -->
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <span *ngIf="isExpired(material)" class="text-red-500 font-bold text-xs" title="Quarantined from procedures">🚫</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ material.name }}</span>
+                <span *ngIf="material.category" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+                  {{ material.category }}
+                </span>
+                <span *ngIf="material.isDefault" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400" title="Default dental catalog supply">
+                  Default
+                </span>
               </div>
               <div *ngIf="material.batchNumber || material.expirationDate || material.supplierName" class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
                 <span *ngIf="material.batchNumber" class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">

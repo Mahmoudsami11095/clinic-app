@@ -129,4 +129,27 @@ describe('InventoryListComponent', () => {
     expect(component.filteredMaterials.length).toBe(2);
     expect(component.filteredMaterials.every(m => component.isLowStock(m))).toBeTrue();
   });
+
+  it('should filter materials by selectedCategory', () => {
+    mockMaterials[0].category = 'Anesthesia';
+    mockMaterials[1].category = 'Disposables';
+    mockMaterials[2].category = 'Restorative';
+
+    component.setCategory('Anesthesia');
+    expect(component.filteredMaterials.length).toBe(1);
+    expect(component.filteredMaterials[0].name).toBe('Dental Anesthetic (Lidocaine)');
+
+    component.setCategory('all');
+    expect(component.filteredMaterials.length).toBe(5);
+  });
+
+  it('should call seedDefaults when seedDefaultMaterials is invoked with an active clinic', () => {
+    const seedSpy = jasmine.createSpy('seedDefaults').and.returnValue(of({ message: 'Success', data: [] }));
+    (component as any).materialsService.seedDefaults = seedSpy;
+
+    component.activeClinicId = 'clinic-1';
+    component.seedDefaultMaterials();
+
+    expect(seedSpy).toHaveBeenCalledWith('clinic-1');
+  });
 });

@@ -107,4 +107,17 @@ describe('MaterialsService (BR-INV-02 Low-Stock Threshold Trigger)', () => {
       req.flush({ data: [] });
     });
   });
+
+  describe('seedDefaults API execution', () => {
+    it('should call /api/materials/seed-defaults with clinicId parameter', () => {
+      service.seedDefaults('clinic-789').subscribe(res => {
+        expect(res.message).toBe('Seeded');
+        expect(res.data.length).toBe(1);
+      });
+
+      const req = httpMock.expectOne('/api/materials/seed-defaults?clinicId=clinic-789');
+      expect(req.request.method).toBe('POST');
+      req.flush({ message: 'Seeded', data: [{ id: 'm-default-1', name: 'Sili Kit BMS', quantity: 0, isDefault: true }] });
+    });
+  });
 });
