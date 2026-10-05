@@ -265,11 +265,13 @@
     [subtitle]="(selectedClinic() ? 'clinics.edit_profile_subtitle' : 'clinics.establish_new_subtitle') | translate"
     (close)="closeModal()"
   >
-    <app-clinic-form
-      [clinic]="selectedClinic()"
-      (saved)="handleClinicSaved()"
-      (cancelled)="closeModal()"
-    ></app-clinic-form>
+    @if (isModalOpen()) {
+      <app-clinic-form
+        [clinic]="selectedClinic()"
+        (saved)="handleClinicSaved()"
+        (cancelled)="closeModal()"
+      ></app-clinic-form>
+    }
   </app-modal>
 
   <!-- Assign Doctors Modal -->
