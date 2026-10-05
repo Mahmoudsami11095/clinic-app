@@ -428,7 +428,7 @@ export class AppointmentListComponent implements OnInit {
   }
 
   canManageAppointments(): boolean {
-    return this.authService.isDoctor() || this.authService.isAssistant();
+    return this.authService.isAdmin() || this.authService.isDoctor() || this.authService.isAssistant();
   }
 
   canManagePrescriptions(): boolean {
