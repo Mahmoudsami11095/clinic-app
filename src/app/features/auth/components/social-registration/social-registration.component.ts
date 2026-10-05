@@ -5,13 +5,9 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService, User } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
-import { extractErrorMessage } from '../../../../core/utils/error.utils';
-import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-field/otp-input-field.component';
-import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
 import { ClinicSelectionComponent } from '../../../../shared/components/clinic-selection/clinic-selection.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { combinePhoneNumber } from '../../../../core/utils/phone.utils';
-import { TranslatePipe } from '@ngx-translate/core';
 import { SpecializationService, SpecializationGroup } from '../../../../core/services/specialization.service';
 import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
 
@@ -24,8 +20,8 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
   selector: 'app-social-registration',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, OtpInputFieldComponent, PhoneInputFieldComponent, 
-    ClinicSelectionComponent, TranslatePipe,
+    CommonModule, ReactiveFormsModule, 
+    ClinicSelectionComponent,
     RoleSelection, ProfileDetailsForm, VerificationStep, InputFieldComponent
   ],
   templateUrl: './social-registration.component.html'

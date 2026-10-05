@@ -12,10 +12,7 @@ import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { extractErrorMessage } from '../../../core/utils/error.utils';
 import { InputFieldComponent } from '../../../shared/components/input-field/input-field.component';
-import { PhoneInputFieldComponent } from '../../../shared/components/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../core/validators/phone.validator';
-import { OtpInputFieldComponent } from '../../../shared/components/otp-input-field/otp-input-field.component';
-import { LocationMapComponent } from '../../../shared/components/location-map/location-map.component';
 import { ClinicSelectionComponent } from '../../../shared/components/clinic-selection/clinic-selection.component';
 import { SpecializationService, SpecializationGroup } from '../../../core/services/specialization.service';
 
@@ -33,8 +30,7 @@ import { WhatsappConnectionComponent } from '../../clinics/components/whatsapp-c
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslatePipe, 
-    InputFieldComponent, PhoneInputFieldComponent, OtpInputFieldComponent, 
-    LocationMapComponent, ClinicSelectionComponent,
+    InputFieldComponent, ClinicSelectionComponent,
     RoleSelection, ProfileDetailsForm, VerificationStep, SocialRegistrationComponent,
     WhatsappConnectionComponent
   ],

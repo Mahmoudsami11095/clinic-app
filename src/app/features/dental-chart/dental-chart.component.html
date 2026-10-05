@@ -73,7 +73,20 @@
   <!-- Main View Workspace -->
   <main class="chart-workspace">
     @if (activeView() === '3d') {
-      <app-three-dental-chart class="view-component" [dentition]="activeDentition()"></app-three-dental-chart>
+      @defer (on viewport; prefetch on idle) {
+        <app-three-dental-chart class="view-component" [dentition]="activeDentition()"></app-three-dental-chart>
+      } @loading (minimum 250ms) {
+        <div class="flex flex-col items-center justify-center h-full min-h-[450px] bg-slate-900/5 dark:bg-slate-950/40 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+          <div class="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
+            <i class="pi pi-spin pi-spinner text-3xl text-indigo-600"></i>
+            <span class="text-sm font-semibold tracking-wide">Initializing 3D Dental Engine & Shaders...</span>
+          </div>
+        </div>
+      } @placeholder {
+        <div class="flex items-center justify-center h-full min-h-[450px] bg-slate-50 dark:bg-slate-900/40 rounded-2xl">
+          <span class="text-xs text-slate-400">3D Interactive Anatomy View</span>
+        </div>
+      }
     } @else {
       <app-skeuomorphic-dental-chart class="view-component" [dentition]="activeDentition()"></app-skeuomorphic-dental-chart>
     }
