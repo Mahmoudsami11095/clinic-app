@@ -7,10 +7,11 @@ import { AuthService } from '../../auth/auth.service';
 import { LayoutService } from '../layout.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommandPaletteComponent } from '../../components/command-palette/command-palette.component';
+import { OfflineBannerComponent } from '../../components/offline-banner/offline-banner.component';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [CommonModule, RouterOutlet, Sidebar, Header, TranslatePipe, CommandPaletteComponent],
+  imports: [CommonModule, RouterOutlet, Sidebar, Header, TranslatePipe, CommandPaletteComponent, OfflineBannerComponent],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css'
 })
