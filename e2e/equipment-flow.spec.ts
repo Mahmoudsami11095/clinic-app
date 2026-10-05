@@ -131,4 +131,32 @@ test.describe('Clinical Equipment & Devices Asset Management - E2E Browser Flow'
       await expect(modalHeader).not.toBeVisible();
     }
   });
+
+  test('6. Equipment Image Thumbnail and Lightbox Zoom Modal', async ({ page }) => {
+    await page.goto('/equipment');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
+
+    // Check for equipment image thumbnails
+    const thumbnails = page.locator('table img[src*="/images/equipment/"]');
+    const count = await thumbnails.count();
+    if (count > 0) {
+      const firstThumb = thumbnails.first();
+      await expect(firstThumb).toBeVisible();
+
+      // Click thumbnail to trigger full-size lightbox zoom
+      await firstThumb.click();
+      await page.waitForTimeout(400);
+
+      // Lightbox preview should appear
+      const lightboxModal = page.locator('.fixed.inset-0.z-50 img[src*="/images/equipment/"]');
+      await expect(lightboxModal).toBeVisible();
+
+      // Close lightbox
+      const closeBtn = page.locator('.fixed.inset-0.z-50 button').first();
+      await closeBtn.click();
+      await page.waitForTimeout(300);
+      await expect(lightboxModal).not.toBeVisible();
+    }
+  });
 });

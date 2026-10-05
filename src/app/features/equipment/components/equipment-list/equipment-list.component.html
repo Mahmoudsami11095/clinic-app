@@ -178,16 +178,38 @@
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
           <tr *ngFor="let item of filteredEquipment" class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-            <!-- Name & Category -->
+            <!-- Name & Category & Thumbnail -->
             <td class="px-6 py-4">
-              <div class="font-bold text-slate-900 dark:text-white text-sm">{{ item.name }}</div>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
-                  {{ item.category }}
-                </span>
-                <span *ngIf="item.manufacturer" class="text-[11px] text-slate-500 dark:text-slate-400">
-                  {{ item.manufacturer }}
-                </span>
+              <div class="flex items-center gap-3.5">
+                <!-- Thumbnail Image with Fallback -->
+                <div class="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center shadow-xs group">
+                  <img
+                    *ngIf="item.imageUrl"
+                    [src]="item.imageUrl"
+                    [alt]="item.name"
+                    (click)="openImagePreview(item.imageUrl, item.name)"
+                    class="w-full h-full object-cover cursor-pointer group-hover:scale-110 transition-transform duration-200"
+                    loading="lazy"
+                  />
+                  <div *ngIf="!item.imageUrl" class="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-lg">
+                    <i class="fas fa-microchip"></i>
+                  </div>
+                  <div *ngIf="item.imageUrl" (click)="openImagePreview(item.imageUrl, item.name)" class="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs cursor-pointer">
+                    <i class="fas fa-search-plus"></i>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="font-bold text-slate-900 dark:text-white text-sm hover:text-blue-600 transition-colors">{{ item.name }}</div>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+                      {{ item.category }}
+                    </span>
+                    <span *ngIf="item.manufacturer" class="text-[11px] text-slate-500 dark:text-slate-400">
+                      {{ item.manufacturer }}
+                    </span>
+                  </div>
+                </div>
               </div>
             </td>
 
@@ -388,6 +410,40 @@
         </div>
       </div>
 
+      <!-- Image URL & Live Preview -->
+      <div>
+        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Device Image URL</label>
+        <div class="flex items-center gap-3">
+          <input
+            type="text"
+            [(ngModel)]="formModel.imageUrl"
+            placeholder="e.g. /images/equipment/autoclave.jpg or https://..."
+            class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 dark:text-white"
+          />
+          <div *ngIf="formModel.imageUrl" class="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+            <img [src]="formModel.imageUrl" alt="Preview" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+          <span class="text-[11px] text-slate-400 font-medium">Presets:</span>
+          <button type="button" (click)="formModel.imageUrl = '/images/equipment/autoclave.jpg'" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+            Autoclave
+          </button>
+          <button type="button" (click)="formModel.imageUrl = '/images/equipment/dental-chair.jpg'" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+            Chair Unit
+          </button>
+          <button type="button" (click)="formModel.imageUrl = '/images/equipment/handpiece.jpg'" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+            Handpiece
+          </button>
+          <button type="button" (click)="formModel.imageUrl = '/images/equipment/curing-light.jpg'" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+            Curing Light
+          </button>
+          <button type="button" (click)="formModel.imageUrl = '/images/equipment/ultrasonic-scaler.jpg'" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-300 font-medium transition-colors cursor-pointer">
+            Scaler
+          </button>
+        </div>
+      </div>
+
       <div>
         <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Maintenance & Protocol Notes</label>
         <textarea
@@ -508,6 +564,21 @@
         <span *ngIf="isSubmitting()"><i class="fas fa-spinner fa-spin mr-1"></i></span>
         Save Service Record
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Full Image Lightbox Preview Modal -->
+<div *ngIf="previewImageUrl()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" (click)="closeImagePreview()">
+  <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-4 shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden relative" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
+      <h3 class="text-sm font-bold text-slate-800 dark:text-white truncate">{{ previewImageTitle() }}</h3>
+      <button (click)="closeImagePreview()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="w-full aspect-square rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+      <img [src]="previewImageUrl()" [alt]="previewImageTitle()" class="w-full h-full object-contain" />
     </div>
   </div>
 </div>

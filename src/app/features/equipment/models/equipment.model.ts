@@ -17,6 +17,7 @@ export interface Equipment {
   maintenanceNotes?: string;
   serviceProvider?: string;
   serviceContactPhone?: string;
+  imageUrl?: string;
   createdAt?: string;
   isMaintenanceDue?: boolean;
   isWarrantyExpired?: boolean;

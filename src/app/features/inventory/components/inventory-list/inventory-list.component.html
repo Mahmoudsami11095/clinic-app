@@ -243,28 +243,50 @@
               class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
               [class.bg-red-50]="isExpired(material)"
               [class.dark:bg-red-950]="isExpired(material)">
-            <!-- Material Name, Batch & Expiration -->
+            <!-- Material Name, Thumbnail, Batch & Expiration -->
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span *ngIf="isExpired(material)" class="text-red-500 font-bold text-xs" title="Quarantined from procedures">🚫</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ material.name }}</span>
-                <span *ngIf="material.category" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
-                  {{ material.category }}
-                </span>
-                <span *ngIf="material.isDefault" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400" title="Default dental catalog supply">
-                  Default
-                </span>
-              </div>
-              <div *ngIf="material.batchNumber || material.expirationDate || (material.supplierName && material.supplierName !== 'Dr MAHDY')" class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
-                <span *ngIf="material.batchNumber" class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">
-                  Lot: {{ material.batchNumber }}
-                </span>
-                <span *ngIf="material.expirationDate" [class.text-red-600]="isExpired(material)" [class.dark:text-red-400]="isExpired(material)" [class.font-bold]="isExpired(material)">
-                  <i class="far fa-calendar-alt text-[10px] mr-0.5"></i> Exp: {{ material.expirationDate | date:'yyyy-MM-dd' }}
-                </span>
-                <span *ngIf="material.supplierName && material.supplierName !== 'Dr MAHDY'" class="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
-                  <i class="fas fa-building text-[9px]"></i> {{ material.supplierName }}
-                </span>
+              <div class="flex items-center gap-3.5">
+                <!-- Thumbnail Image with Fallback and Lightbox Trigger -->
+                <div class="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center shadow-xs group">
+                  <img
+                    *ngIf="material.imageUrl"
+                    [src]="material.imageUrl"
+                    [alt]="material.name"
+                    (click)="openImagePreview(material.imageUrl, material.name)"
+                    class="w-full h-full object-cover cursor-pointer group-hover:scale-110 transition-transform duration-200"
+                    loading="lazy"
+                  />
+                  <div *ngIf="!material.imageUrl" class="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-base">
+                    <i class="fas fa-boxes-stacked"></i>
+                  </div>
+                  <div *ngIf="material.imageUrl" (click)="openImagePreview(material.imageUrl, material.name)" class="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs cursor-pointer">
+                    <i class="fas fa-search-plus"></i>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span *ngIf="isExpired(material)" class="text-red-500 font-bold text-xs" title="Quarantined from procedures">🚫</span>
+                    <span class="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 transition-colors">{{ material.name }}</span>
+                    <span *ngIf="material.category" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+                      {{ material.category }}
+                    </span>
+                    <span *ngIf="material.isDefault" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400" title="Default dental catalog supply">
+                      Default
+                    </span>
+                  </div>
+                  <div *ngIf="material.batchNumber || material.expirationDate || (material.supplierName && material.supplierName !== 'Dr MAHDY')" class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+                    <span *ngIf="material.batchNumber" class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">
+                      Lot: {{ material.batchNumber }}
+                    </span>
+                    <span *ngIf="material.expirationDate" [class.text-red-600]="isExpired(material)" [class.dark:text-red-400]="isExpired(material)" [class.font-bold]="isExpired(material)">
+                      <i class="far fa-calendar-alt text-[10px] mr-0.5"></i> Exp: {{ material.expirationDate | date:'yyyy-MM-dd' }}
+                    </span>
+                    <span *ngIf="material.supplierName && material.supplierName !== 'Dr MAHDY'" class="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
+                      <i class="fas fa-building text-[9px]"></i> {{ material.supplierName }}
+                    </span>
+                  </div>
+                </div>
               </div>
             </td>
             
@@ -632,6 +654,21 @@
         <span *ngIf="isImportingCsv()"><i class="fas fa-spinner fa-spin mr-1"></i></span>
         Upload & Import ({{ parsedCsvRows().length }})
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Full Tool/Supply Image Lightbox Preview Modal -->
+<div *ngIf="previewImageUrl()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" (click)="closeImagePreview()">
+  <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-4 shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden relative" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
+      <h3 class="text-sm font-bold text-slate-800 dark:text-white truncate">{{ previewImageTitle() }}</h3>
+      <button (click)="closeImagePreview()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="w-full aspect-square rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+      <img [src]="previewImageUrl()" [alt]="previewImageTitle()" class="w-full h-full object-contain" />
     </div>
   </div>
 </div>

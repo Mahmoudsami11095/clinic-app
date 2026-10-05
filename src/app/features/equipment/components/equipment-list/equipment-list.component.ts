@@ -45,6 +45,24 @@ export class EquipmentListComponent implements OnInit {
   formModel: Equipment = this.getEmptyFormModel();
   isEditMode: boolean = false;
 
+  // Image Preview Lightbox
+  previewImageUrl = signal<string | null>(null);
+  previewImageTitle = signal<string>('');
+
+  openImagePreview(url: string, title: string): void {
+    this.previewImageUrl.set(url);
+    this.previewImageTitle.set(title);
+  }
+
+  closeImagePreview(): void {
+    this.previewImageUrl.set(null);
+    this.previewImageTitle.set('');
+  }
+
+  filterCategory(category: string): void {
+    this.setCategory(category);
+  }
+
   // Maintenance Log Model
   selectedEquipmentForService: Equipment | null = null;
   serviceModel: EquipmentMaintenanceLogRequest = {
@@ -285,7 +303,8 @@ export class EquipmentListComponent implements OnInit {
       nextMaintenanceDate: '',
       maintenanceNotes: '',
       serviceProvider: '',
-      serviceContactPhone: ''
+      serviceContactPhone: '',
+      imageUrl: ''
     };
   }
 }
