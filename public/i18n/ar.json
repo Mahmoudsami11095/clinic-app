@@ -1001,5 +1001,36 @@
     "resign": "إعادة التوقيع",
     "signed_verified": "موقع إلكترونياً ومعتمد",
     "signature_saved_success": "تم حفظ التوقيع الإلكتروني لموافقة المريض بنجاح."
+  },
+  "sidebar": {
+    "dashboard": "لوحة القيادة",
+    "clinics": "العيادات",
+    "patients": "المرضى",
+    "chair_board": "حالة العيادات والغرف",
+    "appointments": "المواعيد",
+    "radiology": "الأشعة",
+    "billing": "الفواتير",
+    "inventory": "المخزون",
+    "equipment": "المعدات والأجهزة",
+    "doctors": "الأطباء",
+    "profile": "الملف الشخصي",
+    "subscription_plan": "خطة الاشتراك",
+    "subscription_mgmt": "إدارة الاشتراكات",
+    "my_portal": "بوابتي",
+    "my_bills": "فواتيري"
+  },
+  "chairs": {
+    "title": "لوحة حالة الغرف وكراسي الأسنان المباشرة",
+    "subtitle": "تتبع فوري لتواجد المرضى في الكراسي وجلسات التعقيم والتطهير",
+    "live_sync": "مزامنة فورية",
+    "total_chairs": "إجمالي الغرف",
+    "status_available": "جاهز",
+    "status_occupied": "في الكرسي",
+    "status_cleaning": "قيد التعقيم",
+    "status_maintenance": "صيانة",
+    "action_seat_patient": "إجلاس مريض",
+    "action_discharge_sterilize": "إنهاء وبدء التعقيم",
+    "action_mark_ready": "اكتمال التعقيم",
+    "action_return_to_service": "إعادة للخدمة"
   }
 }

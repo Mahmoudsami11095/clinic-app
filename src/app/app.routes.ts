@@ -81,6 +81,12 @@ export const routes: Routes = [
         data: { roles: ['admin', 'doctor', 'assistant'] }
       },
       {
+        path: 'chair-board',
+        loadComponent: () => import('./features/chairs/chair-status-board.component').then(m => m.ChairStatusBoardComponent),
+        canActivate: [roleGuard, subscriptionGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
+      },
+      {
         path: 'radiology',
         loadChildren: () => import('./features/radiology/radiology.routes').then(m => m.radiologyRoutes),
         canActivate: [roleGuard, subscriptionGuard],

@@ -1000,5 +1000,36 @@
     "resign": "Re-sign",
     "signed_verified": "Digitally Signed & Verified",
     "signature_saved_success": "Patient consent digital signature saved successfully."
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "clinics": "Clinics",
+    "patients": "Patients",
+    "chair_board": "Operatory Status",
+    "appointments": "Appointments",
+    "radiology": "Radiology",
+    "billing": "Billing",
+    "inventory": "Inventory",
+    "equipment": "Equipment",
+    "doctors": "Doctors",
+    "profile": "Profile",
+    "subscription_plan": "Subscription Plan",
+    "subscription_mgmt": "Subscription Mgmt",
+    "my_portal": "My Portal",
+    "my_bills": "My Invoices"
+  },
+  "chairs": {
+    "title": "Chair & Operatory Live Status Board",
+    "subtitle": "Real-time room availability, patient occupancy, and sterilization tracking",
+    "live_sync": "Live Sync",
+    "total_chairs": "Total Operatories",
+    "status_available": "Ready",
+    "status_occupied": "In Chair",
+    "status_cleaning": "Sterilization",
+    "status_maintenance": "Maintenance",
+    "action_seat_patient": "Seat Patient",
+    "action_discharge_sterilize": "Discharge & Sterilize",
+    "action_mark_ready": "Complete Cleaning",
+    "action_return_to_service": "Return to Service"
   }
 }
