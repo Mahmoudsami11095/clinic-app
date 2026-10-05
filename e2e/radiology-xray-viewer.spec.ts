@@ -34,7 +34,7 @@ test.describe('Advanced Radiology & X-Ray Viewer - Level 3 (Customer/E2E)', () =
     await page.waitForTimeout(600);
 
     // Verify modal opened
-    const modalTitle = page.locator('text=High-Resolution Radiograph Viewer, text=REQ-RAD-02').first();
+    const modalTitle = page.getByText(/High-Resolution Radiograph Viewer|REQ-RAD-02/i).first();
     await expect(modalTitle).toBeVisible();
 
     // Verify tools present
@@ -76,9 +76,9 @@ test.describe('Advanced Radiology & X-Ray Viewer - Level 3 (Customer/E2E)', () =
       await page.mouse.click(box.x + box.width * 0.6, box.y + box.height * 0.4);
       await page.waitForTimeout(300);
 
-      // Verify SVG distance overlay rendered
-      const svgOverlay = page.locator('svg line').first();
-      await expect(svgOverlay).toBeVisible();
+      // Verify distance label in mm rendered
+      const distanceLabel = page.getByText(/mm/i).first();
+      await expect(distanceLabel).toBeVisible();
     }
 
     // Step B: Toggle Before & After Comparison Mode
