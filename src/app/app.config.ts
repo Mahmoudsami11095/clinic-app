@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection, inject, isDevMode, provideAppInitializer } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, inject, isDevMode, provideAppInitializer, DEFAULT_CURRENCY_CODE } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -17,6 +17,7 @@ import { LanguageService } from './core/i18n/language.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    { provide: DEFAULT_CURRENCY_CODE, useValue: 'EGP' },
     provideRouter(routes),
     provideHttpClient(withInterceptors([apiUrlInterceptor, authTokenInterceptor, loadingInterceptor, errorInterceptor])),
     provideAnimations(),

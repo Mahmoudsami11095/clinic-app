@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ToastrService } from 'ngx-toastr';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { OfflineBannerComponent } from './offline-banner.component';
 import { OfflineService } from '../../services/offline.service';
 
@@ -10,6 +10,7 @@ describe('OfflineBannerComponent - Level 1 (SW/Unit)', () => {
   let component: OfflineBannerComponent;
   let fixture: ComponentFixture<OfflineBannerComponent>;
   let offlineService: OfflineService;
+  let translateService: TranslateService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -22,6 +23,19 @@ describe('OfflineBannerComponent - Level 1 (SW/Unit)', () => {
         provideTranslateService({ fallbackLang: 'en' })
       ]
     }).compileComponents();
+
+    translateService = TestBed.inject(TranslateService);
+    translateService.setTranslation('en', {
+      offline: {
+        title: 'Offline Mode Active',
+        description: 'Browsing cached clinic records. Mutations will synchronize when connectivity returns.',
+        changes_queued: 'changes queued',
+        retry: 'Retry Connection',
+        reconnected_title: 'Back Online!',
+        reconnected_description: 'Connected to MedClinic Cloud. Local state is synchronized.'
+      }
+    });
+    translateService.use('en');
 
     fixture = TestBed.createComponent(OfflineBannerComponent);
     component = fixture.componentInstance;

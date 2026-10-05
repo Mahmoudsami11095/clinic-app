@@ -12,10 +12,13 @@ import {
   categorizeProcedureToPhase, 
   calculateTreatmentPlanEstimate 
 } from '../../models/treatment-plan.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { ClinicCurrencyPipe } from '../../../../core/i18n/clinic-currency.pipe';
+
 @Component({
   selector: 'app-treatment-plan-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe, ClinicCurrencyPipe],
   template: `
     <div
       *ngIf="isOpen"
@@ -38,14 +41,14 @@ import {
             <div>
               <div class="flex items-center gap-2">
                 <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                  Multi-Stage Treatment Plan & Cost Estimator
+                  {{ 'treatment_plans.title' | translate }}
                 </h3>
                 <span class="text-xs px-2.5 py-0.5 rounded-full font-mono font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                  Ref: DTP-{{ patient?.id ? (patient!.id | slice:0:6 | uppercase) : '001' }}
+                  {{ 'treatment_plans.ref' | translate }}: DTP-{{ patient?.id ? (patient!.id | slice:0:6 | uppercase) : '001' }}
                 </span>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ patient ? (patient.firstName + ' ' + patient.lastName) : 'Patient' }} • {{ clinicName || 'Main Clinic' }} • {{ totalProceduresCount() }} Planned Procedure(s)
+                {{ patient ? (patient.firstName + ' ' + patient.lastName) : 'Patient' }} • {{ clinicName || 'Main Clinic' }} • {{ totalProceduresCount() }} {{ 'treatment_plans.planned_procedures' | translate }}
               </p>
             </div>
           </div>
@@ -66,7 +69,7 @@ import {
                 [class.dark:text-slate-300]="activeTab() !== 'roadmap'"
               >
                 <i class="pi pi-sitemap text-xs"></i>
-                <span class="hidden sm:inline">Phases & Roadmap</span>
+                <span class="hidden sm:inline">{{ 'treatment_plans.phases_roadmap' | translate }}</span>
               </button>
 
               <button
@@ -82,7 +85,7 @@ import {
                 [class.dark:text-slate-300]="activeTab() !== 'estimator'"
               >
                 <i class="pi pi-calculator text-xs"></i>
-                <span class="hidden sm:inline">Cost Estimator</span>
+                <span class="hidden sm:inline">{{ 'treatment_plans.cost_estimator' | translate }}</span>
               </button>
 
               <button
@@ -98,7 +101,7 @@ import {
                 [class.dark:text-slate-300]="activeTab() !== 'print'"
               >
                 <i class="pi pi-print text-xs"></i>
-                <span class="hidden sm:inline">Document & Consent</span>
+                <span class="hidden sm:inline">{{ 'treatment_plans.document_consent' | translate }}</span>
               </button>
             </div>
 
@@ -196,7 +199,7 @@ import {
                     <div class="text-right">
                       <span class="text-slate-400 text-[10px] uppercase font-bold block">Subtotal</span>
                       <span class="font-mono text-slate-800 dark:text-slate-200 font-bold">
-                        {{ group.subtotal | currency:'EGP':'symbol':'1.0-0' }}
+                        {{ group.subtotal | clinicCurrency:'symbol':'1.0-0' }}
                       </span>
                     </div>
                     <div class="w-24 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
@@ -300,7 +303,7 @@ import {
               <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Gross Subtotal</span>
                 <span class="text-xl font-black font-mono text-slate-800 dark:text-slate-100 mt-1 block">
-                  {{ estimate().grossTotal | currency:'EGP':'symbol':'1.0-0' }}
+                  {{ estimate().grossTotal | clinicCurrency:'symbol':'1.0-0' }}
                 </span>
                 <span class="text-[11px] text-slate-500 mt-0.5 block">{{ totalProceduresCount() }} procedures</span>
               </div>
@@ -310,7 +313,7 @@ import {
                   Discount ({{ discountPercent() }}%)
                 </span>
                 <span class="text-xl font-black font-mono text-amber-600 dark:text-amber-400 mt-1 block">
-                  -{{ estimate().discountAmount | currency:'EGP':'symbol':'1.0-0' }}
+                  -{{ estimate().discountAmount | clinicCurrency:'symbol':'1.0-0' }}
                 </span>
                 <span class="text-[11px] text-slate-500 mt-0.5 block">Clinic / Insurance</span>
               </div>
@@ -320,7 +323,7 @@ import {
                   Net Estimated Total
                 </span>
                 <span class="text-xl font-black font-mono text-indigo-600 dark:text-indigo-400 mt-1 block">
-                  {{ estimate().netTotal | currency:'EGP':'symbol':'1.0-0' }}
+                  {{ estimate().netTotal | clinicCurrency:'symbol':'1.0-0' }}
                 </span>
                 <span class="text-[11px] text-slate-500 mt-0.5 block">Approved Quote</span>
               </div>
@@ -330,7 +333,7 @@ import {
                   Initial Deposit ({{ depositPercent() }}%)
                 </span>
                 <span class="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-1 block">
-                  {{ estimate().depositRequired | currency:'EGP':'symbol':'1.0-0' }}
+                  {{ estimate().depositRequired | clinicCurrency:'symbol':'1.0-0' }}
                 </span>
                 <span class="text-[11px] text-slate-500 mt-0.5 block">Required to start</span>
               </div>
@@ -350,7 +353,7 @@ import {
                       Discount Rate (%)
                     </label>
                     <span class="font-mono font-bold text-amber-600 dark:text-amber-400">
-                      {{ discountPercent() }}% ({{ estimate().discountAmount | currency:'EGP':'symbol':'1.0-0' }})
+                      {{ discountPercent() }}% ({{ estimate().discountAmount | clinicCurrency:'symbol':'1.0-0' }})
                     </span>
                   </div>
                   <input
@@ -388,7 +391,7 @@ import {
                       Required Deposit Rate (%)
                     </label>
                     <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {{ depositPercent() }}% ({{ estimate().depositRequired | currency:'EGP':'symbol':'1.0-0' }})
+                      {{ depositPercent() }}% ({{ estimate().depositRequired | clinicCurrency:'symbol':'1.0-0' }})
                     </span>
                   </div>
                   <input
@@ -435,7 +438,7 @@ import {
                 <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
                   Remaining After Deposit: 
                   <strong class="font-mono text-indigo-600 dark:text-indigo-400">
-                    {{ estimate().remainingBalance | currency:'EGP':'symbol':'1.0-0' }}
+                    {{ estimate().remainingBalance | clinicCurrency:'symbol':'1.0-0' }}
                   </strong>
                 </span>
               </div>
@@ -457,7 +460,7 @@ import {
                       {{ inst.description }}
                     </td>
                     <td class="px-4 py-3 font-mono font-bold text-slate-900 dark:text-slate-100 text-end">
-                      {{ inst.amount | currency:'EGP':'symbol':'1.0-0' }}
+                      {{ inst.amount | clinicCurrency:'symbol':'1.0-0' }}
                     </td>
                   </tr>
                 </tbody>
@@ -472,7 +475,7 @@ import {
                   <span>Financial Action: Immediate Deposit Booking</span>
                 </h5>
                 <p class="text-xs text-indigo-900/80 dark:text-indigo-300/80 mt-0.5">
-                  Generate an official pending billing invoice for the initial required deposit ({{ estimate().depositRequired | currency:'EGP':'symbol':'1.0-0' }}).
+                  Generate an official pending billing invoice for the initial required deposit ({{ estimate().depositRequired | clinicCurrency:'symbol':'1.0-0' }}).
                 </p>
               </div>
 
@@ -547,7 +550,7 @@ import {
                         {{ group.config.title }}
                       </h4>
                       <span class="font-mono text-xs font-bold text-indigo-700">
-                        Subtotal: {{ group.subtotal | currency:'EGP':'symbol':'1.0-0' }}
+                        Subtotal: {{ group.subtotal | clinicCurrency:'symbol':'1.0-0' }}
                       </span>
                     </div>
 
@@ -571,7 +574,7 @@ import {
                           <td class="px-3 py-2 capitalize">{{ item.stage }}</td>
                           <td class="px-3 py-2 text-center">{{ item.estimatedVisits }}</td>
                           <td class="px-3 py-2 text-end font-mono font-bold text-slate-900">
-                            {{ item.cost | currency:'EGP':'symbol':'1.0-0' }}
+                            {{ item.cost | clinicCurrency:'symbol':'1.0-0' }}
                           </td>
                         </tr>
                       </tbody>
@@ -585,23 +588,23 @@ import {
                 <div class="w-72 space-y-1.5 text-xs">
                   <div class="flex justify-between text-slate-600">
                     <span>Gross Treatment Subtotal:</span>
-                    <span class="font-mono font-bold">{{ estimate().grossTotal | currency:'EGP':'symbol':'1.0-0' }}</span>
+                    <span class="font-mono font-bold">{{ estimate().grossTotal | clinicCurrency:'symbol':'1.0-0' }}</span>
                   </div>
                   <div class="flex justify-between text-amber-700">
                     <span>Clinic Discount ({{ discountPercent() }}%):</span>
-                    <span class="font-mono font-bold">-{{ estimate().discountAmount | currency:'EGP':'symbol':'1.0-0' }}</span>
+                    <span class="font-mono font-bold">-{{ estimate().discountAmount | clinicCurrency:'symbol':'1.0-0' }}</span>
                   </div>
                   <div class="flex justify-between text-indigo-900 font-black text-sm pt-1 border-t border-slate-200">
                     <span>Total Estimated Investment:</span>
-                    <span class="font-mono">{{ estimate().netTotal | currency:'EGP':'symbol':'1.0-0' }}</span>
+                    <span class="font-mono">{{ estimate().netTotal | clinicCurrency:'symbol':'1.0-0' }}</span>
                   </div>
                   <div class="flex justify-between text-emerald-700 pt-1 border-t border-slate-200">
                     <span>Required Advance Deposit:</span>
-                    <span class="font-mono font-bold">{{ estimate().depositRequired | currency:'EGP':'symbol':'1.0-0' }}</span>
+                    <span class="font-mono font-bold">{{ estimate().depositRequired | clinicCurrency:'symbol':'1.0-0' }}</span>
                   </div>
                   <div class="flex justify-between text-slate-500 text-[11px]">
                     <span>Remaining Balance:</span>
-                    <span class="font-mono font-bold">{{ estimate().remainingBalance | currency:'EGP':'symbol':'1.0-0' }}</span>
+                    <span class="font-mono font-bold">{{ estimate().remainingBalance | clinicCurrency:'symbol':'1.0-0' }}</span>
                   </div>
                 </div>
               </div>
@@ -664,12 +667,12 @@ import {
           <div class="text-xs text-slate-500 dark:text-slate-400">
             Total Investment: 
             <strong class="font-mono text-slate-800 dark:text-slate-200">
-              {{ estimate().netTotal | currency:'EGP':'symbol':'1.0-0' }}
+              {{ estimate().netTotal | clinicCurrency:'symbol':'1.0-0' }}
             </strong>
             <span class="mx-1">•</span>
             Deposit Required: 
             <strong class="font-mono text-emerald-600 dark:text-emerald-400">
-              {{ estimate().depositRequired | currency:'EGP':'symbol':'1.0-0' }}
+              {{ estimate().depositRequired | clinicCurrency:'symbol':'1.0-0' }}
             </strong>
           </div>
 

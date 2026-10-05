@@ -12,6 +12,7 @@ export class LanguageService {
 
   currentLang = this.currentLangSignal.asReadonly();
   dir = computed(() => this.currentLangSignal() === 'ar' ? 'rtl' : 'ltr');
+  isRtl = computed(() => this.currentLangSignal() === 'ar');
 
   constructor() {
     // Initial sync
@@ -64,7 +65,9 @@ export class LanguageService {
 
   private updateDomAttributes(lang: 'en' | 'ar') {
     const dir = lang === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.dir = dir;
-    document.documentElement.lang = lang;
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.dir = dir;
+      document.documentElement.lang = lang;
+    }
   }
 }
