@@ -6,6 +6,12 @@
       <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'radiology.title' | translate }}</h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ 'radiology.subtitle' | translate }}</p>
     </div>
+
+    <!-- Quick Launch Advanced X-Ray & Radiograph Viewer -->
+    <button (click)="openAdvancedViewer()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl text-sm font-semibold shadow-md flex items-center gap-2 cursor-pointer transition-all">
+      <i class="pi pi-search-plus text-xs"></i>
+      <span>Launch Advanced X-Ray Viewer</span>
+    </button>
   </div>
 
   <!-- Alerts -->
@@ -240,3 +246,13 @@
     </div>
   </form>
 </app-modal>
+
+<!-- Advanced Radiology & High-Resolution X-Ray Viewer Modal -->
+<app-scan-viewer-modal
+  [isOpen]="isScanViewerOpen()"
+  [fileUrl]="selectedScanUrl()"
+  [fileName]="selectedScanName()"
+  [compareFileUrl]="selectedScanCompareUrl()"
+  (close)="isScanViewerOpen.set(false)">
+</app-scan-viewer-modal>
+

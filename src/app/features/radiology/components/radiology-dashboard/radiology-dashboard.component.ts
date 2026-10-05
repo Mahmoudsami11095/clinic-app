@@ -7,18 +7,19 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { ScanViewerModalComponent } from '../../../../shared/components/scan-viewer-modal/scan-viewer-modal.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-radiology-dashboard',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, ModalComponent, TranslatePipe, LocationMapComponent
+    CommonModule, ReactiveFormsModule, ModalComponent, TranslatePipe, LocationMapComponent, ScanViewerModalComponent
   ],
   templateUrl: './radiology-dashboard.component.html'
 })
 export class RadiologyDashboardComponent implements OnInit {
-    private destroyRef = inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
   private radiologyService = inject(RadiologyService);
   private patientService = inject(PatientService);
   protected authService = inject(AuthService);
@@ -33,6 +34,17 @@ export class RadiologyDashboardComponent implements OnInit {
   // Modals
   centerDialogVisible = signal(false);
   recordDialogVisible = signal(false);
+  isScanViewerOpen = signal(false);
+  selectedScanUrl = signal<string | null>(null);
+  selectedScanName = signal<string>('');
+  selectedScanCompareUrl = signal<string | null>(null);
+
+  openAdvancedViewer(record?: RadiologyRecord) {
+    this.selectedScanUrl.set(record?.fileUrl || '/images/welcome-doctor.webp');
+    this.selectedScanName.set(record?.procedureName ? `${record.procedureName} - High-Res Radiograph` : 'Diagnostic Panoramic Radiograph (CBCT)');
+    this.selectedScanCompareUrl.set('/images/welcome-doctor.webp');
+    this.isScanViewerOpen.set(true);
+  }
 
   // Alerts
   successMsg = signal('');
