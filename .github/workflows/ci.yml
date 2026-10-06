@@ -28,7 +28,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build Angular Application (Production Bundle)
         run: npm run build
@@ -61,7 +61,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
