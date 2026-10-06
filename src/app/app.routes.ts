@@ -11,6 +11,19 @@ export const routes: Routes = [
     canActivate: [unauthGuard]
   },
   {
+    path: 'portal/login',
+    loadComponent: () => import('./portal/portal-login/portal-login.component').then(m => m.PortalLoginComponent)
+  },
+  {
+    path: 'portal/dashboard',
+    loadComponent: () => import('./portal/portal-dashboard/portal-dashboard.component').then(m => m.PortalDashboardComponent)
+  },
+  {
+    path: 'portal',
+    redirectTo: 'portal/dashboard',
+    pathMatch: 'full'
+  },
+  {
     path: 'register',
     loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent),
     canActivate: [unauthGuard]
