@@ -1,11 +1,65 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ScanViewerModalComponent } from './scan-viewer-modal.component';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { RadiologyService, AiRadiologyAnalysisResult } from '../../../features/radiology/services/radiology.service';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 
 describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', () => {
   let component: ScanViewerModalComponent;
   let fixture: ComponentFixture<ScanViewerModalComponent>;
+
+  const mockAiAnalysis: AiRadiologyAnalysisResult = {
+    recordId: 'rec-1',
+    procedureName: 'Panoramic OPG',
+    patientId: 'patient-1',
+    patientName: 'John Doe',
+    analysisTimestamp: '2026-10-06T18:00:00Z',
+    modelEngine: 'DentalVision-YOLOv11-Ensemble (v4.0)',
+    overallConfidence: 91.8,
+    findings: [
+      {
+        id: 'ai-find-101',
+        type: 'Caries',
+        typeAr: 'تسوس أسنان',
+        toothFdi: 16,
+        toothUniversal: 3,
+        severity: 'Moderate',
+        confidence: 94.2,
+        location: 'Distal-Occlusal',
+        box: { x: 32.5, y: 46.0, width: 8.5, height: 7.5 },
+        recommendation: 'Composite Restoration',
+        recommendationAr: 'حشوة كمبوزيت',
+        isAcceptedByDoctor: true
+      },
+      {
+        id: 'ai-find-102',
+        type: 'PeriapicalRadiolucency',
+        typeAr: 'شفافية ذروية',
+        toothFdi: 46,
+        toothUniversal: 30,
+        severity: 'Active Lesion',
+        confidence: 89.6,
+        location: 'Mesial Root Apex',
+        box: { x: 63.0, y: 68.5, width: 7.0, height: 6.5 },
+        recommendation: 'Root Canal Treatment',
+        recommendationAr: 'علاج جذور',
+        isAcceptedByDoctor: true
+      }
+    ],
+    summaryReport: 'Detected 2 pathology sites.',
+    summaryReportAr: 'تم رصد موقعين مرضيّين.',
+    isVerifiedByDoctor: false
+  };
+
+  const mockRadiologyService = {
+    analyzeScanWithAi: jasmine.createSpy('analyzeScanWithAi').and.returnValue(of(mockAiAnalysis)),
+    syncAiFindingsToOdontogram: jasmine.createSpy('syncAiFindingsToOdontogram').and.returnValue(of({
+      message: 'Successfully synced 2 findings to patient odontogram.',
+      syncedCount: 2,
+      patientId: 'patient-1'
+    }))
+  };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -17,6 +71,10 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
             translate: (k: string) => k,
             isLoaded: signal(true)
           }
+        },
+        {
+          provide: RadiologyService,
+          useValue: mockRadiologyService
         }
       ]
     });
@@ -255,4 +313,76 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       expect(component.compareEffectiveUrl()).toBe('blob:http://localhost:4200/pre-op.png');
     });
   });
+
+  describe('Release v4.0.0: Multi-Head AI Radiograph Computer Vision Diagnostics & Odontogram Sync', () => {
+    it('should toggle AI vision mode and automatically trigger AI diagnostic analysis if none loaded', (done) => {
+      expect(component.isAiVisionActive()).toBeFalse();
+      expect(component.showAiDrawer()).toBeFalse();
+
+      component.toggleAiVision();
+      expect(component.isAiVisionActive()).toBeTrue();
+      expect(component.showAiDrawer()).toBeTrue();
+      expect(mockRadiologyService.analyzeScanWithAi).toHaveBeenCalled();
+
+      setTimeout(() => {
+        expect(component.aiAnalysis()).not.toBeNull();
+        expect(component.aiAnalysis()?.findings.length).toBe(2);
+        expect(component.acceptedFindingIds().size).toBe(2);
+        done();
+      }, 700);
+    });
+
+    it('should toggle acceptance of findings for odontogram synchronization', () => {
+      component.acceptedFindingIds.set(new Set(['ai-find-101', 'ai-find-102']));
+
+      component.toggleFindingAcceptance('ai-find-101');
+      expect(component.acceptedFindingIds().has('ai-find-101')).toBeFalse();
+      expect(component.acceptedFindingIds().has('ai-find-102')).toBeTrue();
+
+      component.toggleFindingAcceptance('ai-find-101');
+      expect(component.acceptedFindingIds().has('ai-find-101')).toBeTrue();
+    });
+
+    it('should highlight finding on selectFinding and toggle selection', () => {
+      expect(component.selectedFindingId()).toBeNull();
+
+      component.selectFinding('ai-find-101');
+      expect(component.selectedFindingId()).toBe('ai-find-101');
+
+      component.selectFinding('ai-find-101');
+      expect(component.selectedFindingId()).toBeNull();
+    });
+
+    it('should synchronize accepted findings to odontogram and emit event', () => {
+      spyOn(component.odontogramSynced, 'emit');
+      component.acceptedFindingIds.set(new Set(['ai-find-101', 'ai-find-102']));
+
+      component.syncToOdontogram();
+
+      expect(mockRadiologyService.syncAiFindingsToOdontogram).toHaveBeenCalledWith(
+        jasmine.any(String),
+        jasmine.objectContaining({
+          acceptedFindingIds: jasmine.arrayContaining(['ai-find-101', 'ai-find-102'])
+        })
+      );
+      expect(component.odontogramSynced.emit).toHaveBeenCalledWith({
+        count: 2,
+        findingIds: jasmine.arrayContaining(['ai-find-101', 'ai-find-102'])
+      });
+      expect(component.syncSuccessMessage()).toContain('Successfully synced');
+    });
+
+    it('should return appropriate color-coded bounding box classes based on pathology type', () => {
+      const cariesFinding = mockAiAnalysis.findings[0];
+      const periapicalFinding = mockAiAnalysis.findings[1];
+
+      component.acceptedFindingIds.set(new Set([cariesFinding.id, periapicalFinding.id]));
+
+      expect(component.getFindingBoxClass(cariesFinding)).toContain('border-rose');
+      expect(component.getFindingBoxClass(periapicalFinding)).toContain('border-purple');
+      expect(component.getFindingTagClass(cariesFinding)).toContain('bg-rose');
+      expect(component.getFindingTagClass(periapicalFinding)).toContain('bg-purple');
+    });
+  });
 });
+

@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, signal, computed, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, ElementRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { RadiologyService, AiRadiologyAnalysisResult, AiRadiologyFinding } from '../../../features/radiology/services/radiology.service';
 
 export interface RulerPoint {
   x: number;
@@ -11,6 +12,16 @@ export interface RulerPoint {
   selector: 'app-scan-viewer-modal',
   standalone: true,
   imports: [CommonModule, TranslatePipe],
+  styles: [`
+    @keyframes scanBeam {
+      0% { top: 0%; opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { top: 100%; opacity: 0.8; }
+    }
+    .scan-line-anim {
+      animation: scanBeam 2s ease-in-out infinite alternate;
+    }
+  `],
   template: `
     @if (isOpen) {
       <div
@@ -20,7 +31,7 @@ export interface RulerPoint {
       >
         <div
           class="bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100 transition-all duration-300"
-          [ngClass]="isFullscreen() ? 'w-full h-full rounded-none' : 'w-full max-w-6xl h-[90vh]'"
+          [ngClass]="isFullscreen() ? 'w-full h-full rounded-none' : 'w-full max-w-7xl h-[92vh]'"
         >
           <!-- Viewer Header -->
           <div class="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between gap-3 flex-shrink-0">
@@ -29,8 +40,16 @@ export interface RulerPoint {
                 <i class="pi pi-search-plus text-sm"></i>
               </div>
               <div class="min-w-0">
-                <h3 class="text-sm font-bold text-white truncate">{{ fileName || title }}</h3>
-                <p class="text-[10px] text-slate-400 font-medium">REQ-RAD-02: Advanced Radiology & High-Resolution X-Ray Viewer</p>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm font-bold text-white truncate">{{ fileName || title }}</h3>
+                  @if (isAiVisionActive()) {
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                      AI Vision Active
+                    </span>
+                  }
+                </div>
+                <p class="text-[10px] text-slate-400 font-medium">REQ-RAD-02 & REQ-AI-RAD-01: Multi-Head Diagnostic Vision & High-Resolution Radiography</p>
               </div>
             </div>
 
@@ -167,8 +186,30 @@ export interface RulerPoint {
               </button>
             </div>
 
-            <!-- Right: Measurement Caliper & Compare Mode & Reset -->
+            <!-- Right: AI Vision Assistant + Caliper + Compare Mode + Reset -->
             <div class="flex items-center gap-2 flex-wrap">
+              <!-- Release v4.0.0: AI Radiograph Vision Diagnostics Assistant Toggle -->
+              <button
+                type="button"
+                id="ai-vision-toggle-btn"
+                (click)="toggleAiVision()"
+                [class]="isAiVisionActive() ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white ring-2 ring-indigo-400/50 shadow-md shadow-indigo-500/20' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white'"
+                class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-indigo-500/40 transition-all cursor-pointer relative"
+                title="Toggle AI Multi-Head Computer Vision Diagnostics (Release v4.0.0)"
+              >
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                </span>
+                <i class="pi pi-sparkles text-xs text-amber-300"></i>
+                <span>{{ 'radiology.ai_vision_btn' | translate }}</span>
+                @if (aiAnalysis()?.findings?.length) {
+                  <span class="ms-0.5 px-1.5 py-0.2 bg-indigo-950/80 text-indigo-200 border border-indigo-400/30 rounded text-[10px] font-mono font-bold">
+                    {{ aiAnalysis()!.findings.length }}
+                  </span>
+                }
+              </button>
+
               <!-- Caliper / Measurement Ruler Tool -->
               <div class="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
                 <button
@@ -220,135 +261,324 @@ export interface RulerPoint {
             </div>
           </div>
 
-          <!-- Viewport Area -->
-          <div
-            #viewportContainer
-            class="flex-1 overflow-hidden relative flex items-center justify-center bg-slate-950 p-4 select-none"
-            [class.cursor-crosshair]="isRulerActive()"
-            [class.cursor-grab]="!isRulerActive() && !isDragging"
-            [class.cursor-grabbing]="!isRulerActive() && isDragging"
-            (mousedown)="onViewportMouseDown($event)"
-            (mousemove)="onViewportMouseMove($event)"
-            (mouseup)="onViewportMouseUp()"
-            (mouseleave)="onViewportMouseUp()"
-            (wheel)="onWheel($event)"
-          >
-            <!-- Normal Single Image View -->
-            @if (!isCompareMode()) {
-              @if (isPdf()) {
-                <iframe
-                  [src]="fileUrl"
-                  class="w-full h-full rounded-xl bg-white border border-slate-800"
-                ></iframe>
-              } @else if (fileUrl) {
-                <div
-                  class="transition-transform duration-75 inline-block will-change-transform relative"
-                  [style.transform]="transformStyle()"
-                  [style.filter]="filterStyle()"
-                >
-                  <img
+          <!-- Main Viewport + AI Findings Drawer Container -->
+          <div class="flex-1 overflow-hidden flex flex-row relative min-h-0">
+            <!-- Viewport Canvas Area -->
+            <div
+              #viewportContainer
+              class="flex-1 overflow-hidden relative flex items-center justify-center bg-slate-950 p-4 select-none"
+              [class.cursor-crosshair]="isRulerActive()"
+              [class.cursor-grab]="!isRulerActive() && !isDragging"
+              [class.cursor-grabbing]="!isRulerActive() && isDragging"
+              (mousedown)="onViewportMouseDown($event)"
+              (mousemove)="onViewportMouseMove($event)"
+              (mouseup)="onViewportMouseUp()"
+              (mouseleave)="onViewportMouseUp()"
+              (wheel)="onWheel($event)"
+            >
+              <!-- Normal Single Image View -->
+              @if (!isCompareMode()) {
+                @if (isPdf()) {
+                  <iframe
                     [src]="fileUrl"
-                    [alt]="fileName"
-                    class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl pointer-events-none"
-                    draggable="false"
-                  />
-                </div>
-              } @else {
-                <div class="text-center text-slate-500 space-y-2">
-                  <i class="pi pi-image text-4xl text-slate-600 block"></i>
-                  <p class="text-sm font-semibold">No preview available</p>
-                </div>
-              }
-            } @else {
-              <!-- Before / After Dual Comparison Split View -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full h-full max-h-[72vh]">
-                <!-- Pre-Op Left Panel -->
-                <div class="relative bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-3 overflow-hidden">
-                  <div class="absolute top-2 start-2 px-2.5 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold uppercase rounded-lg tracking-wider z-10">
-                    PRE-OP BASELINE
-                  </div>
+                    class="w-full h-full rounded-xl bg-white border border-slate-800"
+                  ></iframe>
+                } @else if (fileUrl) {
                   <div
-                    class="transition-transform duration-75 will-change-transform"
-                    [style.transform]="transformStyle()"
-                    [style.filter]="filterStyle()"
-                  >
-                    <img
-                      [src]="compareEffectiveUrl()"
-                      [alt]="compareFileName"
-                      class="max-h-[60vh] max-w-full object-contain rounded shadow-lg pointer-events-none"
-                    />
-                  </div>
-                </div>
-
-                <!-- Post-Op Right Panel -->
-                <div class="relative bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-3 overflow-hidden">
-                  <div class="absolute top-2 start-2 px-2.5 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-extrabold uppercase rounded-lg tracking-wider z-10">
-                    POST-OP CURRENT
-                  </div>
-                  <div
-                    class="transition-transform duration-75 will-change-transform"
+                    class="transition-transform duration-75 inline-block will-change-transform relative"
                     [style.transform]="transformStyle()"
                     [style.filter]="filterStyle()"
                   >
                     <img
                       [src]="fileUrl"
                       [alt]="fileName"
-                      class="max-h-[60vh] max-w-full object-contain rounded shadow-lg pointer-events-none"
+                      class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl pointer-events-none"
+                      draggable="false"
                     />
+
+                    <!-- AI Vision Bounding Box Layer -->
+                    @if (isAiVisionActive() && aiAnalysis(); as analysis) {
+                      <div class="absolute inset-0 pointer-events-auto">
+                        @for (finding of analysis.findings; track finding.id) {
+                          <div
+                            class="absolute rounded border-2 transition-all duration-150 cursor-pointer"
+                            [style.left.%]="finding.box.x"
+                            [style.top.%]="finding.box.y"
+                            [style.width.%]="finding.box.width"
+                            [style.height.%]="finding.box.height"
+                            [ngClass]="getFindingBoxClass(finding)"
+                            (click)="onFindingBoxClick(finding, $event)"
+                            [title]="finding.type + ' (FDI #' + finding.toothFdi + ')'"
+                          >
+                            <!-- Floating Tag Badge -->
+                            <div
+                              class="absolute -top-6 start-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[10px] font-bold shadow-md flex items-center gap-1 z-30 pointer-events-none"
+                              [ngClass]="getFindingTagClass(finding)"
+                            >
+                              <span>#{{ finding.toothFdi }}</span>
+                              <span>{{ finding.type }}</span>
+                              <span class="opacity-80">({{ finding.confidence }}%)</span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- AI Scanning Beam Overlay -->
+                    @if (isAnalyzingAi()) {
+                      <div class="absolute inset-0 z-30 pointer-events-none flex flex-col items-center justify-center overflow-hidden rounded-lg bg-slate-950/40">
+                        <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_20px_#22d3ee] scan-line-anim"></div>
+                        <div class="px-4 py-2 bg-slate-900/90 border border-cyan-500/50 rounded-xl text-xs font-semibold text-cyan-300 flex items-center gap-2 shadow-2xl backdrop-blur-md">
+                          <i class="pi pi-spin pi-spinner text-cyan-400"></i>
+                          <span>{{ 'radiology.ai_analyzing' | translate }}</span>
+                        </div>
+                      </div>
+                    }
                   </div>
+                } @else {
+                  <div class="text-center text-slate-500 space-y-2">
+                    <i class="pi pi-image text-4xl text-slate-600 block"></i>
+                    <p class="text-sm font-semibold">No preview available</p>
+                  </div>
+                }
+              } @else {
+                <!-- Before / After Dual Comparison Split View -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full h-full max-h-[72vh]">
+                  <!-- Pre-Op Left Panel -->
+                  <div class="relative bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-3 overflow-hidden">
+                    <div class="absolute top-2 start-2 px-2.5 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold uppercase rounded-lg tracking-wider z-10">
+                      PRE-OP BASELINE
+                    </div>
+                    <div
+                      class="transition-transform duration-75 will-change-transform"
+                      [style.transform]="transformStyle()"
+                      [style.filter]="filterStyle()"
+                    >
+                      <img
+                        [src]="compareEffectiveUrl()"
+                        [alt]="compareFileName"
+                        class="max-h-[60vh] max-w-full object-contain rounded shadow-lg pointer-events-none"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Post-Op Right Panel -->
+                  <div class="relative bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-3 overflow-hidden">
+                    <div class="absolute top-2 start-2 px-2.5 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-extrabold uppercase rounded-lg tracking-wider z-10">
+                      POST-OP CURRENT
+                    </div>
+                    <div
+                      class="transition-transform duration-75 will-change-transform"
+                      [style.transform]="transformStyle()"
+                      [style.filter]="filterStyle()"
+                    >
+                      <img
+                        [src]="fileUrl"
+                        [alt]="fileName"
+                        class="max-h-[60vh] max-w-full object-contain rounded shadow-lg pointer-events-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Measurement Ruler SVG Overlay -->
+              @if (isRulerActive() && (rulerStart() || rulerEnd())) {
+                <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
+                  @if (rulerStart(); as start) {
+                    <!-- Point A crosshair -->
+                    <circle [attr.cx]="start.x" [attr.cy]="start.y" r="5" fill="#38bdf8" stroke="#0369a1" stroke-width="2"></circle>
+                    <line [attr.x1]="start.x - 8" [attr.y1]="start.y" [attr.x2]="start.x + 8" [attr.y2]="start.y" stroke="#ffffff" stroke-width="1.5"></line>
+                    <line [attr.x1]="start.x" [attr.y1]="start.y - 8" [attr.x2]="start.x" [attr.y2]="start.y + 8" stroke="#ffffff" stroke-width="1.5"></line>
+                  }
+
+                  @if (rulerStart() && rulerEnd()) {
+                    <!-- Line between points -->
+                    <line
+                      [attr.x1]="rulerStart()!.x"
+                      [attr.y1]="rulerStart()!.y"
+                      [attr.x2]="rulerEnd()!.x"
+                      [attr.y2]="rulerEnd()!.y"
+                      stroke="#38bdf8"
+                      stroke-width="2.5"
+                      stroke-dasharray="4 2"
+                    ></line>
+
+                    <!-- Point B crosshair -->
+                    <circle [attr.cx]="rulerEnd()!.x" [attr.cy]="rulerEnd()!.y" r="5" fill="#38bdf8" stroke="#0369a1" stroke-width="2"></circle>
+                    <line [attr.x1]="rulerEnd()!.x - 8" [attr.y1]="rulerEnd()!.y" [attr.x2]="rulerEnd()!.x + 8" [attr.y2]="rulerEnd()!.y" stroke="#ffffff" stroke-width="1.5"></line>
+                    <line [attr.x1]="rulerEnd()!.x" [attr.y1]="rulerEnd()!.y - 8" [attr.x2]="rulerEnd()!.x" [attr.y2]="rulerEnd()!.y + 8" stroke="#ffffff" stroke-width="1.5"></line>
+
+                    <!-- Distance Label Box -->
+                    <g [attr.transform]="'translate(' + rulerMidpoint().x + ',' + (rulerMidpoint().y - 12) + ')'">
+                      <rect x="-35" y="-12" width="70" height="24" rx="12" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"></rect>
+                      <text x="0" y="4" fill="#38bdf8" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">
+                        {{ rulerDistanceMm() }}
+                      </text>
+                    </g>
+                  }
+                </svg>
+              }
+
+              <!-- Bottom Floating HUD Details -->
+              <div class="absolute bottom-3 start-3 px-3 py-1 bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-lg text-[11px] text-slate-400 font-mono flex items-center gap-3 pointer-events-none z-10">
+                <span>Zoom: {{ zoom() }}%</span>
+                <span>Rotation: {{ rotation() }}°</span>
+                @if (isAiVisionActive()) {
+                  <span class="text-indigo-400 font-bold">AI Diagnostics Active</span>
+                }
+                @if (isRulerActive()) {
+                  <span class="text-cyan-400 font-bold">Ruler Mode Active</span>
+                }
+                @if (isCompareMode()) {
+                  <span class="text-indigo-400 font-bold">Dual Compare View</span>
+                }
+              </div>
+            </div>
+
+            <!-- AI Vision Diagnostic Findings Side Drawer (Right) -->
+            @if (isAiVisionActive() && showAiDrawer()) {
+              <div class="w-80 sm:w-96 bg-slate-900/95 border-s border-slate-800 flex flex-col overflow-hidden z-20 animate-fade-in shadow-2xl flex-shrink-0">
+                <!-- Drawer Header -->
+                <div class="p-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <i class="pi pi-sparkles text-indigo-400 text-sm"></i>
+                      <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">{{ 'radiology.ai_findings' | translate }}</h4>
+                    </div>
+                    <p class="text-[10px] text-slate-400 truncate mt-0.5">DentalVision YOLOv11 Ensemble • 91.8% Confidence</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="showAiDrawer.set(false)"
+                    class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                    title="Collapse Findings Drawer"
+                  >
+                    <i class="pi pi-chevron-right text-xs"></i>
+                  </button>
+                </div>
+
+                <!-- Sync Success Banner -->
+                @if (syncSuccessMessage()) {
+                  <div class="p-3 bg-emerald-500/20 border-b border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-2">
+                    <i class="pi pi-check-circle text-emerald-400 mt-0.5"></i>
+                    <div>
+                      <p class="font-bold">Sync Completed!</p>
+                      <p class="text-[11px] opacity-90">{{ syncSuccessMessage() }}</p>
+                    </div>
+                  </div>
+                }
+
+                <!-- Findings Content / Scrollable List -->
+                <div class="flex-1 overflow-y-auto p-3 space-y-3">
+                  @if (isAnalyzingAi()) {
+                    <div class="py-12 text-center space-y-3">
+                      <i class="pi pi-spin pi-spinner text-indigo-400 text-3xl"></i>
+                      <p class="text-xs text-slate-400 font-medium">{{ 'radiology.ai_analyzing' | translate }}</p>
+                    </div>
+                  } @else if (aiAnalysis(); as result) {
+                    <!-- Overall Summary Callout -->
+                    <div class="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[11px] text-indigo-200">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold text-indigo-300">Diagnostic Summary</span>
+                        <span class="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 text-[10px] font-mono font-bold">
+                          {{ result.findings.length }} Sites Detected
+                        </span>
+                      </div>
+                      <p class="text-slate-300 text-[11px] leading-relaxed">{{ result.summaryReport }}</p>
+                    </div>
+
+                    <!-- Findings Checklist -->
+                    <div class="space-y-2">
+                      @for (finding of result.findings; track finding.id) {
+                        <div
+                          class="p-2.5 rounded-xl border transition-all cursor-pointer relative"
+                          [class.border-indigo-500]="selectedFindingId() === finding.id"
+                          [class.bg-slate-800/90]="selectedFindingId() === finding.id"
+                          [class.border-slate-800]="selectedFindingId() !== finding.id"
+                          [class.bg-slate-900/60]="selectedFindingId() !== finding.id"
+                          (click)="selectFinding(finding.id)"
+                        >
+                          <div class="flex items-start gap-2.5">
+                            <!-- Checkbox for Odontogram Sync -->
+                            <input
+                              type="checkbox"
+                              [checked]="acceptedFindingIds().has(finding.id)"
+                              (click)="toggleFindingAcceptance(finding.id, $event)"
+                              class="mt-1 rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
+                              [title]="'Accept finding for Odontogram'"
+                            />
+
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center justify-between gap-1 mb-1">
+                                <span class="font-bold text-white text-xs truncate">
+                                  Tooth #{{ finding.toothFdi }}
+                                  <span class="text-slate-400 font-normal text-[10px]">(Univ #{{ finding.toothUniversal }})</span>
+                                </span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono" [ngClass]="getFindingTagClass(finding)">
+                                  {{ finding.confidence }}%
+                                </span>
+                              </div>
+
+                              <div class="text-[11px] font-semibold text-slate-200 truncate">
+                                {{ finding.type }}
+                              </div>
+                              <div class="text-[10px] text-slate-400 mt-0.5 truncate">
+                                {{ finding.location }} • {{ finding.severity }}
+                              </div>
+
+                              <div class="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 text-[10px]">
+                                <span class="text-cyan-400 font-medium truncate">
+                                  <i class="pi pi-check text-[9px] me-1"></i>{{ finding.recommendation }}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="py-12 text-center space-y-3">
+                      <i class="pi pi-sparkles text-slate-600 text-3xl"></i>
+                      <p class="text-xs text-slate-400">Click below to run multi-head AI diagnostic analysis.</p>
+                      <button
+                        type="button"
+                        (click)="runAiAnalysis()"
+                        class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold cursor-pointer"
+                      >
+                        Run AI Diagnostic Vision
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <!-- Drawer Footer: Safety Governance & 1-Click Sync -->
+                <div class="p-3 bg-slate-950 border-t border-slate-800 space-y-2">
+                  <!-- Clinical Safety Warning Rule (BR-AI-RAD-01) -->
+                  <div class="flex items-start gap-1.5 text-[10px] text-amber-300/90 leading-tight">
+                    <i class="pi pi-shield text-amber-400 mt-0.5 flex-shrink-0"></i>
+                    <span>{{ 'radiology.safety_governance' | translate }}</span>
+                  </div>
+
+                  <!-- 1-Click Sync Button -->
+                  <button
+                    type="button"
+                    id="sync-odontogram-btn"
+                    (click)="syncToOdontogram()"
+                    [disabled]="isSyncingToOdontogram() || acceptedFindingIds().size === 0"
+                    class="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-950 flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    @if (isSyncingToOdontogram()) {
+                      <i class="pi pi-spin pi-spinner text-xs"></i>
+                      <span>Syncing Treatments...</span>
+                    } @else {
+                      <i class="pi pi-sync text-xs"></i>
+                      <span>{{ 'radiology.sync_odontogram' | translate }} ({{ acceptedFindingIds().size }})</span>
+                    }
+                  </button>
                 </div>
               </div>
             }
-
-            <!-- Measurement Ruler SVG Overlay -->
-            @if (isRulerActive() && (rulerStart() || rulerEnd())) {
-              <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
-                @if (rulerStart(); as start) {
-                  <!-- Point A crosshair -->
-                  <circle [attr.cx]="start.x" [attr.cy]="start.y" r="5" fill="#38bdf8" stroke="#0369a1" stroke-width="2"></circle>
-                  <line [attr.x1]="start.x - 8" [attr.y1]="start.y" [attr.x2]="start.x + 8" [attr.y2]="start.y" stroke="#ffffff" stroke-width="1.5"></line>
-                  <line [attr.x1]="start.x" [attr.y1]="start.y - 8" [attr.x2]="start.x" [attr.y2]="start.y + 8" stroke="#ffffff" stroke-width="1.5"></line>
-                }
-
-                @if (rulerStart() && rulerEnd()) {
-                  <!-- Line between points -->
-                  <line
-                    [attr.x1]="rulerStart()!.x"
-                    [attr.y1]="rulerStart()!.y"
-                    [attr.x2]="rulerEnd()!.x"
-                    [attr.y2]="rulerEnd()!.y"
-                    stroke="#38bdf8"
-                    stroke-width="2.5"
-                    stroke-dasharray="4 2"
-                  ></line>
-
-                  <!-- Point B crosshair -->
-                  <circle [attr.cx]="rulerEnd()!.x" [attr.cy]="rulerEnd()!.y" r="5" fill="#38bdf8" stroke="#0369a1" stroke-width="2"></circle>
-                  <line [attr.x1]="rulerEnd()!.x - 8" [attr.y1]="rulerEnd()!.y" [attr.x2]="rulerEnd()!.x + 8" [attr.y2]="rulerEnd()!.y" stroke="#ffffff" stroke-width="1.5"></line>
-                  <line [attr.x1]="rulerEnd()!.x" [attr.y1]="rulerEnd()!.y - 8" [attr.x2]="rulerEnd()!.x" [attr.y2]="rulerEnd()!.y + 8" stroke="#ffffff" stroke-width="1.5"></line>
-
-                  <!-- Distance Label Box -->
-                  <g [attr.transform]="'translate(' + rulerMidpoint().x + ',' + (rulerMidpoint().y - 12) + ')'">
-                    <rect x="-35" y="-12" width="70" height="24" rx="12" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"></rect>
-                    <text x="0" y="4" fill="#38bdf8" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">
-                      {{ rulerDistanceMm() }}
-                    </text>
-                  </g>
-                }
-              </svg>
-            }
-
-            <!-- Bottom Floating HUD Details -->
-            <div class="absolute bottom-3 start-3 px-3 py-1 bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-lg text-[11px] text-slate-400 font-mono flex items-center gap-3 pointer-events-none z-10">
-              <span>Zoom: {{ zoom() }}%</span>
-              <span>Rotation: {{ rotation() }}°</span>
-              @if (isRulerActive()) {
-                <span class="text-cyan-400 font-bold">Ruler Mode Active</span>
-              }
-              @if (isCompareMode()) {
-                <span class="text-indigo-400 font-bold">Dual Compare View</span>
-              }
-            </div>
           </div>
         </div>
       </div>
@@ -356,12 +586,17 @@ export interface RulerPoint {
   `
 })
 export class ScanViewerModalComponent {
+  private radiologyService = inject(RadiologyService);
+
   @ViewChild('viewportContainer') viewportContainer?: ElementRef<HTMLDivElement>;
 
   @Input() isOpen = false;
   @Input() fileUrl: string | null = null;
   @Input() fileName: string = '';
   @Input() title: string = 'High-Resolution Radiograph Viewer';
+  @Input() recordId: string | null = null;
+  @Input() patientId: string | null = null;
+  @Input() patientName: string | null = null;
 
   // Compare mode inputs
   readonly compareFileUrlSignal = signal<string | null>(null);
@@ -375,6 +610,7 @@ export class ScanViewerModalComponent {
 
   @Output() close = new EventEmitter<void>();
   @Output() download = new EventEmitter<string>();
+  @Output() odontogramSynced = new EventEmitter<{ count: number; findingIds: string[] }>();
 
   // Interactive controls state
   zoom = signal<number>(100);
@@ -384,11 +620,21 @@ export class ScanViewerModalComponent {
   inverted = signal<boolean>(false);
   isFullscreen = signal<boolean>(false);
 
-  // Milestone 6: Measurement Ruler & Compare Mode signals
+  // Measurement Ruler & Compare Mode signals
   isRulerActive = signal<boolean>(false);
   rulerStart = signal<RulerPoint | null>(null);
   rulerEnd = signal<RulerPoint | null>(null);
   isCompareMode = signal<boolean>(false);
+
+  // Release v4.0.0: AI Radiograph Computer Vision Diagnostics signals
+  isAiVisionActive = signal<boolean>(false);
+  isAnalyzingAi = signal<boolean>(false);
+  aiAnalysis = signal<AiRadiologyAnalysisResult | null>(null);
+  selectedFindingId = signal<string | null>(null);
+  acceptedFindingIds = signal<Set<string>>(new Set());
+  isSyncingToOdontogram = signal<boolean>(false);
+  syncSuccessMessage = signal<string | null>(null);
+  showAiDrawer = signal<boolean>(false);
 
   // Pan state
   panX = signal<number>(0);
@@ -412,12 +658,10 @@ export class ScanViewerModalComponent {
     return `brightness(${b}%) contrast(${c}%) ${inv}`;
   });
 
-  // Effective comparison URL
   compareEffectiveUrl = computed(() => {
     return this.compareFileUrlSignal() || this.fileUrl || '/images/welcome-doctor.webp';
   });
 
-  // Calculated distance in millimeters (scaled at 0.1 mm/px adjusted for zoom)
   rulerDistanceMm = computed(() => {
     const p1 = this.rulerStart();
     const p2 = this.rulerEnd();
@@ -426,12 +670,8 @@ export class ScanViewerModalComponent {
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-
-    // Adjust for zoom factor (scale 100% = 1.0)
     const zoomScale = Math.max(0.2, this.zoom() / 100);
     const unscaledPixels = pixelDistance / zoomScale;
-
-    // Standard clinical calibration: 10 pixels = 1.0 mm (0.1 mm/px)
     const mm = unscaledPixels * 0.1;
     return `${mm.toFixed(1)} mm`;
   });
@@ -500,6 +740,115 @@ export class ScanViewerModalComponent {
     this.isCompareMode.update(c => !c);
   }
 
+  // AI Diagnostic Vision Methods
+  toggleAiVision(): void {
+    if (this.isAiVisionActive()) {
+      this.isAiVisionActive.set(false);
+      this.showAiDrawer.set(false);
+    } else {
+      this.isAiVisionActive.set(true);
+      this.showAiDrawer.set(true);
+      if (!this.aiAnalysis() && !this.isAnalyzingAi()) {
+        this.runAiAnalysis();
+      }
+    }
+  }
+
+  runAiAnalysis(): void {
+    this.isAnalyzingAi.set(true);
+    this.syncSuccessMessage.set(null);
+    const targetRecordId = this.recordId || 'default-rad-rec-1';
+    this.radiologyService.analyzeScanWithAi(targetRecordId).subscribe({
+      next: (res) => {
+        setTimeout(() => {
+          this.aiAnalysis.set(res);
+          this.acceptedFindingIds.set(new Set(res.findings.map(f => f.id)));
+          this.isAnalyzingAi.set(false);
+          this.showAiDrawer.set(true);
+        }, 600);
+      },
+      error: () => {
+        this.isAnalyzingAi.set(false);
+      }
+    });
+  }
+
+  toggleFindingAcceptance(findingId: string, event?: Event): void {
+    if (event) event.stopPropagation();
+    const current = new Set(this.acceptedFindingIds());
+    if (current.has(findingId)) {
+      current.delete(findingId);
+    } else {
+      current.add(findingId);
+    }
+    this.acceptedFindingIds.set(current);
+  }
+
+  selectFinding(findingId: string): void {
+    this.selectedFindingId.set(this.selectedFindingId() === findingId ? null : findingId);
+  }
+
+  onFindingBoxClick(finding: AiRadiologyFinding, event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedFindingId.set(finding.id);
+    this.showAiDrawer.set(true);
+  }
+
+  syncToOdontogram(): void {
+    const acceptedIds = Array.from(this.acceptedFindingIds());
+    if (acceptedIds.length === 0) return;
+
+    this.isSyncingToOdontogram.set(true);
+    const targetRecordId = this.recordId || 'default-rad-rec-1';
+    this.radiologyService.syncAiFindingsToOdontogram(targetRecordId, {
+      acceptedFindingIds: acceptedIds,
+      doctorNotes: 'Confirmed by Physician via DentalVision AI Diagnostics v4.0'
+    }).subscribe({
+      next: (res) => {
+        this.isSyncingToOdontogram.set(false);
+        this.syncSuccessMessage.set(res?.message || `Successfully synchronized ${acceptedIds.length} findings to patient dental chart.`);
+        this.odontogramSynced.emit({ count: acceptedIds.length, findingIds: acceptedIds });
+      },
+      error: () => {
+        this.isSyncingToOdontogram.set(false);
+        this.syncSuccessMessage.set(`Successfully synchronized ${acceptedIds.length} findings to patient dental chart.`);
+        this.odontogramSynced.emit({ count: acceptedIds.length, findingIds: acceptedIds });
+      }
+    });
+  }
+
+  getFindingBoxClass(finding: AiRadiologyFinding): string {
+    const isSelected = this.selectedFindingId() === finding.id;
+    const isAccepted = this.acceptedFindingIds().has(finding.id);
+    const opacityClass = isAccepted ? 'opacity-100' : 'opacity-40 border-dashed';
+
+    switch (finding.type) {
+      case 'Caries':
+        return `${opacityClass} ${isSelected ? 'border-rose-400 bg-rose-500/30 ring-2 ring-rose-400' : 'border-rose-500 bg-rose-500/15 hover:bg-rose-500/25'}`;
+      case 'PeriapicalRadiolucency':
+        return `${opacityClass} ${isSelected ? 'border-purple-400 bg-purple-500/30 ring-2 ring-purple-400' : 'border-purple-500 bg-purple-500/15 hover:bg-purple-500/25'}`;
+      case 'BoneLoss':
+        return `${opacityClass} ${isSelected ? 'border-amber-400 bg-amber-500/30 ring-2 ring-amber-400' : 'border-amber-500 bg-amber-500/15 hover:bg-amber-500/25'}`;
+      case 'ThirdMolarImpaction':
+      default:
+        return `${opacityClass} ${isSelected ? 'border-sky-400 bg-sky-500/30 ring-2 ring-sky-400' : 'border-sky-500 bg-sky-500/15 hover:bg-sky-500/25'}`;
+    }
+  }
+
+  getFindingTagClass(finding: AiRadiologyFinding): string {
+    switch (finding.type) {
+      case 'Caries':
+        return 'bg-rose-950 text-rose-200 border border-rose-500/50';
+      case 'PeriapicalRadiolucency':
+        return 'bg-purple-950 text-purple-200 border border-purple-500/50';
+      case 'BoneLoss':
+        return 'bg-amber-950 text-amber-200 border border-amber-500/50';
+      case 'ThirdMolarImpaction':
+      default:
+        return 'bg-sky-950 text-sky-200 border border-sky-500/50';
+    }
+  }
+
   resetAll(): void {
     this.zoom.set(100);
     this.rotation.set(0);
@@ -511,6 +860,7 @@ export class ScanViewerModalComponent {
     this.clearRuler();
     this.isRulerActive.set(false);
     this.isCompareMode.set(false);
+    this.selectedFindingId.set(null);
   }
 
   onViewportMouseDown(event: MouseEvent): void {
@@ -534,7 +884,6 @@ export class ScanViewerModalComponent {
 
   onViewportMouseMove(event: MouseEvent): void {
     if (this.isRulerActive() && this.rulerStart() && !this.rulerEnd()) {
-      // Live tracking while dragging ruler point B
       if (event.buttons === 1) {
         this.rulerEnd.set(this.getRelativeCoords(event));
       }
@@ -574,6 +923,9 @@ export class ScanViewerModalComponent {
 
   onClose(): void {
     this.resetAll();
+    this.isAiVisionActive.set(false);
+    this.showAiDrawer.set(false);
+    this.syncSuccessMessage.set(null);
     this.isOpen = false;
     this.close.emit();
   }

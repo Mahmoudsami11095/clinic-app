@@ -250,9 +250,13 @@
 <!-- Advanced Radiology & High-Resolution X-Ray Viewer Modal -->
 <app-scan-viewer-modal
   [isOpen]="isScanViewerOpen()"
+  [recordId]="selectedScanRecordId()"
+  [patientId]="selectedScanPatientId()"
+  [patientName]="selectedScanPatientName()"
   [fileUrl]="selectedScanUrl()"
   [fileName]="selectedScanName()"
   [compareFileUrl]="selectedScanCompareUrl()"
+  (odontogramSynced)="onOdontogramSynced($event)"
   (close)="isScanViewerOpen.set(false)">
 </app-scan-viewer-modal>
 
