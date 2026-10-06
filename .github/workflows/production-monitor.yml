@@ -1,0 +1,92 @@
+name: Production Synthetic Monitor & Periodic Health Gate
+
+on:
+  schedule:
+    # Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      full_suite:
+        description: 'Run full E2E suite against production (instead of smoke only)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  api-liveness-probe:
+    name: Azure Cloud API Liveness & DB Readiness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe API /api/health
+        run: |
+          echo "Probing Azure Backend API..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" https://clinic-api-123-a0ghf9aeb5ccawha.swedencentral-01.azurewebsites.net/api/health)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "HTTP Code: $HTTP_CODE"
+          echo "Response: $BODY"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "API Health probe failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Probe API /api/health/liveness
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://clinic-api-123-a0ghf9aeb5ccawha.swedencentral-01.azurewebsites.net/api/health/liveness)
+          echo "Liveness Probe HTTP Code: $HTTP_CODE"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Liveness probe failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+  frontend-e2e-canary:
+    name: Vercel Edge Frontend & Browser E2E Canary
+    runs-on: ubuntu-latest
+    needs: api-liveness-probe
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: clinic-app/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Periodic Live Smoke Tests Against Production
+        run: npx playwright test e2e/live-smoke.spec.ts
+        env:
+          CI: true
+          E2E_BASE_URL: https://clinic-app-ten-topaz.vercel.app
+
+      - name: Upload Canary Test Report on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canary-playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Create Alert Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Health Check Failure Detected',
+              body: `Automated periodic canary tests against production (Vercel & Azure) failed on run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nPlease inspect the live endpoints immediately.`
+            });
