@@ -111,6 +111,14 @@ export class PatientPortalService {
     return this.http.get<any>(`${this.apiUrl}/invoices/${id}/receipt`);
   }
 
+  verifyPrescription(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/verify/rx/${id}`);
+  }
+
+  verifyInvoice(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/verify/inv/${id}`);
+  }
+
   logout(): void {
     this.currentUser.set(null);
     this.authToken.set(null);

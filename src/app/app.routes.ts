@@ -24,6 +24,10 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'verify/:type/:id',
+    loadComponent: () => import('./portal/document-verification/document-verification.component').then(m => m.DocumentVerificationComponent)
+  },
+  {
     path: 'register',
     loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent),
     canActivate: [unauthGuard]
