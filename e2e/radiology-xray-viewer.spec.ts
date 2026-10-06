@@ -39,7 +39,7 @@ test.describe('Advanced Radiology & X-Ray Viewer - Level 3 (Customer/E2E)', () =
 
     // Verify tools present
     await expect(page.locator('button').filter({ hasText: /Ruler/i }).first()).toBeVisible();
-    await expect(page.locator('button').filter({ hasText: /Compare Mode/i }).first()).toBeVisible();
+    await expect(page.locator('button').filter({ hasText: /Compare|مقارنة/i }).first()).toBeVisible();
     await expect(page.locator('text=Bright').first()).toBeVisible();
     await expect(page.locator('text=Contrast').first()).toBeVisible();
   });
@@ -82,7 +82,7 @@ test.describe('Advanced Radiology & X-Ray Viewer - Level 3 (Customer/E2E)', () =
     }
 
     // Step B: Toggle Before & After Comparison Mode
-    const compareBtn = page.locator('button').filter({ hasText: /Compare Mode/i }).first();
+    const compareBtn = page.locator('button').filter({ hasText: /Compare|مقارنة/i }).first();
     await compareBtn.click();
     await page.waitForTimeout(500);
 
