@@ -970,7 +970,13 @@
     "pre_op_baseline": "Pre-Op Baseline",
     "post_op_current": "Post-Op Current",
     "split_view": "Split View",
-    "launch_advanced_viewer": "Launch Advanced X-Ray Viewer"
+    "launch_advanced_viewer": "Launch Advanced X-Ray Viewer",
+    "ai_vision_title": "AI Radiograph Diagnostic Vision",
+    "ai_vision_btn": "AI Vision (v4.0)",
+    "ai_analyzing": "Analyzing radiograph with DentalVision YOLOv11...",
+    "ai_findings": "AI Diagnostic Findings",
+    "sync_odontogram": "1-Click Sync to Patient Odontogram",
+    "safety_governance": "Clinical Safety BR-AI-RAD-01: Physician-in-the-loop review required before committing to patient chart."
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",

@@ -100,4 +100,56 @@ export class RadiologyService {
   deleteRecord(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/records/${id}`);
   }
+
+  // Release v4.0.0: Multi-Head AI Radiograph Computer Vision Diagnostics
+  analyzeScanWithAi(recordId: string): Observable<AiRadiologyAnalysisResult> {
+    return this.http.post<{data: AiRadiologyAnalysisResult}>(`${this.apiUrl}/records/${recordId}/ai-analyze`, {})
+      .pipe(map(res => res.data || (res as any)));
+  }
+
+  syncAiFindingsToOdontogram(recordId: string, request: SyncAiFindingsRequest): Observable<{ message: string; syncedCount: number; patientId: string }> {
+    return this.http.post<{ message: string; syncedCount: number; patientId: string }>(`${this.apiUrl}/records/${recordId}/ai-sync-odontogram`, request);
+  }
 }
+
+export interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface AiRadiologyFinding {
+  id: string;
+  type: string;
+  typeAr: string;
+  toothFdi: number;
+  toothUniversal: number;
+  severity: string;
+  confidence: number;
+  location: string;
+  box: BoundingBox;
+  recommendation: string;
+  recommendationAr: string;
+  isAcceptedByDoctor: boolean;
+}
+
+export interface AiRadiologyAnalysisResult {
+  recordId: string;
+  procedureName: string;
+  patientId: string;
+  patientName: string;
+  analysisTimestamp: string;
+  modelEngine: string;
+  overallConfidence: number;
+  findings: AiRadiologyFinding[];
+  summaryReport: string;
+  summaryReportAr: string;
+  isVerifiedByDoctor: boolean;
+}
+
+export interface SyncAiFindingsRequest {
+  acceptedFindingIds: string[];
+  doctorNotes?: string;
+}
+

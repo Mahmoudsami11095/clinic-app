@@ -35,15 +35,25 @@ export class RadiologyDashboardComponent implements OnInit {
   centerDialogVisible = signal(false);
   recordDialogVisible = signal(false);
   isScanViewerOpen = signal(false);
+  selectedScanRecordId = signal<string | null>(null);
+  selectedScanPatientId = signal<string | null>(null);
+  selectedScanPatientName = signal<string | null>(null);
   selectedScanUrl = signal<string | null>(null);
   selectedScanName = signal<string>('');
   selectedScanCompareUrl = signal<string | null>(null);
 
   openAdvancedViewer(record?: RadiologyRecord) {
+    this.selectedScanRecordId.set(record?.id || 'demo-rad-001');
+    this.selectedScanPatientId.set(record?.patientId || 'demo-pat-001');
+    this.selectedScanPatientName.set(record?.patientName || 'Patient');
     this.selectedScanUrl.set(record?.fileUrl || '/images/welcome-doctor.webp');
     this.selectedScanName.set(record?.procedureName ? `${record.procedureName} - High-Res Radiograph` : 'Diagnostic Panoramic Radiograph (CBCT)');
     this.selectedScanCompareUrl.set('/images/welcome-doctor.webp');
     this.isScanViewerOpen.set(true);
+  }
+
+  onOdontogramSynced(event: { count: number; findingIds: string[] }) {
+    this.showSuccess(`Successfully synchronized ${event.count} AI pathology findings into patient's dental chart!`);
   }
 
   // Alerts
