@@ -35,6 +35,7 @@ export class PatientPortalService {
   queueStatus = signal<QueueStatus | null>(null);
   availableSlots = signal<string[]>([]);
   prescriptions = signal<any[]>([]);
+  invoices = signal<any[]>([]);
 
   constructor() {
     const savedUser = localStorage.getItem('portal_user');
@@ -93,6 +94,21 @@ export class PatientPortalService {
     return this.http.get<any[]>(`${this.apiUrl}/prescriptions?patientId=${patId}`).pipe(
       tap((rx) => this.prescriptions.set(rx))
     );
+  }
+
+  getPrescriptionPrint(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/prescriptions/${id}/print`);
+  }
+
+  getInvoices(): Observable<any[]> {
+    const patId = this.currentUser()?.id || '';
+    return this.http.get<any[]>(`${this.apiUrl}/invoices?patientId=${patId}`).pipe(
+      tap((inv) => this.invoices.set(inv))
+    );
+  }
+
+  getInvoiceReceipt(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/invoices/${id}/receipt`);
   }
 
   logout(): void {
