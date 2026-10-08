@@ -1387,5 +1387,33 @@
     "adjudication_decision": "Adjudication Decision",
     "adjudication_notes": "Adjudication Voucher Notes",
     "confirm_adjudication": "Confirm Decision"
+  },
+  "consent": {
+    "badge": "Clinical Informed Consent",
+    "title": "Medico-Legal Informed Consent Dossier",
+    "subtitle": "Procedure-specific statutory disclosures, touchscreen signatures, doctor countersignatures, and SHA-256 tamper-proofing",
+    "new_consent_btn": "New Consent Form",
+    "governance_title": "Medico-Legal Immutability & Evidentiary Standard (BR-CONSENT-01..04)",
+    "governance_desc": "High-risk surgical treatments require signed consent before local anesthesia administration. Doctor countersignature locks the document with a cryptographic SHA-256 checksum preventing post-execution modifications.",
+    "loading": "Loading clinical consent records...",
+    "empty_title": "No Consent Documents Found",
+    "empty_desc": "No clinical informed consent records match the current facility or filter.",
+    "explained_risks": "Statutory Clinical Risks Explained",
+    "patient_sign_btn": "Capture Patient Signature",
+    "countersign_btn": "Doctor Countersign & Lock",
+    "print_certificate": "Print Legal Certificate (A4)",
+    "modal_create_title": "Draft Clinical Informed Consent Form",
+    "procedure_template": "Procedure Clinical Template",
+    "patient": "Patient",
+    "doctor": "Attending Operating Doctor",
+    "procedure_title": "Formal Procedure Title",
+    "tooth_number": "Target Tooth (FDI)",
+    "cautions": "Special Medical Cautions (Allergies, Anticoagulants)",
+    "create_btn": "Draft Consent Form",
+    "signatory_name": "Signatory Full Legal Name",
+    "relationship": "Signatory Legal Relationship",
+    "sign_canvas_label": "Touchscreen Signature Canvas",
+    "clear_signature": "Clear Signature",
+    "save_signature_btn": "Confirm & Bind Digital Signature"
   }
 }
