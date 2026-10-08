@@ -10,12 +10,12 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { InventoryFormComponent } from '../inventory-form/inventory-form.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-inventory-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventoryFormComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, InventoryFormComponent, TranslatePipe],
   templateUrl: './inventory-list.component.html',
   styleUrls: ['./inventory-list.component.scss']
 })
