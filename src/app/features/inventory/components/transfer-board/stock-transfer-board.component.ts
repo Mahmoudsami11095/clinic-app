@@ -6,12 +6,14 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { MaterialsService } from '../../services/materials.service';
 import { StockTransferRequisition, CreateStockTransferRequest } from '../../models/stock-transfer.model';
 import { Material } from '../../models/material.model';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-stock-transfer-board',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, ModalComponent, StatusBadgeComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="space-y-6 font-cairo animate-fade-in p-2 sm:p-4">
@@ -135,12 +137,11 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                   }
 
                   <!-- Status badge -->
-                  <span
-                    [class]="getStatusBadgeClass(transfer.status)"
-                    class="px-2.5 py-0.5 rounded-full text-2xs font-bold"
-                  >
-                    {{ transfer.status }}
-                  </span>
+                  <app-status-badge
+                    [status]="transfer.status"
+                    type="transfer"
+                    [pulse]="transfer.status === 'InTransit'"
+                  ></app-status-badge>
                 </div>
               </div>
 
@@ -211,130 +212,116 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
         </div>
       }
 
-      <!-- MODAL 1: New Stock Transfer Requisition -->
-      @if (isRequestModalOpen()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
-              <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ 'transfers.modal_req_title' | translate }}</h3>
-              <button type="button" (click)="isRequestModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer">
-                <i class="pi pi-times"></i>
-              </button>
-            </div>
-
-            <div class="space-y-4 text-xs">
-              <div>
-                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.source_clinic' | translate }} *</label>
-                <select [(ngModel)]="reqModel.sourceClinicId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-                  @for (clinic of clinicService.clinics(); track clinic.id) {
-                    <option [value]="clinic.id">{{ clinic.name }}</option>
-                  }
-                </select>
-              </div>
-
-              <div>
-                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.dest_clinic' | translate }} *</label>
-                <select [(ngModel)]="reqModel.destinationClinicId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-                  @for (clinic of clinicService.clinics(); track clinic.id) {
-                    <option [value]="clinic.id">{{ clinic.name }}</option>
-                  }
-                </select>
-              </div>
-
-              <div>
-                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.select_material' | translate }} *</label>
-                <select [(ngModel)]="reqModel.materialId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-                  @for (mat of materialsList(); track mat.id) {
-                    <option [value]="mat.id">{{ mat.name }} ({{ mat.quantity }} in stock)</option>
-                  }
-                </select>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.quantity' | translate }} *</label>
-                  <input type="number" min="1" [(ngModel)]="reqModel.quantityRequested" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
-                </div>
-                <div>
-                  <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.priority' | translate }}</label>
-                  <select [(ngModel)]="reqModel.priority" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-                    <option value="Normal">Normal</option>
-                    <option value="Urgent">Urgent</option>
-                    <option value="Emergency">Emergency</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.notes' | translate }}</label>
-                <input type="text" [(ngModel)]="reqModel.notes" placeholder="e.g. Needed for implant surgery" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
-              </div>
-            </div>
-
-            <div class="flex justify-end gap-3 pt-2">
-              <button type="button" (click)="isRequestModalOpen.set(false)" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer bg-transparent">
-                {{ 'common.cancel' | translate }}
-              </button>
-              <button type="button" (click)="submitTransferRequest()" [disabled]="!isRequestValid()" class="px-6 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition-colors cursor-pointer border-none disabled:opacity-50">
-                {{ 'transfers.submit_request' | translate }}
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- MODAL 2: Physical Inspection & Receive Shipment (BR-LOG-02) -->
-      @if (isReceiveModalOpen(); as trf) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
-              <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ 'transfers.receive_modal_title' | translate }}</h3>
-              <button type="button" (click)="isReceiveModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer">
-                <i class="pi pi-times"></i>
-              </button>
-            </div>
-
-            <div class="space-y-4 text-xs">
-              <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-2xl space-y-1">
-                <span class="text-2xs text-slate-400 block">{{ 'transfers.incoming_shipment' | translate }}</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200 block text-sm">{{ selectedTransfer()?.materialName }}</span>
-                <span class="text-2xs text-teal-600 font-mono font-semibold">{{ selectedTransfer()?.quantityDispatched }} units dispatched</span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.received_qty' | translate }} *</label>
-                  <input type="number" min="0" [(ngModel)]="receiveModel.quantityReceived" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
-                </div>
-                <div>
-                  <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.damaged_qty' | translate }}</label>
-                  <input type="number" min="0" [(ngModel)]="receiveModel.quantityDamaged" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
-                </div>
-              </div>
-
-              @if (receiveModel.quantityDamaged > 0) {
-                <div>
-                  <label class="block font-semibold text-rose-600 mb-1.5">{{ 'transfers.damage_reason' | translate }} *</label>
-                  <select [(ngModel)]="receiveModel.damageReason" class="w-full px-3.5 py-2.5 rounded-xl border border-rose-300 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-                    <option value="BrokenSeal">Broken Seal / Packaging Damaged</option>
-                    <option value="TemperatureExcursion">Cold-Chain Temperature Excursion</option>
-                    <option value="MissingInTransit">Missing Items In Transit</option>
-                  </select>
-                </div>
+      <!-- MODAL 1: New Stock Transfer Requisition (Reusing app-modal) -->
+      <app-modal
+        [isOpen]="isRequestModalOpen()"
+        [title]="'transfers.modal_req_title' | translate"
+        (close)="isRequestModalOpen.set(false)"
+      >
+        <div class="space-y-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.source_clinic' | translate }} *</label>
+            <select [(ngModel)]="reqModel.sourceClinicId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              @for (clinic of clinicService.clinics(); track clinic.id) {
+                <option [value]="clinic.id">{{ clinic.name }}</option>
               }
-            </div>
+            </select>
+          </div>
 
-            <div class="flex justify-end gap-3 pt-2">
-              <button type="button" (click)="isReceiveModalOpen.set(false)" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer bg-transparent">
-                {{ 'common.cancel' | translate }}
-              </button>
-              <button type="button" (click)="submitReceiveShipment()" class="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer border-none shadow-xs">
-                {{ 'transfers.confirm_receive' | translate }}
-              </button>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.dest_clinic' | translate }} *</label>
+            <select [(ngModel)]="reqModel.destinationClinicId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              @for (clinic of clinicService.clinics(); track clinic.id) {
+                <option [value]="clinic.id">{{ clinic.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.select_material' | translate }} *</label>
+            <select [(ngModel)]="reqModel.materialId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              @for (mat of materialsList(); track mat.id) {
+                <option [value]="mat.id">{{ mat.name }} ({{ mat.quantity }} in stock)</option>
+              }
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.quantity' | translate }} *</label>
+              <input type="number" min="1" [(ngModel)]="reqModel.quantityRequested" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.priority' | translate }}</label>
+              <select [(ngModel)]="reqModel.priority" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="Normal">Normal</option>
+                <option value="Urgent">Urgent</option>
+                <option value="Emergency">Emergency</option>
+              </select>
             </div>
           </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.notes' | translate }}</label>
+            <input type="text" [(ngModel)]="reqModel.notes" placeholder="e.g. Needed for implant surgery" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="button" (click)="isRequestModalOpen.set(false)" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer bg-transparent">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button type="button" (click)="submitTransferRequest()" [disabled]="!isRequestValid()" class="px-6 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition-colors cursor-pointer border-none disabled:opacity-50 shadow-xs">
+              {{ 'transfers.submit_request' | translate }}
+            </button>
+          </div>
         </div>
-      }
+      </app-modal>
+
+      <!-- MODAL 2: Physical Inspection & Receive Shipment (BR-LOG-02) (Reusing app-modal) -->
+      <app-modal
+        [isOpen]="isReceiveModalOpen()"
+        [title]="'transfers.receive_modal_title' | translate"
+        (close)="isReceiveModalOpen.set(false)"
+      >
+        <div class="space-y-4 text-xs">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl space-y-1 border border-slate-200/60 dark:border-slate-700">
+            <span class="text-2xs text-slate-400 block">{{ 'transfers.incoming_shipment' | translate }}</span>
+            <span class="font-bold text-slate-800 dark:text-slate-200 block text-sm">{{ selectedTransfer()?.materialName }}</span>
+            <span class="text-2xs text-teal-600 font-mono font-semibold">{{ selectedTransfer()?.quantityDispatched }} units dispatched</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.received_qty' | translate }} *</label>
+              <input type="number" min="0" [(ngModel)]="receiveModel.quantityReceived" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ 'transfers.damaged_qty' | translate }}</label>
+              <input type="number" min="0" [(ngModel)]="receiveModel.quantityDamaged" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
+            </div>
+          </div>
+
+          @if (receiveModel.quantityDamaged > 0) {
+            <div>
+              <label class="block font-semibold text-rose-600 mb-1.5">{{ 'transfers.damage_reason' | translate }} *</label>
+              <select [(ngModel)]="receiveModel.damageReason" class="w-full px-3.5 py-2.5 rounded-xl border border-rose-300 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="BrokenSeal">Broken Seal / Packaging Damaged</option>
+                <option value="TemperatureExcursion">Cold-Chain Temperature Excursion</option>
+                <option value="MissingInTransit">Missing Items In Transit</option>
+              </select>
+            </div>
+          }
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="button" (click)="isReceiveModalOpen.set(false)" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer bg-transparent">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button type="button" (click)="submitReceiveShipment()" class="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer border-none shadow-xs">
+              {{ 'transfers.confirm_receive' | translate }}
+            </button>
+          </div>
+        </div>
+      </app-modal>
 
     </div>
   `

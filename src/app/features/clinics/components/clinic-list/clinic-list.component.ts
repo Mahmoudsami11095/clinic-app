@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,9 +19,11 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-clinic-list',
+  standalone: true,
   imports: [CommonModule, FormsModule, ModalComponent, ClinicFormComponent, ClinicQrModalComponent, TranslatePipe],
   templateUrl: './clinic-list.component.html',
-  styleUrl: './clinic-list.component.css'
+  styleUrl: './clinic-list.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClinicListComponent implements OnInit {
     private destroyRef = inject(DestroyRef);
