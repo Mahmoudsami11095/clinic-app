@@ -1148,5 +1148,25 @@
     "cancel": "Cancel",
     "draft": "Draft",
     "paid": "Paid"
+  },
+  "telehealth": {
+    "title": "Encrypted Telehealth Consultation Suite",
+    "subtitle": "High-definition P2P WebRTC consultation with synchronized chair-side charting",
+    "live_consultation": "Live Consultation Active",
+    "waiting": "Waiting for Patient",
+    "unmute": "Unmute Audio",
+    "mute": "Mute Audio",
+    "camera_on": "Turn Camera On",
+    "camera_off": "Turn Camera Off",
+    "hide_chart": "Hide Odontogram",
+    "show_chart": "Show Odontogram",
+    "end_call": "End Consultation",
+    "waiting_for_patient_connection": "Establishing secure WebRTC channel with patient...",
+    "encrypted_webrtc_channel": "End-to-end DTLS-SRTP encryption with zero server recording",
+    "doctor_local_preview": "Doctor (Local)",
+    "live_odontogram_sync": "Synchronized Dental Chart",
+    "active": "Active",
+    "odontogram_overlay_hint": "Inspect tooth surfaces and log procedures in real-time during consultation.",
+    "charting_ready": "Odontogram Ready for Live Charting"
   }
 }
