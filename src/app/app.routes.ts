@@ -130,6 +130,12 @@ export const routes: Routes = [
         data: { roles: ['admin'] }
       },
       {
+        path: 'admin/executive-intelligence',
+        loadComponent: () => import('./features/dashboard/components/executive-intelligence/executive-intelligence-dashboard.component').then(m => m.ExecutiveIntelligenceDashboardComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['admin'] }
+      },
+      {
         path: 'assistant-hub',
         loadComponent: () => import('./features/assistant-hub/assistant-hub.component').then(m => m.AssistantHubComponent),
         canActivate: [roleGuard, subscriptionGuard],
