@@ -66,7 +66,44 @@ describe('InsuranceClaimsManagerComponent', () => {
       createClaim: jasmine.createSpy('createClaim').and.returnValue(of(mockClaim)),
       submitClaim: jasmine.createSpy('submitClaim').and.returnValue(of({ message: 'Submitted' })),
       adjudicateClaim: jasmine.createSpy('adjudicateClaim').and.returnValue(of({ message: 'Adjudicated' })),
-      settleClaim: jasmine.createSpy('settleClaim').and.returnValue(of({ message: 'Settled' }))
+      settleClaim: jasmine.createSpy('settleClaim').and.returnValue(of({ message: 'Settled' })),
+      getClaimPacket: jasmine.createSpy('getClaimPacket').and.returnValue(of({
+        claimId: 'clm-1',
+        claimNumber: 'CLM-202610-0001',
+        verificationHash: 'sha256-mock-hash-1234567890',
+        payerName: 'Bupa Global',
+        payerCode: 'BUPA-01',
+        patientName: 'Kareem Adel',
+        policyNumber: 'POL-100',
+        memberId: 'MEM-200',
+        doctorName: 'Dr. Sarah',
+        doctorLicenseNumber: 'DENT-EGY-9912',
+        totalGrossAmount: 4000,
+        patientCopayAmount: 800,
+        insurancePayableAmount: 3200,
+        radiographUrl: '/images/welcome-doctor.webp',
+        aiFindingsCount: 2,
+        procedures: [
+          { cdtCode: 'D2740', description: 'Crown - porcelain/ceramic substrate', toothNumber: '16', diagnosisCode: 'K02.1', fee: 4000 }
+        ],
+        qrVerificationPayload: 'urn:ada:claim:sha256:mock',
+        signedAtUtc: '2026-10-08T18:00:00Z',
+        preAuthStatus: 'PreAuthorized'
+      })),
+      checkRealtimeEligibility: jasmine.createSpy('checkRealtimeEligibility').and.returnValue(of({
+        claimId: 'clm-1',
+        payerName: 'Bupa Global',
+        payerCode: 'BUPA-01',
+        memberId: 'MEM-200',
+        isEligible: true,
+        eligibilityStatus: 'Active',
+        copayPercentage: 20,
+        patientDeductibleRemaining: 50,
+        preAuthRequired: true,
+        preAuthStatus: 'PreAuthorized',
+        authorizationToken: 'AUTH-EDI-998811',
+        inquiryTimestamp: '2026-10-08T18:00:00Z'
+      }))
     };
 
     mockClinicService = {
@@ -148,5 +185,27 @@ describe('InsuranceClaimsManagerComponent', () => {
       approvedAmount: 3200
     }));
     expect(component.isAdjudicateModalOpen()).toBeFalse();
+  });
+
+  it('should open ADA Claim Packet modal and load cryptographic data', () => {
+    component.openClaimPacket(mockClaim);
+
+    expect(component.isClaimPacketModalOpen()).toBeTrue();
+    expect(mockInsuranceService.getClaimPacket).toHaveBeenCalledWith('clm-1');
+    expect(component.selectedPacket()?.verificationHash).toBe('sha256-mock-hash-1234567890');
+    expect(component.selectedPacket()?.procedures.length).toBe(1);
+
+    component.closeClaimPacketModal();
+    expect(component.isClaimPacketModalOpen()).toBeFalse();
+    expect(component.selectedPacket()).toBeNull();
+  });
+
+  it('should verify real-time EDI 270/271 eligibility and set status message', () => {
+    component.verifyRealtimeEdi(mockClaim);
+
+    expect(mockInsuranceService.checkRealtimeEligibility).toHaveBeenCalledWith('clm-1');
+    expect(component.eligibilityResult()?.isEligible).toBeTrue();
+    expect(component.eligibilityResult()?.authorizationToken).toBe('AUTH-EDI-998811');
+    expect(component.ediMessage()).toContain('EDI 271 Validated');
   });
 });

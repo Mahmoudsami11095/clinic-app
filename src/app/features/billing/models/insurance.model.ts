@@ -70,3 +70,60 @@ export interface InsuranceClaimsSummary {
   pendingPreAuthCount: number;
   rejectionCount: number;
 }
+
+export interface GenerateAiClaimRequest {
+  radiologyRecordId: string;
+  clinicId?: string;
+  patientId?: string;
+  doctorId?: string;
+  insuranceProviderId?: string;
+  policyNumber?: string;
+  memberId?: string;
+  acceptedFindingIds?: string[];
+  doctorClinicalNotes?: string;
+}
+
+export interface RealtimeEligibilityResponse {
+  claimId: string;
+  payerName: string;
+  payerCode: string;
+  memberId: string;
+  isEligible: boolean;
+  eligibilityStatus: string;
+  copayPercentage: number;
+  patientDeductibleRemaining: number;
+  preAuthRequired: boolean;
+  preAuthStatus: string;
+  authorizationToken: string;
+  inquiryTimestamp: string;
+}
+
+export interface ClaimPacketProcedure {
+  cdtCode: string;
+  description: string;
+  toothNumber: string;
+  diagnosisCode: string;
+  fee: number;
+}
+
+export interface ClaimPacketResponse {
+  claimId: string;
+  claimNumber: string;
+  verificationHash: string;
+  payerName: string;
+  payerCode: string;
+  patientName: string;
+  policyNumber: string;
+  memberId: string;
+  doctorName: string;
+  doctorLicenseNumber: string;
+  totalGrossAmount: number;
+  patientCopayAmount: number;
+  insurancePayableAmount: number;
+  radiographUrl: string;
+  aiFindingsCount: number;
+  procedures: ClaimPacketProcedure[];
+  qrVerificationPayload: string;
+  signedAtUtc: string;
+  preAuthStatus: string;
+}

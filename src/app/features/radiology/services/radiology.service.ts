@@ -110,6 +110,68 @@ export class RadiologyService {
   syncAiFindingsToOdontogram(recordId: string, request: SyncAiFindingsRequest): Observable<{ message: string; syncedCount: number; patientId: string }> {
     return this.http.post<{ message: string; syncedCount: number; patientId: string }>(`${this.apiUrl}/records/${recordId}/ai-sync-odontogram`, request);
   }
+
+  // Release v4.1.0: Real-Time PACS DICOM Web Modality & Multi-Slice CBCT
+  getDicomMetadata(recordId: string): Observable<DicomMetadata> {
+    return this.http.get<DicomMetadata>(`${this.apiUrl}/records/${recordId}/dicom-metadata`);
+  }
+
+  getDicomSlices(recordId: string, orientation: string = 'Axial'): Observable<DicomSeries> {
+    return this.http.get<DicomSeries>(`${this.apiUrl}/records/${recordId}/dicom-slices?orientation=${orientation}`);
+  }
+}
+
+export interface HuPreset {
+  id: string;
+  name: string;
+  nameAr: string;
+  windowWidth: number;
+  windowCenter: number;
+  clinicalDescription: string;
+}
+
+export interface DicomMetadata {
+  recordId: string;
+  patientName: string;
+  patientId: string;
+  studyInstanceUid: string;
+  seriesInstanceUid: string;
+  sopInstanceUid: string;
+  modality: string;
+  studyDescription: string;
+  manufacturer: string;
+  rows: number;
+  columns: number;
+  bitsAllocated: number;
+  bitsStored: number;
+  highBit: number;
+  rescaleIntercept: number;
+  rescaleSlope: number;
+  windowCenter: number;
+  windowWidth: number;
+  numberOfFrames: number;
+  sliceThicknessMm: number;
+  pixelSpacingMm: number;
+  kvp: number;
+  tubeCurrentMa: number;
+  exposureTimeMs: number;
+  patientOrientation: string;
+  huPresets: HuPreset[];
+}
+
+export interface DicomSlice {
+  sliceIndex: number;
+  orientation: string;
+  sliceLocationMm: number;
+  imageUrl: string;
+  anatomicalLandmark: string;
+}
+
+export interface DicomSeries {
+  recordId: string;
+  modality: string;
+  totalSlices: number;
+  slices: DicomSlice[];
 }
 
 export interface BoundingBox {

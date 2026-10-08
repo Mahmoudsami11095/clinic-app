@@ -2,6 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ScanViewerModalComponent } from './scan-viewer-modal.component';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { RadiologyService, AiRadiologyAnalysisResult } from '../../../features/radiology/services/radiology.service';
+import { InsuranceService } from '../../../features/billing/services/insurance.service';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 
@@ -58,7 +59,42 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       message: 'Successfully synced 2 findings to patient odontogram.',
       syncedCount: 2,
       patientId: 'patient-1'
+    })),
+    getDicomMetadata: jasmine.createSpy('getDicomMetadata').and.returnValue(of({
+      patientName: 'John Doe',
+      patientId: 'patient-1',
+      modality: 'CT',
+      sliceThickness: 0.4,
+      kvp: 120,
+      exposure: 15,
+      pixelSpacing: '0.2\\0.2',
+      rescaleIntercept: -1000,
+      rescaleSlope: 1,
+      windowCenter: 400,
+      windowWidth: 1500,
+      rows: 512,
+      columns: 512,
+      institutionName: 'Smart Clinic Imaging Center'
+    })),
+    getDicomSlices: jasmine.createSpy('getDicomSlices').and.returnValue(of({
+      seriesInstanceUid: 'series-uid-1',
+      modality: 'CT',
+      orientation: 'Axial',
+      totalSlices: 48,
+      slices: [
+        { sliceIndex: 1, instanceNumber: 1, sliceLocationMm: 0, windowCenter: 400, windowWidth: 1500, huPreset: 'bone', imageBase64: 'base64' }
+      ]
     }))
+  };
+
+  const mockInsuranceService = {
+    generateClaimFromAi: jasmine.createSpy('generateClaimFromAi').and.returnValue(of({
+      id: 'claim-ai-1',
+      claimNumber: 'CLM-2026-AI-001',
+      status: 'PreAuthorized',
+      claimedAmount: 3200,
+      totalGrossAmount: 4000
+    } as any))
   };
 
   beforeEach(() => {
@@ -75,6 +111,10 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
         {
           provide: RadiologyService,
           useValue: mockRadiologyService
+        },
+        {
+          provide: InsuranceService,
+          useValue: mockInsuranceService
         }
       ]
     });
@@ -382,6 +422,81 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       expect(component.getFindingBoxClass(periapicalFinding)).toContain('border-purple');
       expect(component.getFindingTagClass(cariesFinding)).toContain('bg-rose');
       expect(component.getFindingTagClass(periapicalFinding)).toContain('bg-purple');
+    });
+  });
+
+  describe('Release v4.1.0: Real-Time PACS DICOM Web Modality & Window/Level Presets', () => {
+    it('should toggle DICOM mode and fetch metadata and slices', () => {
+      expect(component.isDicomMode()).toBeFalse();
+
+      component.toggleDicomMode();
+
+      expect(component.isDicomMode()).toBeTrue();
+      expect(mockRadiologyService.getDicomMetadata).toHaveBeenCalled();
+      expect(mockRadiologyService.getDicomSlices).toHaveBeenCalledWith('default-rad-rec-1', 'Axial');
+      expect(component.totalSlices()).toBe(48);
+    });
+
+    it('should navigate through CBCT slices via nextSlice and prevSlice', () => {
+      component.isDicomMode.set(true);
+      component.currentSlice.set(1);
+      component.totalSlices.set(48);
+
+      component.nextSlice();
+      expect(component.currentSlice()).toBe(2);
+
+      component.prevSlice();
+      expect(component.currentSlice()).toBe(1);
+
+      // Boundary check: cannot go below 1
+      component.prevSlice();
+      expect(component.currentSlice()).toBe(1);
+    });
+
+    it('should apply Hounsfield Unit presets and update brightness and contrast', () => {
+      component.applyHuPreset('soft-tissue');
+      expect(component.currentHuPreset()).toBe('soft-tissue');
+      expect(component.brightness()).toBe(120);
+      expect(component.contrast()).toBe(90);
+
+      component.applyHuPreset('cortical-implant');
+      expect(component.currentHuPreset()).toBe('cortical-implant');
+      expect(component.brightness()).toBe(90);
+      expect(component.contrast()).toBe(160);
+    });
+
+    it('should toggle Cine loop playback', (done) => {
+      component.currentSlice.set(1);
+      component.totalSlices.set(48);
+
+      component.toggleCine();
+      expect(component.isCinePlaying()).toBeTrue();
+
+      setTimeout(() => {
+        expect(component.currentSlice()).toBeGreaterThanOrEqual(1);
+        component.toggleCine();
+        expect(component.isCinePlaying()).toBeFalse();
+        done();
+      }, 150);
+    });
+  });
+
+  describe('Release v4.2.0: AI Dental Insurance Pre-Authorization Generation', () => {
+    it('should compile pre-auth claim from accepted findings and emit event', () => {
+      spyOn(component.preAuthGenerated, 'emit');
+      component.aiAnalysis.set(mockAiAnalysis);
+      component.acceptedFindingIds.set(new Set(['ai-find-101']));
+
+      component.generateInsurancePreAuth();
+
+      expect(mockInsuranceService.generateClaimFromAi).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          radiologyRecordId: 'default-rad-rec-1',
+          acceptedFindingIds: jasmine.arrayContaining(['ai-find-101'])
+        })
+      );
+      expect(component.preAuthGenerated.emit).toHaveBeenCalled();
+      expect(component.preAuthSuccessMessage()).toContain('CLM-2026-AI-001');
     });
   });
 });

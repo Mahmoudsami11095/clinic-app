@@ -7,7 +7,10 @@ import {
   InsuranceClaim,
   CreateInsuranceClaimRequest,
   AdjudicateClaimRequest,
-  InsuranceClaimsSummary
+  InsuranceClaimsSummary,
+  GenerateAiClaimRequest,
+  RealtimeEligibilityResponse,
+  ClaimPacketResponse
 } from '../models/insurance.model';
 
 @Injectable({ providedIn: 'root' })
@@ -54,5 +57,24 @@ export class InsuranceService {
 
   settleClaim(id: string): Observable<any> {
     return this.http.put(`/api/insurance/claims/${id}/settle`, {});
+  }
+
+  // Release v4.2.0: AI Insurance Pre-Authorization & Claims Bundler
+  generateClaimFromAi(dto: GenerateAiClaimRequest): Observable<InsuranceClaim> {
+    return this.http.post<{ message: string; data: InsuranceClaim }>('/api/insurance/claims/generate-from-ai', dto).pipe(
+      map(res => res.data)
+    );
+  }
+
+  checkRealtimeEligibility(id: string): Observable<RealtimeEligibilityResponse> {
+    return this.http.post<{ message: string; data: RealtimeEligibilityResponse }>(`/api/insurance/claims/${id}/realtime-eligibility`, {}).pipe(
+      map(res => res.data)
+    );
+  }
+
+  getClaimPacket(id: string): Observable<ClaimPacketResponse> {
+    return this.http.get<{ message: string; data: ClaimPacketResponse }>(`/api/insurance/claims/${id}/packet`).pipe(
+      map(res => res.data)
+    );
   }
 }
