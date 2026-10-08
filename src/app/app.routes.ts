@@ -28,6 +28,14 @@ export const routes: Routes = [
     loadComponent: () => import('./portal/document-verification/document-verification.component').then(m => m.DocumentVerificationComponent)
   },
   {
+    path: 'book/:clinicSlug',
+    loadComponent: () => import('./features/public-booking/clinic-public-booking.component').then(m => m.ClinicPublicBookingComponent)
+  },
+  {
+    path: 'partner-dropzone',
+    loadComponent: () => import('./features/diagnostic-partner/partner-dropzone.component').then(m => m.PartnerDropzoneComponent)
+  },
+  {
     path: 'register',
     loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent),
     canActivate: [unauthGuard]
@@ -120,6 +128,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/subscription/admin-settings.component').then(m => m.AdminSettingsComponent),
         canActivate: [roleGuard],
         data: { roles: ['admin'] }
+      },
+      {
+        path: 'assistant-hub',
+        loadComponent: () => import('./features/assistant-hub/assistant-hub.component').then(m => m.AssistantHubComponent),
+        canActivate: [roleGuard, subscriptionGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

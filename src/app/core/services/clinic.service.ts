@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
-import { Clinic } from '../models/clinic.model';
+import { Clinic, ClinicQrKit } from '../models/clinic.model';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -159,6 +159,12 @@ export class ClinicService {
         this.loadClinics();
         return res;
       })
+    );
+  }
+
+  getQrCodeKit(clinicId: string) {
+    return this.http.get<{ message: string; data: ClinicQrKit }>(`/api/clinics/${clinicId}/qr-code-kit`).pipe(
+      map(res => res.data)
     );
   }
 }

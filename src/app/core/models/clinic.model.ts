@@ -13,4 +13,15 @@ export interface Clinic {
   city?: string;
   state?: string;
   country?: string;
+  slug?: string;
+  publicBookingEnabled?: boolean;
+  qrPosterAssetUrl?: string;
+}
+
+export interface ClinicQrKit {
+  clinicId: string;
+  clinicName: string;
+  slug: string;
+  bookingUrl: string;
+  qrCodeDataUrl: string;
 }
