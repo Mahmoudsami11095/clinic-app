@@ -1443,5 +1443,22 @@
     "sign_canvas_label": "Touchscreen Signature Canvas",
     "clear_signature": "Clear Signature",
     "save_signature_btn": "Confirm & Bind Digital Signature"
+  },
+  "cds": {
+    "safe_status": "Pharmacological Safety Verified",
+    "zero_interactions": "No adverse drug-drug interactions or disease contraindications detected",
+    "clinical_effect": "Anticipated Clinical Effect",
+    "alternative_suggestion": "Recommended Safer Alternative",
+    "use_alternative": "Use Alternative",
+    "override_required_title": "Critical Contraindication Override Required",
+    "override_required_desc": "A potentially life-threatening interaction is present. Enter clinical justification to proceed with prescribing.",
+    "pediatric_modal_title": "Pediatric Weight-Based Dosage Calculator",
+    "select_pediatric_drug": "Pediatric Therapeutic Agent",
+    "patient_weight": "Patient Weight",
+    "patient_age": "Patient Age",
+    "calculated_dose": "Calculated Single Dose",
+    "adult_safety_cap": "Adult Maximum Safety Ceiling",
+    "dosing_interval": "Clinical Dosing Schedule",
+    "apply_dosage_btn": "Apply Calculated Dosage"
   }
 }
