@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -11,6 +11,7 @@ import { ToastrService } from 'ngx-toastr';
   selector: 'app-chair-status-board',
   standalone: true,
   imports: [CommonModule, FormsModule, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="space-y-6 animate-fade-in p-2 sm:p-4">
       <!-- Top Header & Live WebSocket Sync Banner -->

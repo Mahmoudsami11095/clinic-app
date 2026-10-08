@@ -33,6 +33,8 @@ export class Sidebar {
     { labelKey: 'sidebar.profile', route: '/profile', icon: 'pi pi-user', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { labelKey: 'sidebar.subscription_plan', route: '/subscription', icon: 'pi pi-id-card', roles: ['doctor'] },
     { labelKey: 'sidebar.subscription_mgmt', route: '/admin/subscription-management', icon: 'pi pi-percentage', roles: ['admin'] },
+    { labelKey: 'sidebar.executive_intelligence', route: '/admin/executive-intelligence', icon: 'pi pi-chart-line', roles: ['admin'] },
+    { labelKey: 'sidebar.assistant_hub', route: '/assistant-hub', icon: 'pi pi-bolt', roles: ['admin', 'assistant'] },
   ];
 
   menuItems = computed(() => {

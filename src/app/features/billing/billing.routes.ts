@@ -4,5 +4,9 @@ import { DoctorCommissionsComponent } from './components/doctor-commissions/doct
 
 export const billingRoutes: Routes = [
   { path: '', component: BillingListComponent },
-  { path: 'commissions', component: DoctorCommissionsComponent }
+  { path: 'commissions', component: DoctorCommissionsComponent },
+  {
+    path: 'insurance-claims',
+    loadComponent: () => import('./components/insurance-claims/insurance-claims-manager.component').then(m => m.InsuranceClaimsManagerComponent)
+  }
 ];

@@ -132,8 +132,14 @@
             <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
               <i class="pi pi-map text-indigo-500"></i> Location Map
             </h2>
-            <div class="flex-1 rounded-xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700">
-              <app-location-map [lat]="clinic()!.latitude" [lng]="clinic()!.longitude" [readOnly]="true"></app-location-map>
+            <div class="flex-1 rounded-xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700 min-h-[300px]">
+              @defer (on viewport; prefetch on idle) {
+                <app-location-map [lat]="clinic()!.latitude" [lng]="clinic()!.longitude" [readOnly]="true"></app-location-map>
+              } @placeholder {
+                <div class="h-full min-h-[300px] flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-xs text-slate-400">
+                  <i class="pi pi-spin pi-spinner mr-2"></i> Loading interactive map...
+                </div>
+              }
             </div>
           </div>
         } @else {

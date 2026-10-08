@@ -23,6 +23,11 @@
         <span>Bulk Import</span>
       </button>
 
+      <a routerLink="/inventory/transfers" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer no-underline text-sm">
+        <i class="fas fa-exchange-alt"></i>
+        <span>{{ 'transfers.badge' | translate }}</span>
+      </a>
+
       <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer" (click)="openReceiveShipmentModal()">
         <i class="fas fa-truck-loading"></i>
         <span>{{ 'inventory.receive_shipment' | translate }}</span>

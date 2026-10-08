@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { Clinic } from '../../../../core/models/clinic.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { ClinicFormComponent } from '../clinic-form/clinic-form.component';
+import { ClinicQrModalComponent } from '../../clinic-qr-modal.component';
 import { DoctorService } from '../../../doctors/services/doctor.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
@@ -18,9 +19,11 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-clinic-list',
-  imports: [CommonModule, FormsModule, ModalComponent, ClinicFormComponent, TranslatePipe],
+  standalone: true,
+  imports: [CommonModule, FormsModule, ModalComponent, ClinicFormComponent, ClinicQrModalComponent, TranslatePipe],
   templateUrl: './clinic-list.component.html',
-  styleUrl: './clinic-list.component.css'
+  styleUrl: './clinic-list.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClinicListComponent implements OnInit {
     private destroyRef = inject(DestroyRef);
@@ -40,6 +43,9 @@ export class ClinicListComponent implements OnInit {
   searchQuery = signal('');
   isModalOpen = signal(false);
   selectedClinic = signal<Clinic | undefined>(undefined);
+
+  isQrModalOpen = signal(false);
+  qrClinic = signal<Clinic | null>(null);
 
   isAssignModalOpen = signal(false);
   assignClinic = signal<Clinic | undefined>(undefined);
@@ -121,6 +127,11 @@ export class ClinicListComponent implements OnInit {
   openEditModal(clinic: Clinic) {
     this.selectedClinic.set(clinic);
     this.isModalOpen.set(true);
+  }
+
+  openQrModal(clinic: Clinic) {
+    this.qrClinic.set(clinic);
+    this.isQrModalOpen.set(true);
   }
 
   closeModal() {

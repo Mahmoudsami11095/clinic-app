@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { InventoryListComponent } from './inventory-list.component';
 import { MaterialsService } from '../../services/materials.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -47,6 +48,7 @@ describe('InventoryListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [InventoryListComponent],
       providers: [
+        provideRouter([]),
         { provide: MaterialsService, useValue: mockMaterialsService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: ClinicService, useValue: mockClinicService },
