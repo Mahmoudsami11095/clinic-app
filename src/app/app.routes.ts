@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { MainLayout } from './core/layout/main-layout/main-layout.component';
 import { roleGuard } from './core/auth/role.guard';
 import { authGuard, unauthGuard } from './core/auth/auth.guard';
 import { subscriptionGuard } from './core/auth/subscription.guard';
@@ -42,7 +41,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    component: MainLayout,
+    loadComponent: () => import('./core/layout/main-layout/main-layout.component').then(m => m.MainLayout),
     canActivate: [authGuard],
     children: [
       {
