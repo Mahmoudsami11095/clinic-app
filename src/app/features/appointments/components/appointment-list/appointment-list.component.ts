@@ -21,6 +21,7 @@ import { PatientService } from '../../../patients/services/patient.service';
 import { Patient } from '../../../patients/models/patient.model';
 import { BillingService } from '../../../billing/services/billing.service';
 import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
+import { AiNoShowService } from '../../../../core/services/ai-no-show/ai-no-show.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
@@ -42,6 +43,7 @@ export class AppointmentListComponent implements OnInit {
   private patientService = inject(PatientService);
   private billingService = inject(BillingService);
   private patientDebtService = inject(PatientDebtService);
+  private aiNoShowService = inject(AiNoShowService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
@@ -223,6 +225,31 @@ export class AppointmentListComponent implements OnInit {
       error: () => {
         this.toastr.error('Failed to check in patient.', 'Error');
       }
+    });
+  }
+
+  triggerAiPrediction(appt: AppointmentWithDetails): void {
+    this.aiNoShowService.predictNoShow(appt.id).subscribe({
+      next: (res) => {
+        this.appointments.update(list => 
+          list.map(a => a.id === appt.id ? { ...a, aiRiskScore: res.riskScore, aiIsHighRisk: res.isHighRisk } : a)
+        );
+        if (res.isHighRisk) {
+          this.toastr.warning(`High no-show risk detected for ${appt.patientName}. Score: ${res.riskScore}%`, 'AI Prediction');
+        } else {
+          this.toastr.info(`No-show risk score for ${appt.patientName}: ${res.riskScore}%`, 'AI Prediction');
+        }
+      },
+      error: () => this.toastr.error('Failed to run AI prediction', 'Error')
+    });
+  }
+
+  triggerStandby(appt: AppointmentWithDetails): void {
+    this.aiNoShowService.triggerStandbyAlerts(appt.id).subscribe({
+      next: (res) => {
+        this.toastr.success(res.message, 'Standby Alerts Triggered');
+      },
+      error: () => this.toastr.error('Failed to trigger standby alerts', 'Error')
     });
   }
 
