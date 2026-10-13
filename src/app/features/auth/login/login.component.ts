@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { AuthService, User } from '../../../core/auth/auth.service';
+import { WebAuthnService } from '../../../core/auth/webauthn.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -39,6 +40,7 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
 export class LoginComponent {
     private destroyRef = inject(DestroyRef);
   protected authService = inject(AuthService);
+  protected webAuthnService = inject(WebAuthnService);
   protected languageService = inject(LanguageService);
   protected themeService = inject(ThemeService);
   private fb = inject(FormBuilder);
@@ -59,6 +61,9 @@ export class LoginComponent {
   socialSignUpState = signal<'none' | 'role' | 'data' | 'doctor-clinics' | 'social-otp'>('none');
   socialProvider = signal<string>('');
   socialToken = signal<string>('');
+
+  // WebAuthn state
+  isBiometricLoading = signal(false);
 
   constructor() {
     if (window.opener && window.location.hash) {
@@ -253,6 +258,22 @@ export class LoginComponent {
       return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  loginWithBiometrics() {
+    this.isBiometricLoading.set(true);
+    this.errorMessage.set(null);
+    this.webAuthnService.loginWithBiometrics().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.authService.setCurrentUser(res.user, res.token);
+        this.handleSuccessfulAuth(res.user);
+      },
+      error: (err) => {
+        this.errorMessage.set(extractErrorMessage(err) || 'Biometric authentication failed.');
+        this.isBiometricLoading.set(false);
+      },
+      complete: () => this.isBiometricLoading.set(false)
+    });
   }
 
   private handleSuccessfulAuth(user: User, returnUrlOverride?: string) {
