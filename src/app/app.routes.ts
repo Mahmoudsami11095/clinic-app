@@ -40,6 +40,11 @@ export const routes: Routes = [
     canActivate: [unauthGuard]
   },
   {
+    path: 'onboard',
+    loadComponent: () => import('./features/subscription/components/tenant-onboarding/tenant-onboarding.component').then(m => m.TenantOnboardingComponent),
+    canActivate: [unauthGuard]
+  },
+  {
     path: '',
     loadComponent: () => import('./core/layout/main-layout/main-layout.component').then(m => m.MainLayout),
     canActivate: [authGuard],
