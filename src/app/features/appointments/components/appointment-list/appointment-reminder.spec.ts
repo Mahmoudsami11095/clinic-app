@@ -13,6 +13,7 @@ import { BillingService } from '../../../billing/services/billing.service';
 import { PatientDebtService } from '../../../../core/services/patient-debt.service';
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
+import { AiNoShowService } from '../../../../core/services/ai-no-show/ai-no-show.service';
 import { AppointmentWithDetails } from '../../models/appointment.model';
 
 describe('REQ-NOTIF-02: Patient Appointment Reminders (WhatsApp & SMS)', () => {
@@ -95,7 +96,8 @@ describe('REQ-NOTIF-02: Patient Appointment Reminders (WhatsApp & SMS)', () => {
         { provide: WhatsappService, useValue: {} },
         { provide: PatientService, useValue: mockPatientService },
         { provide: BillingService, useValue: { getAllWithDetails: () => of([]) } },
-        { provide: PatientDebtService, useValue: { calculateAllDebts: () => of(new Map()) } }
+        { provide: PatientDebtService, useValue: { calculateAllDebts: () => of(new Map()) } },
+        { provide: AiNoShowService, useValue: { predictNoShow: () => of({}), triggerStandbyAlerts: () => of({}) } }
       ]
     });
 

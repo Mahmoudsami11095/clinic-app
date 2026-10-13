@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../core/auth/auth.service';
 import { extractErrorMessage } from '../../core/utils/error.utils';
 import { LanguageService } from '../../core/i18n/language.service';
+import { WebAuthnService } from '../../core/auth/webauthn.service';
 import { environment } from '../../../environments/environment';
 
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -33,6 +34,7 @@ export class ProfileComponent implements OnInit {
   protected clinicService = inject(ClinicService);
   protected languageService = inject(LanguageService);
   protected specializationService = inject(SpecializationService);
+  protected webAuthnService = inject(WebAuthnService);
   private destroyRef = inject(DestroyRef);
 
   profileForm!: FormGroup;
@@ -58,6 +60,21 @@ export class ProfileComponent implements OnInit {
   emailOtpConfirmed = signal(false);
   phoneOtpConfirmed = signal(false);
   patientLocationData?: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string };
+
+  isRegisteringBiometrics = signal(false);
+
+  registerBiometrics() {
+    this.isRegisteringBiometrics.set(true);
+    this.webAuthnService.registerBiometrics().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.toastr.success(res.message || 'Biometric authenticator registered successfully.', 'Success');
+      },
+      error: (err) => {
+        this.toastr.error(extractErrorMessage(err) || 'Failed to register biometrics.', 'Error');
+      },
+      complete: () => this.isRegisteringBiometrics.set(false)
+    });
+  }
 
   onPatientLocationPicked(data: { address: string, lat: number, lng: number, city?: string, state?: string, country?: string }) {
     this.patientLocationData = data;

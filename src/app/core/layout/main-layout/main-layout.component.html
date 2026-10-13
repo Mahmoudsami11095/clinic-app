@@ -94,6 +94,8 @@
   </div>
 
   <!-- Global Universal Command Palette (Ctrl + K) -->
-  <app-command-palette></app-command-palette>
+  @defer (on idle) {
+    <app-command-palette></app-command-palette>
+  }
 </div>
 }

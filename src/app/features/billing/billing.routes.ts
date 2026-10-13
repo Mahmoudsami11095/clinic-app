@@ -8,5 +8,9 @@ export const billingRoutes: Routes = [
   {
     path: 'insurance-claims',
     loadComponent: () => import('./components/insurance-claims/insurance-claims-manager.component').then(m => m.InsuranceClaimsManagerComponent)
+  },
+  {
+    path: 'plans',
+    loadComponent: () => import('./components/payment-plan-manager/payment-plan-manager.component').then(m => m.PaymentPlanManagerComponent)
   }
 ];

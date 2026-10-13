@@ -83,9 +83,37 @@ async function startSession(clinicId, callbacks, phoneNumber = null) {
   // Save credentials on update
   sock.ev.on('creds.update', saveCreds);
 
-  // Optional: Listen for incoming messages if you need a webhook/chatbot later
-  sock.ev.on('messages.upsert', (m) => {
-    // console.log(JSON.stringify(m, undefined, 2));
+  // Listen for incoming messages for two-way chatbot interaction (BR-WA-01, BR-WA-03)
+  sock.ev.on('messages.upsert', async (m) => {
+    if (m.type === 'notify') {
+      for (const msg of m.messages) {
+        if (!msg.key.fromMe) {
+          const payload = {
+            from: msg.key.remoteJid.split('@')[0], // Extract raw phone number
+            type: msg.message?.interactiveResponseMessage ? 'interactive' : 'text',
+            text: msg.message?.conversation ? { body: msg.message.conversation } : null,
+            interactive: msg.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.name === 'button_reply' 
+              ? {
+                  type: 'button_reply',
+                  button_reply: {
+                    id: JSON.parse(msg.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson).id,
+                    title: 'Button Reply'
+                  }
+                }
+              : null
+          };
+
+          try {
+            // Forward payload to .NET Backend Webhook
+            const axios = require('axios');
+            await axios.post('http://host.docker.internal:5000/api/webhooks/whatsapp', payload);
+            console.log(`[Clinic ${clinicId}] Webhook payload dispatched to .NET API.`);
+          } catch (e) {
+            console.error(`[Clinic ${clinicId}] Webhook dispatch failed:`, e.message);
+          }
+        }
+      }
+    }
   });
 
   // Request pairing code if a phone number is provided and we aren't registered yet

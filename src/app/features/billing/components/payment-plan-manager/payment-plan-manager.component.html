@@ -1,0 +1,628 @@
+<div class="space-y-6 font-cairo animate-fade-in p-2 sm:p-4">
+  
+  <!-- Top Navigation & Action Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700 shadow-xs">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-500/20 mb-2">
+        <i class="pi pi-credit-card"></i>
+        <span>{{ 'financing.badge' | translate }}</span>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ 'financing.title' | translate }}</h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">{{ 'financing.subtitle' | translate }}</p>
+    </div>
+
+    <!-- Sub-tab Navigation + Action Buttons -->
+    <div class="flex flex-wrap items-center gap-3">
+      @if (!authService.isPatient()) {
+        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+          <a
+            routerLink="/billing"
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <i class="pi pi-receipt text-xs"></i>
+            <span>{{ 'commissions.invoices_tab' | translate }}</span>
+          </a>
+          <a
+            routerLink="/billing/commissions"
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <i class="pi pi-chart-pie text-xs"></i>
+            <span>{{ 'commissions.commissions_tab' | translate }}</span>
+          </a>
+          <a
+            routerLink="/billing/insurance-claims"
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <i class="pi pi-shield text-xs"></i>
+            <span>{{ 'insurance.badge' | translate }}</span>
+          </a>
+          <button
+            type="button"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition-all flex items-center gap-1.5 cursor-default"
+          >
+            <i class="pi pi-calendar-clock text-xs"></i>
+            <span>{{ 'financing.plans_tab' | translate }}</span>
+          </button>
+        </div>
+
+        <button
+          (click)="openCreateModal()"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer border-none"
+        >
+          <i class="pi pi-plus text-xs"></i>
+          <span>{{ 'financing.new_plan_btn' | translate }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Financed Capital -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+        <i class="pi pi-wallet text-xl"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ 'financing.kpi_financed' | translate }}</p>
+        <p class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+          {{ summary()?.totalFinancedCapital || 0 | currency:'EGP':'symbol':'1.0-0' }}
+        </p>
+        <span class="text-[11px] text-slate-500">{{ summary()?.totalPlans || 0 }} {{ 'financing.plans_total' | translate }}</span>
+      </div>
+    </div>
+
+    <!-- Total Collected to Date -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+        <i class="pi pi-check-circle text-xl"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ 'financing.kpi_collected' | translate }}</p>
+        <p class="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+          {{ summary()?.totalCollectedAmount || 0 | currency:'EGP':'symbol':'1.0-0' }}
+        </p>
+        <span class="text-[11px] text-emerald-600 font-semibold">{{ summary()?.collectionRatePercentage || 0 }}% {{ 'financing.rate' | translate }}</span>
+      </div>
+    </div>
+
+    <!-- Outstanding Receivables -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+        <i class="pi pi-clock text-xl"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ 'financing.kpi_outstanding' | translate }}</p>
+        <p class="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+          {{ summary()?.totalOutstandingReceivables || 0 | currency:'EGP':'symbol':'1.0-0' }}
+        </p>
+        <span class="text-[11px] text-slate-500">{{ summary()?.activePlans || 0 }} {{ 'financing.active' | translate }}</span>
+      </div>
+    </div>
+
+    <!-- Overdue Arrears -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 shadow-xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+        <i class="pi pi-exclamation-triangle text-xl"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ 'financing.kpi_overdue' | translate }}</p>
+        <p class="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400 mt-0.5">
+          {{ summary()?.totalOverdueArrears || 0 | currency:'EGP':'symbol':'1.0-0' }}
+        </p>
+        <span class="text-[11px] text-rose-500 font-semibold">{{ summary()?.atRiskPlans || 0 }} {{ 'financing.at_risk' | translate }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700 shadow-xs">
+    
+    <!-- Tab Filter -->
+    <div class="flex flex-wrap items-center gap-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl">
+      <button
+        type="button"
+        (click)="activeTab.set('all')"
+        [class]="activeTab() === 'all' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer border-none"
+      >
+        {{ 'financing.filter_all' | translate }}
+      </button>
+      <button
+        type="button"
+        (click)="activeTab.set('Active')"
+        [class]="activeTab() === 'Active' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer border-none"
+      >
+        {{ 'financing.filter_active' | translate }}
+      </button>
+      <button
+        type="button"
+        (click)="activeTab.set('AtRisk')"
+        [class]="activeTab() === 'AtRisk' ? 'bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer border-none"
+      >
+        {{ 'financing.filter_at_risk' | translate }}
+      </button>
+      <button
+        type="button"
+        (click)="activeTab.set('Completed')"
+        [class]="activeTab() === 'Completed' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+        class="px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer border-none"
+      >
+        {{ 'financing.filter_completed' | translate }}
+      </button>
+    </div>
+
+    <!-- Search & Clinic Selector -->
+    <div class="flex items-center gap-3">
+      @if (clinics().length > 1) {
+        <select
+          [(ngModel)]="selectedClinicId"
+          (change)="loadPlans()"
+          class="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="all">{{ 'common.all_clinics' | translate }}</option>
+          @for (c of clinics(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      }
+
+      <div class="relative flex-1 sm:w-64">
+        <i class="pi pi-search absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          [placeholder]="'financing.search_placeholder' | translate"
+          class="w-full ps-9 pe-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Financing Plans Card Grid -->
+  @if (loading()) {
+    <div class="p-12 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700">
+      <i class="pi pi-spin pi-spinner text-3xl text-indigo-600 mb-3"></i>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'common.loading' | translate }}</p>
+    </div>
+  } @else if (filteredPlans().length === 0) {
+    <div class="p-12 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
+      <div class="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-500 mx-auto mb-4">
+        <i class="pi pi-credit-card text-2xl"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ 'financing.empty_title' | translate }}</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-5">{{ 'financing.empty_desc' | translate }}</p>
+      @if (!authService.isPatient()) {
+        <button
+          (click)="openCreateModal()"
+          class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors shadow-xs cursor-pointer border-none"
+        >
+          <i class="pi pi-plus me-1.5"></i>
+          {{ 'financing.new_plan_btn' | translate }}
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      @for (plan of filteredPlans(); track plan.id) {
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+          
+          <!-- Card Header -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300">
+                {{ plan.planNumber }}
+              </span>
+              <app-status-badge [status]="plan.status" domain="general"></app-status-badge>
+            </div>
+
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight line-clamp-1 mb-1">
+              {{ plan.title }}
+            </h3>
+            
+            <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4">
+              <i class="pi pi-user text-[11px]"></i>
+              <span class="font-medium text-slate-700 dark:text-slate-300">{{ plan.patientName }}</span>
+              <span class="text-slate-300 dark:text-slate-600">•</span>
+              <span>{{ plan.doctorName }}</span>
+            </div>
+
+            <!-- Financial Progress Bar -->
+            <div class="space-y-1.5 mb-4 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-500">{{ 'financing.paid_progress' | translate }}</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200">
+                  {{ plan.totalPaid | currency:'EGP':'symbol':'1.0-0' }} / {{ plan.totalPayable | currency:'EGP':'symbol':'1.0-0' }}
+                </span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-full transition-all duration-500"
+                  [style.width.%]="plan.totalPayable > 0 ? (plan.totalPaid / plan.totalPayable) * 100 : 0"
+                ></div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <span>{{ plan.numberOfInstallments }} {{ 'financing.installments' | translate }} ({{ plan.installmentFrequency }})</span>
+                <span class="font-semibold text-emerald-600 dark:text-emerald-400">
+                  {{ (plan.totalPayable > 0 ? (plan.totalPaid / plan.totalPayable) * 100 : 0) | number:'1.0-0' }}%
+                </span>
+              </div>
+            </div>
+
+            <!-- Installment Details Brief -->
+            <div class="grid grid-cols-2 gap-2 text-xs mb-4">
+              <div class="bg-slate-50/70 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p class="text-[10px] text-slate-400 uppercase font-semibold">{{ 'financing.down_payment' | translate }}</p>
+                <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ plan.downPayment | currency:'EGP':'symbol':'1.0-0' }}</p>
+              </div>
+              <div class="bg-slate-50/70 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p class="text-[10px] text-slate-400 uppercase font-semibold">{{ 'financing.remaining' | translate }}</p>
+                <p class="font-bold text-rose-600 dark:text-rose-400 mt-0.5">{{ plan.remainingBalance | currency:'EGP':'symbol':'1.0-0' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              (click)="openScheduleModal(plan)"
+              class="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer bg-transparent"
+            >
+              <i class="pi pi-list text-xs"></i>
+              <span>{{ 'financing.view_schedule' | translate }}</span>
+            </button>
+
+            @if (plan.status !== 'Completed' && !authService.isPatient()) {
+              <button
+                type="button"
+                (click)="openScheduleModal(plan)"
+                class="px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer border-none"
+              >
+                <i class="pi pi-wallet text-xs"></i>
+                <span>{{ 'financing.pay_btn' | translate }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal: Create New Financing Plan -->
+  <app-modal
+    [title]="'financing.new_plan_modal_title' | translate"
+    [subtitle]="'financing.new_plan_modal_subtitle' | translate"
+    [isOpen]="isCreateModalOpen()"
+    (close)="isCreateModalOpen.set(false)"
+  >
+    <div class="space-y-4 text-xs font-cairo">
+      
+      <!-- Clinic & Doctor Selection -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'common.clinic' | translate }} *</label>
+          <select
+            [ngModel]="newPlanForm().clinicId"
+            (ngModelChange)="updateFormField('clinicId', $event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+            @for (c of clinics(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'common.doctor' | translate }} *</label>
+          <select
+            [ngModel]="newPlanForm().doctorId"
+            (ngModelChange)="updateFormField('doctorId', $event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+            @for (d of doctors(); track d.id) {
+              <option [value]="d.id">Dr. {{ d.firstName }} {{ d.lastName }} ({{ d.specialization }})</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Patient Selection -->
+      <div>
+        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'common.patient' | translate }} *</label>
+        <select
+          [ngModel]="newPlanForm().patientId"
+          (ngModelChange)="updateFormField('patientId', $event)"
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          @for (p of patients(); track p.id) {
+            <option [value]="p.id">{{ p.firstName }} {{ p.lastName }} ({{ p.phoneNumber }})</option>
+          }
+        </select>
+      </div>
+
+      <!-- Plan Title -->
+      <div>
+        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.plan_title' | translate }} *</label>
+        <input
+          type="text"
+          [ngModel]="newPlanForm().title"
+          (ngModelChange)="updateFormField('title', $event)"
+          placeholder="e.g. Orthodontic Aligners Complete Treatment"
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+
+      <!-- Financial Calculation Inputs -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.total_amount' | translate }} (EGP) *</label>
+          <input
+            type="number"
+            min="100"
+            [ngModel]="newPlanForm().totalAmount"
+            (ngModelChange)="updateFormField('totalAmount', +$event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          />
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.down_payment' | translate }} (EGP)</label>
+          <input
+            type="number"
+            min="0"
+            [ngModel]="newPlanForm().downPayment"
+            (ngModelChange)="updateFormField('downPayment', +$event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          />
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.tenure_installments' | translate }} *</label>
+          <select
+            [ngModel]="newPlanForm().numberOfInstallments"
+            (ngModelChange)="updateFormField('numberOfInstallments', +$event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+            <option [value]="3">3 Months (Quarterly)</option>
+            <option [value]="6">6 Months (Half-Year)</option>
+            <option [value]="10">10 Months</option>
+            <option [value]="12">12 Months (1 Year)</option>
+            <option [value]="18">18 Months</option>
+            <option [value]="24">24 Months (2 Years)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Frequency & Start Date -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.frequency' | translate }}</label>
+          <select
+            [ngModel]="newPlanForm().installmentFrequency"
+            (ngModelChange)="updateFormField('installmentFrequency', $event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+            <option value="Monthly">{{ 'financing.monthly' | translate }}</option>
+            <option value="BiWeekly">{{ 'financing.biweekly' | translate }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.start_date' | translate }} *</label>
+          <input
+            type="date"
+            [ngModel]="newPlanForm().startDate"
+            (ngModelChange)="updateFormField('startDate', $event)"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          />
+        </div>
+      </div>
+
+      <!-- Live Schedule Preview Table -->
+      <div class="mt-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-bold text-slate-800 dark:text-slate-200">{{ 'financing.preview_schedule' | translate }}</span>
+          <span class="text-[11px] text-indigo-600 font-semibold">
+            {{ 'financing.financed_net' | translate }}: {{ (newPlanForm().totalAmount - newPlanForm().downPayment) | currency:'EGP':'symbol':'1.0-0' }}
+          </span>
+        </div>
+        
+        <div class="max-h-36 overflow-y-auto space-y-1">
+          @for (item of previewSchedule(); track item.num) {
+            <div class="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-slate-800 text-[11px]">
+              <span class="font-semibold text-slate-600 dark:text-slate-300">#{{ item.num }} — {{ item.dueDate }}</span>
+              <span class="font-bold text-slate-900 dark:text-white">{{ item.amount | currency:'EGP':'symbol':'1.2-2' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="isCreateModalOpen.set(false)"
+          class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer bg-transparent"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+
+        <button
+          type="button"
+          (click)="submitCreatePlan()"
+          class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer border-none"
+        >
+          {{ 'financing.confirm_plan_btn' | translate }}
+        </button>
+      </div>
+
+    </div>
+  </app-modal>
+
+  <!-- Modal: Installments Schedule & Status Drawer -->
+  <app-modal
+    [title]="selectedPlan()?.title || 'Installment Schedule'"
+    [subtitle]="selectedPlan()?.planNumber + ' — ' + selectedPlan()?.patientName"
+    [isOpen]="isScheduleModalOpen()"
+    (close)="isScheduleModalOpen.set(false)"
+  >
+    @if (selectedPlan(); as plan) {
+      <div class="space-y-4 text-xs font-cairo">
+        
+        <!-- Summary Header inside Modal -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+          <div>
+            <span class="text-[10px] text-slate-400 block">{{ 'financing.total_payable' | translate }}</span>
+            <span class="font-bold text-slate-900 dark:text-white">{{ plan.totalPayable | currency:'EGP':'symbol':'1.0-0' }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block">{{ 'financing.down_payment' | translate }}</span>
+            <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ plan.downPayment | currency:'EGP':'symbol':'1.0-0' }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block">{{ 'financing.total_paid' | translate }}</span>
+            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ plan.totalPaid | currency:'EGP':'symbol':'1.0-0' }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block">{{ 'financing.remaining' | translate }}</span>
+            <span class="font-bold text-rose-600 dark:text-rose-400">{{ plan.remainingBalance | currency:'EGP':'symbol':'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <!-- Installments Table -->
+        <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-700">
+          <table class="w-full text-start text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-900/80 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="p-3 text-start">#</th>
+                <th class="p-3 text-start">{{ 'financing.due_date' | translate }}</th>
+                <th class="p-3 text-start">{{ 'financing.amount_due' | translate }}</th>
+                <th class="p-3 text-start">{{ 'financing.amount_paid' | translate }}</th>
+                <th class="p-3 text-start">{{ 'common.status' | translate }}</th>
+                <th class="p-3 text-end">{{ 'common.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (inst of plan.installments; track inst.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                  <td class="p-3 font-bold text-slate-700 dark:text-slate-300">#{{ inst.installmentNumber }}</td>
+                  <td class="p-3 text-slate-600 dark:text-slate-400">{{ inst.dueDate }}</td>
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">{{ inst.amountDue | currency:'EGP':'symbol':'1.2-2' }}</td>
+                  <td class="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{{ inst.amountPaid | currency:'EGP':'symbol':'1.2-2' }}</td>
+                  <td class="p-3">
+                    <app-status-badge [status]="inst.status" domain="invoice"></app-status-badge>
+                  </td>
+                  <td class="p-3 text-end">
+                    <div class="flex items-center justify-end gap-1.5">
+                      @if (inst.status !== 'Paid' && !authService.isPatient()) {
+                        <button
+                          type="button"
+                          (click)="openPayModal(plan, inst)"
+                          class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 text-[11px] cursor-pointer border-none"
+                        >
+                          {{ 'financing.pay_now' | translate }}
+                        </button>
+                      }
+
+                      @if (inst.status !== 'Paid' && !authService.isPatient()) {
+                        <button
+                          type="button"
+                          (click)="sendWhatsAppReminder(plan, inst, $event)"
+                          [title]="'financing.send_wa_reminder' | translate"
+                          class="p-1.5 rounded-lg border border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-[11px] cursor-pointer bg-transparent"
+                        >
+                          <i class="pi pi-whatsapp"></i>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    }
+  </app-modal>
+
+  <!-- Modal: Record Installment Payment -->
+  <app-modal
+    [title]="'financing.record_payment_title' | translate"
+    [subtitle]="selectedPlan()?.title + ' — Installment #' + selectedInstallment()?.installmentNumber"
+    [isOpen]="isPayModalOpen()"
+    (close)="isPayModalOpen.set(false)"
+  >
+    <div class="space-y-4 text-xs font-cairo">
+      <div>
+        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.payment_amount' | translate }} (EGP) *</label>
+        <input
+          type="number"
+          min="1"
+          [ngModel]="payForm().amount"
+          (ngModelChange)="updatePayField('amount', +$event)"
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'billing.payment_method' | translate }} *</label>
+        <select
+          [ngModel]="payForm().paymentMethod"
+          (ngModelChange)="updatePayField('paymentMethod', $event)"
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="Card">Credit / Debit Card</option>
+          <option value="Cash">Cash (Front Desk)</option>
+          <option value="BankTransfer">Bank Wire / InstaPay</option>
+          <option value="Tabby">Tabby Split 4</option>
+          <option value="Tamara">Tamara Installments</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'financing.txn_reference' | translate }}</label>
+        <input
+          type="text"
+          [ngModel]="payForm().transactionReference"
+          (ngModelChange)="updatePayField('transactionReference', $event)"
+          placeholder="e.g. POS-AUTH-98214"
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ 'common.notes' | translate }}</label>
+        <input
+          type="text"
+          [ngModel]="payForm().notes"
+          (ngModelChange)="updatePayField('notes', $event)"
+          placeholder="Receipt comments..."
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="isPayModalOpen.set(false)"
+          class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer bg-transparent"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+
+        <button
+          type="button"
+          (click)="submitPayment()"
+          class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer border-none"
+        >
+          {{ 'financing.confirm_payment_btn' | translate }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+</div>

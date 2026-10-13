@@ -199,6 +199,13 @@
             <i *ngIf="!isLoading()" class="pi pi-arrow-right text-xs rtl-flip group-hover:translate-x-1 transition-transform"></i>
           </ng-container>
         </button>
+
+        <button type="button" (click)="loginWithBiometrics()" [disabled]="isBiometricLoading() || isSuccess()"
+                class="w-full font-bold text-xs py-3.5 px-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-700 dark:text-slate-300 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer focus:outline-none mt-2">
+          <i *ngIf="isBiometricLoading()" class="pi pi-spin pi-spinner text-xs"></i>
+          <i *ngIf="!isBiometricLoading()" class="pi pi-id-card text-xs"></i>
+          <span>Sign in with Biometrics (TouchID / FaceID)</span>
+        </button>
       </form>
 
       <!-- OTP Login Form -->
