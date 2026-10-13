@@ -8,5 +8,9 @@ export const inventoryRoutes: Routes = [
   {
     path: 'transfers',
     loadComponent: () => import('./components/transfer-board/stock-transfer-board.component').then(m => m.StockTransferBoardComponent)
+  },
+  {
+    path: 'procurement',
+    loadComponent: () => import('./components/purchase-order-manager/purchase-order-manager.component').then(m => m.PurchaseOrderManagerComponent)
   }
 ];
