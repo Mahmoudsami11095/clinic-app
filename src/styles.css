@@ -128,3 +128,40 @@ html.dark .toast-container .toast-error {
   }
 }
 
+/* ==========================================================================
+   Mobile Ergonomics & Safe Area Insets (Capacitor Native iOS/Android)
+   ========================================================================== */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+.safe-top {
+  padding-top: var(--sat);
+}
+
+.safe-bottom {
+  padding-bottom: var(--sab);
+}
+
+.touch-target-min {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* HIPAA Privacy Shield veil when mobile app is backgrounded in multitasking */
+.hipaa-privacy-shield {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  backdrop-filter: blur(25px);
+  background-color: rgba(15, 23, 42, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
