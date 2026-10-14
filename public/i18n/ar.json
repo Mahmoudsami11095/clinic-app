@@ -690,6 +690,8 @@
     "fdi_system_label": "نظام الاتحاد العالمي لطب الأسنان (FDI)",
     "universal_system_label": "نظام الترقيم الأمريكي الشامل (Universal)",
     "dual_notation_active": "نظام الترقيم المزدوج مفعّل",
+    "clinical_photos": "الصور السريرية للفم",
+    "capture_photo_btn": "التقاط صورة سريرية",
     "save_diagnosis_log": "حفظ سجل التشخيص",
     "treatment_notes": "ملاحظات العلاج / الإجراء",
     "pain_sensitivity": "مستوى الألم / الحساسية",

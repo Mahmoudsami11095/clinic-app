@@ -690,6 +690,8 @@
     "fdi_system_label": "FDI World Dental Federation Notation",
     "universal_system_label": "Universal Numbering System",
     "dual_notation_active": "Dual Notation Standard Active",
+    "clinical_photos": "Clinical Intraoral Photos",
+    "capture_photo_btn": "Capture Intraoral Photo",
     "save_diagnosis_log": "Save Diagnosis Log",
     "treatment_notes": "Treatment / Procedure Notes",
     "pain_sensitivity": "Pain / Sensitivity Level",
