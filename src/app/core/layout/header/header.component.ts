@@ -10,6 +10,7 @@ import { NotificationService } from '../../services/notification.service';
 import { LayoutService } from '../layout.service';
 import { CommandPaletteService } from '../../services/command-palette.service';
 import { TutorialService } from '../../services/tutorial/tutorial.service';
+import { OfflineSyncService } from '../../services/mobile/offline-sync.service';
 
 @Component({
   selector: 'app-header',
@@ -26,6 +27,7 @@ export class Header {
   protected layoutService = inject(LayoutService);
   protected commandPaletteService = inject(CommandPaletteService);
   protected tutorialService = inject(TutorialService);
+  protected syncService = inject(OfflineSyncService);
   private router = inject(Router);
 
   isDropdownOpen = signal(false);

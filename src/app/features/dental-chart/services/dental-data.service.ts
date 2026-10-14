@@ -1,7 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { ToothStatus } from '../../../core/services/dental.service';
+import { OfflineSyncService } from '../../../core/services/mobile/offline-sync.service';
+import { environment } from '../../../../environments/environment';
 
 export interface CanalMeasurement {
   name: string;          // Canal designation, e.g., "MB" (Mesiobuccal), "DB" (Distobuccal), "P" (Palatal)
@@ -30,6 +32,7 @@ export interface EndodonticRecord {
 export class DentalDataService {
   private STORAGE_KEY = 'dental_endodontic_records';
   private records: { [toothId: string]: EndodonticRecord } = {};
+  private syncService = inject(OfflineSyncService);
 
   constructor() {
     this.loadRecordsFromStorage();
@@ -271,11 +274,25 @@ export class DentalDataService {
   }
 
   updateEndodonticRecord(record: EndodonticRecord): Observable<EndodonticRecord> {
-    record.lastUpdated = new Date().toLocaleDateString('en-US', {
+    record.lastUpdated = new Date().toLocaleString('en-US', { 
       month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
+
+    // Optimistic UI update
     this.records[record.toothId] = { ...record };
     this.saveRecordsToStorage();
+
+    // Milestone 4: Offline Delta-Sync Engine Queue
+    const url = `${environment.apiUrl}/dental/records/${record.toothId}`;
+    if (!this.syncService.isOnline()) {
+      this.syncService.queueRequest(url, 'PUT', record);
+    } else {
+      // If we are online but the backend fails, the OfflineSyncService automatically handles queuing 
+      // if we wrap HTTP calls directly in it, but here we just queue explicitly for simplicity.
+      // (For this mock implementation, we just queue it to simulate API dispatch)
+      this.syncService.queueRequest(url, 'PUT', record);
+    }
+
     return of({ ...this.records[record.toothId] }).pipe(delay(200));
   }
 }
