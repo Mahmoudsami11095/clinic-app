@@ -6,6 +6,7 @@ import { CommandPaletteService } from './command-palette.service';
 import { ThemeService } from './theme.service';
 import { LanguageService } from '../i18n/language.service';
 import { AuthService } from '../auth/auth.service';
+import { TutorialService } from './tutorial/tutorial.service';
 import { environment } from '../../../environments/environment';
 
 describe('CommandPaletteService - Level 1 (SW/Unit)', () => {
@@ -15,6 +16,7 @@ describe('CommandPaletteService - Level 1 (SW/Unit)', () => {
   let themeSpy: jasmine.SpyObj<ThemeService>;
   let langSpy: jasmine.SpyObj<LanguageService>;
   let authSpy: jasmine.SpyObj<AuthService>;
+  let tutorialSpy: jasmine.SpyObj<TutorialService>;
 
   beforeEach(() => {
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
@@ -22,6 +24,7 @@ describe('CommandPaletteService - Level 1 (SW/Unit)', () => {
     langSpy = jasmine.createSpyObj('LanguageService', ['setLanguage', 'currentLang']);
     langSpy.currentLang.and.returnValue('en');
     authSpy = jasmine.createSpyObj('AuthService', ['logout']);
+    tutorialSpy = jasmine.createSpyObj('TutorialService', ['openHelpCenter', 'startTour']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -31,7 +34,8 @@ describe('CommandPaletteService - Level 1 (SW/Unit)', () => {
         { provide: Router, useValue: routerSpy },
         { provide: ThemeService, useValue: themeSpy },
         { provide: LanguageService, useValue: langSpy },
-        { provide: AuthService, useValue: authSpy }
+        { provide: AuthService, useValue: authSpy },
+        { provide: TutorialService, useValue: tutorialSpy }
       ]
     });
 

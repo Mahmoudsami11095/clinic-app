@@ -5,7 +5,8 @@ export type CommandCategory =
   | 'doctors' 
   | 'chairs' 
   | 'inventory' 
-  | 'preferences';
+  | 'preferences'
+  | 'help';
 
 export interface CommandItem {
   id: string;

@@ -1,0 +1,209 @@
+<app-modal [isOpen]="tutorialService.isHelpCenterOpen()"
+           (close)="close()"
+           [title]="'tutorial.help_center_title' | translate"
+           [subtitle]="'tutorial.help_center_subtitle' | translate">
+  
+  <div class="space-y-6">
+
+    <!-- Tab Bar -->
+    <div class="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-x-auto">
+      <button type="button"
+              (click)="setTab('page-guide')"
+              [ngClass]="activeTab() === 'page-guide' 
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+              class="flex-1 min-w-[120px] py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border-none">
+        <i class="pi pi-file-o"></i>
+        <span>{{ 'tutorial.tabs.current_page' | translate }}</span>
+      </button>
+
+      <button type="button"
+              (click)="setTab('cheat-sheets')"
+              [ngClass]="activeTab() === 'cheat-sheets' 
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+              class="flex-1 min-w-[120px] py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border-none">
+        <i class="pi pi-book"></i>
+        <span>{{ 'tutorial.tabs.cheat_sheets' | translate }}</span>
+      </button>
+
+      <button type="button"
+              (click)="setTab('tours')"
+              [ngClass]="activeTab() === 'tours' 
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+              class="flex-1 min-w-[120px] py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border-none">
+        <i class="pi pi-compass"></i>
+        <span>{{ 'tutorial.tabs.tours' | translate }}</span>
+      </button>
+
+      <button type="button"
+              (click)="setTab('shortcuts')"
+              [ngClass]="activeTab() === 'shortcuts' 
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+              class="flex-1 min-w-[120px] py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border-none">
+        <i class="pi pi-th-large"></i>
+        <span>{{ 'tutorial.tabs.shortcuts' | translate }}</span>
+      </button>
+    </div>
+
+    <!-- ── TAB 1: Contextual Current Page Guide ── -->
+    <div *ngIf="activeTab() === 'page-guide'" class="space-y-4 animate-in fade-in duration-200">
+      <div *ngIf="tutorialService.currentPageHelp() as page"
+           class="bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40 rounded-2xl p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+              <i class="pi pi-sparkles text-sm"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                {{ isArabic() ? page.titleAr : page.title }}
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ isArabic() ? page.summaryAr : page.summary }}
+              </p>
+            </div>
+          </div>
+
+          <button *ngIf="page.recommendedTourId"
+                  type="button"
+                  (click)="startTour(page.recommendedTourId)"
+                  class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border-none">
+            <i class="pi pi-play text-[10px]"></i>
+            <span>{{ 'tutorial.start_tour' | translate }}</span>
+          </button>
+        </div>
+
+        <!-- Tips List -->
+        <div class="space-y-2 pt-2 border-t border-indigo-200/40 dark:border-indigo-900/40">
+          <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">
+            {{ 'tutorial.pro_tips' | translate }}
+          </h4>
+          <ul class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+            <li *ngFor="let tip of page.tips" class="flex items-start gap-2">
+              <i class="pi pi-check-circle text-indigo-600 dark:text-indigo-400 mt-0.5 text-[11px]"></i>
+              <span>{{ isArabic() ? tip.ar : tip.en }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 2: Searchable Cheat Sheets (SOPs) ── -->
+    <div *ngIf="activeTab() === 'cheat-sheets'" class="space-y-4 animate-in fade-in duration-200">
+      
+      <!-- Search Input -->
+      <div class="relative">
+        <i class="pi pi-search absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input type="text"
+               [(ngModel)]="searchQuery"
+               [placeholder]="'tutorial.search_cheat_sheets' | translate"
+               class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl ps-9 pe-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-indigo-500 transition-colors">
+      </div>
+
+      <!-- Cheat Sheets Accordions / Cards -->
+      <div class="space-y-4 max-h-[50vh] overflow-y-auto pe-1">
+        <div *ngFor="let card of filteredCheatSheets()"
+             class="bg-white dark:bg-slate-800/60 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-xs">
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                <i [class]="card.icon" class="text-sm"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white">
+                  {{ isArabic() ? card.titleAr : card.title }}
+                </h4>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ card.targetRole }}</p>
+              </div>
+            </div>
+
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+              {{ isArabic() ? card.badgeAr : card.badge }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+            <div *ngFor="let step of card.steps"
+                 class="p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl space-y-1 border border-slate-100 dark:border-slate-800">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-[10px]">
+                    {{ step.num }}
+                  </span>
+                  {{ isArabic() ? step.titleAr : step.title }}
+                </span>
+                <span *ngIf="step.shortcut"
+                      class="px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-indigo-600 dark:text-indigo-400">
+                  {{ step.shortcut }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed ps-5">
+                {{ isArabic() ? step.descAr : step.desc }}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 3: Role-Based Interactive Tours ── -->
+    <div *ngIf="activeTab() === 'tours'" class="space-y-3 animate-in fade-in duration-200">
+      <div *ngFor="let tour of tutorialService.filteredTours()"
+           class="bg-white dark:bg-slate-800/60 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-4 shadow-xs hover:border-indigo-500/50 transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+            <i [class]="tour.icon" class="text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white">
+                {{ tour.titleKey | translate }}
+              </h4>
+              <span *ngIf="tutorialService.completedTourIds().includes(tour.id)"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 flex items-center gap-1">
+                <i class="pi pi-check text-[9px]"></i>
+                <span>{{ 'tutorial.completed' | translate }}</span>
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {{ tour.descriptionKey | translate }}
+            </p>
+          </div>
+        </div>
+
+        <button type="button"
+                (click)="startTour(tour.id)"
+                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border-none shrink-0">
+          <i class="pi pi-play text-[10px]"></i>
+          <span>{{ (tutorialService.completedTourIds().includes(tour.id) ? 'tutorial.restart' : 'tutorial.start') | translate }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── TAB 4: Keyboard Shortcuts Cheatsheet ── -->
+    <div *ngIf="activeTab() === 'shortcuts'" class="space-y-3 animate-in fade-in duration-200">
+      <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 divide-y divide-slate-100 dark:divide-slate-700/60">
+        <div *ngFor="let item of tutorialService.keyboardShortcuts()"
+             class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+          <span class="text-xs font-medium text-slate-700 dark:text-slate-300">
+            {{ isArabic() ? item.descriptionAr : item.description }}
+          </span>
+
+          <div class="flex items-center gap-1">
+            <kbd *ngFor="let k of item.keys"
+                 class="px-2 py-1 text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-2xs">
+              {{ k }}
+            </kbd>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</app-modal>

@@ -132,7 +132,8 @@
     "executive_intelligence": "Executive Intelligence",
     "assistant_hub": "Assistant Hub",
     "my_portal": "My Portal",
-    "my_bills": "My Invoices"
+    "my_bills": "My Invoices",
+    "help_tutorials": "Help & Quickstart"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1551,5 +1552,83 @@
     "payment_amount": "Payment Amount",
     "txn_reference": "POS Auth / Transaction Ref",
     "confirm_payment_btn": "Submit Payment Receipt"
+  },
+  "tutorial": {
+    "help_center_title": "ClinicCorp Help & Quickstart Hub",
+    "help_center_subtitle": "Real-time SOP cheat sheets, role-based guided walkthroughs, and shortcut cheatsheets",
+    "tabs": {
+      "current_page": "Page Guide",
+      "cheat_sheets": "Cheat Sheets & SOPs",
+      "tours": "Guided Tours",
+      "shortcuts": "Shortcuts"
+    },
+    "start_tour": "Start Guided Tour",
+    "pro_tips": "Best Practice Pro-Tips",
+    "search_cheat_sheets": "Search cheat sheets, clinical steps, or shortcuts...",
+    "completed": "Completed",
+    "start": "Start Tour",
+    "restart": "Restart Tour",
+    "skip": "Skip Tour",
+    "previous": "Previous",
+    "next": "Next Step",
+    "finish": "Finish Tour",
+    "tours": {
+      "reception": {
+        "title": "Front-Desk Reception & 45s Check-in Tour",
+        "desc": "Learn patient arrival, live waiting queue, and split payment settlement."
+      },
+      "doctor": {
+        "title": "Doctor & Specialist Consultation Tour",
+        "desc": "Learn EMR timeline, AI Voice Scribe dictation, and prescription allergy interceptors."
+      },
+      "dental": {
+        "title": "3D Dental Odontogram & Multi-Stage Plans Tour",
+        "desc": "Learn tooth pathology charting, treatment plan stages, and consent signatures."
+      },
+      "operatory": {
+        "title": "Operatory Chairs & Inventory Stock Tour",
+        "desc": "Learn live chair turnover timers, low-stock alerts, and auto recipe deductions."
+      },
+      "owner": {
+        "title": "Practice Management & Executive Analytics Tour",
+        "desc": "Learn KPI revenue trends, doctor commission audits, and branch switching."
+      }
+    },
+    "steps": {
+      "reception": {
+        "step1_title": "1. Patients Directory & Quick Search",
+        "step1_content": "Search patients by mobile or name, or register a new patient with drug allergies in <45 seconds.",
+        "step2_title": "2. Today's Appointments & Live Queue",
+        "step2_content": "Click [ Check-In ] upon arrival to notify the physician and start the waiting timer.",
+        "step3_title": "3. Invoicing & Split-Payment Cashier",
+        "step3_content": "Settle fees with Cash, Card, or Split Payment and print 80mm thermal receipts."
+      },
+      "doctor": {
+        "step1_title": "1. Appointments & Calling Next Patient",
+        "step1_content": "Inspect the active queue and click [ Call Next Patient ] to start consultation.",
+        "step2_title": "2. Patient Medical File & Allergy Banner",
+        "step2_content": "Review past visits, lab reports, and verify the persistent red Drug Allergy Warning.",
+        "step3_title": "3. High-Resolution Scans & Radiology",
+        "step3_content": "Inspect panoramic and periapical X-rays side-by-side with digital caliper measurements."
+      },
+      "dental": {
+        "step1_title": "1. Patients & Dental Records",
+        "step1_content": "Select a patient to open their comprehensive clinical chart and medical records.",
+        "step2_title": "2. Treatment Plans & Odontogram",
+        "step2_content": "Chart tooth pathologies on FDI surfaces and bundle procedures into signed stages."
+      },
+      "operatory": {
+        "step1_title": "1. Operatory & Chair Live Status Board",
+        "step1_content": "Monitor room occupancy in real-time and trigger 5-minute sterilization turnover timers.",
+        "step2_title": "2. Materials Inventory & Auto-Deductions",
+        "step2_content": "Track consumables stock levels and inspect low-stock or expiration quarantine alerts."
+      },
+      "owner": {
+        "step1_title": "1. Executive KPI Intelligence Dashboard",
+        "step1_content": "Monitor real-time practice revenue, patient retention, and chair utilization rates.",
+        "step2_title": "2. Billing & Doctor Commission Ledgers",
+        "step2_content": "Review tiered commissions and generate audit-locked monthly doctor payouts."
+      }
+    }
   }
 }

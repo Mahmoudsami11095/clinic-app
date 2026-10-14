@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, OnInit } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar.component';
@@ -8,19 +8,41 @@ import { LayoutService } from '../layout.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommandPaletteComponent } from '../../components/command-palette/command-palette.component';
 import { OfflineBannerComponent } from '../../components/offline-banner/offline-banner.component';
+import { HelpCenterModalComponent } from '../../components/help-center/help-center-modal.component';
+import { InteractiveTourOverlayComponent } from '../../../shared/components/interactive-tour-overlay/interactive-tour-overlay.component';
+import { TutorialService } from '../../services/tutorial/tutorial.service';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [CommonModule, RouterOutlet, Sidebar, Header, TranslatePipe, CommandPaletteComponent, OfflineBannerComponent],
+  imports: [
+    CommonModule, 
+    RouterOutlet, 
+    Sidebar, 
+    Header, 
+    TranslatePipe, 
+    CommandPaletteComponent, 
+    OfflineBannerComponent,
+    HelpCenterModalComponent,
+    InteractiveTourOverlayComponent
+  ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css'
 })
 export class MainLayout implements OnInit {
   protected authService = inject(AuthService);
   protected layoutService = inject(LayoutService);
+  protected tutorialService = inject(TutorialService);
 
   showWelcomeOverlay = signal(false);
   isClosingWelcome = signal(false);
+
+  @HostListener('window:keydown', ['$event'])
+  onGlobalKeydown(event: KeyboardEvent) {
+    if (event.key === '?' && event.shiftKey) {
+      event.preventDefault();
+      this.tutorialService.toggleHelpCenter();
+    }
+  }
 
   constructor() {
     effect(() => {
