@@ -22,6 +22,7 @@ import { Patient } from '../../../patients/models/patient.model';
 import { BillingService } from '../../../billing/services/billing.service';
 import { PatientDebtService, PatientDebtSummary } from '../../../../core/services/patient-debt.service';
 import { AiNoShowService } from '../../../../core/services/ai-no-show/ai-no-show.service';
+import { NativeScannerService } from '../../../../core/services/mobile/native-scanner.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
@@ -44,6 +45,7 @@ export class AppointmentListComponent implements OnInit {
   private billingService = inject(BillingService);
   private patientDebtService = inject(PatientDebtService);
   private aiNoShowService = inject(AiNoShowService);
+  protected scannerService = inject(NativeScannerService);
 
   appointments = signal<AppointmentWithDetails[]>([]);
   prescriptions = signal<Prescription[]>([]);
@@ -565,5 +567,26 @@ export class AppointmentListComponent implements OnInit {
     this.isPrintRxModalOpen.set(false);
     this.prescriptionToPrint.set(null);
     this.appointmentForPrint.set(null);
+  }
+
+  async startQrCheckInScanner() {
+    const qrContent = await this.scannerService.scanQrCode();
+    if (qrContent) {
+      try {
+        const payload = JSON.parse(qrContent);
+        if (payload.appointmentId) {
+          const appt = this.appointments().find(a => a.id === payload.appointmentId);
+          if (appt) {
+            this.checkIn(appt);
+          } else {
+            this.toastr.error('Scanned appointment not found in your schedule.', 'Invalid QR');
+          }
+        } else {
+          this.toastr.warning('Unrecognized QR format.', 'Scan Failed');
+        }
+      } catch {
+        this.toastr.warning('Invalid QR payload format.', 'Scan Failed');
+      }
+    }
   }
 }
