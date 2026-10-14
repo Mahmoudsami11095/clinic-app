@@ -11,6 +11,7 @@ import { OfflineBannerComponent } from '../../components/offline-banner/offline-
 import { HelpCenterModalComponent } from '../../components/help-center/help-center-modal.component';
 import { InteractiveTourOverlayComponent } from '../../../shared/components/interactive-tour-overlay/interactive-tour-overlay.component';
 import { TutorialService } from '../../services/tutorial/tutorial.service';
+import { NativePushService } from '../../services/mobile/native-push.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -32,6 +33,7 @@ export class MainLayout implements OnInit {
   protected authService = inject(AuthService);
   protected layoutService = inject(LayoutService);
   protected tutorialService = inject(TutorialService);
+  protected pushService = inject(NativePushService);
 
   showWelcomeOverlay = signal(false);
   isClosingWelcome = signal(false);
@@ -57,6 +59,8 @@ export class MainLayout implements OnInit {
     if (this.authService.consumeJustLoggedIn()) {
       this.triggerWelcomeSequence();
     }
+    // Register mobile device for native push notifications
+    this.pushService.requestPermissionsAndRegister();
   }
 
   private triggerWelcomeSequence() {

@@ -5,6 +5,8 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalDataService, EndodonticRecord, CanalMeasurement } from '../../services/dental-data.service';
 import { ToothStatus } from '../../../../core/services/dental.service';
 import { DentalNotationService } from '../../../../core/services/dental-notation.service';
+import { NativeHapticsService } from '../../../../core/services/mobile/native-haptics.service';
+import { NativeCameraService } from '../../../../core/services/mobile/native-camera.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 interface HistoricalLog {
@@ -26,6 +28,27 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private dentalDataService = inject(DentalDataService);
   public notationService = inject(DentalNotationService);
+  protected haptics = inject(NativeHapticsService);
+  protected cameraService = inject(NativeCameraService);
+
+  readonly attachedPhotos = signal<string[]>([]);
+
+  async captureToothPhoto() {
+    const photo = await this.cameraService.captureClinicalPhoto();
+    if (photo?.dataUrl) {
+      this.attachedPhotos.update(list => [...list, photo.dataUrl!]);
+      this.haptics.notification('success');
+    }
+  }
+
+  removePhoto(index: number) {
+    this.attachedPhotos.update(list => {
+      const next = [...list];
+      next.splice(index, 1);
+      return next;
+    });
+    this.haptics.impact('light');
+  }
 
   formatToothNumber(fdi: string | number): string {
     return this.notationService.formatToothNumber(fdi);
@@ -215,6 +238,7 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
       }
     }
     this.editStatuses = current;
+    this.haptics.impact('light');
   }
 
   isStatusSelected(status: ToothStatus): boolean {
@@ -230,6 +254,7 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
     this.selectedToothNum.set(num);
     const toothId = `tooth_${num}`;
     this.loadToothLog(toothId);
+    this.haptics.selectionChanged();
   }
 
   loadToothLog(toothId: string) {
@@ -319,6 +344,7 @@ export class SkeuomorphicDentalChartComponent implements OnInit {
 
       this.historyLogs.set(logs);
       localStorage.setItem(historyKey, JSON.stringify(logs));
+      this.haptics.notification('success');
       this.refreshRecords();
     });
   }

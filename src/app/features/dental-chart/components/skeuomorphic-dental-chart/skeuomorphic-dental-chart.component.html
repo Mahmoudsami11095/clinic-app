@@ -535,6 +535,38 @@
               </textarea>
             </div>
 
+            <!-- Mobile / Chair-side Camera Integration (FEAT-MOBILE-01) -->
+            <div class="form-group" style="margin-top: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label style="margin-bottom: 0;">{{ 'dental.clinical_photos' | translate }}</label>
+                <span style="font-size: 0.65rem; color: #818cf8; font-family: monospace;">Mobile / Tablet</span>
+              </div>
+              
+              <button type="button" 
+                      (click)="captureToothPhoto()"
+                      style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.75rem; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(71, 85, 105, 0.6); color: #818cf8; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                <i class="pi pi-camera"></i>
+                <span>{{ 'dental.capture_photo_btn' | translate }}</span>
+              </button>
+
+              @if (attachedPhotos().length > 0) {
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem;">
+                  @for (photo of attachedPhotos(); track $index) {
+                    <div style="position: relative; width: 3.5rem; height: 3.5rem; border-radius: 0.5rem; overflow: hidden; border: 1px solid rgba(99, 102, 241, 0.5); flex-shrink: 0;">
+                      <img [src]="photo" alt="Tooth photo" style="width: 100%; height: 100%; object-fit: cover;">
+                      <button type="button" 
+                              (click)="removePhoto($index)"
+                              style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); opacity: 0; display: flex; align-items: center; justify-content: center; color: #f43f5e; border: none; cursor: pointer; transition: opacity 0.2s;"
+                              onmouseover="this.style.opacity='1'" 
+                              onmouseout="this.style.opacity='0'">
+                        <i class="pi pi-trash" style="font-size: 0.75rem;"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
             <button type="submit" class="btn-save">
               <svg style="width: 1rem; height: 1rem; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
               {{ 'dental.save_diagnosis_log' | translate }}
