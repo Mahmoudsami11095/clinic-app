@@ -1,0 +1,65 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { OfflineSyncService } from './offline-sync.service';
+import * as localForage from 'localforage';
+
+describe('OfflineSyncService', () => {
+  let service: OfflineSyncService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(async () => {
+    // Clear mock DB before each test
+    const store = localForage.createInstance({ name: 'smartClinicDB', storeName: 'syncQueue' });
+    await store.clear();
+
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [OfflineSyncService]
+    });
+    
+    service = TestBed.inject(OfflineSyncService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('should initialize and detect online status', () => {
+    expect(service).toBeTruthy();
+    expect(service.isOnline()).toBeTrue();
+  });
+
+  it('should queue a POST request when offline', async () => {
+    service.isOnline.set(false);
+    
+    await service.queueRequest('/api/test', 'POST', { data: 123 });
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(service.pendingQueueSize()).toBe(1);
+    
+    // No HTTP request should be made while offline
+    httpMock.expectNone('/api/test');
+  });
+
+  it('should process queue when coming back online', async () => {
+    service.isOnline.set(false);
+    await service.queueRequest('/api/sync-me', 'PUT', { status: 'completed' });
+    await new Promise(r => setTimeout(r, 50));
+    expect(service.pendingQueueSize()).toBe(1);
+
+    // Simulate coming online
+    service.isOnline.set(true);
+    const processPromise = service.processQueue();
+    await new Promise(r => setTimeout(r, 50));
+
+    const req = httpMock.expectOne('/api/sync-me');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.headers.get('X-Offline-Synced')).toBe('true');
+    req.flush({ success: true });
+
+    await processPromise;
+    await new Promise(r => setTimeout(r, 50));
+    expect(service.pendingQueueSize()).toBe(0);
+  });
+});

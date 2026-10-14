@@ -7,6 +7,7 @@ import { apiUrlInterceptor } from './core/interceptors/api-url.interceptor';
 import { authTokenInterceptor } from './core/interceptors/auth-token.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { offlineSyncInterceptor } from './core/interceptors/offline-sync.interceptor';
 import { routes } from './app.routes';
 
 import { provideTranslateService } from '@ngx-translate/core';
@@ -19,7 +20,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     { provide: DEFAULT_CURRENCY_CODE, useValue: 'EGP' },
     provideRouter(routes),
-    provideHttpClient(withInterceptors([apiUrlInterceptor, authTokenInterceptor, loadingInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([apiUrlInterceptor, authTokenInterceptor, offlineSyncInterceptor, loadingInterceptor, errorInterceptor])),
     provideAnimations(),
     provideToastr({
       timeOut: 3000,

@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OfflineService } from '../../services/offline.service';
+import { OfflineSyncService } from '../../services/mobile/offline-sync.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 
 @Component({
@@ -21,9 +22,9 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
           <span class="truncate">
             <strong class="font-bold">{{ 'offline.title' | translate }}</strong> — {{ 'offline.description' | translate }}
           </span>
-          @if (offlineService.pendingActions().length > 0) {
+          @if (syncService.pendingQueueSize() > 0) {
             <span class="px-2 py-0.5 bg-black/30 rounded-full text-[10px] font-mono">
-              {{ offlineService.pendingActions().length }} {{ 'offline.changes_queued' | translate }}
+              {{ syncService.pendingQueueSize() }} {{ 'offline.changes_queued' | translate }}
             </span>
           }
         </div>
@@ -34,6 +35,23 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
           class="ms-3 px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0">
           <i class="pi pi-refresh text-[10px]"></i>
           <span>{{ 'offline.retry' | translate }}</span>
+        </button>
+      </div>
+    } @else if (syncService.pendingQueueSize() > 0) {
+      <div 
+        class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-lg sticky top-0 z-50 animate-in slide-in-from-top duration-300"
+        role="status">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-sync animate-spin text-sm"></i>
+          <span>
+            Synchronizing {{ syncService.pendingQueueSize() }} pending offline mutation(s)...
+          </span>
+        </div>
+        <button 
+          type="button" 
+          (click)="syncService.processQueue()"
+          class="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[11px] font-bold cursor-pointer transition-colors">
+          Sync Now
         </button>
       </div>
     } @else if (offlineService.isReconnected()) {
@@ -58,4 +76,5 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 })
 export class OfflineBannerComponent {
   readonly offlineService = inject(OfflineService);
+  readonly syncService = inject(OfflineSyncService);
 }
