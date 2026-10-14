@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Smart Clinic</string>
+    <string name="title_activity_main">Smart Clinic</string>
+    <string name="package_name">ai.cliniccorp.mobile</string>
+    <string name="custom_url_scheme">ai.cliniccorp.mobile</string>
+</resources>
