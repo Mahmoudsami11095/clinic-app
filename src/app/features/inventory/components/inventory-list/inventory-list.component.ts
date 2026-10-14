@@ -11,6 +11,7 @@ import { InventoryFormComponent } from '../inventory-form/inventory-form.compone
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NativeScannerService } from '../../../../core/services/mobile/native-scanner.service';
 
 @Component({
   selector: 'app-inventory-list',
@@ -23,6 +24,7 @@ export class InventoryListComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute, { optional: true });
   private toastr = inject(ToastrService);
+  protected scannerService = inject(NativeScannerService);
   materials: Material[] = [];
   doctorId: string = '';
   activeClinicId: string = 'all';
@@ -542,5 +544,30 @@ export class InventoryListComponent implements OnInit {
     }
     // 7. General fallback for clinical tools
     return '/images/materials/composite.jpg';
+  }
+
+  async startBarcodeScanner() {
+    const barcodeContent = await this.scannerService.scanProductBarcode();
+    if (barcodeContent) {
+      this.searchTerm = barcodeContent;
+      
+      const found = this.materials.find(m => 
+        (m.batchNumber === barcodeContent) ||
+        (m.purchaseOrderRef === barcodeContent) ||
+        (m.name.toLowerCase().includes(barcodeContent.toLowerCase()))
+      );
+
+      if (found) {
+        this.toastr.success(`Found material: ${found.name}`, 'Scan Successful');
+        this.openReceiveModal(found);
+      } else {
+        this.toastr.warning(`No inventory item matched barcode: ${barcodeContent}`, 'Not Found');
+      }
+    }
+  }
+
+  openReceiveModal(material: Material): void {
+    this.selectedMaterialForShipment.set(material);
+    this.isReceiveModalOpen.set(true);
   }
 }
