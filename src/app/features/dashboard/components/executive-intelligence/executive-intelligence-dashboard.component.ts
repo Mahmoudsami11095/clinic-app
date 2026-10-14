@@ -6,7 +6,8 @@ import { ExecutiveAnalyticsService } from '../../services/executive-analytics.se
 import { ExecutiveNetworkSummary, BranchBenchmark, DoctorProductivity, SupplyChainVelocity } from '../../models/executive-analytics.model';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-executive-intelligence-dashboard',
@@ -303,16 +304,16 @@ export class ExecutiveIntelligenceDashboardComponent implements OnInit {
     this.loading.set(true);
 
     forkJoin({
-      summary: this.analyticsService.getNetworkSummary(force),
-      branches: this.analyticsService.getBranchBenchmarks(force),
-      doctors: this.analyticsService.getDoctorProductivity(force),
-      supply: this.analyticsService.getSupplyChainVelocity(force)
+      summary: this.analyticsService.getNetworkSummary(force).pipe(catchError(() => of(null))),
+      branches: this.analyticsService.getBranchBenchmarks(force).pipe(catchError(() => of([]))),
+      doctors: this.analyticsService.getDoctorProductivity(force).pipe(catchError(() => of([]))),
+      supply: this.analyticsService.getSupplyChainVelocity(force).pipe(catchError(() => of([])))
     }).subscribe({
       next: (res) => {
         this.summary.set(res.summary);
-        this.branches.set(res.branches);
-        this.doctors.set(res.doctors);
-        this.supplyVelocity.set(res.supply);
+        this.branches.set(res.branches || []);
+        this.doctors.set(res.doctors || []);
+        this.supplyVelocity.set(res.supply || []);
         this.loading.set(false);
       },
       error: () => {
