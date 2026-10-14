@@ -88,6 +88,13 @@
         {{ 'common.role' | translate }}: {{ user.role }}
       </span>
 
+      <!-- Help & Tutorial Center Button -->
+      <button (click)="tutorialService.toggleHelpCenter()" 
+              [title]="'tutorial.help_center_title' | translate"
+              class="relative p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all focus:outline-none cursor-pointer group">
+        <i class="pi pi-question-circle text-xl transition-transform group-hover:scale-110"></i>
+      </button>
+
       <!-- Theme Toggle Button -->
       <button (click)="themeService.toggle()" 
               [title]="'theme.toggle' | translate"

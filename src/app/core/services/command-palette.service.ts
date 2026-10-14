@@ -5,6 +5,7 @@ import { CommandItem, BackendSearchResult } from '../models/command.model';
 import { ThemeService } from './theme.service';
 import { LanguageService } from '../i18n/language.service';
 import { AuthService } from '../auth/auth.service';
+import { TutorialService } from './tutorial/tutorial.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -16,6 +17,7 @@ export class CommandPaletteService {
   private themeService = inject(ThemeService);
   private languageService = inject(LanguageService);
   private authService = inject(AuthService);
+  private tutorialService = inject(TutorialService);
 
   readonly isOpen = signal(false);
   readonly query = signal('');
@@ -169,6 +171,43 @@ export class CommandPaletteService {
         const nextLang = this.languageService.currentLang() === 'en' ? 'ar' : 'en';
         this.languageService.setLanguage(nextLang);
         this.close();
+      }
+    },
+    {
+      id: 'help-center',
+      title: 'Open Help & Quickstart Hub',
+      titleAr: 'فتح مركز المساعدة ودليل الاستخدام',
+      category: 'help',
+      icon: 'pi pi-question-circle',
+      shortcut: 'Shift ?',
+      keywords: ['help', 'tutorial', 'guide', 'cheat sheet', 'sop', 'faq', 'support'],
+      perform: () => {
+        this.close();
+        this.tutorialService.openHelpCenter();
+      }
+    },
+    {
+      id: 'help-tour-reception',
+      title: 'Start Receptionist & Cashier Tour',
+      titleAr: 'بدء جولة موظف الاستقبال والصندوق',
+      category: 'help',
+      icon: 'pi pi-compass',
+      keywords: ['tour', 'walkthrough', 'reception', 'checkin', 'cashier'],
+      perform: () => {
+        this.close();
+        this.tutorialService.startTour('tour-reception');
+      }
+    },
+    {
+      id: 'help-tour-doctor',
+      title: 'Start Doctor & Clinical Tour',
+      titleAr: 'بدء جولة الطبيب والاستشارة السريرية',
+      category: 'help',
+      icon: 'pi pi-compass',
+      keywords: ['tour', 'doctor', 'clinical', 'scribe', 'emr', 'soap'],
+      perform: () => {
+        this.close();
+        this.tutorialService.startTour('tour-doctor');
       }
     },
     {

@@ -5,6 +5,7 @@ import { AuthService } from '../../auth/auth.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { LayoutService } from '../layout.service';
 import { PwaInstallService } from '../../services/pwa-install.service';
+import { TutorialService } from '../../services/tutorial/tutorial.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -17,6 +18,7 @@ export class Sidebar {
   protected authService = inject(AuthService);
   protected layoutService = inject(LayoutService);
   protected pwaInstallService = inject(PwaInstallService);
+  protected tutorialService = inject(TutorialService);
   protected env = environment;
 
   private allMenuItems = [
