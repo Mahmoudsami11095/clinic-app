@@ -1213,7 +1213,12 @@
     "live_odontogram_sync": "Synchronized Dental Chart",
     "active": "Active",
     "odontogram_overlay_hint": "Inspect tooth surfaces and log procedures in real-time during consultation.",
-    "charting_ready": "Odontogram Ready for Live Charting"
+    "charting_ready": "Odontogram Ready for Live Charting",
+    "whatsapp_invite": "Invite Patient via WhatsApp",
+    "whatsapp_sent": "WhatsApp Invite Sent",
+    "room_token": "Room Token",
+    "duration": "Call Duration",
+    "pip_toggle": "Picture-in-Picture"
   },
   "booking": {
     "loading": "Loading clinic booking portal...",
