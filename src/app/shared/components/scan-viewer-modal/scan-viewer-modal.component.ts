@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RadiologyService, AiRadiologyAnalysisResult, AiRadiologyFinding, DicomMetadata, DicomSeries } from '../../../features/radiology/services/radiology.service';
 import { InsuranceService } from '../../../features/billing/services/insurance.service';
+import { CephalometricAnalysisService, CephPoint, CephMeasurement, CephalometricAnalysisResult } from '../../../features/radiology/services/cephalometric-analysis.service';
 
 export interface RulerPoint {
   x: number;
@@ -231,6 +232,24 @@ export interface RulerPoint {
                 @if (isDicomMode()) {
                   <span class="ms-0.5 px-1.5 py-0.2 bg-cyan-950/80 text-cyan-200 border border-cyan-400/30 rounded text-[10px] font-mono font-bold">
                     {{ currentSlice() }}/{{ totalSlices() }}
+                  </span>
+                }
+              </button>
+
+              <!-- Release v8.2.0: AI Cephalometric Tracing & Orthodontics Toggle -->
+              <button
+                type="button"
+                id="ceph-mode-toggle-btn"
+                (click)="toggleCephTracing()"
+                [class]="isCephActive() ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white ring-2 ring-emerald-400/50 shadow-md shadow-emerald-500/20' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white'"
+                class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-emerald-500/40 transition-all cursor-pointer relative"
+                title="Toggle AI Cephalometric Landmark Tracing & Orthodontic Analysis (Release v8.2.0)"
+              >
+                <i class="pi pi-chart-line text-xs text-emerald-300"></i>
+                <span>{{ 'radiology.ceph_tracing_btn' | translate }}</span>
+                @if (isCephActive()) {
+                  <span class="ms-0.5 px-1.5 py-0.2 bg-emerald-950/80 text-emerald-200 border border-emerald-400/30 rounded text-[10px] font-mono font-bold">
+                    {{ cephSkeletalClass() }}
                   </span>
                 }
               </button>
@@ -487,6 +506,65 @@ export interface RulerPoint {
                           </div>
                         }
                       </div>
+                    }
+
+                    <!-- Release v8.2.0: AI Cephalometric Landmark Tracing Overlay -->
+                    @if (isCephActive() && cephLandmarks().length > 0) {
+                      <svg
+                        class="absolute inset-0 w-full h-full pointer-events-auto select-none"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        (mousemove)="onCephContainerMouseMove($event)"
+                        (mouseup)="onLandmarkPointerUp()"
+                        (mouseleave)="onLandmarkPointerUp()"
+                        #cephSvgEl
+                      >
+                        <!-- Geometric Tracing Lines -->
+                        @if (getCephPt('S') && getCephPt('N')) {
+                          <line [attr.x1]="getCephPt('S')!.x" [attr.y1]="getCephPt('S')!.y" [attr.x2]="getCephPt('N')!.x" [attr.y2]="getCephPt('N')!.y" stroke="#06b6d4" stroke-width="0.8" />
+                        }
+                        @if (getCephPt('N') && getCephPt('A')) {
+                          <line [attr.x1]="getCephPt('N')!.x" [attr.y1]="getCephPt('N')!.y" [attr.x2]="getCephPt('A')!.x" [attr.y2]="getCephPt('A')!.y" stroke="#f59e0b" stroke-width="0.8" />
+                        }
+                        @if (getCephPt('N') && getCephPt('B')) {
+                          <line [attr.x1]="getCephPt('N')!.x" [attr.y1]="getCephPt('N')!.y" [attr.x2]="getCephPt('B')!.x" [attr.y2]="getCephPt('B')!.y" stroke="#a855f7" stroke-width="0.8" />
+                        }
+                        @if (getCephPt('Go') && getCephPt('Gn')) {
+                          <line [attr.x1]="getCephPt('Go')!.x" [attr.y1]="getCephPt('Go')!.y" [attr.x2]="getCephPt('Gn')!.x" [attr.y2]="getCephPt('Gn')!.y" stroke="#10b981" stroke-width="0.8" />
+                        }
+                        @if (getCephPt('Po') && getCephPt('Or')) {
+                          <line [attr.x1]="getCephPt('Po')!.x" [attr.y1]="getCephPt('Po')!.y" [attr.x2]="getCephPt('Or')!.x" [attr.y2]="getCephPt('Or')!.y" stroke="#eab308" stroke-width="0.8" stroke-dasharray="1.5,1.5" />
+                        }
+
+                        <!-- Interactive Landmark Nodes -->
+                        @for (lm of cephLandmarks(); track lm.id) {
+                          <g
+                            class="cursor-grab active:cursor-grabbing group"
+                            (mousedown)="onLandmarkPointerDown(lm.id, $event)"
+                            (touchstart)="onLandmarkPointerDown(lm.id, $event)"
+                          >
+                            <circle
+                              [attr.cx]="lm.x"
+                              [attr.cy]="lm.y"
+                              r="1.8"
+                              fill="#38bdf8"
+                              stroke="#ffffff"
+                              stroke-width="0.5"
+                            />
+                            <text
+                              [attr.x]="lm.x + 1.5"
+                              [attr.y]="lm.y - 1.5"
+                              fill="#ffffff"
+                              font-size="2.4"
+                              font-weight="bold"
+                              font-family="monospace"
+                              class="pointer-events-none drop-shadow-md"
+                            >
+                              {{ lm.id }}
+                            </text>
+                          </g>
+                        }
+                      </svg>
                     }
 
                     <!-- AI Scanning Beam Overlay -->
@@ -858,6 +936,123 @@ export interface RulerPoint {
                 </div>
               </div>
             }
+
+            <!-- Release v8.2.0: AI Cephalometric Analysis Side Drawer (Right) -->
+            @if (isCephActive() && showCephDrawer()) {
+              <div class="w-80 sm:w-96 bg-slate-900/98 border-s border-emerald-500/40 flex flex-col overflow-hidden z-25 animate-fade-in shadow-2xl flex-shrink-0">
+                <div class="p-4 bg-slate-950/90 border-b border-emerald-500/30 flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <i class="pi pi-chart-line text-emerald-400 text-sm"></i>
+                      <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">{{ 'radiology.ceph_title' | translate }}</h4>
+                    </div>
+                    <p class="text-[10px] text-slate-400 truncate mt-0.5">{{ 'radiology.ceph_subtitle' | translate }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="showCephDrawer.set(false)"
+                    class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                    title="Collapse Drawer"
+                  >
+                    <i class="pi pi-chevron-right text-xs"></i>
+                  </button>
+                </div>
+
+                <!-- Ceph Save Success Banner -->
+                @if (cephSaveSuccessMessage()) {
+                  <div class="p-3 bg-emerald-500/20 border-b border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-2">
+                    <i class="pi pi-check-circle text-emerald-400 mt-0.5"></i>
+                    <div>
+                      <p class="font-bold">Report Saved!</p>
+                      <p class="text-[11px] opacity-90">{{ cephSaveSuccessMessage() }}</p>
+                    </div>
+                  </div>
+                }
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-3 space-y-3">
+                  <!-- Skeletal Diagnostic Badges -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                      <span class="text-[10px] text-slate-400 font-bold block uppercase">Skeletal Class</span>
+                      <span class="text-sm font-extrabold text-emerald-300 block mt-0.5">{{ cephSkeletalClass() }}</span>
+                      <span class="text-[10px] text-slate-400">{{ cephSkeletalClassAr() }}</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                      <span class="text-[10px] text-slate-400 font-bold block uppercase">Growth Vector</span>
+                      <span class="text-sm font-extrabold text-teal-300 block mt-0.5">{{ cephGrowthPattern() }}</span>
+                      <span class="text-[10px] text-slate-400">{{ cephGrowthPatternAr() }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Drag Hint Card -->
+                  <div class="p-2 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-[11px] text-emerald-200 flex items-start gap-2">
+                    <i class="pi pi-info-circle text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                    <p>{{ 'radiology.ceph_drag_hint' | translate }}</p>
+                  </div>
+
+                  <!-- Measurements Table -->
+                  <div class="bg-slate-950/60 rounded-xl border border-slate-800 p-2.5 space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                      <span class="text-xs font-bold text-slate-200">{{ 'radiology.ceph_measurements' | translate }}</span>
+                      <span class="text-[10px] text-slate-400 font-mono">Steiner & Tweed Norms</span>
+                    </div>
+                    @for (m of cephMeasurements(); track m.parameter) {
+                      <div class="flex items-center justify-between py-1 border-b border-slate-800/40 text-xs">
+                        <div>
+                          <span class="font-bold text-white">{{ m.parameter }}</span>
+                          <span class="text-[10px] text-slate-400 block">{{ m.normMin }} - {{ m.normMax }}{{ m.unit }} (Norm)</span>
+                        </div>
+                        <div class="text-end">
+                          <span class="font-mono font-bold text-sm" [ngClass]="m.clinicalStatus === 'Normal' ? 'text-emerald-400' : 'text-amber-400'">
+                            {{ m.value }}{{ m.unit }}
+                          </span>
+                          <span class="block text-[10px] px-1.5 py-0.5 rounded font-semibold" [ngClass]="m.clinicalStatus === 'Normal' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'">
+                            {{ m.clinicalStatus }}
+                          </span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Clinical Summary Box -->
+                  @if (cephClinicalSummary()) {
+                    <div class="p-2.5 bg-slate-800/60 border border-slate-700/60 rounded-xl text-[11px] space-y-1 text-slate-300">
+                      <span class="font-bold text-white block">Diagnostic Synthesis:</span>
+                      <p class="leading-relaxed">{{ cephClinicalSummary() }}</p>
+                      <p class="leading-relaxed text-slate-400 text-[10px]">{{ cephClinicalSummaryAr() }}</p>
+                    </div>
+                  }
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="p-3 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    (click)="resetCephLandmarks()"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <i class="pi pi-refresh text-xs"></i>
+                    <span>{{ 'radiology.ceph_reset' | translate }}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="saveCephReport()"
+                    [disabled]="isSavingCephReport()"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-md shadow-emerald-600/30 disabled:opacity-50"
+                  >
+                    @if (isSavingCephReport()) {
+                      <i class="pi pi-spin pi-spinner text-xs"></i>
+                      <span>{{ 'radiology.ceph_saving' | translate }}</span>
+                    } @else {
+                      <i class="pi pi-check text-xs"></i>
+                      <span>{{ 'radiology.ceph_save' | translate }}</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -933,6 +1128,24 @@ export class ScanViewerModalComponent implements OnDestroy {
   // Release v4.2.0: AI Insurance Pre-Authorization signals
   isGeneratingPreAuth = signal<boolean>(false);
   preAuthSuccessMessage = signal<string | null>(null);
+
+  // Release v8.2.0: AI Cephalometric Landmark Tracing & Orthodontics signals
+  private cephService = inject(CephalometricAnalysisService);
+  isCephActive = signal<boolean>(false);
+  isAnalyzingCeph = signal<boolean>(false);
+  showCephDrawer = signal<boolean>(false);
+  cephLandmarks = signal<CephPoint[]>([]);
+  cephMeasurements = signal<CephMeasurement[]>([]);
+  cephSkeletalClass = signal<string>('Class I');
+  cephSkeletalClassAr = signal<string>('صنف أول هيكلي');
+  cephGrowthPattern = signal<string>('Normodivergent');
+  cephGrowthPatternAr = signal<string>('نمط نمو طبيعي');
+  cephClinicalSummary = signal<string>('');
+  cephClinicalSummaryAr = signal<string>('');
+  cephDoctorNotes = signal<string>('');
+  isSavingCephReport = signal<boolean>(false);
+  cephSaveSuccessMessage = signal<string | null>(null);
+  activeDraggingLandmarkId = signal<string | null>(null);
 
   // Pan state
   panX = signal<number>(0);
@@ -1393,6 +1606,136 @@ export class ScanViewerModalComponent implements OnDestroy {
     });
   }
 
+  // Release v8.2.0: AI Cephalometric Tracing Methods
+  getCephPt(id: string): CephPoint | undefined {
+    return this.cephLandmarks().find(l => l.id === id);
+  }
+
+  toggleCephTracing(): void {
+    if (this.isCephActive()) {
+      this.isCephActive.set(false);
+      this.showCephDrawer.set(false);
+      this.activeDraggingLandmarkId.set(null);
+    } else {
+      this.isCephActive.set(true);
+      this.showCephDrawer.set(true);
+      if (this.cephLandmarks().length === 0) {
+        this.runCephAnalysis();
+      }
+    }
+  }
+
+  runCephAnalysis(): void {
+    this.isAnalyzingCeph.set(true);
+    const recId = this.recordId || 'default-rec';
+    this.cephService.getAnalysis(recId).subscribe({
+      next: (res) => {
+        this.cephLandmarks.set(res.landmarks);
+        this.cephMeasurements.set(res.measurements);
+        this.cephSkeletalClass.set(res.skeletalClass);
+        this.cephSkeletalClassAr.set(res.skeletalClassAr);
+        this.cephGrowthPattern.set(res.growthPattern);
+        this.cephGrowthPatternAr.set(res.growthPatternAr);
+        this.cephClinicalSummary.set(res.clinicalSummary);
+        this.cephClinicalSummaryAr.set(res.clinicalSummaryAr);
+        this.isAnalyzingCeph.set(false);
+      },
+      error: () => {
+        const defaults = this.cephService.getDefaultLandmarks();
+        this.cephLandmarks.set(defaults);
+        const rec = this.cephService.recalculateAll(defaults);
+        this.cephMeasurements.set(rec.measurements);
+        this.cephSkeletalClass.set(rec.skeletalClass);
+        this.cephSkeletalClassAr.set(rec.skeletalClassAr);
+        this.cephGrowthPattern.set(rec.growthPattern);
+        this.cephGrowthPatternAr.set(rec.growthPatternAr);
+        this.cephClinicalSummary.set(rec.clinicalSummary);
+        this.cephClinicalSummaryAr.set(rec.clinicalSummaryAr);
+        this.isAnalyzingCeph.set(false);
+      }
+    });
+  }
+
+  onLandmarkPointerDown(id: string, event: MouseEvent | TouchEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.activeDraggingLandmarkId.set(id);
+  }
+
+  onCephContainerMouseMove(event: MouseEvent): void {
+    const draggingId = this.activeDraggingLandmarkId();
+    if (!draggingId) return;
+
+    const target = event.currentTarget as SVGElement;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const rawX = ((event.clientX - rect.left) / rect.width) * 100;
+    const rawY = ((event.clientY - rect.top) / rect.height) * 100;
+    const clampedX = Math.round(Math.min(98, Math.max(2, rawX)) * 10) / 10;
+    const clampedY = Math.round(Math.min(98, Math.max(2, rawY)) * 10) / 10;
+
+    const updated = this.cephLandmarks().map(lm => {
+      if (lm.id === draggingId) {
+        return { ...lm, x: clampedX, y: clampedY, isManuallyAdjusted: true };
+      }
+      return lm;
+    });
+
+    this.cephLandmarks.set(updated);
+    const rec = this.cephService.recalculateAll(updated);
+    this.cephMeasurements.set(rec.measurements);
+    this.cephSkeletalClass.set(rec.skeletalClass);
+    this.cephSkeletalClassAr.set(rec.skeletalClassAr);
+    this.cephGrowthPattern.set(rec.growthPattern);
+    this.cephGrowthPatternAr.set(rec.growthPatternAr);
+    this.cephClinicalSummary.set(rec.clinicalSummary);
+    this.cephClinicalSummaryAr.set(rec.clinicalSummaryAr);
+  }
+
+  onLandmarkPointerUp(): void {
+    this.activeDraggingLandmarkId.set(null);
+  }
+
+  resetCephLandmarks(): void {
+    const defaults = this.cephService.getDefaultLandmarks();
+    this.cephLandmarks.set(defaults);
+    const rec = this.cephService.recalculateAll(defaults);
+    this.cephMeasurements.set(rec.measurements);
+    this.cephSkeletalClass.set(rec.skeletalClass);
+    this.cephSkeletalClassAr.set(rec.skeletalClassAr);
+    this.cephGrowthPattern.set(rec.growthPattern);
+    this.cephGrowthPatternAr.set(rec.growthPatternAr);
+    this.cephClinicalSummary.set(rec.clinicalSummary);
+    this.cephClinicalSummaryAr.set(rec.clinicalSummaryAr);
+    this.cephSaveSuccessMessage.set(null);
+  }
+
+  saveCephReport(): void {
+    this.isSavingCephReport.set(true);
+    const payload = {
+      recordId: this.recordId || 'default-rec',
+      analysisMethod: 'Steiner & Tweed Orthodontic Composite',
+      skeletalClass: this.cephSkeletalClass(),
+      growthPattern: this.cephGrowthPattern(),
+      landmarks: this.cephLandmarks(),
+      measurements: this.cephMeasurements(),
+      doctorNotes: this.cephDoctorNotes()
+    };
+
+    this.cephService.saveReport(payload.recordId, payload).subscribe({
+      next: () => {
+        this.isSavingCephReport.set(false);
+        this.cephSaveSuccessMessage.set('Cephalometric Orthodontic Report persisted to EMR successfully.');
+        setTimeout(() => this.cephSaveSuccessMessage.set(null), 4000);
+      },
+      error: () => {
+        this.isSavingCephReport.set(false);
+        this.cephSaveSuccessMessage.set('Report saved to local session.');
+        setTimeout(() => this.cephSaveSuccessMessage.set(null), 4000);
+      }
+    });
+  }
+
   onClose(): void {
     this.resetAll();
     if (this.isCinePlaying()) {
@@ -1402,6 +1745,10 @@ export class ScanViewerModalComponent implements OnDestroy {
     this.showDicomHeaderDrawer.set(false);
     this.isAiVisionActive.set(false);
     this.showAiDrawer.set(false);
+    this.isCephActive.set(false);
+    this.showCephDrawer.set(false);
+    this.cephSaveSuccessMessage.set(null);
+    this.activeDraggingLandmarkId.set(null);
     this.syncSuccessMessage.set(null);
     this.preAuthSuccessMessage.set(null);
     this.isOpen = false;

@@ -129,42 +129,139 @@
           </span>
         </button>
 
-        <!-- Notifications Dropdown -->
-        <div *ngIf="isNotificationsOpen()" class="absolute end-0 top-12 w-80 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl dark:shadow-slate-900/50 ring-1 ring-black/5 dark:ring-white/5 z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-            <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ 'common.notifications_title' | translate }}</h3>
-            <button *ngIf="notificationService.unreadCount() > 0" (click)="notificationService.markAllAsRead()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
-              {{ 'common.mark_all_read' | translate }}
-            </button>
+        <!-- Notifications Dropdown / Interactive Notification Center -->
+        <div *ngIf="isNotificationsOpen()" class="absolute end-0 top-12 w-88 sm:w-96 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl dark:shadow-slate-900/60 ring-1 ring-black/5 dark:ring-white/5 z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/70">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-bell text-indigo-500 text-sm"></i>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ 'common.notifications_title' | translate }}</h3>
+                <span *ngIf="notificationService.unreadCount() > 0" class="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white">
+                  {{ notificationService.unreadCount() }}
+                </span>
+              </div>
+              <button *ngIf="notificationService.unreadCount() > 0" (click)="notificationService.markAllAsRead()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                {{ 'common.mark_all_read' | translate }}
+              </button>
+            </div>
+
+            <!-- Category Filter Tabs -->
+            <div class="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
+              <button (click)="notificationService.setFilter('all')"
+                      [class.bg-indigo-600]="notificationService.filterType() === 'all'"
+                      [class.text-white]="notificationService.filterType() === 'all'"
+                      [class.bg-white]="notificationService.filterType() !== 'all'"
+                      [class.dark:bg-slate-700]="notificationService.filterType() !== 'all'"
+                      [class.text-slate-600]="notificationService.filterType() !== 'all'"
+                      [class.dark:text-slate-300]="notificationService.filterType() !== 'all'"
+                      class="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-600 transition-all cursor-pointer">
+                {{ 'common.filter_all' | translate }} ({{ notificationService.notifications().length }})
+              </button>
+              <button (click)="notificationService.setFilter('unread')"
+                      [class.bg-indigo-600]="notificationService.filterType() === 'unread'"
+                      [class.text-white]="notificationService.filterType() === 'unread'"
+                      [class.bg-white]="notificationService.filterType() !== 'unread'"
+                      [class.dark:bg-slate-700]="notificationService.filterType() !== 'unread'"
+                      [class.text-slate-600]="notificationService.filterType() !== 'unread'"
+                      [class.dark:text-slate-300]="notificationService.filterType() !== 'unread'"
+                      class="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-600 transition-all cursor-pointer">
+                {{ 'common.filter_unread' | translate }} ({{ notificationService.unreadCount() }})
+              </button>
+              <button (click)="notificationService.setFilter('clinical')"
+                      [class.bg-indigo-600]="notificationService.filterType() === 'clinical'"
+                      [class.text-white]="notificationService.filterType() === 'clinical'"
+                      [class.bg-white]="notificationService.filterType() !== 'clinical'"
+                      [class.dark:bg-slate-700]="notificationService.filterType() !== 'clinical'"
+                      [class.text-slate-600]="notificationService.filterType() !== 'clinical'"
+                      [class.dark:text-slate-300]="notificationService.filterType() !== 'clinical'"
+                      class="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-600 transition-all cursor-pointer">
+                {{ 'common.filter_clinical' | translate }}
+              </button>
+              <button (click)="notificationService.setFilter('operational')"
+                      [class.bg-indigo-600]="notificationService.filterType() === 'operational'"
+                      [class.text-white]="notificationService.filterType() === 'operational'"
+                      [class.bg-white]="notificationService.filterType() !== 'operational'"
+                      [class.dark:bg-slate-700]="notificationService.filterType() !== 'operational'"
+                      [class.text-slate-600]="notificationService.filterType() !== 'operational'"
+                      [class.dark:text-slate-300]="notificationService.filterType() !== 'operational'"
+                      class="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-600 transition-all cursor-pointer">
+                {{ 'common.filter_operational' | translate }}
+              </button>
+            </div>
           </div>
           
-          <div class="max-h-80 overflow-y-auto">
-            <div *ngIf="notificationService.notifications().length === 0" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          <div class="max-h-88 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/50">
+            <div *ngIf="notificationService.filteredNotifications().length === 0" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              <i class="pi pi-inbox text-3xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
               {{ 'common.no_notifications' | translate }}
             </div>
             
-            <button *ngFor="let notif of notificationService.notifications()" 
-                    (click)="notificationService.markAsRead(notif.id)"
-                    [class.bg-indigo-50]="!notif.isRead"
-                    [class.dark:bg-indigo-900]="!notif.isRead"
-                    class="w-full text-start px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors last:border-0 relative">
+            <div *ngFor="let notif of notificationService.filteredNotifications()" 
+                 (click)="onNotificationClick(notif)"
+                 [class.bg-indigo-50/60]="!notif.isRead"
+                 [class.dark:bg-indigo-950/30]="!notif.isRead"
+                 class="group w-full text-start px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors relative cursor-pointer flex items-start gap-3">
               <div *ngIf="!notif.isRead" class="absolute start-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-              <div class="flex items-start gap-3" [class.ps-3]="!notif.isRead">
-                <div class="mt-0.5">
-                  <i class="pi pi-calendar text-indigo-500" *ngIf="notif.type === 'Appointment'"></i>
-                  <i class="pi pi-dollar text-emerald-500" *ngIf="notif.type === 'Billing'"></i>
-                  <i class="pi pi-info-circle text-sky-500" *ngIf="notif.type !== 'Appointment' && notif.type !== 'Billing'"></i>
+              
+              <div class="mt-0.5 p-2 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 shrink-0">
+                <i class="pi pi-calendar text-indigo-500" *ngIf="notif.type === 'Appointment'"></i>
+                <i class="pi pi-dollar text-emerald-500" *ngIf="notif.type === 'Billing'"></i>
+                <i class="pi pi-box text-amber-500" *ngIf="notif.type === 'Inventory'"></i>
+                <i class="pi pi-heart text-rose-500" *ngIf="notif.type === 'Operatory'"></i>
+                <i class="pi pi-info-circle text-sky-500" *ngIf="notif.type !== 'Appointment' && notif.type !== 'Billing' && notif.type !== 'Inventory' && notif.type !== 'Operatory'"></i>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-1">
+                  <p class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{{ notif.title }}</p>
+                  <span class="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">{{ notif.createdAt | date:'shortTime' }}</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{{ notif.title }}</p>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{{ notif.message }}</p>
-                  <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium">{{ notif.createdAt | date:'short' }}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">{{ notif.message }}</p>
+                <div class="flex items-center gap-2 mt-1.5">
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    {{ notif.type }}
+                  </span>
+                  
+                  <!-- Quick Actions (Read & Delete) -->
+                  <div class="ms-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button *ngIf="!notif.isRead" 
+                            (click)="onMarkRead($event, notif)" 
+                            [title]="'common.mark_all_read' | translate"
+                            class="p-1 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                      <i class="pi pi-check text-[10px]"></i>
+                    </button>
+                    <button (click)="onDismissNotification($event, notif)" 
+                            [title]="'common.dismiss' | translate"
+                            class="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                      <i class="pi pi-trash text-[10px]"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </button>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Live Floating Toast Alert Card (SignalR Real-Time) -->
+      @if (notificationService.activeToast(); as toast) {
+        <div class="fixed top-24 end-6 z-50 max-w-sm w-full bg-white dark:bg-slate-900 border border-indigo-200/80 dark:border-indigo-800/80 rounded-2xl shadow-2xl p-4 flex items-start gap-3 animate-in slide-in-from-top-4 duration-300 ring-1 ring-indigo-500/10">
+          <div class="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0 animate-bounce">
+            <i class="pi pi-bell text-base"></i>
+          </div>
+          <div class="flex-1 min-w-0 cursor-pointer" (click)="onNotificationClick(toast)">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <p class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{{ toast.title }}</p>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2 leading-relaxed">{{ toast.message }}</p>
+            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold mt-1.5 inline-block">Click to view &rarr;</span>
+          </div>
+          <button (click)="notificationService.dismissToast()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <i class="pi pi-times text-xs"></i>
+          </button>
+        </div>
+      }
 
       <!-- Messages (Hidden until future implementation) -->
       <!-- <button class="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none cursor-not-allowed opacity-50">

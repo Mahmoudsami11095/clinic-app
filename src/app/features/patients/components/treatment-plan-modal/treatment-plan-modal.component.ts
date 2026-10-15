@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed, effect } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DentalLog, DentalProcedureStage } from '../../../../core/services/dental.service';
@@ -12,6 +12,7 @@ import {
   categorizeProcedureToPhase, 
   calculateTreatmentPlanEstimate 
 } from '../../models/treatment-plan.model';
+import { AiTreatmentCopilotService } from '../../../../core/services/ai-treatment-copilot.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ClinicCurrencyPipe } from '../../../../core/i18n/clinic-currency.pipe';
 
@@ -90,6 +91,22 @@ import { ClinicCurrencyPipe } from '../../../../core/i18n/clinic-currency.pipe';
 
               <button
                 type="button"
+                (click)="activeTab.set('dossier')"
+                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border-none"
+                [class.bg-white]="activeTab() === 'dossier'"
+                [class.text-indigo-600]="activeTab() === 'dossier'"
+                [class.shadow-xs]="activeTab() === 'dossier'"
+                [class.dark:bg-slate-800]="activeTab() === 'dossier'"
+                [class.dark:text-indigo-400]="activeTab() === 'dossier'"
+                [class.text-slate-600]="activeTab() !== 'dossier'"
+                [class.dark:text-slate-300]="activeTab() !== 'dossier'"
+              >
+                <i class="pi pi-sparkles text-xs"></i>
+                <span class="hidden sm:inline">{{ 'treatment_plans.ai_dossier' | translate }}</span>
+              </button>
+
+              <button
+                type="button"
                 (click)="activeTab.set('print')"
                 class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border-none"
                 [class.bg-white]="activeTab() === 'print'"
@@ -139,8 +156,18 @@ import { ClinicCurrencyPipe } from '../../../../core/i18n/clinic-currency.pipe';
                 </div>
               </div>
 
-              <!-- Mini Phase Indicators -->
+              <!-- Mini Phase Indicators & AI Auto-Sequence Button -->
               <div class="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  (click)="applyAiAutoPhasing()"
+                  class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold shadow-md shadow-indigo-600/20 hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-1.5 cursor-pointer border-none"
+                  title="Automatically optimize procedure sequencing into clinical phases"
+                >
+                  <i class="pi pi-sparkles text-xs"></i>
+                  <span>{{ 'treatment_plans.ai_autophase' | translate }}</span>
+                </button>
+
                 <div 
                   *ngFor="let group of phaseGroups()" 
                   class="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2"
@@ -495,6 +522,94 @@ import { ClinicCurrencyPipe } from '../../../../core/i18n/clinic-currency.pipe';
           </div>
 
           <!-- ════════════════════════════════════════════════════════════ -->
+          <!-- TAB: AI CLINICAL PRESENTATION DOSSIER -->
+          <!-- ════════════════════════════════════════════════════════════ -->
+          <div *ngIf="activeTab() === 'dossier'" class="space-y-6">
+            <!-- Dossier Executive Header -->
+            <div class="bg-gradient-to-r from-indigo-900 to-purple-900 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/20 text-white uppercase tracking-wider">
+                    AI Clinical Proposal Dossier
+                  </span>
+                  <span *ngIf="aiDossier().consentRequired" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-amber-950">
+                    Consent Required
+                  </span>
+                  <span *ngIf="aiDossier().preauthRequired" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-400 text-cyan-950">
+                    ADA Pre-Auth Recommended
+                  </span>
+                </div>
+                <h3 class="text-xl font-black tracking-tight">Comprehensive Oral Rehabilitation Proposal</h3>
+                <p class="text-xs text-indigo-200 mt-1">
+                  Synthesized for {{ patient ? (patient.firstName + ' ' + patient.lastName) : 'Patient' }} • {{ aiDossier().findingsCount }} Findings • {{ aiDossier().totalEstimatedVisits }} Planned Clinical Visits
+                </p>
+              </div>
+
+              <div class="flex items-center gap-4 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
+                <div class="text-center">
+                  <span class="text-[10px] uppercase font-bold text-indigo-200 block">Est. Chair-Time</span>
+                  <span class="text-lg font-black font-mono">{{ aiDossier().totalEstimatedChairTimeMinutes }} mins</span>
+                </div>
+                <div class="h-8 w-px bg-white/20"></div>
+                <div class="text-center">
+                  <span class="text-[10px] uppercase font-bold text-indigo-200 block">Total Investment</span>
+                  <span class="text-lg font-black font-mono text-emerald-300">{{ aiDossier().totalCost | clinicCurrency:'symbol':'1.0-0' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ADA CDT Billing Codes Cloud -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+              <h5 class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 mb-2.5">
+                <i class="pi pi-shield text-indigo-500"></i>
+                <span>ADA CDT Procedure Codes Included in Proposal:</span>
+              </h5>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span *ngFor="let code of aiDossier().adaClaimCodes" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-mono font-bold">
+                  {{ code }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Phased Trajectory Dossier Cards -->
+            <div class="space-y-4">
+              <div *ngFor="let phase of aiDossier().phases" class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3 mb-4">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ phase.title }}</h4>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">
+                      Est. Timeline: ~{{ phase.estimatedWeeks }} Week(s)
+                    </span>
+                  </div>
+                  <span class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                    Phase Subtotal: {{ phase.subtotal | clinicCurrency:'symbol':'1.0-0' }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div *ngFor="let proc of phase.procedures" class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/60 flex items-start gap-3">
+                    <div class="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-mono font-bold text-xs shrink-0">
+                      {{ proc.cdtCode }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-1">
+                        <p class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{{ proc.name }}</p>
+                        <span class="text-xs font-mono font-bold text-slate-900 dark:text-slate-200 shrink-0">{{ proc.estimatedCost | clinicCurrency:'symbol':'1.0-0' }}</span>
+                      </div>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{{ proc.clinicalRationale }}</p>
+                      <div class="flex items-center gap-3 mt-2 text-[10px] text-slate-400 font-medium">
+                        <span><i class="pi pi-clock mr-1"></i>{{ proc.durationMinutes }} mins</span>
+                        <span><i class="pi pi-calendar mr-1"></i>{{ proc.estimatedVisits }} visit(s)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ════════════════════════════════════════════════════════════ -->
           <!-- TAB 3: FORMAL PRINTABLE DOCUMENT & PATIENT CONSENT -->
           <!-- ════════════════════════════════════════════════════════════ -->
           <div *ngIf="activeTab() === 'print'" class="space-y-6">
@@ -732,11 +847,48 @@ export class TreatmentPlanModalComponent {
   @Output() generateDepositInvoice = new EventEmitter<{ amount: number; description: string }>();
   @Output() updateItemStageEvent = new EventEmitter<{ item: TreatmentPlanItem; stage: DentalProcedureStage }>();
 
+  private aiCopilot = inject(AiTreatmentCopilotService);
+
   today = new Date();
-  activeTab = signal<'roadmap' | 'estimator' | 'print'>('roadmap');
+  activeTab = signal<'roadmap' | 'estimator' | 'dossier' | 'print'>('roadmap');
   items = signal<TreatmentPlanItem[]>([]);
   discountPercent = signal<number>(0);
   depositPercent = signal<number>(20);
+
+  aiDossier = computed(() => {
+    const findings = this.items().map(i => ({
+      toothNumber: i.toothNumber,
+      condition: i.procedureName,
+      severity: 'moderate' as const
+    }));
+    return this.aiCopilot.generateDossier(findings, {
+      id: this.patient?.id,
+      name: this.patient ? `${this.patient.firstName} ${this.patient.lastName}` : undefined
+    });
+  });
+
+  applyAiAutoPhasing(): void {
+    const findings = this.items().map(i => ({
+      toothNumber: i.toothNumber,
+      condition: i.procedureName,
+      severity: 'moderate' as const
+    }));
+    const synthesized = this.aiCopilot.synthesizeProceduresFromFindings(findings);
+    if (synthesized.length === 0) return;
+
+    this.items.update(list => list.map(item => {
+      const match = synthesized.find(s => String(s.toothNumber) === String(item.toothNumber));
+      if (match) {
+        return {
+          ...item,
+          phase: match.phase,
+          estimatedVisits: match.estimatedVisits,
+          cost: item.cost > 0 ? item.cost : match.estimatedCost
+        };
+      }
+      return item;
+    }));
+  }
 
   totalProceduresCount = computed(() => this.items().length);
 

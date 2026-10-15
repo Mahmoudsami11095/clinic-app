@@ -52,6 +52,21 @@ export class Header {
     }
   }
 
+  onNotificationClick(notif: any) {
+    this.notificationService.navigateAndMarkRead(notif);
+    this.isNotificationsOpen.set(false);
+  }
+
+  onDismissNotification(event: Event, notif: any) {
+    event.stopPropagation();
+    this.notificationService.deleteNotification(notif.id);
+  }
+
+  onMarkRead(event: Event, notif: any) {
+    event.stopPropagation();
+    this.notificationService.markAsRead(notif.id);
+  }
+
   navigateToProfile() {
     this.router.navigate(['/profile']);
     this.isDropdownOpen.set(false);

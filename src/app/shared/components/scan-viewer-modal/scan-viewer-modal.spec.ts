@@ -3,6 +3,7 @@ import { ScanViewerModalComponent } from './scan-viewer-modal.component';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { RadiologyService, AiRadiologyAnalysisResult } from '../../../features/radiology/services/radiology.service';
 import { InsuranceService } from '../../../features/billing/services/insurance.service';
+import { CephalometricAnalysisService } from '../../../features/radiology/services/cephalometric-analysis.service';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 
@@ -97,6 +98,66 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
     } as any))
   };
 
+  const mockCephService = {
+    getDefaultLandmarks: jasmine.createSpy('getDefaultLandmarks').and.returnValue([
+      { id: 'S', name: 'Sella', nameAr: 'Sella', x: 42.0, y: 31.0, confidence: 96.2 },
+      { id: 'N', name: 'Nasion', nameAr: 'Nasion', x: 68.5, y: 26.5, confidence: 95.8 },
+      { id: 'A', name: 'Point A', nameAr: 'Point A', x: 71.2, y: 54.5, confidence: 92.4 },
+      { id: 'B', name: 'Point B', nameAr: 'Point B', x: 67.8, y: 69.0, confidence: 93.1 },
+      { id: 'Pog', name: 'Pogonion', nameAr: 'Pogonion', x: 69.5, y: 78.2, confidence: 94.0 },
+      { id: 'Me', name: 'Menton', nameAr: 'Menton', x: 66.0, y: 86.5, confidence: 91.5 },
+      { id: 'Go', name: 'Gonion', nameAr: 'Gonion', x: 36.0, y: 68.5, confidence: 90.7 },
+      { id: 'Gn', name: 'Gnathion', nameAr: 'Gnathion', x: 68.0, y: 83.0, confidence: 92.0 },
+      { id: 'Or', name: 'Orbitale', nameAr: 'Orbitale', x: 63.5, y: 39.0, confidence: 93.4 },
+      { id: 'Po', name: 'Porion', nameAr: 'Porion', x: 33.5, y: 37.5, confidence: 89.2 }
+    ]),
+    getAnalysis: jasmine.createSpy('getAnalysis').and.returnValue(of({
+      recordId: 'rec-1',
+      patientId: 'patient-1',
+      patientName: 'John Doe',
+      analysisMethod: 'Steiner',
+      analysisDate: new Date().toISOString(),
+      skeletalClass: 'Class I',
+      skeletalClassAr: 'صنف أول',
+      growthPattern: 'Normodivergent',
+      growthPatternAr: 'طبيعي',
+      overallConfidence: 94.0,
+      landmarks: [
+        { id: 'S', name: 'Sella', nameAr: 'Sella', x: 42.0, y: 31.0, confidence: 96.2 },
+        { id: 'N', name: 'Nasion', nameAr: 'Nasion', x: 68.5, y: 26.5, confidence: 95.8 },
+        { id: 'A', name: 'Point A', nameAr: 'Point A', x: 71.2, y: 54.5, confidence: 92.4 },
+        { id: 'B', name: 'Point B', nameAr: 'Point B', x: 67.8, y: 69.0, confidence: 93.1 },
+        { id: 'Pog', name: 'Pogonion', nameAr: 'Pogonion', x: 69.5, y: 78.2, confidence: 94.0 },
+        { id: 'Me', name: 'Menton', nameAr: 'Menton', x: 66.0, y: 86.5, confidence: 91.5 },
+        { id: 'Go', name: 'Gonion', nameAr: 'Gonion', x: 36.0, y: 68.5, confidence: 90.7 },
+        { id: 'Gn', name: 'Gnathion', nameAr: 'Gnathion', x: 68.0, y: 83.0, confidence: 92.0 },
+        { id: 'Or', name: 'Orbitale', nameAr: 'Orbitale', x: 63.5, y: 39.0, confidence: 93.4 },
+        { id: 'Po', name: 'Porion', nameAr: 'Porion', x: 33.5, y: 37.5, confidence: 89.2 }
+      ],
+      measurements: [
+        { parameter: 'SNA', nameAr: 'SNA', value: 82.0, unit: '°', normMin: 80, normMax: 84, interpretation: 'Normal', interpretationAr: 'طبيعي', clinicalStatus: 'Normal' },
+        { parameter: 'SNB', nameAr: 'SNB', value: 79.5, unit: '°', normMin: 78, normMax: 82, interpretation: 'Normal', interpretationAr: 'طبيعي', clinicalStatus: 'Normal' },
+        { parameter: 'ANB', nameAr: 'ANB', value: 2.5, unit: '°', normMin: 0, normMax: 4, interpretation: 'Class I', interpretationAr: 'صنف أول', clinicalStatus: 'Normal' }
+      ],
+      clinicalSummary: 'Class I skeletal profile',
+      clinicalSummaryAr: 'صنف أول هيكلي'
+    })),
+    recalculateAll: jasmine.createSpy('recalculateAll').and.returnValue({
+      measurements: [
+        { parameter: 'SNA', nameAr: 'SNA', value: 82.0, unit: '°', normMin: 80, normMax: 84, interpretation: 'Normal', interpretationAr: 'طبيعي', clinicalStatus: 'Normal' },
+        { parameter: 'SNB', nameAr: 'SNB', value: 79.5, unit: '°', normMin: 78, normMax: 82, interpretation: 'Normal', interpretationAr: 'طبيعي', clinicalStatus: 'Normal' },
+        { parameter: 'ANB', nameAr: 'ANB', value: 2.5, unit: '°', normMin: 0, normMax: 4, interpretation: 'Class I', interpretationAr: 'صنف أول', clinicalStatus: 'Normal' }
+      ],
+      skeletalClass: 'Class I',
+      skeletalClassAr: 'صنف أول',
+      growthPattern: 'Normodivergent',
+      growthPatternAr: 'طبيعي',
+      clinicalSummary: 'Class I profile',
+      clinicalSummaryAr: 'صنف أول'
+    }),
+    saveReport: jasmine.createSpy('saveReport').and.returnValue(of({ success: true }))
+  };
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ScanViewerModalComponent],
@@ -115,6 +176,10 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
         {
           provide: InsuranceService,
           useValue: mockInsuranceService
+        },
+        {
+          provide: CephalometricAnalysisService,
+          useValue: mockCephService
         }
       ]
     });
@@ -497,6 +562,41 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       );
       expect(component.preAuthGenerated.emit).toHaveBeenCalled();
       expect(component.preAuthSuccessMessage()).toContain('CLM-2026-AI-001');
+    });
+  });
+
+  describe('Release v8.2.0: AI Cephalometric Landmark Tracing & Orthodontics', () => {
+    it('should toggle ceph mode and trigger analysis when empty', () => {
+      expect(component.isCephActive()).toBeFalse();
+      component.toggleCephTracing();
+      expect(component.isCephActive()).toBeTrue();
+      expect(component.showCephDrawer()).toBeTrue();
+      expect(mockCephService.getAnalysis).toHaveBeenCalled();
+      expect(component.cephLandmarks().length).toBe(10);
+      expect(component.cephSkeletalClass()).toBe('Class I');
+    });
+
+    it('should reset landmarks to defaults', () => {
+      component.toggleCephTracing();
+      component.resetCephLandmarks();
+      expect(mockCephService.getDefaultLandmarks).toHaveBeenCalled();
+      expect(component.cephLandmarks().length).toBe(10);
+      expect(component.cephMeasurements().length).toBe(3);
+    });
+
+    it('should save ceph report and display success banner', () => {
+      component.toggleCephTracing();
+      component.saveCephReport();
+      expect(mockCephService.saveReport).toHaveBeenCalled();
+      expect(component.cephSaveSuccessMessage()).toContain('persisted to EMR');
+    });
+
+    it('should clean up ceph state on modal close', () => {
+      component.toggleCephTracing();
+      expect(component.isCephActive()).toBeTrue();
+      component.onClose();
+      expect(component.isCephActive()).toBeFalse();
+      expect(component.showCephDrawer()).toBeFalse();
     });
   });
 });
