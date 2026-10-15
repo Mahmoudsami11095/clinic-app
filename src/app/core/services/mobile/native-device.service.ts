@@ -1,7 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
-import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 
 export type MobilePlatform = 'ios' | 'android' | 'web';
@@ -36,12 +35,6 @@ export class NativeDeviceService {
     try {
       // Hide native splash screen once Angular bootstrap is ready
       await SplashScreen.hide();
-
-      // Configure default transparent/dark status bar
-      await StatusBar.setStyle({ style: Style.Dark });
-      if (this.isAndroid()) {
-        await StatusBar.setBackgroundColor({ color: '#0f172a' });
-      }
 
       // App lifecycle listeners (HIPAA background privacy protection)
       App.addListener('appStateChange', ({ isActive }) => {
