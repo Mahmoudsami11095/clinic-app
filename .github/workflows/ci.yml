@@ -3,34 +3,32 @@ name: ClinicApp CI - Quality & Test Gate
 on:
   push:
     branches:
-      - master
-      - main
+      - '**'
   pull_request:
     branches:
-      - master
-      - main
+      - '**'
   workflow_dispatch:
 
 jobs:
   quality-gate:
-    name: Build & Unit Test Gate (277 Jasmine Specs)
+    name: Build & Unit Test Gate (585 Jasmine Specs)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
       - name: Install NPM Dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Build Angular Application (Production Bundle)
+      - name: Build Angular Application (Production Bundle & Budget Check)
         run: npm run build
 
       - name: Run Automated Unit & Component Tests (Chrome Headless)
@@ -53,10 +51,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
