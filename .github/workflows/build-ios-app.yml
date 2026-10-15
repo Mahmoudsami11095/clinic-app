@@ -1,0 +1,90 @@
+name: Build iOS App (Capacitor)
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'ios/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - '.github/workflows/build-ios-app.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Assemble iOS Application
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 (Required by Capacitor 7)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build Angular Web Bundle
+        run: npm run build
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Build iOS App for Simulator via xcodebuild
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Package iOS Simulator App
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -r SmartClinic-iOS-Simulator.zip App.app
+          mv SmartClinic-iOS-Simulator.zip ../../../../
+
+      - name: Build iOS Device Binary (Payload / Unsigned IPA)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build-device \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+          
+          mkdir -p Payload
+          cp -r build-device/Build/Products/Release-iphoneos/App.app Payload/
+          zip -r SmartClinic-iOS-Unsigned.ipa Payload
+          rm -rf Payload
+
+      - name: Upload iOS Simulator App (.zip)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartClinic-iOS-Simulator-App
+          path: SmartClinic-iOS-Simulator.zip
+          retention-days: 30
+
+      - name: Upload iOS Device Package (.ipa)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartClinic-iOS-Unsigned-IPA
+          path: SmartClinic-iOS-Unsigned.ipa
+          retention-days: 30
