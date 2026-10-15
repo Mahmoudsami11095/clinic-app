@@ -1103,6 +1103,8 @@
     "planned_procedures": "إجراءات علاجية مخططة",
     "phases_roadmap": "المراحل وخريطة العلاج",
     "cost_estimator": "حاسبة التكلفة والخصم",
+    "ai_dossier": "الملف الذكي",
+    "ai_autophase": "ترتيب ذكي",
     "document_consent": "الوثيقة والموافقة الموقعة",
     "gross_total": "الإجمالي قبل الخصم",
     "discount": "الخصم",

@@ -1103,6 +1103,8 @@
     "planned_procedures": "Planned Procedure(s)",
     "phases_roadmap": "Phases & Roadmap",
     "cost_estimator": "Cost Estimator",
+    "ai_dossier": "AI Dossier",
+    "ai_autophase": "AI Auto-Sequence",
     "document_consent": "Document & Consent",
     "gross_total": "Gross Total",
     "discount": "Discount",

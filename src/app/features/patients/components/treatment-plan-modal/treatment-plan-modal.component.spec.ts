@@ -230,4 +230,27 @@ describe('TreatmentPlanModalComponent - Milestone 2 Level 1 (SW/Unit)', () => {
     component.triggerPrint();
     expect(window.print).toHaveBeenCalled();
   });
+
+  it('12. should synthesize AI Clinical Proposal Dossier with chair time, visits, and ADA codes', () => {
+    component.activeTab.set('dossier');
+    expect(component.activeTab()).toBe('dossier');
+
+    const dossier = component.aiDossier();
+    expect(dossier).toBeDefined();
+    expect(dossier.findingsCount).toBe(4);
+    expect(dossier.totalEstimatedChairTimeMinutes).toBeGreaterThan(0);
+    expect(dossier.totalEstimatedVisits).toBeGreaterThan(0);
+    expect(dossier.adaClaimCodes.length).toBeGreaterThan(0);
+    expect(dossier.patientName).toContain('Mohamed Ghanem');
+  });
+
+  it('13. should apply AI Auto-Phasing to optimize procedure phases and visit estimates', () => {
+    // Before: items exist with default mappings
+    component.applyAiAutoPhasing();
+
+    const items = component.items();
+    const wisdomItem = items.find(i => Number(i.toothNumber) === 18);
+    expect(wisdomItem?.phase).toBe('urgent');
+    expect(wisdomItem?.estimatedVisits).toBe(1);
+  });
 });
