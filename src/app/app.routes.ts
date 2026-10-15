@@ -45,10 +45,18 @@ export const routes: Routes = [
     canActivate: [unauthGuard]
   },
   {
+    path: 'download',
+    loadComponent: () => import('./features/mobile-download/mobile-download.component').then(m => m.MobileDownloadComponent)
+  },
+  {
     path: '',
     loadComponent: () => import('./core/layout/main-layout/main-layout.component').then(m => m.MainLayout),
     canActivate: [authGuard],
     children: [
+      {
+        path: 'download',
+        loadComponent: () => import('./features/mobile-download/mobile-download.component').then(m => m.MobileDownloadComponent)
+      },
       {
         path: 'dashboard',
         loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.dashboardRoutes),
