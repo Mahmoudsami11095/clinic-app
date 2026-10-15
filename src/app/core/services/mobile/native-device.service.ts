@@ -1,7 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
-import { SplashScreen } from '@capacitor/splash-screen';
 
 export type MobilePlatform = 'ios' | 'android' | 'web';
 
@@ -33,9 +32,6 @@ export class NativeDeviceService {
     if (!this.isNative()) return;
 
     try {
-      // Hide native splash screen once Angular bootstrap is ready
-      await SplashScreen.hide();
-
       // App lifecycle listeners (HIPAA background privacy protection)
       App.addListener('appStateChange', ({ isActive }) => {
         this.isPrivacyVeilActive.set(!isActive);
