@@ -11,6 +11,7 @@ import {
   signal,
   computed,
   effect,
+  inject,
   ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -20,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabOrder3DModelResponse } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -146,6 +147,27 @@ export interface MeshTelemetry {
             <div class="flex items-center gap-2">
               <button
                 type="button"
+                (click)="toggleCaliper()"
+                [class.bg-cyan-600]="isCaliperActive()"
+                [class.text-white]="isCaliperActive()"
+                [class.border-cyan-400]="isCaliperActive()"
+                [class.bg-slate-800]="!isCaliperActive()"
+                [class.text-slate-300]="!isCaliperActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_caliper' | translate"
+                id="toggle-caliper-btn"
+              >
+                <i class="pi pi-arrows-h text-xs"></i>
+                <span>{{ 'lab_3d.caliper_btn' | translate }}</span>
+                @if (savedMeasurements().length > 0) {
+                  <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-500/30">
+                    {{ savedMeasurements().length }}
+                  </span>
+                }
+              </button>
+
+              <button
+                type="button"
                 (click)="toggleAutoRotate()"
                 [class.bg-cyan-600]="isAutoRotating()"
                 [class.text-white]="isAutoRotating()"
@@ -160,7 +182,7 @@ export interface MeshTelemetry {
               <button
                 type="button"
                 (click)="resetCamera()"
-                class="p-2.5 rounded-xl text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors cursor-pointer"
+                class="p-2.5 rounded-xl text-xs bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700 transition-colors cursor-pointer"
                 [title]="'lab_3d.reset_view' | translate"
               >
                 <i class="pi pi-compass text-xs"></i>
@@ -182,7 +204,138 @@ export interface MeshTelemetry {
           <div class="relative flex-1 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
             
             <!-- Three.js Canvas Container -->
-            <div #canvasContainer class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+            <div
+              #canvasContainer
+              class="w-full h-full"
+              [class.cursor-crosshair]="isCaliperActive()"
+              [class.cursor-grab]="!isCaliperActive()"
+              [class.active:cursor-grabbing]="!isCaliperActive()"
+            ></div>
+
+            <!-- Caliper Measurement Control HUD & Visual Pill -->
+            @if (isCaliperActive()) {
+              <div class="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 max-w-xl w-full px-4 pointer-events-auto">
+                <div class="flex items-center gap-2 bg-slate-950/90 border border-cyan-500/40 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-2xl">
+                  <!-- Mode Toggle -->
+                  <div class="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-800">
+                    <button
+                      type="button"
+                      (click)="setCaliperMode('distance')"
+                      [class.bg-cyan-600]="caliperMode() === 'distance'"
+                      [class.text-white]="caliperMode() === 'distance'"
+                      [class.text-slate-400]="caliperMode() !== 'distance'"
+                      class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                      id="caliper-mode-dist-btn"
+                    >
+                      {{ 'lab_3d.caliper_distance' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setCaliperMode('angle')"
+                      [class.bg-cyan-600]="caliperMode() === 'angle'"
+                      [class.text-white]="caliperMode() === 'angle'"
+                      [class.text-slate-400]="caliperMode() !== 'angle'"
+                      class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                      id="caliper-mode-angle-btn"
+                    >
+                      {{ 'lab_3d.caliper_angle' | translate }}
+                    </button>
+                  </div>
+
+                  <!-- Clear Button -->
+                  <button
+                    type="button"
+                    (click)="clearCaliper()"
+                    class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-750 transition-colors cursor-pointer flex items-center gap-1"
+                    [title]="'lab_3d.caliper_clear' | translate"
+                    id="caliper-clear-btn"
+                  >
+                    <i class="pi pi-trash text-[10px]"></i>
+                    <span>{{ 'lab_3d.caliper_clear' | translate }}</span>
+                  </button>
+
+                  <!-- View Saved Drawer Toggle -->
+                  <button
+                    type="button"
+                    (click)="toggleMeasurementsDrawer()"
+                    class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-750 transition-colors cursor-pointer flex items-center gap-1"
+                    id="caliper-drawer-toggle-btn"
+                  >
+                    <i class="pi pi-list text-[10px]"></i>
+                    <span>{{ 'lab_3d.saved_measurements' | translate }} ({{ savedMeasurements().length }})</span>
+                  </button>
+                </div>
+
+                <!-- Active Measurement Display Badge -->
+                @if (currentReading(); as reading) {
+                  <div class="flex items-center gap-3 bg-slate-900/95 border border-cyan-500/50 backdrop-blur-md px-4 py-2 rounded-2xl shadow-xl animate-fade-in" id="caliper-active-badge">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-bold text-slate-300">{{ reading.label || 'Measured' }}:</span>
+                      <span class="font-mono text-base font-extrabold text-cyan-300" id="caliper-reading-value">{{ reading.value }} {{ reading.unit }}</span>
+                      @if (reading.warning) {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-500/40 flex items-center gap-1" id="caliper-reading-warning">
+                          <i class="pi pi-exclamation-triangle text-[9px]"></i>
+                          {{ reading.warning }}
+                        </span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                          <i class="pi pi-check text-[9px]"></i>
+                          Clinically Acceptable
+                        </span>
+                      }
+                    </div>
+
+                    <button
+                      type="button"
+                      (click)="saveCurrentMeasurement()"
+                      [disabled]="isSaving()"
+                      class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      id="save-measurement-btn"
+                    >
+                      <i class="pi" [class.pi-check]="!isSaving()" [class.pi-spin]="isSaving()" [class.pi-spinner]="isSaving()"></i>
+                      <span>{{ 'lab_3d.caliper_save' | translate }}</span>
+                    </button>
+                  </div>
+                } @else {
+                  <!-- Hint Pill -->
+                  <div class="text-[11px] font-medium text-slate-300 bg-slate-950/80 px-3 py-1 rounded-full border border-slate-800 shadow backdrop-blur-xs flex items-center gap-1.5" id="caliper-hint-pill">
+                    <i class="pi pi-info-circle text-cyan-400"></i>
+                    <span>{{ (caliperMode() === 'distance' ? 'lab_3d.click_surface_hint' : 'lab_3d.click_angle_hint') | translate }}</span>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Saved Measurements Drawer -->
+            @if (showMeasurementsDrawer()) {
+              <div class="absolute top-16 right-4 z-20 w-80 bg-slate-950/95 border border-slate-800 backdrop-blur-md rounded-2xl p-4 shadow-2xl text-xs space-y-3 pointer-events-auto animate-fade-in" id="saved-measurements-drawer">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span class="font-bold text-white flex items-center gap-1.5">
+                    <i class="pi pi-history text-cyan-400"></i>
+                    {{ 'lab_3d.saved_measurements' | translate }}
+                  </span>
+                  <button (click)="showMeasurementsDrawer.set(false)" class="text-slate-400 hover:text-white cursor-pointer" id="close-drawer-btn">
+                    <i class="pi pi-times"></i>
+                  </button>
+                </div>
+                <div class="max-h-60 overflow-y-auto space-y-2 pr-1">
+                  @for (item of savedMeasurements(); track item.id) {
+                    <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 flex items-center justify-between">
+                      <div>
+                        <div class="font-bold text-slate-200">{{ item.label }}</div>
+                        <div class="text-[10px] text-slate-400">{{ item.createdAtUtc | date:'short' }}</div>
+                      </div>
+                      <div class="text-right">
+                        <span class="font-mono font-bold text-cyan-300 text-sm">{{ item.value }} {{ item.unit }}</span>
+                        <div class="text-[9px] uppercase font-semibold text-slate-400">{{ item.mode }}</div>
+                      </div>
+                    </div>
+                  } @empty {
+                    <p class="text-slate-400 text-center py-4">No measurements recorded yet.</p>
+                  }
+                </div>
+              </div>
+            }
 
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
@@ -318,6 +471,8 @@ export interface MeshTelemetry {
 export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('canvasContainer') canvasContainer!: ElementRef<HTMLDivElement>;
 
+  private labWorkOrderService = inject(LabWorkOrderService, { optional: true });
+
   // Inputs & Model signals
   order = input<LabWorkOrder | null>(null);
   modelData = input<LabOrder3DModelResponse | null>(null);
@@ -332,6 +487,15 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   isAutoRotating = signal<boolean>(false);
   isWireframe = signal<boolean>(false);
   activePreset = signal<MaterialPreset>('zirconia');
+
+  // Caliper State Signals (v9.1.0)
+  isCaliperActive = signal<boolean>(false);
+  caliperMode = signal<'distance' | 'angle'>('distance');
+  caliperPoints = signal<THREE.Vector3[]>([]);
+  currentReading = signal<{ value: number; unit: string; warning?: string; label?: string } | null>(null);
+  savedMeasurements = signal<ModelMeasurement[]>([]);
+  isSaving = signal<boolean>(false);
+  showMeasurementsDrawer = signal<boolean>(false);
 
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
@@ -351,6 +515,12 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private wireframeMesh: THREE.LineSegments | null = null;
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
+
+  // Caliper Raycasting & 3D Visuals
+  private raycaster = new THREE.Raycaster();
+  private pointer = new THREE.Vector2();
+  private caliperGroup: THREE.Group = new THREE.Group();
+  private pointerDownPos = { x: 0, y: 0 };
 
   activeOrder = computed(() => this.order());
   activeModelData = computed(() => this.modelData());
@@ -413,6 +583,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     grid.position.y = -15;
     this.scene.add(grid);
 
+    // Caliper Group
+    this.caliperGroup = new THREE.Group();
+    this.scene.add(this.caliperGroup);
+
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     this.camera.position.set(0, 20, 50);
@@ -443,6 +617,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     // Clear previous canvas if any
     container.innerHTML = '';
     container.appendChild(this.renderer.domElement);
+
+    // Attach pointer picking listeners for Caliper
+    this.renderer.domElement.addEventListener('pointerdown', this.onCanvasPointerDown);
+    this.renderer.domElement.addEventListener('pointerup', this.onCanvasPointerUp);
 
     // 5. OrbitControls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -493,6 +671,11 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     const format = data?.modelFileFormat || order?.modelFileFormat || 'STL';
     const fileSize = data?.scanFileSize || order?.scanFileSize || 2621440;
     const dims = data?.modelBoundingBoxMm || order?.modelBoundingBoxMm || '48.2 x 34.6 x 19.5 mm';
+
+    const orderId = order?.id || order?.orderToken || data?.orderId || data?.orderToken;
+    if (orderId) {
+      this.loadMeasurementsForOrder(orderId);
+    }
 
     this.telemetry.set({
       polyCount,
@@ -729,12 +912,234 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     }
   }
 
+  toggleCaliper(): void {
+    const next = !this.isCaliperActive();
+    this.isCaliperActive.set(next);
+    if (!next) {
+      this.clearCaliper();
+    }
+  }
+
+  setCaliperMode(mode: 'distance' | 'angle'): void {
+    this.caliperMode.set(mode);
+    this.clearCaliper();
+  }
+
+  toggleMeasurementsDrawer(): void {
+    this.showMeasurementsDrawer.update(v => !v);
+  }
+
+  clearCaliper(): void {
+    this.caliperPoints.set([]);
+    this.currentReading.set(null);
+    this.updateCaliperVisuals();
+  }
+
+  private onCanvasPointerDown = (event: PointerEvent): void => {
+    this.pointerDownPos = { x: event.clientX, y: event.clientY };
+  };
+
+  private onCanvasPointerUp = (event: PointerEvent): void => {
+    if (!this.isCaliperActive() || !this.mesh || !this.camera || !this.renderer) return;
+    const dx = event.clientX - this.pointerDownPos.x;
+    const dy = event.clientY - this.pointerDownPos.y;
+    // Disregard if it was an orbit drag gesture
+    if (Math.hypot(dx, dy) > 5) return;
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    this.raycaster.setFromCamera(this.pointer, this.camera);
+    const intersects = this.raycaster.intersectObject(this.mesh, false);
+    if (intersects.length > 0) {
+      this.handleCaliperHit(intersects[0].point.clone());
+    }
+  };
+
+  handleCaliperHit(point: THREE.Vector3): void {
+    if (this.caliperMode() === 'distance') {
+      const current = this.caliperPoints();
+      let updated: THREE.Vector3[];
+      if (current.length >= 2) {
+        updated = [point];
+      } else {
+        updated = [...current, point];
+      }
+      this.caliperPoints.set(updated);
+
+      if (updated.length === 2) {
+        const [p1, p2] = updated;
+        const dist = p1.distanceTo(p2);
+        const distRounded = Number(dist.toFixed(2));
+
+        // Clinical reduction clearance rules (BR-CAL-01)
+        const orderMat = (this.order()?.material || '').toLowerCase();
+        let warning: string | undefined;
+        if ((orderMat.includes('zirconia') || this.activePreset() === 'zirconia') && distRounded < 1.0) {
+          warning = 'Insufficient Clearance (< 1.0 mm for Zirconia)';
+        } else if ((orderMat.includes('emax') || this.activePreset() === 'emax') && distRounded < 1.5) {
+          warning = 'Insufficient Clearance (< 1.5 mm for IPS e.max)';
+        } else if (distRounded < 1.0) {
+          warning = 'Insufficient Clearance (< 1.0 mm)';
+        }
+
+        this.currentReading.set({
+          value: distRounded,
+          unit: 'mm',
+          warning,
+          label: 'Prep Reduction'
+        });
+      } else {
+        this.currentReading.set(null);
+      }
+    } else {
+      // Angle Mode: 3 points (Point A, Vertex, Point B)
+      const current = this.caliperPoints();
+      let updated: THREE.Vector3[];
+      if (current.length >= 3) {
+        updated = [point];
+      } else {
+        updated = [...current, point];
+      }
+      this.caliperPoints.set(updated);
+
+      if (updated.length === 3) {
+        const [p1, p2, p3] = updated; // p2 is vertex
+        const v1 = new THREE.Vector3().subVectors(p1, p2).normalize();
+        const v2 = new THREE.Vector3().subVectors(p3, p2).normalize();
+        const angleRad = v1.angleTo(v2);
+        const angleDeg = (angleRad * 180) / Math.PI;
+        const degRounded = Number(angleDeg.toFixed(1));
+
+        let warning: string | undefined;
+        if (degRounded < 4.0) {
+          warning = 'Undercut Risk (Taper < 4°)';
+        } else if (degRounded > 16.0) {
+          warning = 'Excessive Taper (> 16°)';
+        }
+
+        this.currentReading.set({
+          value: degRounded,
+          unit: '°',
+          warning,
+          label: 'Convergence Angle'
+        });
+      } else {
+        this.currentReading.set(null);
+      }
+    }
+
+    this.updateCaliperVisuals();
+  }
+
+  updateCaliperVisuals(): void {
+    if (!this.caliperGroup) return;
+
+    // Clear previous children
+    while (this.caliperGroup.children.length > 0) {
+      const child = this.caliperGroup.children[0];
+      this.caliperGroup.remove(child);
+      if ((child as any).geometry) (child as any).geometry.dispose();
+      if ((child as any).material) {
+        if (Array.isArray((child as any).material)) {
+          (child as any).material.forEach((m: any) => m.dispose());
+        } else {
+          (child as any).material.dispose();
+        }
+      }
+    }
+
+    const points = this.caliperPoints();
+    if (points.length === 0) return;
+
+    // Render spheres at marker points
+    const sphereGeo = new THREE.SphereGeometry(0.5, 16, 16);
+    const sphereMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 }); // cyan
+
+    points.forEach(pt => {
+      const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+      sphere.position.copy(pt);
+      this.caliperGroup.add(sphere);
+    });
+
+    // Render connecting dimension lines
+    if (this.caliperMode() === 'distance' && points.length === 2) {
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 });
+      const line = new THREE.Line(lineGeo, lineMat);
+      this.caliperGroup.add(line);
+    } else if (this.caliperMode() === 'angle' && points.length >= 2) {
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 2 });
+      const line = new THREE.Line(lineGeo, lineMat);
+      this.caliperGroup.add(line);
+    }
+  }
+
+  saveCurrentMeasurement(): void {
+    const reading = this.currentReading();
+    if (!reading) return;
+
+    const orderId = this.order()?.id || this.order()?.orderToken || 'LAB-ORD-CURRENT';
+    this.isSaving.set(true);
+
+    const fallbackSaved: ModelMeasurement = {
+      id: `meas-local-${Date.now()}`,
+      orderId,
+      label: reading.label || 'Prep Measurement',
+      value: reading.value,
+      unit: reading.unit,
+      mode: this.caliperMode(),
+      createdAtUtc: new Date().toISOString()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveMeasurement(orderId, {
+        label: reading.label || 'Prep Measurement',
+        value: reading.value,
+        unit: reading.unit,
+        mode: this.caliperMode()
+      }).subscribe({
+        next: (saved) => {
+          this.savedMeasurements.update(list => [saved, ...list]);
+          this.isSaving.set(false);
+        },
+        error: () => {
+          this.savedMeasurements.update(list => [fallbackSaved, ...list]);
+          this.isSaving.set(false);
+        }
+      });
+    } else {
+      this.savedMeasurements.update(list => [fallbackSaved, ...list]);
+      this.isSaving.set(false);
+    }
+  }
+
+  loadMeasurementsForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getMeasurements(orderId).subscribe({
+      next: (list) => {
+        this.savedMeasurements.set(list || []);
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
     window.removeEventListener('resize', this.onWindowResize);
+
+    if (this.renderer?.domElement) {
+      this.renderer.domElement.removeEventListener('pointerdown', this.onCanvasPointerDown);
+      this.renderer.domElement.removeEventListener('pointerup', this.onCanvasPointerUp);
+    }
+    this.clearCaliper();
+
+    if (this.caliperGroup && this.scene) {
+      this.scene.remove(this.caliperGroup);
+    }
 
     if (this.mesh) {
       this.scene?.remove(this.mesh);

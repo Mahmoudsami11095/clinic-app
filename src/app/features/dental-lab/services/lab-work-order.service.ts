@@ -78,6 +78,23 @@ export interface FittingEligibilityResult {
   reason: string;
 }
 
+export interface ModelMeasurement {
+  id: string;
+  orderId: string;
+  label: string;
+  value: number;
+  unit: string;
+  mode: 'distance' | 'angle';
+  createdAtUtc: string;
+}
+
+export interface SaveMeasurementRequest {
+  label: string;
+  value: number;
+  unit?: string;
+  mode?: 'distance' | 'angle';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -312,6 +329,51 @@ export class LabWorkOrderService {
           scanFileSize: 2400000,
           modelBoundingBoxMm: '44.2 x 33.1 x 19.8 mm'
         });
+      })
+    );
+  }
+
+  getMeasurements(orderId: string): Observable<ModelMeasurement[]> {
+    return this.http.get<ModelMeasurement[]>(`${environment.apiUrl}/labworkorders/${orderId}/measurements`).pipe(
+      catchError(() => {
+        const fallbacks: ModelMeasurement[] = [
+          {
+            id: 'meas-mock-1',
+            orderId,
+            label: 'Occlusal Reduction',
+            value: 1.85,
+            unit: 'mm',
+            mode: 'distance',
+            createdAtUtc: new Date(Date.now() - 3600000).toISOString()
+          },
+          {
+            id: 'meas-mock-2',
+            orderId,
+            label: 'Axial Convergence Angle',
+            value: 6.4,
+            unit: 'deg',
+            mode: 'angle',
+            createdAtUtc: new Date(Date.now() - 3600000).toISOString()
+          }
+        ];
+        return of(fallbacks);
+      })
+    );
+  }
+
+  saveMeasurement(orderId: string, request: SaveMeasurementRequest): Observable<ModelMeasurement> {
+    return this.http.post<ModelMeasurement>(`${environment.apiUrl}/labworkorders/${orderId}/measurements`, request).pipe(
+      catchError(() => {
+        const newMeas: ModelMeasurement = {
+          id: `meas-mock-${Date.now()}`,
+          orderId,
+          label: request.label,
+          value: request.value,
+          unit: request.unit || (request.mode === 'angle' ? 'deg' : 'mm'),
+          mode: request.mode || 'distance',
+          createdAtUtc: new Date().toISOString()
+        };
+        return of(newMeas);
       })
     );
   }

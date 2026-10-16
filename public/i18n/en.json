@@ -1086,7 +1086,16 @@
     "view_occlusal": "Occlusal",
     "view_buccal": "Buccal",
     "view_lingual": "Lingual",
-    "view_margin": "Prep Margin"
+    "view_margin": "Prep Margin",
+    "caliper_btn": "Caliper",
+    "toggle_caliper": "Activate 3D Surface Caliper & Angle Gauge",
+    "caliper_distance": "Distance (mm)",
+    "caliper_angle": "Taper Angle (°)",
+    "caliper_clear": "Clear Markers",
+    "caliper_save": "Save Measurement",
+    "saved_measurements": "Saved Measurements",
+    "click_surface_hint": "Click two surface points to measure thickness and reduction clearance",
+    "click_angle_hint": "Click three surface points (A, vertex, B) to measure wall convergence angle"
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",
