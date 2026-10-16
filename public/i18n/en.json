@@ -50,7 +50,12 @@
     "btn_minimize": "Minimize",
     "btn_maximize": "Maximize",
     "btn_restore": "Restore",
-    "btn_close": "Close"
+    "btn_close": "Close",
+    "update_available": "Update Available",
+    "update_ready": "Restart to Apply",
+    "update_downloading": "Downloading",
+    "check_updates": "Check for Updates",
+    "up_to_date": "App is up to date"
   },
   "app_center": {
     "subtitle": "Enterprise Desktop & Mobile Companion",

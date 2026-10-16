@@ -69,4 +69,79 @@ describe('NativeDesktopService', () => {
     const info = await service.getOfflineStorageInfo();
     expect(info).toBeNull();
   });
+
+  // --- Silent Background Auto-Updater (BR-DESK-07) Tests ---
+
+  it('should initialize updater signals with default values', () => {
+    expect(service.isUpdateChecking()).toBeFalse();
+    expect(service.isUpdateAvailable()).toBeFalse();
+    expect(service.isUpdateDownloading()).toBeFalse();
+    expect(service.isUpdateDownloaded()).toBeFalse();
+    expect(service.updateProgressPercent()).toBe(0);
+    expect(service.availableUpdateVersion()).toBeNull();
+  });
+
+  it('should return false for checkForUpdates and downloadUpdate in browser fallback context', async () => {
+    const checkRes = await service.checkForUpdates();
+    expect(checkRes).toBeFalse();
+    expect(service.isUpdateChecking()).toBeFalse();
+
+    const dlRes = await service.downloadUpdate();
+    expect(dlRes).toBeFalse();
+    expect(service.isUpdateDownloading()).toBeFalse();
+
+    await expectAsync(service.installUpdate()).toBeResolved();
+  });
+
+  it('should handle updater bridge interactions when bridge is provided', async () => {
+    let progressCb: ((p: { percent: number }) => void) | undefined;
+    let downloadedCb: ((i: { version: string }) => void) | undefined;
+
+    const mockBridge = {
+      isDesktop: true,
+      platform: 'win32',
+      updater: {
+        checkForUpdates: jasmine.createSpy('checkForUpdates').and.resolveTo({
+          updateAvailable: true,
+          version: '8.1.0',
+          releaseNotes: 'Performance enhancements'
+        }),
+        downloadUpdate: jasmine.createSpy('downloadUpdate').and.resolveTo({ success: true }),
+        installUpdate: jasmine.createSpy('installUpdate').and.resolveTo(),
+        onUpdateProgress: jasmine.createSpy('onUpdateProgress').and.callFake((cb) => {
+          progressCb = cb;
+          return () => {};
+        }),
+        onUpdateDownloaded: jasmine.createSpy('onUpdateDownloaded').and.callFake((cb) => {
+          downloadedCb = cb;
+          return () => {};
+        })
+      }
+    };
+
+    (service as any).bridge = mockBridge;
+    (service as any).initializeBridgeListeners();
+
+    const hasUpdate = await service.checkForUpdates();
+    expect(hasUpdate).toBeTrue();
+    expect(service.isUpdateAvailable()).toBeTrue();
+    expect(service.availableUpdateVersion()).toBe('8.1.0');
+
+    const downloadSuccess = await service.downloadUpdate();
+    expect(downloadSuccess).toBeTrue();
+
+    // Trigger simulated progress
+    progressCb?.({ percent: 45 });
+    expect(service.isUpdateDownloading()).toBeTrue();
+    expect(service.updateProgressPercent()).toBe(45);
+
+    // Trigger simulated download complete
+    downloadedCb?.({ version: '8.1.0' });
+    expect(service.isUpdateDownloading()).toBeFalse();
+    expect(service.isUpdateDownloaded()).toBeTrue();
+    expect(service.updateProgressPercent()).toBe(100);
+
+    await service.installUpdate();
+    expect(mockBridge.updater.installUpdate).toHaveBeenCalled();
+  });
 });

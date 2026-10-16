@@ -52,6 +52,15 @@ export class NativeDesktopService {
   readonly spotlightTriggerCounter = signal<number>(0);
   readonly voiceScribeTriggerCounter = signal<number>(0);
 
+  // Silent Background Auto-Updater (BR-DESK-07)
+  readonly isUpdateChecking = signal<boolean>(false);
+  readonly isUpdateAvailable = signal<boolean>(false);
+  readonly isUpdateDownloading = signal<boolean>(false);
+  readonly isUpdateDownloaded = signal<boolean>(false);
+  readonly updateProgressPercent = signal<number>(0);
+  readonly availableUpdateVersion = signal<string | null>(null);
+  readonly updateReleaseNotes = signal<string | null>(null);
+
   readonly isWindows = computed(() => this.platform() === 'windows');
   readonly isMacOS = computed(() => this.platform() === 'macos');
   readonly isLinux = computed(() => this.platform() === 'linux');
@@ -112,6 +121,23 @@ export class NativeDesktopService {
     this.bridge.shortcuts?.onVoiceScribeTrigger?.(() => {
       this.ngZone.run(() => {
         this.voiceScribeTriggerCounter.update((n) => n + 1);
+      });
+    });
+
+    // Background Auto-Updater Listeners (BR-DESK-07)
+    this.bridge.updater?.onUpdateProgress?.((progress: { percent: number }) => {
+      this.ngZone.run(() => {
+        this.isUpdateDownloading.set(true);
+        this.updateProgressPercent.set(Math.round(progress.percent));
+      });
+    });
+
+    this.bridge.updater?.onUpdateDownloaded?.((info: { version: string }) => {
+      this.ngZone.run(() => {
+        this.isUpdateDownloading.set(false);
+        this.isUpdateDownloaded.set(true);
+        this.updateProgressPercent.set(100);
+        this.availableUpdateVersion.set(info.version);
       });
     });
   }
@@ -271,5 +297,45 @@ export class NativeDesktopService {
       return await this.bridge.storage.getStorageInfo();
     }
     return null;
+  }
+
+  // --- Silent Background Auto-Updater API (BR-DESK-07) ---
+
+  async checkForUpdates(): Promise<boolean> {
+    if (!this.bridge?.updater?.checkForUpdates) return false;
+    this.isUpdateChecking.set(true);
+    try {
+      const res = await this.bridge.updater.checkForUpdates();
+      this.ngZone.run(() => {
+        this.isUpdateChecking.set(false);
+        this.isUpdateAvailable.set(res?.updateAvailable ?? false);
+        if (res?.updateAvailable && res?.version) {
+          this.availableUpdateVersion.set(res.version);
+          this.updateReleaseNotes.set(res.releaseNotes ?? null);
+        }
+      });
+      return res?.updateAvailable ?? false;
+    } catch {
+      this.ngZone.run(() => this.isUpdateChecking.set(false));
+      return false;
+    }
+  }
+
+  async downloadUpdate(): Promise<boolean> {
+    if (!this.bridge?.updater?.downloadUpdate) return false;
+    this.isUpdateDownloading.set(true);
+    try {
+      const res = await this.bridge.updater.downloadUpdate();
+      return res?.success ?? false;
+    } catch {
+      this.ngZone.run(() => this.isUpdateDownloading.set(false));
+      return false;
+    }
+  }
+
+  async installUpdate(): Promise<void> {
+    if (this.bridge?.updater?.installUpdate) {
+      await this.bridge.updater.installUpdate();
+    }
   }
 }

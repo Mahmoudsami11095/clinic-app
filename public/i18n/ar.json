@@ -50,7 +50,12 @@
     "btn_minimize": "تصغير النافذة",
     "btn_maximize": "تكبير النافذة",
     "btn_restore": "استعادة النافذة",
-    "btn_close": "إغلاق التطبيق"
+    "btn_close": "إغلاق التطبيق",
+    "update_available": "تحديث متاح",
+    "update_ready": "إعادة التشغيل للتطبيق",
+    "update_downloading": "جارٍ التنزيل",
+    "check_updates": "التحقق من وجود تحديثات",
+    "up_to_date": "التطبيق محدث إلى آخر إصدار"
   },
   "app_center": {
     "subtitle": "تطبيق الديسكتوب والموبايل المتكامل للمنشآت الطبية",

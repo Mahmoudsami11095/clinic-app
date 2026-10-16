@@ -35,6 +35,19 @@ export interface TrayStatusPayload {
   waitingQueue: number;
 }
 
+export interface UpdateCheckResult {
+  updateAvailable: boolean;
+  version?: string;
+  releaseNotes?: string;
+  mandatory?: boolean;
+}
+
+export interface UpdateProgressPayload {
+  percent: number;
+  transferredBytes?: number;
+  totalBytes?: number;
+}
+
 const desktopAPI = {
   isDesktop: true,
   platform: process.platform,
@@ -101,6 +114,22 @@ const desktopAPI = {
 
   system: {
     getSystemInfo: (): Promise<SystemInfo> => ipcRenderer.invoke('desktop:get-system-info')
+  },
+
+  updater: {
+    checkForUpdates: (): Promise<UpdateCheckResult> => ipcRenderer.invoke('desktop:check-updates'),
+    downloadUpdate: (): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('desktop:download-update'),
+    installUpdate: (): Promise<void> => ipcRenderer.invoke('desktop:install-update'),
+    onUpdateProgress: (callback: (progress: UpdateProgressPayload) => void) => {
+      const listener = (_: any, progress: UpdateProgressPayload) => callback(progress);
+      ipcRenderer.on('desktop:update-progress', listener);
+      return () => ipcRenderer.removeListener('desktop:update-progress', listener);
+    },
+    onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
+      const listener = (_: any, info: { version: string }) => callback(info);
+      ipcRenderer.on('desktop:update-downloaded', listener);
+      return () => ipcRenderer.removeListener('desktop:update-downloaded', listener);
+    }
   }
 };
 
