@@ -166,4 +166,11 @@ describe('LabWorkOrdersBoardComponent (Release v8.4.0)', () => {
     component.testCheckFitting();
     expect(component.eligibilityResult()?.canSchedule).toBeTrue();
   });
+
+  it('should open 3D intraoral mesh viewer modal for an order (v9.0.0)', () => {
+    const order = mockOrders[0];
+    component.open3DViewer(order);
+    expect(component.selected3DOrder()).toBe(order);
+    expect(component.show3DViewerModal()).toBeTrue();
+  });
 });

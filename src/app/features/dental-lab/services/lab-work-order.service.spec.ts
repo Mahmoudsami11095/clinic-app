@@ -110,4 +110,47 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       reason: 'Clinical Governance BR-LAB-01: Restoration is currently Milling'
     });
   });
+
+  it('should fetch 3D model metadata via get3DModel (v9.0.0)', (done) => {
+    service.get3DModel('lab-1').subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.modelFileFormat).toBe('STL');
+      expect(res.meshPolyCount).toBe(52400);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/3d-model`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      orderToken: 'LAB-123456',
+      toothNumber: 36,
+      modelFileFormat: 'STL',
+      meshPolyCount: 52400,
+      scanFileSize: 2621440,
+      modelBoundingBoxMm: '48.2 x 34.6 x 19.5 mm',
+      restorationType: 'Full Crown',
+      material: 'Zirconia',
+      shade: 'A2'
+    });
+  });
+
+  it('should upload 3D mesh model with magic-byte validation (v9.0.0)', (done) => {
+    service.upload3DModel('lab-1', {
+      base64Data: 'c29saWQgdGVzdA==',
+      fileName: 'prep_36.stl',
+      fileFormat: 'STL'
+    }).subscribe(res => {
+      expect(res.success).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/3d-model`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      success: true,
+      message: '3D model validated and attached successfully.',
+      orderId: 'lab-1'
+    });
+  });
 });

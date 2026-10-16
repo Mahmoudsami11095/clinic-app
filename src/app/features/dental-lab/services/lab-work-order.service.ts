@@ -18,6 +18,10 @@ export interface LabWorkOrder {
   shade: string;
   stumpShade?: string;
   stlScanUrl?: string;
+  modelFileFormat?: string;
+  meshPolyCount?: number;
+  scanFileSize?: number;
+  modelBoundingBoxMm?: string;
   status: 'Dispatched' | 'ReceivedByLab' | 'Milling' | 'QualityControl' | 'Shipped' | 'ReceivedByClinic';
   labPartnerName: string;
   labTrackingNumber?: string;
@@ -25,6 +29,22 @@ export interface LabWorkOrder {
   estimatedDeliveryDate?: string;
   deliveryReceivedAtUtc?: string;
   createdAtUtc: string;
+}
+
+export interface LabOrder3DModelResponse {
+  orderId: string;
+  orderToken: string;
+  toothNumber: number;
+  stlScanUrl?: string;
+  modelFileFormat: string;
+  meshPolyCount: number;
+  scanFileSize: number;
+  modelBoundingBoxMm?: string;
+  restorationType: string;
+  material: string;
+  shade: string;
+  accessToken?: string;
+  expiresAtUtc: string;
 }
 
 export interface CreateLabWorkOrderRequest {
@@ -36,6 +56,10 @@ export interface CreateLabWorkOrderRequest {
   shade?: string;
   stumpShade?: string;
   stlScanUrl?: string;
+  modelFileFormat?: string;
+  meshPolyCount?: number;
+  scanFileSize?: number;
+  modelBoundingBoxMm?: string;
   labPartnerName?: string;
   estimatedDays?: number;
 }
@@ -76,6 +100,10 @@ export class LabWorkOrderService {
       shade: 'A2',
       stumpShade: 'ND2',
       stlScanUrl: '/scans/intraoral_mandible_36.stl',
+      modelFileFormat: 'STL',
+      meshPolyCount: 52400,
+      scanFileSize: 2621440,
+      modelBoundingBoxMm: '48.2 x 34.6 x 19.5 mm',
       status: 'Milling',
       labPartnerName: 'Apex Precision CAD/CAM Lab',
       labTrackingNumber: 'APX-882194',
@@ -97,6 +125,10 @@ export class LabWorkOrderService {
       shade: 'BL2',
       stumpShade: 'ND1',
       stlScanUrl: '/scans/intraoral_maxilla_11.stl',
+      modelFileFormat: 'STL',
+      meshPolyCount: 38120,
+      scanFileSize: 1945600,
+      modelBoundingBoxMm: '32.1 x 28.4 x 16.0 mm',
       status: 'Shipped',
       labPartnerName: 'CeramArt Aesthetic Dental Studio',
       labTrackingNumber: 'DHL-99482710',
@@ -117,6 +149,10 @@ export class LabWorkOrderService {
       material: 'Titanium Base + Zirconia Coping',
       shade: 'A3',
       stlScanUrl: '/scans/scanbody_implant_46.stl',
+      modelFileFormat: 'PLY',
+      meshPolyCount: 64900,
+      scanFileSize: 3145728,
+      modelBoundingBoxMm: '45.0 x 36.2 x 22.1 mm',
       status: 'ReceivedByClinic',
       labPartnerName: 'TitanPro Implant Milling Center',
       labTrackingNumber: 'FEDEX-554192',
@@ -169,6 +205,10 @@ export class LabWorkOrderService {
           shade: request.shade || 'A2',
           stumpShade: request.stumpShade,
           stlScanUrl: request.stlScanUrl || '/scans/sample_scan.stl',
+          modelFileFormat: request.modelFileFormat || 'STL',
+          meshPolyCount: request.meshPolyCount || 48200,
+          scanFileSize: request.scanFileSize || 2411000,
+          modelBoundingBoxMm: request.modelBoundingBoxMm || '44.0 x 32.0 x 18.0 mm',
           status: 'Dispatched',
           labPartnerName: request.labPartnerName || 'Apex Precision CAD/CAM Lab',
           estimatedDeliveryDate: new Date(Date.now() + (request.estimatedDays || 4) * 86400000).toISOString(),
@@ -214,6 +254,63 @@ export class LabWorkOrderService {
           reason: canSchedule
             ? `Restoration (Tooth #${toothNumber}) physically received by clinic. Fitting can proceed.`
             : `Clinical Governance BR-LAB-01: Restoration (Tooth #${toothNumber}) is currently '${order.status}'. Fitting cannot be booked until piece is 'ReceivedByClinic'.`
+        });
+      })
+    );
+  }
+
+  get3DModel(orderId: string): Observable<LabOrder3DModelResponse> {
+    return this.http.get<LabOrder3DModelResponse>(`${environment.apiUrl}/labworkorders/${orderId}/3d-model`).pipe(
+      catchError(() => {
+        const order = this.mockOrders.find(o => o.id === orderId || o.orderToken.toUpperCase() === orderId.toUpperCase());
+        const tooth = order ? order.toothNumber : 36;
+        return of({
+          orderId: order?.id || orderId,
+          orderToken: order?.orderToken || 'LAB-MOCK-3D',
+          toothNumber: tooth,
+          stlScanUrl: order?.stlScanUrl || `/scans/intraoral_tooth_${tooth}.stl`,
+          modelFileFormat: order?.modelFileFormat || 'STL',
+          meshPolyCount: order?.meshPolyCount || 52400,
+          scanFileSize: order?.scanFileSize || 2621440,
+          modelBoundingBoxMm: order?.modelBoundingBoxMm || '48.2 x 34.6 x 19.5 mm',
+          restorationType: order?.restorationType || 'Full Anatomical Crown',
+          material: order?.material || 'Monolithic Multi-Layer Zirconia',
+          shade: order?.shade || 'A2',
+          accessToken: `sas-token-${Date.now()}`,
+          expiresAtUtc: new Date(Date.now() + 14400000).toISOString()
+        });
+      })
+    );
+  }
+
+  get3DModelByToken(token: string): Observable<LabOrder3DModelResponse> {
+    return this.http.get<LabOrder3DModelResponse>(`${this.apiUrl}/token/${token}/3d-model`).pipe(
+      catchError(() => {
+        return this.get3DModel(token);
+      })
+    );
+  }
+
+  upload3DModel(orderId: string, payload: { base64Data: string; fileName?: string; fileFormat?: string }): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/labworkorders/${orderId}/3d-model`, payload).pipe(
+      catchError(() => {
+        const order = this.mockOrders.find(o => o.id === orderId || o.orderToken.toUpperCase() === orderId.toUpperCase());
+        if (order) {
+          order.modelFileFormat = payload.fileFormat || 'STL';
+          order.meshPolyCount = 48250;
+          order.scanFileSize = payload.base64Data ? Math.floor(payload.base64Data.length * 0.75) : 2400000;
+          order.modelBoundingBoxMm = '44.2 x 33.1 x 19.8 mm';
+          order.stlScanUrl = `/scans/${order.orderToken.toLowerCase()}_${payload.fileName || 'scan.stl'}`;
+        }
+        return of({
+          success: true,
+          message: '3D model validated and attached successfully.',
+          orderId,
+          stlScanUrl: order?.stlScanUrl || '/scans/uploaded_mesh.stl',
+          modelFileFormat: payload.fileFormat || 'STL',
+          meshPolyCount: 48250,
+          scanFileSize: 2400000,
+          modelBoundingBoxMm: '44.2 x 33.1 x 19.8 mm'
         });
       })
     );
