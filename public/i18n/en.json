@@ -1937,5 +1937,37 @@
         "step2_content": "Review tiered commissions and generate audit-locked monthly doctor payouts."
       }
     }
+  },
+  "sterilization": {
+    "guardian_title": "IoT Autoclave Sterilization Guardian",
+    "guardian_subtitle": "Real-time EN 13060 Class B telemetry streaming, cassette tracking, and DIN EN ISO 11140-1 compliance audit",
+    "live_telemetry": "Live IoT Sensor Stream",
+    "chamber_temp": "Chamber Temp",
+    "chamber_pressure": "Chamber Pressure",
+    "water_conductivity": "Boiler Feed Water",
+    "cycle_phase": "Current Phase",
+    "phase_standby": "Standby",
+    "phase_prevacuum": "Fractionated Pre-Vacuum",
+    "phase_heating": "Thermodynamic Heating",
+    "phase_plateau": "Saturated Steam Plateau",
+    "phase_drying": "Vacuum Drying",
+    "phase_completed": "Cycle Completed",
+    "phase_quarantine": "Cycle Failed (Quarantine)",
+    "validate_cycle": "Validate Class B Cycle",
+    "cycle_type": "Sterilization Program",
+    "plateau_duration": "Plateau Duration",
+    "peak_temp": "Peak Temperature",
+    "peak_pressure": "Peak Pressure",
+    "bio_indicator": "Spore Biological Indicator",
+    "bio_negative": "Negative (Sterile / No Growth)",
+    "bio_positive": "Positive (Contaminated)",
+    "class_b_certified": "EN 13060 Class B Certified",
+    "quarantine_alert": "Sterilization Breach Alert",
+    "cassettes_released": "Cassettes Released",
+    "cassettes_quarantined": "Cassettes Quarantined",
+    "audit_certificate": "DIN EN ISO 11140-1 Audit Proof",
+    "download_cert": "Download Cycle Certificate",
+    "operator": "Operator",
+    "cycle_history": "Recent Autoclave Cycles"
   }
 }

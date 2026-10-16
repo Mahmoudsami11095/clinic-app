@@ -8,11 +8,12 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AutoclaveGuardianComponent } from '../autoclave-guardian/autoclave-guardian.component';
 
 @Component({
   selector: 'app-equipment-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AutoclaveGuardianComponent],
   templateUrl: './equipment-list.component.html',
   styleUrls: ['./equipment-list.component.scss']
 })
@@ -40,6 +41,11 @@ export class EquipmentListComponent implements OnInit {
   isMaintenanceModalOpen = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
   isSeeding = signal<boolean>(false);
+  showAutoclaveGuardian = signal<boolean>(true);
+
+  toggleAutoclaveGuardian(): void {
+    this.showAutoclaveGuardian.update(v => !v);
+  }
 
   // Form Model
   formModel: Equipment = this.getEmptyFormModel();

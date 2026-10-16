@@ -1937,5 +1937,37 @@
         "step2_content": "راجع العمولات المحسوبة آلياً واستخرج كشوف الحسابات المعتمدة للأطباء شهرياً."
       }
     }
+  },
+  "sterilization": {
+    "guardian_title": "حارس التعقيم الذكي وأجهزة الأوتوكلاف (IoT)",
+    "guardian_subtitle": "مراقبة فورية لحساسات الأوتوكلاف وفق معيار EN 13060 وتتبع حاويات الأدوات وسجل التدقيق الرقمي",
+    "live_telemetry": "بيانات الحساسات الفورية",
+    "chamber_temp": "حرارة الحجرة",
+    "chamber_pressure": "ضغط الحجرة",
+    "water_conductivity": "مياه التغذية (نقاء)",
+    "cycle_phase": "المرحلة الحالية",
+    "phase_standby": "وضع الاستعداد",
+    "phase_prevacuum": "تفريغ الهواء الأولي",
+    "phase_heating": "التسخين الديناميكي",
+    "phase_plateau": "هضبة البخار المشبع",
+    "phase_drying": "التجفيف بالتفريغ",
+    "phase_completed": "اكتملت الدورة",
+    "phase_quarantine": "فشلت الدورة (قيد الحجر)",
+    "validate_cycle": "اعتماد دورة الفئة B",
+    "cycle_type": "برنامج التعقيم",
+    "plateau_duration": "مدة هضبة التعقيم",
+    "peak_temp": "أقصى درجة حرارة",
+    "peak_pressure": "أقصى ضغط",
+    "bio_indicator": "المؤشر البيولوجي (الأبواغ)",
+    "bio_negative": "سالب (معقم / لا نمو جرثومي)",
+    "bio_positive": "موجب (ملوث)",
+    "class_b_certified": "معتمد وفق EN 13060 Class B",
+    "quarantine_alert": "تحذير اختراق التعقيم",
+    "cassettes_released": "حاويات مصرح بها",
+    "cassettes_quarantined": "حاويات قيد الحجر",
+    "audit_certificate": "شهادة الاعتماد الرقمية DIN EN ISO 11140-1",
+    "download_cert": "تحميل شهادة الدورة",
+    "operator": "المشغل المسؤول",
+    "cycle_history": "سجل دورات التعقيم الأخيرة"
   }
 }

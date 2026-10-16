@@ -20,6 +20,19 @@
       </button>
 
       <button
+        (click)="toggleAutoclaveGuardian()"
+        [class.bg-cyan-600]="showAutoclaveGuardian()"
+        [class.text-white]="showAutoclaveGuardian()"
+        [class.bg-slate-800]="!showAutoclaveGuardian()"
+        [class.text-slate-300]="!showAutoclaveGuardian()"
+        class="border border-slate-700 px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer hover:bg-slate-750"
+        id="toggle-guardian-btn"
+      >
+        <i class="pi pi-shield text-cyan-400"></i>
+        <span>IoT Autoclave Guardian</span>
+      </button>
+
+      <button
         (click)="openAddModal()"
         class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all flex items-center gap-2 cursor-pointer"
       >
@@ -70,6 +83,11 @@
         <div class="text-2xl font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">{{ inRepairCount }}</div>
       </div>
     </div>
+  </div>
+
+  <!-- IoT Autoclave Sterilization Guardian Card (Release v11.5.0) -->
+  <div *ngIf="showAutoclaveGuardian()" class="animate-fade-in" id="autoclave-guardian-section">
+    <app-autoclave-guardian></app-autoclave-guardian>
   </div>
 
   <!-- Search & Filters -->
