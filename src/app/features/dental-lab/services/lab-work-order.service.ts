@@ -382,6 +382,44 @@ export interface SaveGbrMeshPlanRequest {
   fixationScrews?: GbrFixationScrew[];
 }
 
+export interface RpdClaspAssembly {
+  toothFdi: string;
+  claspType: 'Akers' | 'RoachIBar';
+  restSeatType: 'Occlusal' | 'Cingulum';
+  undercutDepthMm: number;
+  hasReciprocalArm: boolean;
+  isSurveyCompliant: boolean;
+}
+
+export interface RpdSurveyorPlan {
+  orderId: string;
+  patientId: string;
+  arch: 'Maxillary' | 'Mandibular';
+  kennedyClassification: 'ClassI' | 'ClassII' | 'ClassIII' | 'ClassIV';
+  tiltBuccolingualDeg: number;
+  tiltMesiodistalDeg: number;
+  majorConnectorType: 'PalatalStrap' | 'Horseshoe' | 'LingualBar' | 'LingualPlate';
+  majorConnectorThicknessMm: number;
+  floorOfMouthDepthMm: number;
+  hasTissueImpingementWarning: boolean;
+  isFabricationApproved: boolean;
+  statusMessage: string;
+  clasps: RpdClaspAssembly[];
+  plannedAtUtc: string;
+}
+
+export interface SaveRpdPlanRequest {
+  arch?: 'Maxillary' | 'Mandibular';
+  kennedyClassification?: 'ClassI' | 'ClassII' | 'ClassIII' | 'ClassIV';
+  tiltBuccolingualDeg?: number;
+  tiltMesiodistalDeg?: number;
+  majorConnectorType?: 'PalatalStrap' | 'Horseshoe' | 'LingualBar' | 'LingualPlate';
+  majorConnectorThicknessMm?: number;
+  floorOfMouthDepthMm?: number;
+  isFabricationApproved?: boolean;
+  clasps?: RpdClaspAssembly[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1329,6 +1367,82 @@ export class LabWorkOrderService {
           statusMessage: status,
           fixationScrews: screwsList,
           flatPatternContourPointsCount: 32,
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  getRpdPlan(orderId: string): Observable<RpdSurveyorPlan> {
+    return this.http.get<RpdSurveyorPlan>(`${this.apiUrl}/${orderId}/rpd`).pipe(
+      catchError(() => {
+        const clasps: RpdClaspAssembly[] = [
+          { toothFdi: '35', claspType: 'Akers', restSeatType: 'Occlusal', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true },
+          { toothFdi: '47', claspType: 'Akers', restSeatType: 'Occlusal', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true },
+          { toothFdi: '44', claspType: 'RoachIBar', restSeatType: 'Cingulum', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true }
+        ];
+        const fallback: RpdSurveyorPlan = {
+          orderId,
+          patientId: 'pat-seed',
+          arch: 'Mandibular',
+          kennedyClassification: 'ClassII',
+          tiltBuccolingualDeg: 2.5,
+          tiltMesiodistalDeg: -1.5,
+          majorConnectorType: 'LingualBar',
+          majorConnectorThicknessMm: 1.2,
+          floorOfMouthDepthMm: 8.5,
+          hasTissueImpingementWarning: false,
+          isFabricationApproved: true,
+          statusMessage: `RPD framework digital survey initialized for Mandibular Class II arch. Insertion path: BL 2.5°, MD -1.5°.`,
+          clasps,
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveRpdPlan(orderId: string, request: SaveRpdPlanRequest): Observable<RpdSurveyorPlan> {
+    return this.http.post<RpdSurveyorPlan>(`${this.apiUrl}/${orderId}/rpd`, request).pipe(
+      catchError(() => {
+        const arch = request.arch ?? 'Mandibular';
+        const kennedy = request.kennedyClassification ?? 'ClassII';
+        const tiltBL = Math.max(-15.0, Math.min(15.0, request.tiltBuccolingualDeg ?? 2.5));
+        const tiltMD = Math.max(-10.0, Math.min(10.0, request.tiltMesiodistalDeg ?? -1.5));
+        const majorConnector = request.majorConnectorType ?? (arch === 'Mandibular' ? 'LingualBar' : 'PalatalStrap');
+        const thickness = Math.max(0.8, Math.min(2.5, request.majorConnectorThicknessMm ?? 1.2));
+        const floorOfMouth = Math.max(3.0, Math.min(15.0, request.floorOfMouthDepthMm ?? 8.5));
+
+        const isLingualBar = arch === 'Mandibular' && majorConnector === 'LingualBar';
+        const hasImpingement = isLingualBar && floorOfMouth < 7.0;
+
+        const claspsList: RpdClaspAssembly[] = (request.clasps && request.clasps.length > 0)
+          ? request.clasps
+          : [
+              { toothFdi: '35', claspType: 'Akers', restSeatType: 'Occlusal', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true },
+              { toothFdi: '47', claspType: 'Akers', restSeatType: 'Occlusal', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true },
+              { toothFdi: '44', claspType: 'RoachIBar', restSeatType: 'Cingulum', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true }
+            ];
+
+        const status = hasImpingement
+          ? 'BR-RPD-02 WARNING: Floor-of-mouth depth < 7.0 mm (tissue impingement risk). Select LingualPlate instead of LingualBar.'
+          : `Removable Partial Denture (RPD) framework approved for ${arch} ${kennedy}. Insertion path: BL ${tiltBL.toFixed(1)}°, MD ${tiltMD.toFixed(1)}°. Major connector: ${majorConnector} (${thickness.toFixed(1)} mm). ${claspsList.length} clasps verified.`;
+
+        const fallback: RpdSurveyorPlan = {
+          orderId,
+          patientId: 'pat-seed',
+          arch,
+          kennedyClassification: kennedy,
+          tiltBuccolingualDeg: tiltBL,
+          tiltMesiodistalDeg: tiltMD,
+          majorConnectorType: majorConnector,
+          majorConnectorThicknessMm: thickness,
+          floorOfMouthDepthMm: floorOfMouth,
+          hasTissueImpingementWarning: hasImpingement,
+          isFabricationApproved: request.isFabricationApproved ?? !hasImpingement,
+          statusMessage: status,
+          clasps: claspsList,
           plannedAtUtc: new Date().toISOString()
         };
         return of(fallback);

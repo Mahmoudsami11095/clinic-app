@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan, AlignerPlan, GbrTitaniumMeshPlan } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan, AlignerPlan, GbrTitaniumMeshPlan, RpdSurveyorPlan } from '../../services/lab-work-order.service';
 
 describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
@@ -1472,6 +1472,114 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
 
     component.toggleGbr();
     expect(() => component.exportGbrTemplate()).not.toThrow();
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
+  });
+
+  // --- Release v11.3.0 AI 3D RPD Framework & Clasp Surveyor Tests ---
+
+  it('should toggle RPD mode and enforce mutual exclusivity across all analysis modes (BR-RPD-01)', () => {
+    // 1. Caliper vs RPD
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+    component.toggleRpd();
+    expect(component.isRpdActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    // 2. Heatmap vs RPD
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.isRpdActive()).toBeFalse();
+
+    component.toggleRpd();
+    expect(component.isRpdActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+
+    // 3. GBR vs RPD
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isRpdActive()).toBeFalse();
+
+    component.toggleRpd();
+    expect(component.isRpdActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    // Toggle off
+    component.toggleRpd();
+    expect(component.isRpdActive()).toBeFalse();
+  });
+
+  it('should configure arch, kennedy classification, and major connector parameters (BR-RPD-02)', () => {
+    component.toggleRpd();
+    expect(component.selectedArch()).toBe('Mandibular');
+    expect(component.selectedKennedy()).toBe('ClassII');
+    expect(component.selectedMajorConnector()).toBe('LingualBar');
+
+    component.setArch('Maxillary');
+    expect(component.selectedArch()).toBe('Maxillary');
+    expect(component.selectedMajorConnector()).toBe('PalatalStrap');
+
+    component.setKennedy('ClassI');
+    expect(component.selectedKennedy()).toBe('ClassI');
+
+    component.setMajorConnector('Horseshoe');
+    expect(component.selectedMajorConnector()).toBe('Horseshoe');
+  });
+
+  it('should detect floor of mouth clearance < 7.0 mm and flag tissue impingement warning (BR-RPD-02)', () => {
+    component.toggleRpd();
+    component.setArch('Mandibular');
+    component.setMajorConnector('LingualBar');
+
+    // Default floor of mouth is 8.5 mm -> compliant
+    expect(component.floorOfMouthDepthMm()).toBe(8.5);
+    expect(component.hasTissueImpingementWarning()).toBeFalse();
+
+    // Reduce floor depth to 5.5 mm (< 7.0 mm threshold)
+    component.adjustFloorDepth(-3.0);
+    expect(component.floorOfMouthDepthMm()).toBe(5.5);
+    expect(component.hasTissueImpingementWarning()).toBeTrue();
+
+    // Switching to LingualPlate resolves tissue impingement
+    component.setMajorConnector('LingualPlate');
+    expect(component.hasTissueImpingementWarning()).toBeFalse();
+  });
+
+  it('should save RPD framework plan via LabWorkOrderService (BR-RPD-04)', () => {
+    const mockPlan: RpdSurveyorPlan = {
+      orderId: 'lab-test-01',
+      patientId: 'pat-seed',
+      arch: 'Mandibular',
+      kennedyClassification: 'ClassII',
+      tiltBuccolingualDeg: 2.5,
+      tiltMesiodistalDeg: -1.5,
+      majorConnectorType: 'LingualBar',
+      majorConnectorThicknessMm: 1.2,
+      floorOfMouthDepthMm: 8.5,
+      hasTissueImpingementWarning: false,
+      isFabricationApproved: true,
+      statusMessage: 'RPD framework plan approved.',
+      clasps: [],
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'saveRpdPlan').and.returnValue(of(mockPlan));
+
+    component.toggleRpd();
+    component.saveRpdPlan();
+
+    expect(labService.saveRpdPlan).toHaveBeenCalled();
+    expect(component.savedRpd()).toEqual(mockPlan);
+    expect(component.isSavingRpd()).toBeFalse();
+  });
+
+  it('should export RPD SLM framework JSON cleanly (BR-RPD-04)', () => {
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/rpd-framework-slm');
+    spyOn(URL, 'revokeObjectURL');
+
+    component.toggleRpd();
+    expect(() => component.exportRpdSlm()).not.toThrow();
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
