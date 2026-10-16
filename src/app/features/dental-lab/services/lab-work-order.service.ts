@@ -306,6 +306,41 @@ export interface SaveDualModalityFusionRequest {
   isFusionApproved?: boolean;
 }
 
+export interface AlignerStage {
+  stageNumber: number;
+  translationDeltaMm: number;
+  rotationDeltaDeg: number;
+  attachmentRequired: boolean;
+  iprRequiredMm: number;
+  estimatedDaysWear: number;
+}
+
+export interface AlignerPlan {
+  orderId: string;
+  patientId: string;
+  totalStages: number;
+  currentStage: number;
+  maxTranslationDeltaMm: number;
+  maxRotationDeltaDeg: number;
+  totalIprMm: number;
+  foilThicknessMm: number;
+  isVelocityCompliant: boolean;
+  isTreatmentApproved: boolean;
+  statusMessage: string;
+  stages: AlignerStage[];
+  plannedAtUtc: string;
+}
+
+export interface SaveAlignerPlanRequest {
+  totalStages?: number;
+  currentStage?: number;
+  maxTranslationDeltaMm?: number;
+  maxRotationDeltaDeg?: number;
+  totalIprMm?: number;
+  foilThicknessMm?: number;
+  isTreatmentApproved?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1085,6 +1120,94 @@ export class LabWorkOrderService {
           isFusionApproved: request.isFusionApproved ?? !hasWarning,
           statusMessage: message,
           registeredAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  getAlignerPlan(orderId: string): Observable<AlignerPlan> {
+    return this.http.get<AlignerPlan>(`${this.apiUrl}/${orderId}/aligner`).pipe(
+      catchError(() => {
+        const totalStages = 16;
+        const stages: AlignerStage[] = [];
+        for (let i = 1; i <= totalStages; i++) {
+          stages.push({
+            stageNumber: i,
+            translationDeltaMm: 0.20,
+            rotationDeltaDeg: 1.5,
+            attachmentRequired: i >= 3 && i <= 8,
+            iprRequiredMm: i === 1 ? 0.3 : 0.0,
+            estimatedDaysWear: 10
+          });
+        }
+
+        const fallback: AlignerPlan = {
+          orderId,
+          patientId: 'pat-seed',
+          totalStages,
+          currentStage: 1,
+          maxTranslationDeltaMm: 0.20,
+          maxRotationDeltaDeg: 1.5,
+          totalIprMm: 1.2,
+          foilThicknessMm: 0.75,
+          isVelocityCompliant: true,
+          isTreatmentApproved: true,
+          statusMessage: 'Clear aligner staging plan initialized. 16 active stages (160 days total treatment).',
+          stages,
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveAlignerPlan(orderId: string, request: SaveAlignerPlanRequest): Observable<AlignerPlan> {
+    return this.http.post<AlignerPlan>(`${this.apiUrl}/${orderId}/aligner`, request).pipe(
+      catchError(() => {
+        const maxTranslation = request.maxTranslationDeltaMm ?? 0.22;
+        const maxRotation = request.maxRotationDeltaDeg ?? 1.8;
+        const hasViolation = maxTranslation > 0.25 || maxRotation > 2.0;
+
+        let totalStages = Math.max(5, Math.min(45, request.totalStages ?? 16));
+        if (hasViolation) {
+          totalStages = Math.min(45, Math.ceil(totalStages * 1.5));
+        }
+
+        const currentStage = Math.max(1, Math.min(totalStages, request.currentStage ?? 1));
+        const totalIpr = Math.max(0.0, request.totalIprMm ?? 1.2);
+        const foilThickness = Math.max(0.5, request.foilThicknessMm ?? 0.75);
+
+        const status = hasViolation
+          ? `BR-ALIGN-01 WARNING: Velocity limit exceeded (translation: ${maxTranslation.toFixed(2)} mm > 0.25 mm or rotation: ${maxRotation.toFixed(1)}° > 2.0°). Plan subdivided into ${totalStages} stages.`
+          : `Clear aligner orthodontic staging approved. Total stages: ${totalStages} (${totalStages * 10} days total wear). Velocity compliant.`;
+
+        const stages: AlignerStage[] = [];
+        for (let i = 1; i <= totalStages; i++) {
+          stages.push({
+            stageNumber: i,
+            translationDeltaMm: Math.min(0.24, maxTranslation),
+            rotationDeltaDeg: Math.min(1.9, maxRotation),
+            attachmentRequired: i >= 3 && i <= 8,
+            iprRequiredMm: i === 1 ? 0.3 : (i === 4 ? 0.2 : 0.0),
+            estimatedDaysWear: 10
+          });
+        }
+
+        const fallback: AlignerPlan = {
+          orderId,
+          patientId: 'pat-seed',
+          totalStages,
+          currentStage,
+          maxTranslationDeltaMm: maxTranslation,
+          maxRotationDeltaDeg: maxRotation,
+          totalIprMm: totalIpr,
+          foilThicknessMm: foilThickness,
+          isVelocityCompliant: !hasViolation,
+          isTreatmentApproved: request.isTreatmentApproved ?? !hasViolation,
+          statusMessage: status,
+          stages,
+          plannedAtUtc: new Date().toISOString()
         };
         return of(fallback);
       })

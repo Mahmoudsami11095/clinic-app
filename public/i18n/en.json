@@ -1257,7 +1257,20 @@
     "fusion_nerve_distance": "Mandibular Nerve Buffer",
     "saving_fusion": "Saving Multi-Modal Plan...",
     "save_fusion": "Save Fusion Plan",
-    "export_fusion_dossier": "Export Multi-Modal Dossier"
+    "export_fusion_dossier": "Export Multi-Modal Dossier",
+    "aligner_btn": "Aligners",
+    "toggle_aligner": "AI Clear Aligner Orthodontic Staging Engine (v11.1.0)",
+    "aligner_panel_title": "AI Clear Aligner Staging Engine",
+    "aligner_velocity_compliant": "Velocity Compliant (≤0.25mm)",
+    "aligner_velocity_warning": "Excessive Velocity (>0.25mm)",
+    "aligner_velocity_warning_desc": "Stage movement exceeds 0.25 mm/stage biomechanical limit. Subdividing stages recommended.",
+    "aligner_stage_scrubber": "Aligner Staging Timeline",
+    "aligner_stage": "Stage",
+    "aligner_total_stages": "Total Stages",
+    "aligner_ipr": "Arch IPR Schedule",
+    "saving_aligner": "Saving Aligner Plan...",
+    "save_aligner": "Save Aligner Plan",
+    "export_aligner_series": "Export 3D Aligner STL Series"
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",

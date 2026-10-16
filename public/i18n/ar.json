@@ -1257,7 +1257,20 @@
     "fusion_nerve_distance": "المسافة إلى القناة العصبية الفكية",
     "saving_fusion": "جاري حفظ خطة المطابقة...",
     "save_fusion": "حفظ خطة المطابقة",
-    "export_fusion_dossier": "تصدير التقرير المزدوج"
+    "export_fusion_dossier": "تصدير التقرير المزدوج",
+    "aligner_btn": "تقويم شفاف",
+    "toggle_aligner": "محرك تخطيط التقويم الشفاف الذكي (v11.1.0)",
+    "aligner_panel_title": "تخطيط مراحل التقويم الشفاف",
+    "aligner_velocity_compliant": "سرعة حركة مطابقة (≤0.25 مم)",
+    "aligner_velocity_warning": "تجاوز سرعة الحركة (>0.25 مم)",
+    "aligner_velocity_warning_desc": "حركة المرحلة تتجاوز الحد الحيوي المسموح 0.25 مم. يُنصح بزيادة المراحل.",
+    "aligner_stage_scrubber": "مراحل التقويم الزمني",
+    "aligner_stage": "المرحلة",
+    "aligner_total_stages": "إجمالي المراحل",
+    "aligner_ipr": "جدول حك المينا (IPR)",
+    "saving_aligner": "جاري حفظ خطة التقويم...",
+    "save_aligner": "حفظ خطة التقويم",
+    "export_aligner_series": "تصدير نماذج التقويم 3D STL"
   },
   "subscription": {
     "title": "اشتراك العيادة وحوكمة الحصص",

@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan, AlignerPlan } from '../../services/lab-work-order.service';
 
 describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
@@ -1156,6 +1156,145 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
 
     component.toggleFusion();
     expect(() => component.exportFusionDossier()).not.toThrow();
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
+  });
+
+  // --- Release v11.1.0 AI Clear Aligner Orthodontic Staging Engine Tests ---
+
+  it('should toggle aligner staging mode and enforce mutual exclusivity across all CAD/CAM tools', () => {
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+
+    // Mutual exclusivity checks
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isArticulatorActive()).toBeFalse();
+
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isMarginActive()).toBeFalse();
+
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    component.toggleGuide();
+    expect(component.isGuideActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isGuideActive()).toBeFalse();
+
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+  });
+
+  it('should scrub aligner staging timeline and dynamically activate retention attachments', () => {
+    component.toggleAligner();
+    component.alignerTotalStages.set(16);
+    expect(component.alignerCurrentStage()).toBe(1);
+    expect(component.alignerAttachmentsCount()).toBe(0);
+
+    const event = { target: { value: '5' } } as unknown as Event;
+    component.onAlignerStageChange(event);
+    expect(component.alignerCurrentStage()).toBe(5);
+    // Stages 3-8 have active retention attachments (BR-ALIGN-03)
+    expect(component.alignerAttachmentsCount()).toBe(4);
+  });
+
+  it('should evaluate velocity compliance and flag violations (BR-ALIGN-01)', () => {
+    component.alignerMaxTranslation.set(0.20);
+    component.alignerMaxRotation.set(1.5);
+    expect(component.isAlignerVelocityCompliant()).toBeTrue();
+
+    component.adjustAlignerTranslation(0.08); // 0.20 + 0.08 = 0.28 mm (> 0.25 mm)
+    expect(component.alignerMaxTranslation()).toBe(0.28);
+    expect(component.isAlignerVelocityCompliant()).toBeFalse();
+
+    component.adjustAlignerTranslation(-0.06); // 0.28 - 0.06 = 0.22 mm
+    expect(component.alignerMaxTranslation()).toBe(0.22);
+    expect(component.isAlignerVelocityCompliant()).toBeTrue();
+  });
+
+  it('should save aligner plan via LabWorkOrderService', () => {
+    const mockPlan: AlignerPlan = {
+      orderId: 'lab-test-01',
+      patientId: 'pat-seed',
+      totalStages: 16,
+      currentStage: 1,
+      maxTranslationDeltaMm: 0.20,
+      maxRotationDeltaDeg: 1.5,
+      totalIprMm: 1.2,
+      foilThicknessMm: 0.75,
+      isVelocityCompliant: true,
+      isTreatmentApproved: true,
+      statusMessage: 'Clear aligner staging approved.',
+      stages: [],
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'saveAlignerPlan').and.returnValue(of(mockPlan));
+
+    component.toggleAligner();
+    component.saveAlignerPlan();
+
+    expect(labService.saveAlignerPlan).toHaveBeenCalled();
+    expect(component.savedAligner()).toEqual(mockPlan);
+    expect(component.isSavingAligner()).toBeFalse();
+  });
+
+  it('should export 3D aligner series manifest cleanly (BR-ALIGN-04)', () => {
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/aligner-series');
+    spyOn(URL, 'revokeObjectURL');
+
+    component.toggleAligner();
+    expect(() => component.exportAlignerSeries()).not.toThrow();
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
