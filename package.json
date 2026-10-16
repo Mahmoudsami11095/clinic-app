@@ -1,6 +1,8 @@
 {
   "name": "clinic-app",
   "version": "8.0.0",
+  "description": "Smart Clinic Enterprise Management Desktop & Mobile Application Suite",
+  "author": "ClinicCorp AI <devops@cliniccorp.ai>",
   "main": "desktop/dist/main.js",
   "scripts": {
     "ng": "ng",
