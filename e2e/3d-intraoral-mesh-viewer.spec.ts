@@ -169,6 +169,36 @@ M30`,
       });
     });
 
+    // Intercept 3D Implant Surgical Guide & Stent endpoints (v10.1.0)
+    await page.route(/\/surgical-guide/i, async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-headers': '*',
+          'content-type': 'application/json'
+        },
+        contentType: 'application/json',
+        body: JSON.stringify({
+          orderId: 'ord-123456',
+          implantSystem: 'NobelActive',
+          sleeveDiameterMm: 5.0,
+          sleeveInnerDiameterMm: 4.2,
+          sleeveHeightMm: 5.0,
+          drillOffsetMm: 9.0,
+          buccoLingualAngleDeg: 2.5,
+          mesioDistalAngleDeg: 1.0,
+          stentWallThicknessMm: 2.5,
+          safetyClearanceMm: 3.4,
+          hasInspectionWindow: true,
+          hasSafetyWarning: false,
+          statusMessage: 'Implant surgical guide plan active (NobelActive). Anatomical clearance: 3.4 mm.',
+          plannedAtUtc: new Date().toISOString()
+        })
+      });
+    });
+
     // Mock background app polling routes
     await page.route(/\/notifications/i, async (route) => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
@@ -532,6 +562,85 @@ M30`,
     await expect(downloadGcodeBtn).toBeVisible();
 
     await page.screenshot({ path: path.join(screenshotsDir, '07-3d-dental-cam-toolpath.png'), fullPage: true });
+
+    // Close modal
+    const closeBtn = page.locator('#close-mesh-viewer-btn');
+    if (await closeBtn.isVisible()) {
+      await closeBtn.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(300);
+    }
+  });
+
+  test('8. Milestone 4 (v10.1.0): 3D Implant Surgical Guide & Stent Generator, Angulation & Dossier Export', async ({ page }) => {
+    test.setTimeout(45000);
+    const modal = await open3DViewerInDropzone(page);
+
+    // Toggle Surgical Guide Mode
+    const guideBtn = modal.locator('#toggle-guide-btn');
+    await expect(guideBtn).toBeVisible({ timeout: 5000 });
+    await guideBtn.click();
+    await page.waitForTimeout(400);
+
+    // Verify Guide Control Panel HUD is displayed
+    const panel = modal.locator('#guide-control-panel');
+    await expect(panel).toBeVisible({ timeout: 5000 });
+
+    // Verify Telemetry elements (sleeve outer, drill offset, safety clearance)
+    const sleeveVal = modal.locator('#guide-sleeve-val');
+    await expect(sleeveVal).toBeVisible();
+
+    const offsetVal = modal.locator('#guide-offset-val');
+    await expect(offsetVal).toBeVisible();
+
+    const clearanceVal = modal.locator('#guide-clearance-val');
+    await expect(clearanceVal).toBeVisible();
+
+    // Switch Implant System: StraumannBLX
+    const straumannBtn = modal.locator('#guide-system-straumann-btn');
+    await expect(straumannBtn).toBeVisible();
+    await straumannBtn.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Switch Implant System: ZimmerTSV
+    const zimmerBtn = modal.locator('#guide-system-zimmer-btn');
+    await expect(zimmerBtn).toBeVisible();
+    await zimmerBtn.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Switch back to NobelActive
+    const nobelBtn = modal.locator('#guide-system-nobel-btn');
+    await expect(nobelBtn).toBeVisible();
+    await nobelBtn.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Adjust Angulation BL & MD
+    const incBlBtn = modal.locator('#guide-control-panel button:has-text("+2°")').first();
+    await expect(incBlBtn).toBeVisible();
+    await incBlBtn.click({ force: true });
+    await page.waitForTimeout(200);
+
+    const incMdBtn = modal.locator('#guide-control-panel button:has-text("+2°")').nth(1);
+    await expect(incMdBtn).toBeVisible();
+    await incMdBtn.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Toggle Seating & Coolant Window
+    const windowBtn = modal.locator('#guide-toggle-window-btn');
+    await expect(windowBtn).toBeVisible();
+    await windowBtn.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Save Surgical Guide Plan
+    const saveGuideBtn = modal.locator('#save-guide-btn');
+    await expect(saveGuideBtn).toBeVisible();
+    await saveGuideBtn.click({ force: true });
+    await page.waitForTimeout(400);
+
+    // Export Surgical Guide Dossier
+    const exportDossierBtn = modal.locator('#export-guide-btn');
+    await expect(exportDossierBtn).toBeVisible();
+
+    await page.screenshot({ path: path.join(screenshotsDir, '08-3d-implant-surgical-guide.png'), fullPage: true });
 
     // Close modal
     const closeBtn = page.locator('#close-mesh-viewer-btn');

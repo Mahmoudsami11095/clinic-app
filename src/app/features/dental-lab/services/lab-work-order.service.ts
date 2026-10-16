@@ -212,6 +212,36 @@ export interface CamToolpathResult {
   generatedAtUtc: string;
 }
 
+export interface ImplantSurgicalGuide {
+  orderId: string;
+  implantSystem: 'NobelActive' | 'StraumannBLX' | 'ZimmerTSV';
+  sleeveDiameterMm: number;
+  sleeveInnerDiameterMm: number;
+  sleeveHeightMm: number;
+  drillOffsetMm: number;
+  buccoLingualAngleDeg: number;
+  mesioDistalAngleDeg: number;
+  stentWallThicknessMm: number;
+  safetyClearanceMm: number;
+  hasInspectionWindow: boolean;
+  hasSafetyWarning: boolean;
+  statusMessage: string;
+  plannedAtUtc: string;
+}
+
+export interface SaveImplantSurgicalGuideRequest {
+  implantSystem?: 'NobelActive' | 'StraumannBLX' | 'ZimmerTSV';
+  sleeveDiameterMm?: number;
+  sleeveInnerDiameterMm?: number;
+  sleeveHeightMm?: number;
+  drillOffsetMm?: number;
+  buccoLingualAngleDeg?: number;
+  mesioDistalAngleDeg?: number;
+  stentWallThicknessMm?: number;
+  safetyClearanceMm?: number;
+  hasInspectionWindow?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -790,6 +820,70 @@ export class LabWorkOrderService {
           gcodeContent: gcode,
           layers,
           generatedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  getSurgicalGuide(orderId: string): Observable<ImplantSurgicalGuide> {
+    return this.http.get<ImplantSurgicalGuide>(`${environment.apiUrl}/labworkorders/${orderId}/surgical-guide`).pipe(
+      catchError(() => {
+        const fallback: ImplantSurgicalGuide = {
+          orderId,
+          implantSystem: 'NobelActive',
+          sleeveDiameterMm: 5.0,
+          sleeveInnerDiameterMm: 4.2,
+          sleeveHeightMm: 5.0,
+          drillOffsetMm: 9.0,
+          buccoLingualAngleDeg: 0.0,
+          mesioDistalAngleDeg: 0.0,
+          stentWallThicknessMm: 2.5,
+          safetyClearanceMm: 3.4,
+          hasInspectionWindow: true,
+          hasSafetyWarning: false,
+          statusMessage: 'Implant surgical guide plan active (NobelActive). Anatomical clearance: 3.4 mm.',
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveSurgicalGuide(orderId: string, request: SaveImplantSurgicalGuideRequest): Observable<ImplantSurgicalGuide> {
+    return this.http.post<ImplantSurgicalGuide>(`${environment.apiUrl}/labworkorders/${orderId}/surgical-guide`, request).pipe(
+      catchError(() => {
+        const system = request.implantSystem || 'NobelActive';
+        const sleeveDia = request.sleeveDiameterMm ?? (system === 'StraumannBLX' ? 4.8 : (system === 'ZimmerTSV' ? 5.2 : 5.0));
+        const innerDia = request.sleeveInnerDiameterMm ?? (system === 'StraumannBLX' ? 4.0 : (system === 'ZimmerTSV' ? 4.4 : 4.2));
+        const height = request.sleeveHeightMm ?? 5.0;
+        const offset = request.drillOffsetMm ?? (system === 'StraumannBLX' ? 10.0 : 9.0);
+        const blAngle = Math.max(-15.0, Math.min(15.0, request.buccoLingualAngleDeg ?? 0.0));
+        const mdAngle = Math.max(-10.0, Math.min(10.0, request.mesioDistalAngleDeg ?? 0.0));
+        const wallThickness = Math.max(2.5, request.stentWallThicknessMm ?? 2.5);
+        const clearance = request.safetyClearanceMm ?? 3.4;
+        const hasWarning = clearance < 2.0;
+        const window = request.hasInspectionWindow ?? true;
+
+        const message = hasWarning
+          ? `BR-SG-01 WARNING: Planned safety clearance (${clearance.toFixed(1)} mm) violates minimum 2.0 mm buffer from critical anatomical structures.`
+          : `Surgical guide approved (${system}). Titanium master sleeve ⌀${sleeveDia.toFixed(1)} mm, offset ${offset.toFixed(1)} mm. Anatomical safety clearance: ${clearance.toFixed(1)} mm.`;
+
+        const fallback: ImplantSurgicalGuide = {
+          orderId,
+          implantSystem: system,
+          sleeveDiameterMm: sleeveDia,
+          sleeveInnerDiameterMm: innerDia,
+          sleeveHeightMm: height,
+          drillOffsetMm: offset,
+          buccoLingualAngleDeg: blAngle,
+          mesioDistalAngleDeg: mdAngle,
+          stentWallThicknessMm: wallThickness,
+          safetyClearanceMm: clearance,
+          hasInspectionWindow: window,
+          hasSafetyWarning: hasWarning,
+          statusMessage: message,
+          plannedAtUtc: new Date().toISOString()
         };
         return of(fallback);
       })
