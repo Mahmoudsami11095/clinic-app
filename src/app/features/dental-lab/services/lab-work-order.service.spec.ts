@@ -153,4 +153,65 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       orderId: 'lab-1'
     });
   });
+
+  it('should retrieve 3D model caliper measurements via getMeasurements (v9.1.0)', (done) => {
+    service.getMeasurements('lab-1').subscribe(measurements => {
+      expect(measurements.length).toBe(2);
+      expect(measurements[0].label).toBe('Occlusal Reduction');
+      expect(measurements[0].value).toBe(1.85);
+      expect(measurements[0].unit).toBe('mm');
+      expect(measurements[1].mode).toBe('angle');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/measurements`);
+    expect(req.request.method).toBe('GET');
+    req.flush([
+      {
+        id: 'm-1',
+        orderId: 'lab-1',
+        label: 'Occlusal Reduction',
+        value: 1.85,
+        unit: 'mm',
+        mode: 'distance',
+        createdAtUtc: new Date().toISOString()
+      },
+      {
+        id: 'm-2',
+        orderId: 'lab-1',
+        label: 'Taper Angle',
+        value: 6.5,
+        unit: 'deg',
+        mode: 'angle',
+        createdAtUtc: new Date().toISOString()
+      }
+    ]);
+  });
+
+  it('should persist 3D caliper measurement via saveMeasurement (v9.1.0)', (done) => {
+    service.saveMeasurement('lab-1', {
+      label: 'Prep Margin Width',
+      value: 1.25,
+      unit: 'mm',
+      mode: 'distance'
+    }).subscribe(saved => {
+      expect(saved.id).toBe('m-saved-1');
+      expect(saved.value).toBe(1.25);
+      expect(saved.label).toBe('Prep Margin Width');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/measurements`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.value).toBe(1.25);
+    req.flush({
+      id: 'm-saved-1',
+      orderId: 'lab-1',
+      label: 'Prep Margin Width',
+      value: 1.25,
+      unit: 'mm',
+      mode: 'distance',
+      createdAtUtc: new Date().toISOString()
+    });
+  });
 });

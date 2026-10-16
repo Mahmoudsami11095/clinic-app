@@ -3,6 +3,8 @@ import { PartnerDropzoneComponent } from './partner-dropzone.component';
 import { DiagnosticPartnerService, DiagnosticRequisitionOrder } from '../../core/services/diagnostic-partner.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
 
@@ -51,6 +53,8 @@ describe('PartnerDropzoneComponent', () => {
       imports: [PartnerDropzoneComponent],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: DiagnosticPartnerService, useValue: mockPartnerService },
         { provide: LanguageService, useValue: mockLanguageService },
         {

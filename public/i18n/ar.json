@@ -1086,7 +1086,16 @@
     "view_occlusal": "إطباقي",
     "view_buccal": "خدي (دهليزي)",
     "view_lingual": "لساني",
-    "view_margin": "خط التحضير"
+    "view_margin": "خط التحضير",
+    "caliper_btn": "المقياس ثلاثي الأبعاد",
+    "toggle_caliper": "تفعيل مقياس السطح وقياس زوايا التحضير",
+    "caliper_distance": "مسافة (مم)",
+    "caliper_angle": "زاوية التقارب (°)",
+    "caliper_clear": "مسح النقاط",
+    "caliper_save": "حفظ القياس",
+    "saved_measurements": "القياسات المحفوظة",
+    "click_surface_hint": "انقر على نقطتين على السطح لقياس السمك ومساحة الإطباق",
+    "click_angle_hint": "انقر على ثلاث نقاط (أ، رأس الزاوية، ب) لقياس زاوية تقارب الجدران المحضرة"
   },
   "subscription": {
     "title": "اشتراك العيادة وحوكمة الحصص",

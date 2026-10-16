@@ -1,11 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
+import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService } from '../../services/lab-work-order.service';
 
-describe('IntraoralMeshViewerComponent (Release v9.0.0)', () => {
+describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
   let fixture: ComponentFixture<IntraoralMeshViewerComponent>;
+  let labService: LabWorkOrderService;
 
   const mockOrder: LabWorkOrder = {
     id: 'lab-test-01',
@@ -30,11 +35,17 @@ describe('IntraoralMeshViewerComponent (Release v9.0.0)', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IntraoralMeshViewerComponent, TranslatePipe]
+      imports: [IntraoralMeshViewerComponent, TranslatePipe],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        LabWorkOrderService
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(IntraoralMeshViewerComponent);
     component = fixture.componentInstance;
+    labService = TestBed.inject(LabWorkOrderService);
   });
 
   it('should create the 3D intraoral mesh viewer component', () => {
@@ -43,6 +54,8 @@ describe('IntraoralMeshViewerComponent (Release v9.0.0)', () => {
     expect(component.isAutoRotating()).toBeFalse();
     expect(component.isWireframe()).toBeFalse();
     expect(component.activePreset()).toBe('zirconia');
+    expect(component.isCaliperActive()).toBeFalse();
+    expect(component.caliperMode()).toBe('distance');
   });
 
   it('should toggle auto-rotation state', () => {
@@ -111,7 +124,6 @@ describe('IntraoralMeshViewerComponent (Release v9.0.0)', () => {
   });
 
   it('should support camera view angles (occlusal, buccal, lingual, prep-margin)', () => {
-    // Should execute without error even before full canvas mount
     expect(() => {
       component.setCameraView('occlusal');
       component.setCameraView('buccal');
@@ -119,5 +131,121 @@ describe('IntraoralMeshViewerComponent (Release v9.0.0)', () => {
       component.setCameraView('prep-margin');
       component.resetCamera();
     }).not.toThrow();
+  });
+
+  // --- Milestone 1 (v9.1.0) Caliper Unit Tests ---
+
+  it('should toggle caliper active state and clear points on deactivation', () => {
+    expect(component.isCaliperActive()).toBeFalse();
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+
+    // Set a point
+    component.handleCaliperHit(new THREE.Vector3(1, 2, 3));
+    expect(component.caliperPoints().length).toBe(1);
+
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeFalse();
+    expect(component.caliperPoints().length).toBe(0);
+    expect(component.currentReading()).toBeNull();
+  });
+
+  it('should switch between distance and angle caliper modes', () => {
+    component.setCaliperMode('angle');
+    expect(component.caliperMode()).toBe('angle');
+
+    component.setCaliperMode('distance');
+    expect(component.caliperMode()).toBe('distance');
+  });
+
+  it('should calculate accurate 3D Euclidean distance in mm (REQ-CAL-02)', () => {
+    component.setCaliperMode('distance');
+    // Point 1: (0, 0, 0), Point 2: (0, 3, 4) -> hypotenuse is 5.00 mm
+    component.handleCaliperHit(new THREE.Vector3(0, 0, 0));
+    expect(component.currentReading()).toBeNull();
+
+    component.handleCaliperHit(new THREE.Vector3(0, 3, 4));
+    const reading = component.currentReading();
+    expect(reading).toBeTruthy();
+    expect(reading?.value).toBe(5.00);
+    expect(reading?.unit).toBe('mm');
+    expect(reading?.warning).toBeUndefined();
+  });
+
+  it('should flag Insufficient Clearance warning for reduction < 1.0 mm on Zirconia (BR-CAL-01)', () => {
+    component.setMaterialPreset('zirconia');
+    component.setCaliperMode('distance');
+
+    component.handleCaliperHit(new THREE.Vector3(0, 0, 0));
+    component.handleCaliperHit(new THREE.Vector3(0, 0.75, 0));
+
+    const reading = component.currentReading();
+    expect(reading).toBeTruthy();
+    expect(reading?.value).toBe(0.75);
+    expect(reading?.warning).toContain('Insufficient Clearance');
+  });
+
+  it('should calculate accurate wall convergence angle in degrees (REQ-CAL-03)', () => {
+    component.setCaliperMode('angle');
+
+    // 90 degree angle: vertex at (0,0,0), P1 at (0,10,0), P3 at (10,0,0)
+    component.handleCaliperHit(new THREE.Vector3(0, 10, 0));
+    component.handleCaliperHit(new THREE.Vector3(0, 0, 0)); // vertex
+    expect(component.currentReading()).toBeNull();
+
+    component.handleCaliperHit(new THREE.Vector3(10, 0, 0));
+    const reading = component.currentReading();
+    expect(reading).toBeTruthy();
+    expect(reading?.value).toBe(90.0);
+    expect(reading?.unit).toBe('°');
+    expect(reading?.warning).toContain('Excessive Taper');
+  });
+
+  it('should flag Undercut Risk warning when convergence angle is < 4 degrees', () => {
+    component.setCaliperMode('angle');
+
+    // Vector v1: along Y axis (0, 10, 0)
+    // Vector v2: almost parallel along Y axis with tiny X offset (0.2, 10, 0) -> angle ~ 1.15 deg
+    component.handleCaliperHit(new THREE.Vector3(0, 10, 0));
+    component.handleCaliperHit(new THREE.Vector3(0, 0, 0)); // vertex
+    component.handleCaliperHit(new THREE.Vector3(0.2, 10, 0));
+
+    const reading = component.currentReading();
+    expect(reading).toBeTruthy();
+    expect(reading?.value).toBeLessThan(4.0);
+    expect(reading?.warning).toContain('Undercut Risk');
+  });
+
+  it('should persist measurement and update savedMeasurements list (REQ-CAL-04)', () => {
+    spyOn(labService, 'saveMeasurement').and.returnValue(of({
+      id: 'm-persisted-1',
+      orderId: 'lab-test-01',
+      label: 'Prep Reduction',
+      value: 2.00,
+      unit: 'mm',
+      mode: 'distance',
+      createdAtUtc: new Date().toISOString()
+    }));
+
+    component.setCaliperMode('distance');
+    component.handleCaliperHit(new THREE.Vector3(0, 0, 0));
+    component.handleCaliperHit(new THREE.Vector3(0, 2, 0));
+
+    expect(component.currentReading()?.value).toBe(2.00);
+    expect(component.savedMeasurements().length).toBe(0);
+
+    component.saveCurrentMeasurement();
+
+    expect(component.savedMeasurements().length).toBe(1);
+    expect(component.savedMeasurements()[0].value).toBe(2.00);
+    expect(component.savedMeasurements()[0].unit).toBe('mm');
+  });
+
+  it('should toggle saved measurements drawer visibility', () => {
+    expect(component.showMeasurementsDrawer()).toBeFalse();
+    component.toggleMeasurementsDrawer();
+    expect(component.showMeasurementsDrawer()).toBeTrue();
+    component.toggleMeasurementsDrawer();
+    expect(component.showMeasurementsDrawer()).toBeFalse();
   });
 });
