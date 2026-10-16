@@ -49,6 +49,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/mobile-download/mobile-download.component').then(m => m.MobileDownloadComponent)
   },
   {
+    path: 'desktop-app',
+    redirectTo: 'download',
+    pathMatch: 'full'
+  },
+  {
+    path: 'mobile-app',
+    redirectTo: 'download',
+    pathMatch: 'full'
+  },
+  {
     path: '',
     loadComponent: () => import('./core/layout/main-layout/main-layout.component').then(m => m.MainLayout),
     canActivate: [authGuard],
@@ -56,6 +66,16 @@ export const routes: Routes = [
       {
         path: 'download',
         loadComponent: () => import('./features/mobile-download/mobile-download.component').then(m => m.MobileDownloadComponent)
+      },
+      {
+        path: 'desktop-app',
+        redirectTo: 'download',
+        pathMatch: 'full'
+      },
+      {
+        path: 'mobile-app',
+        redirectTo: 'download',
+        pathMatch: 'full'
       },
       {
         path: 'dashboard',

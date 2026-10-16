@@ -1,0 +1,66 @@
+<div 
+  class="desktop-titlebar h-9 bg-slate-950/95 border-b border-slate-800 text-slate-300 flex items-center justify-between select-none px-3 z-50 text-xs backdrop-blur-md"
+  [attr.dir]="languageService.currentLang() === 'ar' ? 'rtl' : 'ltr'">
+
+  <!-- Left: Branding & Status -->
+  <div class="flex items-center gap-2.5 app-region-no-drag">
+    <div class="w-5 h-5 rounded-md bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-sm">
+      <i class="pi pi-plus text-[10px] font-bold"></i>
+    </div>
+    <span class="font-semibold text-slate-100 tracking-tight text-xs flex items-center gap-1.5">
+      <span>{{ 'desktop.title' | translate }}</span>
+      <span class="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">v{{ appVersion }}</span>
+    </span>
+
+    <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px]">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span>{{ 'desktop.connected' | translate }}</span>
+    </div>
+  </div>
+
+  <!-- Center: Draggable Spacer & Hotkey Pill -->
+  <div class="flex-1 h-full app-region-drag flex items-center justify-center px-4">
+    <div class="hidden md:flex items-center gap-3 text-[10px] text-slate-500 font-medium">
+      <span class="flex items-center gap-1">
+        <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">Ctrl+Alt+K</kbd>
+        <span>{{ 'desktop.hotkey_spotlight' | translate }}</span>
+      </span>
+      <span class="text-slate-700">•</span>
+      <span class="flex items-center gap-1">
+        <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">Ctrl+Alt+S</kbd>
+        <span>{{ 'desktop.hotkey_voice' | translate }}</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Right: Window Controls -->
+  <div class="flex items-center h-full app-region-no-drag">
+    <!-- Minimize -->
+    <button 
+      type="button"
+      (click)="minimize()"
+      title="{{ 'desktop.btn_minimize' | translate }}"
+      class="h-9 w-10 flex items-center justify-center text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors cursor-pointer">
+      <i class="pi pi-minus text-[11px]"></i>
+    </button>
+
+    <!-- Maximize / Restore -->
+    <button 
+      type="button"
+      (click)="maximize()"
+      title="{{ desktopService.isMaximized() ? ('desktop.btn_restore' | translate) : ('desktop.btn_maximize' | translate) }}"
+      class="h-9 w-10 flex items-center justify-center text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors cursor-pointer">
+      <i class="pi text-[11px]" [ngClass]="desktopService.isMaximized() ? 'pi-clone' : 'pi-window-maximize'"></i>
+    </button>
+
+    <!-- Close -->
+    <button 
+      type="button"
+      (click)="close()"
+      title="{{ 'desktop.btn_close' | translate }}"
+      class="h-9 w-11 flex items-center justify-center text-slate-400 hover:text-white hover:bg-rose-600 transition-colors cursor-pointer">
+      <i class="pi pi-times text-[12px]"></i>
+    </button>
+  </div>
+
+</div>

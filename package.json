@@ -1,6 +1,7 @@
 {
   "name": "clinic-app",
-  "version": "0.0.0",
+  "version": "8.0.0",
+  "main": "desktop/dist/main.js",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -8,6 +9,14 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "desktop:compile": "tsc -p desktop/tsconfig.json",
+    "desktop:serve": "concurrently \"ng serve\" \"wait-on tcp:4200 && electron desktop/dist/main.js --dev\"",
+    "desktop:build": "ng build && npm run desktop:compile",
+    "desktop:generate": "npm run desktop:build && electron-builder --dir",
+    "desktop:generate:installer": "npm run desktop:build && electron-builder",
+    "desktop:pack": "npm run desktop:build && electron-builder",
+    "desktop:pack:dir": "npm run desktop:build && electron-builder --dir",
+    "desktop:run": "electron desktop/dist/main.js",
     "docs:generate": "npx @compodoc/compodoc -p tsconfig.app.json -c .compodocrc.json",
     "docs:serve": "npx @compodoc/compodoc -s -d documentation -p 8080",
     "test:e2e": "playwright test",
@@ -76,6 +85,10 @@
     "@tailwindcss/postcss": "^4.2.2",
     "@types/google.maps": "^3.65.2",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^22.20.5",
+    "concurrently": "^9.2.5",
+    "electron": "^34.5.8",
+    "electron-builder": "^25.1.8",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -84,6 +97,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.5.9",
     "tailwindcss": "^4.2.2",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "wait-on": "^8.0.5"
   }
 }
