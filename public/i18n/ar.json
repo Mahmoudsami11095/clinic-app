@@ -1095,7 +1095,21 @@
     "caliper_save": "حفظ القياس",
     "saved_measurements": "القياسات المحفوظة",
     "click_surface_hint": "انقر على نقطتين على السطح لقياس السمك ومساحة الإطباق",
-    "click_angle_hint": "انقر على ثلاث نقاط (أ، رأس الزاوية، ب) لقياس زاوية تقارب الجدران المحضرة"
+    "click_angle_hint": "انقر على ثلاث نقاط (أ، رأس الزاوية، ب) لقياس زاوية تقارب الجدران المحضرة",
+    "heatmap_btn": "الخريطة الحرارية",
+    "toggle_heatmap": "تبديل خريطة انخفاضات التثبيت والخلوص الإطباقي",
+    "heatmap_mode_clearance": "الخلوص الإطباقي",
+    "heatmap_mode_undercut": "مناطق التعليق (مسار الإدخال)",
+    "poi_tilt": "ميل مسار الإدخال",
+    "poi_tilt_mesial_distal": "ميل أنسي - وحشي",
+    "poi_tilt_buccal_lingual": "ميل دهليزي - لساني",
+    "undercut_detected": "تم رصد تعليق مسار الإدخال",
+    "zero_undercuts": "خالٍ من مناطق التعليق (جاهز للخراطة)",
+    "clearance_insufficient": "خلوص غير كافٍ (< 1.0 مم)",
+    "clearance_borderline": "خلوص حرج (1.0 - 1.4 مم)",
+    "clearance_ideal": "خلوص مثالي (1.5 - 2.2 مم)",
+    "clearance_excessive": "خلوص زائد (> 2.2 مم)",
+    "save_heatmap_eval": "حفظ تقييم الخلوص"
   },
   "subscription": {
     "title": "اشتراك العيادة وحوكمة الحصص",

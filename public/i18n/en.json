@@ -1095,7 +1095,21 @@
     "caliper_save": "Save Measurement",
     "saved_measurements": "Saved Measurements",
     "click_surface_hint": "Click two surface points to measure thickness and reduction clearance",
-    "click_angle_hint": "Click three surface points (A, vertex, B) to measure wall convergence angle"
+    "click_angle_hint": "Click three surface points (A, vertex, B) to measure wall convergence angle",
+    "heatmap_btn": "Heatmap",
+    "toggle_heatmap": "Toggle Undercut & Clearance Heatmap",
+    "heatmap_mode_clearance": "Occlusal Clearance",
+    "heatmap_mode_undercut": "Undercuts (POI)",
+    "poi_tilt": "Insertion Path Tilt",
+    "poi_tilt_mesial_distal": "Mesial-Distal Tilt",
+    "poi_tilt_buccal_lingual": "Buccal-Lingual Tilt",
+    "undercut_detected": "Undercut Detected",
+    "zero_undercuts": "Zero Undercuts (Ready to Mill)",
+    "clearance_insufficient": "Insufficient (< 1.0 mm)",
+    "clearance_borderline": "Borderline (1.0 - 1.4 mm)",
+    "clearance_ideal": "Ideal (1.5 - 2.2 mm)",
+    "clearance_excessive": "Passive (> 2.2 mm)",
+    "save_heatmap_eval": "Save Clearance Evaluation"
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",

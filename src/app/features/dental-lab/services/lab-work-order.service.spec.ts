@@ -214,4 +214,58 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       createdAtUtc: new Date().toISOString()
     });
   });
+
+  it('should fetch 3D clearance heatmap data via getClearanceHeatmap (v9.2.0)', (done) => {
+    service.getClearanceHeatmap('lab-1').subscribe(heatmap => {
+      expect(heatmap.orderId).toBe('lab-1');
+      expect(heatmap.undercutSurfacePercent).toBe(0.0);
+      expect(heatmap.isCompliant).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/clearance-heatmap`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      undercutSurfacePercent: 0.0,
+      minClearanceMm: 1.85,
+      maxClearanceMm: 2.40,
+      insertionTiltMesialDistalDeg: 0.0,
+      insertionTiltBuccalLingualDeg: 0.0,
+      isCompliant: true,
+      statusMessage: 'Zero Undercuts Detected. Optimal Occlusal Reduction.',
+      evaluatedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should persist 3D clearance heatmap evaluation via saveClearanceHeatmap (v9.2.0)', (done) => {
+    service.saveClearanceHeatmap('lab-1', {
+      undercutSurfacePercent: 3.5,
+      minClearanceMm: 0.90,
+      maxClearanceMm: 2.10,
+      insertionTiltMesialDistalDeg: 5.0,
+      insertionTiltBuccalLingualDeg: 0.0,
+      isCompliant: false
+    }).subscribe(saved => {
+      expect(saved.orderId).toBe('lab-1');
+      expect(saved.undercutSurfacePercent).toBe(3.5);
+      expect(saved.isCompliant).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/clearance-heatmap`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.undercutSurfacePercent).toBe(3.5);
+    req.flush({
+      orderId: 'lab-1',
+      undercutSurfacePercent: 3.5,
+      minClearanceMm: 0.90,
+      maxClearanceMm: 2.10,
+      insertionTiltMesialDistalDeg: 5.0,
+      insertionTiltBuccalLingualDeg: 0.0,
+      isCompliant: false,
+      statusMessage: 'Undercut detected (3.5%). Insertion path adjustment required.',
+      evaluatedAtUtc: new Date().toISOString()
+    });
+  });
 });
