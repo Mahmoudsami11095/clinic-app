@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpBackend } from '@angular/common/http';
 import * as localForage from 'localforage';
 
 export interface QueuedRequest {
@@ -17,8 +17,10 @@ export class OfflineSyncService {
   readonly isOnline = signal(true);
   readonly pendingQueueSize = signal(0);
   private queueStore: LocalForage;
+  private http: HttpClient;
 
-  constructor(private http: HttpClient) {
+  constructor(private httpBackend: HttpBackend) {
+    this.http = new HttpClient(this.httpBackend);
     this.queueStore = localForage.createInstance({
       name: 'smartClinicDB',
       storeName: 'syncQueue'

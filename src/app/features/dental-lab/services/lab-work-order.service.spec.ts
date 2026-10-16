@@ -268,4 +268,66 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       evaluatedAtUtc: new Date().toISOString()
     });
   });
+
+  it('should fetch 3D virtual articulator settings via getArticulatorSettings (v9.3.0)', (done) => {
+    service.getArticulatorSettings('lab-1').subscribe(articulator => {
+      expect(articulator.orderId).toBe('lab-1');
+      expect(articulator.condylarInclinationDeg).toBe(35.0);
+      expect(articulator.bennettAngleDeg).toBe(15.0);
+      expect(articulator.excursionType).toBe('Centric');
+      expect(articulator.hasInterferenceWarning).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/articulator`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      condylarInclinationDeg: 35.0,
+      bennettAngleDeg: 15.0,
+      incisalPinOpeningMm: 0.0,
+      excursionType: 'Centric',
+      maxInterferenceMm: 0.0,
+      activeContactCount: 12,
+      hasInterferenceWarning: false,
+      statusMessage: 'Optimal Centric Occlusion. No dynamic interference.',
+      evaluatedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should persist 3D virtual articulator simulation via saveArticulatorSettings (v9.3.0)', (done) => {
+    service.saveArticulatorSettings('lab-1', {
+      condylarInclinationDeg: 42.0,
+      bennettAngleDeg: 18.0,
+      incisalPinOpeningMm: 0.5,
+      excursionType: 'Protrusive',
+      maxInterferenceMm: 0.12,
+      activeContactCount: 8,
+      hasInterferenceWarning: true
+    }).subscribe(saved => {
+      expect(saved.orderId).toBe('lab-1');
+      expect(saved.excursionType).toBe('Protrusive');
+      expect(saved.hasInterferenceWarning).toBeTrue();
+      expect(saved.maxInterferenceMm).toBe(0.12);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/articulator`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.condylarInclinationDeg).toBe(42.0);
+    expect(req.request.body.excursionType).toBe('Protrusive');
+    req.flush({
+      orderId: 'lab-1',
+      condylarInclinationDeg: 42.0,
+      bennettAngleDeg: 18.0,
+      incisalPinOpeningMm: 0.5,
+      excursionType: 'Protrusive',
+      maxInterferenceMm: 0.12,
+      activeContactCount: 8,
+      hasInterferenceWarning: true,
+      statusMessage: 'High-spot premature interference detected (0.12 mm). Occlusal adjustment advised.',
+      evaluatedAtUtc: new Date().toISOString()
+    });
+  });
 });
+

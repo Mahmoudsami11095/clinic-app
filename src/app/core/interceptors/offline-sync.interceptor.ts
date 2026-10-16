@@ -1,16 +1,17 @@
 import { HttpInterceptorFn, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { OfflineSyncService } from '../services/mobile/offline-sync.service';
 
 export const offlineSyncInterceptor: HttpInterceptorFn = (req, next) => {
-  const syncService = inject(OfflineSyncService);
-
   // Skip GET requests, auth requests, or requests marked as already synced
   if (req.method === 'GET' || req.headers.has('X-Offline-Synced') || req.url.includes('/api/auth/')) {
     return next(req);
   }
+
+  const injector = inject(Injector);
+  const syncService = injector.get(OfflineSyncService);
 
   // If already known to be offline, queue immediately and return optimistic 200
   if (!syncService.isOnline()) {
