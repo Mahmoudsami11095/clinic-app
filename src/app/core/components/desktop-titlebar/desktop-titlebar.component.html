@@ -10,6 +10,37 @@
     <span class="font-semibold text-slate-100 tracking-tight text-xs flex items-center gap-1.5">
       <span>{{ 'desktop.title' | translate }}</span>
       <span class="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">v{{ appVersion }}</span>
+      @if (desktopService.isUpdateDownloaded()) {
+        <button
+          type="button"
+          (click)="installUpdate()"
+          id="titlebar-update-ready-btn"
+          class="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold hover:bg-emerald-500/30 transition-all cursor-pointer shadow-sm animate-pulse"
+          title="{{ 'desktop.update_ready' | translate }}"
+        >
+          <i class="pi pi-refresh text-[9px]"></i>
+          <span>{{ 'desktop.update_ready' | translate }}</span>
+        </button>
+      } @else if (desktopService.isUpdateDownloading()) {
+        <div
+          id="titlebar-update-downloading-badge"
+          class="flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 font-medium"
+        >
+          <i class="pi pi-spin pi-spinner text-[9px]"></i>
+          <span>{{ 'desktop.update_downloading' | translate }} {{ desktopService.updateProgressPercent() }}%</span>
+        </div>
+      } @else if (desktopService.isUpdateAvailable()) {
+        <button
+          type="button"
+          (click)="downloadUpdate()"
+          id="titlebar-update-available-btn"
+          class="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-medium hover:bg-indigo-500/30 transition-all cursor-pointer"
+          title="{{ 'desktop.update_available' | translate }}"
+        >
+          <i class="pi pi-arrow-circle-down text-[9px]"></i>
+          <span>{{ 'desktop.update_available' | translate }}</span>
+        </button>
+      }
     </span>
 
     <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px]">

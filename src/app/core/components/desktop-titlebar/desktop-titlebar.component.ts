@@ -28,4 +28,16 @@ export class DesktopTitlebarComponent {
   close(): void {
     this.desktopService.close();
   }
+
+  downloadUpdate(): void {
+    this.desktopService.downloadUpdate();
+  }
+
+  installUpdate(): void {
+    this.desktopService.installUpdate();
+  }
+
+  checkForUpdates(): void {
+    this.desktopService.checkForUpdates();
+  }
 }
