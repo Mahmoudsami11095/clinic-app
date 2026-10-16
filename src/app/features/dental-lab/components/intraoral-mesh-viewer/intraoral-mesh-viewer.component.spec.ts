@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan } from '../../services/lab-work-order.service';
 
 describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
@@ -1022,6 +1022,142 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
 
     expect(component.isCrownActive()).toBeFalse();
     expect(component.isCamActive()).toBeTrue();
+  });
+
+  // --- Release v11.0.0 Dual-Modality CBCT-DICOM & Intraoral STL 3D Multi-Modal Fusion Tests ---
+
+  it('should toggle fusion mode and ensure mutual exclusivity with other 3D CAD/CAM modes', () => {
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+
+    // Check mutual exclusivity with other tools
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isArticulatorActive()).toBeFalse();
+
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isMarginActive()).toBeFalse();
+
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    component.toggleGuide();
+    expect(component.isGuideActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isGuideActive()).toBeFalse();
+
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+  });
+
+  it('should adjust fusion bone vs soft-tissue opacity (BR-FUSION-02)', () => {
+    component.toggleFusion();
+    expect(component.fusionBoneOpacity()).toBe(50);
+
+    const event = { target: { value: '75' } } as unknown as Event;
+    component.onFusionOpacityChange(event);
+    expect(component.fusionBoneOpacity()).toBe(75);
+  });
+
+  it('should adjust mandibular nerve distance and flag safety warning when < 2.0 mm (BR-FUSION-03)', () => {
+    component.fusionNerveDistance.set(3.2);
+    expect(component.hasNerveWarning()).toBeFalse();
+
+    component.adjustNerveDistance(-1.4); // 3.2 - 1.4 = 1.8 mm
+    expect(component.fusionNerveDistance()).toBe(1.8);
+    expect(component.hasNerveWarning()).toBeTrue();
+
+    component.adjustNerveDistance(0.5); // 1.8 + 0.5 = 2.3 mm
+    expect(component.fusionNerveDistance()).toBe(2.3);
+    expect(component.hasNerveWarning()).toBeFalse();
+  });
+
+  it('should verify RMS co-registration error compliance (BR-FUSION-01)', () => {
+    component.fusionRmsError.set(0.24);
+    expect(component.isRmsCompliant()).toBeTrue();
+
+    component.fusionRmsError.set(0.42);
+    expect(component.isRmsCompliant()).toBeFalse();
+  });
+
+  it('should save dual-modality fusion plan via LabWorkOrderService', () => {
+    const mockPlan: DualModalityFusionPlan = {
+      orderId: 'lab-test-01',
+      patientId: 'pat-seed',
+      dicomSeriesUid: '1.2.840.10008.5.1.4.1.1.2.36',
+      registrationLandmarks: [
+        { scanX: 12.4, scanY: 8.2, scanZ: 15.1, cbctX: 12.5, cbctY: 8.1, cbctZ: 15.0, landmarkName: 'Mesiobuccal Cusp' }
+      ],
+      rmsErrorMm: 0.22,
+      boneOpacityPercent: 55,
+      softTissueOpacityPercent: 45,
+      subsurfaceBoneClearanceMm: 3.4,
+      nerveDistanceMm: 3.0,
+      hasNerveSafetyWarning: false,
+      isFusionApproved: true,
+      statusMessage: 'Multi-modal fusion plan approved.',
+      registeredAtUtc: new Date().toISOString()
+    };
+
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'saveDualModalityFusion').and.returnValue(of(mockPlan));
+
+    component.toggleFusion();
+    component.saveFusionPlan();
+
+    expect(labService.saveDualModalityFusion).toHaveBeenCalled();
+    expect(component.savedFusion()).toEqual(mockPlan);
+    expect(component.isSavingFusion()).toBeFalse();
+  });
+
+  it('should export multi-modal fusion dossier cleanly (BR-FUSION-04)', () => {
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/dossier');
+    spyOn(URL, 'revokeObjectURL');
+
+    component.toggleFusion();
+    expect(() => component.exportFusionDossier()).not.toThrow();
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 });
 

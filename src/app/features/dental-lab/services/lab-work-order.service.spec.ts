@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest } from './lab-work-order.service';
+import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest } from './lab-work-order.service';
 import { environment } from '../../../../environments/environment';
 
 describe('LabWorkOrderService (Release v8.4.0)', () => {
@@ -648,6 +648,93 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
     const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/crown`);
     expect(req.request.method).toBe('POST');
     req.flush('Error saving crown', { status: 500, statusText: 'Server Error' });
+  });
+
+  it('should fetch 3D dual-modality fusion plan via getDualModalityFusion (v11.0.0)', (done) => {
+    service.getDualModalityFusion('lab-1').subscribe(fusion => {
+      expect(fusion.orderId).toBe('lab-1');
+      expect(fusion.rmsErrorMm).toBe(0.24);
+      expect(fusion.boneOpacityPercent).toBe(50);
+      expect(fusion.nerveDistanceMm).toBe(3.2);
+      expect(fusion.hasNerveSafetyWarning).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/fusion`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      dicomSeriesUid: '1.2.840.10008.5.1.4.1.1.2.36',
+      registrationLandmarks: [
+        { scanX: 12.4, scanY: 8.2, scanZ: 15.1, cbctX: 12.5, cbctY: 8.1, cbctZ: 15.0, landmarkName: 'Mesiobuccal Cusp' }
+      ],
+      rmsErrorMm: 0.24,
+      boneOpacityPercent: 50,
+      softTissueOpacityPercent: 50,
+      subsurfaceBoneClearanceMm: 3.4,
+      nerveDistanceMm: 3.2,
+      hasNerveSafetyWarning: false,
+      isFusionApproved: true,
+      statusMessage: 'Dual-modality fusion approved.',
+      registeredAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should persist 3D dual-modality fusion plan via saveDualModalityFusion (v11.0.0)', (done) => {
+    const saveReq: SaveDualModalityFusionRequest = {
+      dicomSeriesUid: '1.2.840.10008.5.1.4.1.1.2.36',
+      boneOpacityPercent: 60,
+      softTissueOpacityPercent: 40,
+      nerveDistanceMm: 3.5,
+      isFusionApproved: true
+    };
+
+    service.saveDualModalityFusion('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.boneOpacityPercent).toBe(60);
+      expect(plan.nerveDistanceMm).toBe(3.5);
+      expect(plan.hasNerveSafetyWarning).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/fusion`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.boneOpacityPercent).toBe(60);
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      dicomSeriesUid: '1.2.840.10008.5.1.4.1.1.2.36',
+      registrationLandmarks: [],
+      rmsErrorMm: 0.22,
+      boneOpacityPercent: 60,
+      softTissueOpacityPercent: 40,
+      subsurfaceBoneClearanceMm: 3.4,
+      nerveDistanceMm: 3.5,
+      hasNerveSafetyWarning: false,
+      isFusionApproved: true,
+      statusMessage: 'Multi-modal plan saved.',
+      registeredAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should compute fallback fusion plan and flag BR-FUSION-03 warning when nerve distance < 2.0 mm', (done) => {
+    const saveReq: SaveDualModalityFusionRequest = {
+      nerveDistanceMm: 1.4, // Violates 2.0 mm threshold
+      boneOpacityPercent: 50
+    };
+
+    service.saveDualModalityFusion('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.nerveDistanceMm).toBe(1.4);
+      expect(plan.hasNerveSafetyWarning).toBeTrue();
+      expect(plan.statusMessage).toContain('BR-FUSION-03 WARNING');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/fusion`);
+    expect(req.request.method).toBe('POST');
+    req.flush('Server Error', { status: 500, statusText: 'Internal Error' });
   });
 });
 

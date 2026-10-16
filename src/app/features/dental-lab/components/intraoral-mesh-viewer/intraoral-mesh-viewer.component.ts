@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -282,6 +282,26 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.crown_btn' | translate }}</span>
                 @if (isCrownActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasOcclusalWarning()" [class.bg-rose-400]="hasOcclusalWarning()"></span>
+                }
+              </button>
+
+              <!-- Dual-Modality CBCT-DICOM & STL 3D Multi-Modal Fusion Toggle (v11.0.0) -->
+              <button
+                type="button"
+                (click)="toggleFusion()"
+                [class.bg-purple-600]="isFusionActive()"
+                [class.text-white]="isFusionActive()"
+                [class.border-purple-400]="isFusionActive()"
+                [class.bg-slate-800]="!isFusionActive()"
+                [class.text-slate-300]="!isFusionActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_fusion' | translate"
+                id="toggle-fusion-btn"
+              >
+                <i class="pi pi-clone text-xs"></i>
+                <span>{{ 'lab_3d.fusion_btn' | translate }}</span>
+                @if (isFusionActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasNerveWarning() && isRmsCompliant()" [class.bg-rose-400]="hasNerveWarning() || !isRmsCompliant()"></span>
                 }
               </button>
 
@@ -1262,6 +1282,115 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- Dual-Modality CBCT-DICOM & Intraoral STL 3D Multi-Modal Fusion Control Panel (v11.0.0) -->
+            @if (isFusionActive()) {
+              <div
+                class="absolute bottom-6 left-6 w-84 bg-slate-950/90 border border-purple-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md z-10 font-cairo animate-fade-in"
+                id="fusion-panel"
+              >
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="p-1 rounded bg-purple-500/20 text-purple-400">
+                      <i class="pi pi-clone text-xs"></i>
+                    </span>
+                    <h3 class="text-xs font-bold text-white tracking-tight">
+                      {{ 'lab_3d.fusion_panel_title' | translate }}
+                    </h3>
+                  </div>
+                  <span
+                    class="px-2 py-0.5 rounded text-[10px] font-bold"
+                    [class.bg-emerald-950]="isRmsCompliant()"
+                    [class.text-emerald-400]="isRmsCompliant()"
+                    [class.border-emerald-500/30]="isRmsCompliant()"
+                    [class.bg-rose-950]="!isRmsCompliant()"
+                    [class.text-rose-400]="!isRmsCompliant()"
+                    [class.border-rose-500/30]="!isRmsCompliant()"
+                  >
+                    {{ isRmsCompliant() ? ('lab_3d.fusion_compliant' | translate) : ('lab_3d.fusion_warning' | translate) }}
+                  </span>
+                </div>
+
+                <div class="mt-3 space-y-2.5 text-xs">
+                  <!-- Rigid Co-Registration Telemetry: RMS & Landmarks -->
+                  <div class="flex items-center justify-between text-slate-300 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <span class="text-[11px]">RMS Co-Registration Error:</span>
+                    <strong class="font-mono" [class.text-emerald-400]="isRmsCompliant()" [class.text-rose-400]="!isRmsCompliant()">
+                      {{ fusionRmsError() }} mm ({{ fusionLandmarks().length }} pairs)
+                    </strong>
+                  </div>
+
+                  <!-- Bone vs. Soft-Tissue Continuous Alpha Blending Slider (BR-FUSION-02: 0-100%) -->
+                  <div class="space-y-1 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <div class="flex items-center justify-between text-slate-400 text-[10px]">
+                      <span>{{ 'lab_3d.fusion_bone_opacity' | translate }}</span>
+                      <strong class="text-purple-300 font-mono">{{ fusionBoneOpacity() }}%</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      [value]="fusionBoneOpacity()"
+                      (input)="onFusionOpacityChange($event)"
+                      id="fusion-opacity-slider"
+                      class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                    />
+                    <div class="flex justify-between text-[9px] text-slate-500">
+                      <span>0% (STL Soft-Tissue)</span>
+                      <span>50% (Fused Hybrid)</span>
+                      <span>100% (CBCT Bone)</span>
+                    </div>
+                  </div>
+
+                  <!-- Mandibular Nerve Buffer Distance (BR-FUSION-03: >= 2.0 mm) -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                    <div class="flex items-center justify-between text-slate-400 text-[10px]">
+                      <span>{{ 'lab_3d.fusion_nerve_distance' | translate }}</span>
+                      <strong [class.text-rose-400]="hasNerveWarning()" [class.text-emerald-400]="!hasNerveWarning()" class="font-mono text-[11px]">
+                        {{ fusionNerveDistance() }} mm
+                      </strong>
+                    </div>
+                    <div class="flex items-center gap-1 justify-end">
+                      <button type="button" (click)="adjustNerveDistance(-0.2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] cursor-pointer">-0.2</button>
+                      <button type="button" (click)="adjustNerveDistance(0.2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] cursor-pointer">+0.2</button>
+                    </div>
+                  </div>
+
+                  <!-- Critical Nerve Buffer Warning (BR-FUSION-03) -->
+                  @if (hasNerveWarning()) {
+                    <p class="text-[10px] text-rose-400 bg-rose-950/40 border border-rose-800/40 p-1.5 rounded-lg font-semibold animate-pulse" id="nerve-warning-banner">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      {{ 'lab_3d.fusion_nerve_warning_desc' | translate }}
+                    </p>
+                  }
+
+                  <!-- Action Buttons: Save Fusion & Export Dossier -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80 gap-2">
+                    <button
+                      type="button"
+                      (click)="saveFusionPlan()"
+                      [disabled]="isSavingFusion()"
+                      class="flex-1 py-1.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      id="save-fusion-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingFusion()" [class.pi-spin]="isSavingFusion()" [class.pi-spinner]="isSavingFusion()"></i>
+                      <span>{{ isSavingFusion() ? ('lab_3d.saving_fusion' | translate) : ('lab_3d.save_fusion' | translate) }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="exportFusionDossier()"
+                      class="py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      id="export-fusion-btn"
+                    >
+                      <i class="pi pi-download"></i>
+                      <span>{{ 'lab_3d.export_fusion_dossier' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -1503,6 +1632,21 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   savedCrown = signal<CrownMorphologyPlan | null>(null);
   hasOcclusalWarning = computed(() => this.crownOcclusalReduction() < 1.5);
 
+  // Dual-Modality CBCT-DICOM & Intraoral STL 3D Multi-Modal Fusion State Signals (v11.0.0)
+  isFusionActive = signal<boolean>(false);
+  fusionBoneOpacity = signal<number>(50);
+  fusionNerveDistance = signal<number>(3.2);
+  fusionRmsError = signal<number>(0.26);
+  fusionLandmarks = signal<FusionPointPair[]>([
+    { scanX: 12.4, scanY: 8.2, scanZ: 15.1, cbctX: 12.5, cbctY: 8.1, cbctZ: 15.0, landmarkName: 'Mesiobuccal Cusp' },
+    { scanX: -11.8, scanY: 7.9, scanZ: 14.8, cbctX: -11.9, cbctY: 8.0, cbctZ: 14.7, landmarkName: 'Distobuccal Cusp' },
+    { scanX: 0.5, scanY: -9.1, scanZ: 12.3, cbctX: 0.4, cbctY: -9.0, cbctZ: 12.4, landmarkName: 'Lingual Groove' }
+  ]);
+  isSavingFusion = signal<boolean>(false);
+  savedFusion = signal<DualModalityFusionPlan | null>(null);
+  hasNerveWarning = computed(() => this.fusionNerveDistance() < 2.0);
+  isRmsCompliant = computed(() => this.fusionRmsError() <= 0.35);
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -1521,6 +1665,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private wireframeMesh: THREE.LineSegments | null = null;
   private guideGroup: THREE.Group = new THREE.Group();
   private crownGroup: THREE.Group = new THREE.Group();
+  private fusionGroup: THREE.Group = new THREE.Group();
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -1639,6 +1784,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.crownGroup = new THREE.Group();
     this.scene.add(this.crownGroup);
 
+    // Dual-Modality CBCT-DICOM & STL 3D Fusion Group (v11.0.0)
+    this.fusionGroup = new THREE.Group();
+    this.scene.add(this.fusionGroup);
+
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     this.camera.position.set(0, 20, 50);
@@ -1738,6 +1887,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       this.loadCamToolpathForOrder(orderId);
       this.loadSurgicalGuideForOrder(orderId);
       this.loadCrownForOrder(orderId);
+      this.loadFusionForOrder(orderId);
     }
 
     this.telemetry.set({
@@ -1997,6 +2147,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isCrownActive()) {
         this.toggleCrown();
       }
+      if (this.isFusionActive()) {
+        this.toggleFusion();
+      }
     } else {
       this.clearCaliper();
     }
@@ -2230,6 +2383,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isCrownActive()) {
         this.toggleCrown();
       }
+      if (this.isFusionActive()) {
+        this.toggleFusion();
+      }
       this.applyHeatmapToMesh();
     } else {
       this.revertHeatmapFromMesh();
@@ -2451,6 +2607,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       }
       if (this.isCrownActive()) {
         this.toggleCrown();
+      }
+      if (this.isFusionActive()) {
+        this.toggleFusion();
       }
       this.rebuildArticulatorMesh();
     } else {
@@ -2692,6 +2851,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isCamActive()) this.toggleCam();
       if (this.isGuideActive()) this.toggleGuide();
       if (this.isCrownActive()) this.toggleCrown();
+      if (this.isFusionActive()) this.toggleFusion();
       this.autoTraceMargin();
     } else {
       this.clearMargin();
@@ -2869,6 +3029,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isMarginActive()) this.toggleMargin();
       if (this.isGuideActive()) this.toggleGuide();
       if (this.isCrownActive()) this.toggleCrown();
+      if (this.isFusionActive()) this.toggleFusion();
       this.generateCamGCode();
     } else {
       this.clearCamToolpaths();
@@ -3137,6 +3298,7 @@ M30 ; Program End`,
       if (this.isMarginActive()) this.toggleMargin();
       if (this.isCamActive()) this.toggleCam();
       if (this.isCrownActive()) this.toggleCrown();
+      if (this.isFusionActive()) this.toggleFusion();
       this.rebuildSurgicalGuideVisuals();
     } else {
       this.clearSurgicalGuide();
@@ -3410,6 +3572,7 @@ M30 ; Program End`,
       if (this.isMarginActive()) this.toggleMargin();
       if (this.isCamActive()) this.toggleCam();
       if (this.isGuideActive()) this.toggleGuide();
+      if (this.isFusionActive()) this.toggleFusion();
       this.rebuildCrownVisuals();
     } else {
       this.clearCrownVisuals();
@@ -3591,6 +3754,207 @@ M30 ; Program End`,
     });
   }
 
+  // --- Release v11.0.0 Dual-Modality CBCT-DICOM & Intraoral STL 3D Multi-Modal Fusion Engine Methods ---
+
+  toggleFusion(): void {
+    const next = !this.isFusionActive();
+    this.isFusionActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) this.toggleCaliper();
+      if (this.isHeatmapActive()) this.toggleHeatmap();
+      if (this.isArticulatorActive()) this.toggleArticulator();
+      if (this.isMarginActive()) this.toggleMargin();
+      if (this.isCamActive()) this.toggleCam();
+      if (this.isGuideActive()) this.toggleGuide();
+      if (this.isCrownActive()) this.toggleCrown();
+      this.rebuildFusionVisuals();
+    } else {
+      this.clearFusionVisuals();
+    }
+  }
+
+  onFusionOpacityChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const val = Number(target.value);
+    this.fusionBoneOpacity.set(val);
+    if (this.isFusionActive()) {
+      this.rebuildFusionVisuals();
+    }
+  }
+
+  adjustNerveDistance(delta: number): void {
+    this.fusionNerveDistance.update(v => Math.max(0.5, Math.min(6.0, Number((v + delta).toFixed(1)))));
+    if (this.isFusionActive()) {
+      this.rebuildFusionVisuals();
+    }
+  }
+
+  rebuildFusionVisuals(): void {
+    if (!this.fusionGroup) {
+      this.fusionGroup = new THREE.Group();
+      if (this.scene) this.scene.add(this.fusionGroup);
+    }
+    this.clearFusionVisuals();
+
+    const boneOpacity = this.fusionBoneOpacity() / 100;
+    const nerveDist = this.fusionNerveDistance();
+    const hasWarning = this.hasNerveWarning();
+    const landmarks = this.fusionLandmarks();
+
+    // 1. Mandibular Cortical Bone Volume (Semi-transparent hybrid anatomical overlay)
+    const boneGeo = new THREE.CylinderGeometry(18, 16, 12, 32, 1, false, 0, Math.PI);
+    const boneMat = new THREE.MeshPhysicalMaterial({
+      color: 0xddcca8,
+      roughness: 0.5,
+      metalness: 0.1,
+      transparent: true,
+      opacity: Math.max(0.08, boneOpacity * 0.85),
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const boneMesh = new THREE.Mesh(boneGeo, boneMat);
+    boneMesh.position.set(0, -6, 0);
+    boneMesh.rotation.z = Math.PI;
+    this.fusionGroup.add(boneMesh);
+
+    // 2. Mandibular Canal / Inferior Alveolar Nerve Safety Corridor
+    const nerveCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-20, -10 - (nerveDist < 2.0 ? 1.5 : 0), -5),
+      new THREE.Vector3(-8, -12, 0),
+      new THREE.Vector3(8, -12, 2),
+      new THREE.Vector3(20, -10 - (nerveDist < 2.0 ? 1.5 : 0), -4)
+    ]);
+    const nerveGeo = new THREE.TubeGeometry(nerveCurve, 32, 1.4, 12, false);
+    const nerveMat = new THREE.MeshStandardMaterial({
+      color: hasWarning ? 0xef4444 : 0xf59e0b,
+      roughness: 0.3,
+      metalness: 0.2,
+      emissive: hasWarning ? 0x7f1d1d : 0x78350f,
+      emissiveIntensity: hasWarning ? 0.8 : 0.3
+    });
+    const nerveMesh = new THREE.Mesh(nerveGeo, nerveMat);
+    this.fusionGroup.add(nerveMesh);
+
+    // 3. Fiducial Registration Landmark Spheres & Procrustes Alignment Residuals
+    landmarks.forEach((lm) => {
+      // Intraoral scan landmark (Cyan)
+      const scanSphereGeo = new THREE.SphereGeometry(0.7, 16, 16);
+      const scanSphereMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+      const scanSphere = new THREE.Mesh(scanSphereGeo, scanSphereMat);
+      scanSphere.position.set(lm.scanX, lm.scanY, lm.scanZ);
+      this.fusionGroup.add(scanSphere);
+
+      // CBCT bone landmark (Purple)
+      const cbctSphereGeo = new THREE.SphereGeometry(0.7, 16, 16);
+      const cbctSphereMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+      const cbctSphere = new THREE.Mesh(cbctSphereGeo, cbctSphereMat);
+      cbctSphere.position.set(lm.cbctX, lm.cbctY, lm.cbctZ);
+      this.fusionGroup.add(cbctSphere);
+
+      // Residual vector line connecting the pair
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(lm.scanX, lm.scanY, lm.scanZ),
+        new THREE.Vector3(lm.cbctX, lm.cbctY, lm.cbctZ)
+      ]);
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xe2e8f0 });
+      const resLine = new THREE.Line(lineGeo, lineMat);
+      this.fusionGroup.add(resLine);
+    });
+  }
+
+  clearFusionVisuals(): void {
+    if (!this.fusionGroup) return;
+    while (this.fusionGroup.children.length > 0) {
+      const obj = this.fusionGroup.children[0];
+      this.fusionGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+  }
+
+  saveFusionPlan(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingFusion.set(true);
+
+    const req: SaveDualModalityFusionRequest = {
+      dicomSeriesUid: '1.2.840.10008.5.1.4.1.1.2.36',
+      registrationLandmarks: this.fusionLandmarks(),
+      boneOpacityPercent: this.fusionBoneOpacity(),
+      softTissueOpacityPercent: 100 - this.fusionBoneOpacity(),
+      subsurfaceBoneClearanceMm: 3.4,
+      nerveDistanceMm: this.fusionNerveDistance(),
+      isFusionApproved: !this.hasNerveWarning() && this.isRmsCompliant()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveDualModalityFusion(orderId, req).subscribe({
+        next: (plan) => {
+          this.savedFusion.set(plan);
+          this.fusionRmsError.set(plan.rmsErrorMm);
+          this.fusionNerveDistance.set(plan.nerveDistanceMm);
+          this.isSavingFusion.set(false);
+          this.rebuildFusionVisuals();
+        },
+        error: () => {
+          this.isSavingFusion.set(false);
+        }
+      });
+    } else {
+      this.isSavingFusion.set(false);
+    }
+  }
+
+  exportFusionDossier(): void {
+    const plan = this.savedFusion() || {
+      orderId: this.order()?.id || 'LAB-CURRENT',
+      patientId: 'pat-seed',
+      dicomSeriesUid: '1.2.840.10008.5.1.4.1.1.2.36',
+      registrationLandmarks: this.fusionLandmarks(),
+      rmsErrorMm: this.fusionRmsError(),
+      boneOpacityPercent: this.fusionBoneOpacity(),
+      softTissueOpacityPercent: 100 - this.fusionBoneOpacity(),
+      subsurfaceBoneClearanceMm: 3.4,
+      nerveDistanceMm: this.fusionNerveDistance(),
+      hasNerveSafetyWarning: this.hasNerveWarning(),
+      isFusionApproved: !this.hasNerveWarning() && this.isRmsCompliant(),
+      statusMessage: 'Co-registered CBCT-DICOM and Intraoral STL multi-modal dossier exported.',
+      registeredAtUtc: new Date().toISOString()
+    };
+
+    const json = JSON.stringify(plan, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Fusion_Dossier_${plan.orderId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  loadFusionForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getDualModalityFusion(orderId).subscribe({
+      next: (plan) => {
+        if (plan) {
+          this.savedFusion.set(plan);
+          this.fusionBoneOpacity.set(plan.boneOpacityPercent);
+          this.fusionNerveDistance.set(plan.nerveDistanceMm);
+          this.fusionRmsError.set(plan.rmsErrorMm);
+          if (plan.registrationLandmarks && plan.registrationLandmarks.length > 0) {
+            this.fusionLandmarks.set(plan.registrationLandmarks);
+          }
+          if (this.isFusionActive()) {
+            this.rebuildFusionVisuals();
+          }
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -3631,6 +3995,11 @@ M30 ; Program End`,
     this.clearCrownVisuals();
     if (this.crownGroup && this.scene) {
       this.scene.remove(this.crownGroup);
+    }
+
+    this.clearFusionVisuals();
+    if (this.fusionGroup && this.scene) {
+      this.scene.remove(this.fusionGroup);
     }
 
     if (this.mesh) {
