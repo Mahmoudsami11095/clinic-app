@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest } from './lab-work-order.service';
+import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest, AlignerPlan, SaveAlignerPlanRequest } from './lab-work-order.service';
 import { environment } from '../../../../environments/environment';
 
 describe('LabWorkOrderService (Release v8.4.0)', () => {
@@ -735,6 +735,96 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
     const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/fusion`);
     expect(req.request.method).toBe('POST');
     req.flush('Server Error', { status: 500, statusText: 'Internal Error' });
+  });
+
+  it('should fetch 3D clear aligner staging plan via getAlignerPlan (v11.1.0)', (done) => {
+    service.getAlignerPlan('lab-1').subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.totalStages).toBe(16);
+      expect(plan.maxTranslationDeltaMm).toBe(0.20);
+      expect(plan.isVelocityCompliant).toBeTrue();
+      expect(plan.stages.length).toBe(1);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/aligner`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      totalStages: 16,
+      currentStage: 1,
+      maxTranslationDeltaMm: 0.20,
+      maxRotationDeltaDeg: 1.5,
+      totalIprMm: 1.2,
+      foilThicknessMm: 0.75,
+      isVelocityCompliant: true,
+      isTreatmentApproved: true,
+      statusMessage: 'Clear aligner staging plan approved.',
+      stages: [
+        { stageNumber: 1, translationDeltaMm: 0.20, rotationDeltaDeg: 1.5, attachmentRequired: false, iprRequiredMm: 0.3, estimatedDaysWear: 10 }
+      ],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should persist 3D clear aligner staging plan via saveAlignerPlan (v11.1.0)', (done) => {
+    const saveReq: SaveAlignerPlanRequest = {
+      totalStages: 18,
+      currentStage: 1,
+      maxTranslationDeltaMm: 0.22,
+      maxRotationDeltaDeg: 1.8,
+      totalIprMm: 1.5,
+      foilThicknessMm: 0.75,
+      isTreatmentApproved: true
+    };
+
+    service.saveAlignerPlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.totalStages).toBe(18);
+      expect(plan.maxTranslationDeltaMm).toBe(0.22);
+      expect(plan.isVelocityCompliant).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/aligner`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.totalStages).toBe(18);
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      totalStages: 18,
+      currentStage: 1,
+      maxTranslationDeltaMm: 0.22,
+      maxRotationDeltaDeg: 1.8,
+      totalIprMm: 1.5,
+      foilThicknessMm: 0.75,
+      isVelocityCompliant: true,
+      isTreatmentApproved: true,
+      statusMessage: 'Staging plan saved.',
+      stages: [],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should compute fallback aligner plan and flag BR-ALIGN-01 warning on velocity violation', (done) => {
+    const saveReq: SaveAlignerPlanRequest = {
+      totalStages: 10,
+      maxTranslationDeltaMm: 0.38, // Violates 0.25 mm threshold
+      maxRotationDeltaDeg: 1.8
+    };
+
+    service.saveAlignerPlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.isVelocityCompliant).toBeFalse();
+      expect(plan.statusMessage).toContain('BR-ALIGN-01 WARNING');
+      expect(plan.totalStages).toBeGreaterThan(10); // Automatically subdivided
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/aligner`);
+    expect(req.request.method).toBe('POST');
+    req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
   });
 });
 
