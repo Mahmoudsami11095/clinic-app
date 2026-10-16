@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -322,6 +322,26 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.aligner_btn' | translate }}</span>
                 @if (isAlignerActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="isAlignerVelocityCompliant()" [class.bg-rose-400]="!isAlignerVelocityCompliant()"></span>
+                }
+              </button>
+
+              <!-- AI Guided Bone Regeneration (GBR) Titanium Mesh Toggle (v11.2.0) -->
+              <button
+                type="button"
+                (click)="toggleGbr()"
+                [class.bg-sky-600]="isGbrActive()"
+                [class.text-white]="isGbrActive()"
+                [class.border-sky-400]="isGbrActive()"
+                [class.bg-slate-800]="!isGbrActive()"
+                [class.text-slate-300]="!isGbrActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_gbr' | translate"
+                id="toggle-gbr-btn"
+              >
+                <i class="pi pi-th-large text-xs"></i>
+                <span>{{ 'lab_3d.gbr_btn' | translate }}</span>
+                @if (isGbrActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasGbrSafetyWarning()" [class.bg-rose-400]="hasGbrSafetyWarning()"></span>
                 }
               </button>
 
@@ -1528,6 +1548,151 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- AI Guided Bone Regeneration Titanium Mesh Control Panel (v11.2.0) -->
+            @if (isGbrActive()) {
+              <div
+                class="absolute bottom-6 left-6 w-88 bg-slate-950/90 border border-sky-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md z-10 font-cairo animate-fade-in"
+                id="gbr-mesh-panel"
+              >
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping"></span>
+                    <h4 class="text-xs font-bold text-sky-400 tracking-wider">
+                      {{ 'lab_3d.gbr_panel_title' | translate }}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="toggleGbr()"
+                    class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                  >
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+
+                <div class="space-y-3 pt-3">
+                  <!-- Safety Status Badge (BR-GBR-03: clearance >= 1.5mm / 2.0mm) -->
+                  <div class="flex items-center justify-between bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400">Cortical Safety:</span>
+                    <span
+                      class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                      [class.bg-emerald-950]="!hasGbrSafetyWarning()"
+                      [class.text-emerald-400]="!hasGbrSafetyWarning()"
+                      [class.border]="true"
+                      [class.border-emerald-800]="!hasGbrSafetyWarning()"
+                      [class.bg-rose-950]="hasGbrSafetyWarning()"
+                      [class.text-rose-400]="hasGbrSafetyWarning()"
+                      [class.border-rose-800]="hasGbrSafetyWarning()"
+                      id="gbr-safety-badge"
+                    >
+                      <i class="pi mr-1" [class.pi-check-circle]="!hasGbrSafetyWarning()" [class.pi-exclamation-triangle]="hasGbrSafetyWarning()"></i>
+                      {{ hasGbrSafetyWarning() ? ('lab_3d.gbr_safety_warning' | translate) : ('lab_3d.gbr_safety_compliant' | translate) }}
+                    </span>
+                  </div>
+
+                  <!-- Defect Volume & Recommended Graft (+15% Overfill) (BR-GBR-01) -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.gbr_defect_volume' | translate }}:</span>
+                        <strong class="text-sky-300 font-mono">{{ defectVolumeMm3() }} mm³</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustDefectVolume(-50)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">-50</button>
+                        <button type="button" (click)="adjustDefectVolume(50)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">+50</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.gbr_graft_volume' | translate }}:</span>
+                        <strong class="text-rose-300 font-mono">{{ recommendedGraftVolumeMm3() }} mm³</strong>
+                      </div>
+                      <div class="text-[9px] text-slate-500 text-right">
+                        <span>+15% osteo overfill</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mesh Specifications: Thickness & Porosity (BR-GBR-02) -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.gbr_mesh_thickness' | translate }}:</span>
+                        <strong class="text-slate-200 font-mono">{{ meshThicknessMm() }} mm</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="setMeshThickness(0.10)" [class.bg-sky-600]="meshThicknessMm() === 0.10" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] cursor-pointer">0.10</button>
+                        <button type="button" (click)="setMeshThickness(0.15)" [class.bg-sky-600]="meshThicknessMm() === 0.15" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] cursor-pointer">0.15</button>
+                        <button type="button" (click)="setMeshThickness(0.20)" [class.bg-sky-600]="meshThicknessMm() === 0.20" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] cursor-pointer">0.20</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.gbr_porosity' | translate }}:</span>
+                        <strong class="text-sky-300 font-mono">{{ porosityPercent() }}%</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustPorosity(-5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">-5%</button>
+                        <button type="button" (click)="adjustPorosity(5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">+5%</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Fixation Screws List (BR-GBR-03) -->
+                  <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800 space-y-1.5">
+                    <div class="flex items-center justify-between text-slate-400 text-[10px]">
+                      <span>{{ 'lab_3d.gbr_screws_count' | translate }}:</span>
+                      <span class="text-amber-400 font-bold font-mono">{{ gbrScrews().length }} Screws Placed</span>
+                    </div>
+                    <div class="space-y-1 max-h-24 overflow-y-auto pr-1">
+                      @for (screw of gbrScrews(); track screw.screwId) {
+                        <div class="flex items-center justify-between bg-slate-950/80 p-1 rounded-lg text-[9px] border border-slate-800/80">
+                          <span class="font-bold text-slate-300">{{ screw.screwId }} (Ø{{ screw.diameterMm }}x{{ screw.lengthMm }}mm)</span>
+                          <span [class.text-rose-400]="screw.hasSafetyCorridorViolation || screw.nerveClearanceMm < 2.0" [class.text-emerald-400]="!screw.hasSafetyCorridorViolation && screw.nerveClearanceMm >= 2.0" class="font-mono">
+                            Nerve: {{ screw.nerveClearanceMm }}mm
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Safety Warning Banner (BR-GBR-03) -->
+                  @if (hasGbrSafetyWarning()) {
+                    <p class="text-[10px] text-rose-400 bg-rose-950/40 border border-rose-800/40 p-1.5 rounded-lg font-semibold animate-pulse" id="gbr-warning-banner">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      {{ 'lab_3d.gbr_safety_warning_desc' | translate }}
+                    </p>
+                  }
+
+                  <!-- Action Buttons: Save Plan & Export Template (BR-GBR-04) -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80 gap-2">
+                    <button
+                      type="button"
+                      (click)="saveGbrPlan()"
+                      [disabled]="isSavingGbr()"
+                      class="flex-1 py-1.5 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      id="save-gbr-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingGbr()" [class.pi-spin]="isSavingGbr()" [class.pi-spinner]="isSavingGbr()"></i>
+                      <span>{{ isSavingGbr() ? ('lab_3d.saving_gbr' | translate) : ('lab_3d.save_gbr' | translate) }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="exportGbrTemplate()"
+                      class="py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      id="export-gbr-template-btn"
+                    >
+                      <i class="pi pi-download"></i>
+                      <span>{{ 'lab_3d.export_gbr_template' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -1800,6 +1965,24 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     return (stage >= 3 && stage <= 8) ? 4 : 0;
   });
 
+  // AI Guided Bone Regeneration (GBR) Titanium Mesh State Signals (v11.2.0)
+  isGbrActive = signal<boolean>(false);
+  defectVolumeMm3 = signal<number>(450.0);
+  meshThicknessMm = signal<number>(0.15);
+  porosityPercent = signal<number>(50.0);
+  poreDiameterMm = signal<number>(1.0);
+  tentPoleClearanceMm = signal<number>(2.5);
+  gbrScrews = signal<GbrFixationScrew[]>([
+    { screwId: 'screw-1', positionX: -6.5, positionY: -4.2, positionZ: 2.1, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.4, nerveClearanceMm: 3.2, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+    { screwId: 'screw-2', positionX: -2.1, positionY: -5.0, positionZ: 1.8, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.1, nerveClearanceMm: 2.8, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+    { screwId: 'screw-3', positionX: 3.2, positionY: -4.8, positionZ: 2.0, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.6, nerveClearanceMm: 3.5, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+    { screwId: 'screw-4', positionX: 7.0, positionY: -3.9, positionZ: 2.2, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.8, nerveClearanceMm: 3.9, isCorticalEngaged: true, hasSafetyCorridorViolation: false }
+  ]);
+  isSavingGbr = signal<boolean>(false);
+  savedGbr = signal<GbrTitaniumMeshPlan | null>(null);
+  recommendedGraftVolumeMm3 = computed(() => Math.round(this.defectVolumeMm3() * 1.15 * 10) / 10);
+  hasGbrSafetyWarning = computed(() => this.gbrScrews().some(s => s.hasSafetyCorridorViolation || s.nerveClearanceMm < 2.0 || s.boneClearanceMm < 1.5));
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -1820,6 +2003,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private crownGroup: THREE.Group = new THREE.Group();
   private fusionGroup: THREE.Group = new THREE.Group();
   private alignerGroup: THREE.Group = new THREE.Group();
+  private gbrGroup: THREE.Group = new THREE.Group();
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -1946,6 +2130,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.alignerGroup = new THREE.Group();
     this.scene.add(this.alignerGroup);
 
+    // AI Guided Bone Regeneration Titanium Mesh Group (v11.2.0)
+    this.gbrGroup = new THREE.Group();
+    this.scene.add(this.gbrGroup);
+
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     this.camera.position.set(0, 20, 50);
@@ -2047,6 +2235,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       this.loadCrownForOrder(orderId);
       this.loadFusionForOrder(orderId);
       this.loadAlignerForOrder(orderId);
+      this.loadGbrForOrder(orderId);
     }
 
     this.telemetry.set({
@@ -2312,6 +2501,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isAlignerActive()) {
         this.toggleAligner();
       }
+      if (this.isGbrActive()) {
+        this.toggleGbr();
+      }
     } else {
       this.clearCaliper();
     }
@@ -2551,6 +2743,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isAlignerActive()) {
         this.toggleAligner();
       }
+      if (this.isGbrActive()) {
+        this.toggleGbr();
+      }
       this.applyHeatmapToMesh();
     } else {
       this.revertHeatmapFromMesh();
@@ -2778,6 +2973,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       }
       if (this.isAlignerActive()) {
         this.toggleAligner();
+      }
+      if (this.isGbrActive()) {
+        this.toggleGbr();
       }
       this.rebuildArticulatorMesh();
     } else {
@@ -3021,6 +3219,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isGbrActive()) this.toggleGbr();
       this.autoTraceMargin();
     } else {
       this.clearMargin();
@@ -3200,6 +3399,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isGbrActive()) this.toggleGbr();
       this.generateCamGCode();
     } else {
       this.clearCamToolpaths();
@@ -3470,6 +3670,7 @@ M30 ; Program End`,
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isGbrActive()) this.toggleGbr();
       this.rebuildSurgicalGuideVisuals();
     } else {
       this.clearSurgicalGuide();
@@ -3745,6 +3946,7 @@ M30 ; Program End`,
       if (this.isGuideActive()) this.toggleGuide();
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isGbrActive()) this.toggleGbr();
       this.rebuildCrownVisuals();
     } else {
       this.clearCrownVisuals();
@@ -3940,6 +4142,7 @@ M30 ; Program End`,
       if (this.isGuideActive()) this.toggleGuide();
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isGbrActive()) this.toggleGbr();
       this.rebuildFusionVisuals();
     } else {
       this.clearFusionVisuals();
@@ -4142,6 +4345,7 @@ M30 ; Program End`,
       if (this.isGuideActive()) this.toggleGuide();
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isFusionActive()) this.toggleFusion();
+      if (this.isGbrActive()) this.toggleGbr();
       this.rebuildAlignerVisuals();
     } else {
       this.clearAlignerVisuals();
@@ -4319,6 +4523,235 @@ M30 ; Program End`,
     });
   }
 
+  // --- Release v11.2.0 AI Guided Bone Regeneration (GBR) Titanium Mesh Generator Methods ---
+
+  toggleGbr(): void {
+    const next = !this.isGbrActive();
+    this.isGbrActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) this.toggleCaliper();
+      if (this.isHeatmapActive()) this.toggleHeatmap();
+      if (this.isArticulatorActive()) this.toggleArticulator();
+      if (this.isMarginActive()) this.toggleMargin();
+      if (this.isCamActive()) this.toggleCam();
+      if (this.isGuideActive()) this.toggleGuide();
+      if (this.isCrownActive()) this.toggleCrown();
+      if (this.isFusionActive()) this.toggleFusion();
+      if (this.isAlignerActive()) this.toggleAligner();
+      this.rebuildGbrVisuals();
+    } else {
+      this.clearGbrVisuals();
+    }
+  }
+
+  adjustDefectVolume(delta: number): void {
+    this.defectVolumeMm3.update(v => Math.max(50.0, Math.min(2000.0, v + delta)));
+    if (this.isGbrActive()) {
+      this.rebuildGbrVisuals();
+    }
+  }
+
+  setMeshThickness(thickness: number): void {
+    this.meshThicknessMm.set(thickness);
+    if (this.isGbrActive()) {
+      this.rebuildGbrVisuals();
+    }
+  }
+
+  adjustPorosity(delta: number): void {
+    this.porosityPercent.update(v => Math.max(40.0, Math.min(60.0, v + delta)));
+    if (this.isGbrActive()) {
+      this.rebuildGbrVisuals();
+    }
+  }
+
+  rebuildGbrVisuals(): void {
+    if (!this.gbrGroup) {
+      this.gbrGroup = new THREE.Group();
+      if (this.scene) this.scene.add(this.gbrGroup);
+    }
+    this.clearGbrVisuals();
+
+    const graftVol = this.recommendedGraftVolumeMm3();
+    const porosity = this.porosityPercent();
+    const screws = this.gbrScrews();
+
+    // 1. Alveolar Bone Defect / Particulate Graft Scaffolding Envelope (Coral Pink translucent volume)
+    const graftRadius = Math.max(5.0, Math.min(10.0, Math.cbrt(graftVol) * 0.9));
+    const graftGeo = new THREE.CylinderGeometry(graftRadius, graftRadius * 0.85, 6.0, 32, 1, false, 0, Math.PI);
+    const graftMat = new THREE.MeshStandardMaterial({
+      color: 0xe11d48, // deep coral/pink
+      roughness: 0.6,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.70,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const graftMesh = new THREE.Mesh(graftGeo, graftMat);
+    graftMesh.position.set(0, 3.0, 1.0);
+    this.gbrGroup.add(graftMesh);
+
+    // 2. Custom Perforated Medical Titanium Mesh (Parametric curved dome shell)
+    const meshRadius = graftRadius + 0.6;
+    const meshGeo = new THREE.CylinderGeometry(meshRadius, meshRadius * 0.9, 6.8, 32, 1, false, 0, Math.PI);
+    const meshMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8, // slate titanium
+      roughness: 0.25,
+      metalness: 0.85,
+      side: THREE.DoubleSide,
+      wireframe: porosity > 55
+    });
+    const meshShell = new THREE.Mesh(meshGeo, meshMat);
+    meshShell.position.set(0, 3.2, 1.0);
+    this.gbrGroup.add(meshShell);
+
+    // 3. Hexagonal Micro-Pore Lattice Array (Procedural perforated dots)
+    const porePointsGeo = new THREE.BufferGeometry();
+    const porePositions: number[] = [];
+    for (let u = -4; u <= 4; u++) {
+      for (let v = 1; v <= 5; v++) {
+        const px = u * 1.6;
+        const py = v * 1.1;
+        const pz = meshRadius + 0.1;
+        porePositions.push(px, py, pz);
+      }
+    }
+    porePointsGeo.setAttribute('position', new THREE.Float32BufferAttribute(porePositions, 3));
+    const poreMat = new THREE.PointsMaterial({ color: 0x0f172a, size: this.poreDiameterMm() * 0.6 });
+    const porePoints = new THREE.Points(porePointsGeo, poreMat);
+    this.gbrGroup.add(porePoints);
+
+    // 4. Fixation Mini-Screws (Metallic gold/titanium cylinders with safety color coding)
+    for (const screw of screws) {
+      const isBreach = screw.hasSafetyCorridorViolation || screw.nerveClearanceMm < 2.0 || screw.boneClearanceMm < 1.5;
+      const screwGeo = new THREE.CylinderGeometry(screw.diameterMm * 0.5, screw.diameterMm * 0.4, screw.lengthMm, 16);
+      const headGeo = new THREE.CylinderGeometry(screw.diameterMm * 0.8, screw.diameterMm * 0.5, 0.8, 16);
+
+      const screwMat = new THREE.MeshStandardMaterial({
+        color: isBreach ? 0xef4444 : 0xeab308,
+        roughness: 0.2,
+        metalness: 0.9,
+        emissive: isBreach ? 0x7f1d1d : 0x000000,
+        emissiveIntensity: isBreach ? 0.6 : 0
+      });
+
+      const screwCyl = new THREE.Mesh(screwGeo, screwMat);
+      screwCyl.position.set(screw.positionX, screw.positionY, screw.positionZ);
+      screwCyl.rotation.x = Math.PI / 2;
+
+      const headMesh = new THREE.Mesh(headGeo, screwMat);
+      headMesh.position.set(screw.positionX, screw.positionY, screw.positionZ + (screw.lengthMm * 0.5));
+      headMesh.rotation.x = Math.PI / 2;
+
+      this.gbrGroup.add(screwCyl);
+      this.gbrGroup.add(headMesh);
+    }
+  }
+
+  clearGbrVisuals(): void {
+    if (!this.gbrGroup) return;
+    while (this.gbrGroup.children.length > 0) {
+      const obj = this.gbrGroup.children[0];
+      this.gbrGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+  }
+
+  saveGbrPlan(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingGbr.set(true);
+
+    const req: SaveGbrMeshPlanRequest = {
+      defectVolumeMm3: this.defectVolumeMm3(),
+      meshThicknessMm: this.meshThicknessMm(),
+      porosityPercent: this.porosityPercent(),
+      poreDiameterMm: this.poreDiameterMm(),
+      tentPoleCrestalClearanceMm: this.tentPoleClearanceMm(),
+      isFabricationApproved: !this.hasGbrSafetyWarning(),
+      fixationScrews: this.gbrScrews()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveGbrMeshPlan(orderId, req).subscribe({
+        next: (plan) => {
+          this.savedGbr.set(plan);
+          this.defectVolumeMm3.set(plan.defectVolumeMm3);
+          this.meshThicknessMm.set(plan.meshThicknessMm);
+          this.porosityPercent.set(plan.porosityPercent);
+          this.poreDiameterMm.set(plan.poreDiameterMm);
+          this.tentPoleClearanceMm.set(plan.tentPoleCrestalClearanceMm);
+          if (plan.fixationScrews && plan.fixationScrews.length > 0) {
+            this.gbrScrews.set(plan.fixationScrews);
+          }
+          this.isSavingGbr.set(false);
+          this.rebuildGbrVisuals();
+        },
+        error: () => {
+          this.isSavingGbr.set(false);
+        }
+      });
+    } else {
+      this.isSavingGbr.set(false);
+    }
+  }
+
+  exportGbrTemplate(): void {
+    const plan = this.savedGbr() || {
+      orderId: this.order()?.id || 'LAB-CURRENT',
+      patientId: 'pat-seed',
+      defectVolumeMm3: this.defectVolumeMm3(),
+      recommendedGraftVolumeMm3: this.recommendedGraftVolumeMm3(),
+      meshThicknessMm: this.meshThicknessMm(),
+      porosityPercent: this.porosityPercent(),
+      poreDiameterMm: this.poreDiameterMm(),
+      tentPoleCrestalClearanceMm: this.tentPoleClearanceMm(),
+      fixationScrewsCount: this.gbrScrews().length,
+      hasSafetyCorridorViolation: this.hasGbrSafetyWarning(),
+      isFabricationApproved: !this.hasGbrSafetyWarning(),
+      statusMessage: 'Guided bone regeneration (GBR) titanium mesh template exported.',
+      fixationScrews: this.gbrScrews(),
+      flatPatternContourPointsCount: 32,
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    const json = JSON.stringify(plan, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GBR_TitaniumMesh_${plan.orderId}_${plan.defectVolumeMm3}mm3.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  loadGbrForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getGbrMeshPlan(orderId).subscribe({
+      next: (plan) => {
+        if (plan) {
+          this.savedGbr.set(plan);
+          this.defectVolumeMm3.set(plan.defectVolumeMm3);
+          this.meshThicknessMm.set(plan.meshThicknessMm);
+          this.porosityPercent.set(plan.porosityPercent);
+          this.poreDiameterMm.set(plan.poreDiameterMm);
+          this.tentPoleClearanceMm.set(plan.tentPoleCrestalClearanceMm);
+          if (plan.fixationScrews && plan.fixationScrews.length > 0) {
+            this.gbrScrews.set(plan.fixationScrews);
+          }
+          if (this.isGbrActive()) {
+            this.rebuildGbrVisuals();
+          }
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -4369,6 +4802,11 @@ M30 ; Program End`,
     this.clearAlignerVisuals();
     if (this.alignerGroup && this.scene) {
       this.scene.remove(this.alignerGroup);
+    }
+
+    this.clearGbrVisuals();
+    if (this.gbrGroup && this.scene) {
+      this.scene.remove(this.gbrGroup);
     }
 
     if (this.mesh) {

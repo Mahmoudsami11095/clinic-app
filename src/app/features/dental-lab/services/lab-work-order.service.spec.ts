@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest, AlignerPlan, SaveAlignerPlanRequest } from './lab-work-order.service';
+import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest, AlignerPlan, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, SaveGbrMeshPlanRequest } from './lab-work-order.service';
 import { environment } from '../../../../environments/environment';
 
 describe('LabWorkOrderService (Release v8.4.0)', () => {
@@ -823,6 +823,103 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
     });
 
     const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/aligner`);
+    expect(req.request.method).toBe('POST');
+    req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+  });
+
+  it('should fetch 3D GBR titanium mesh plan via getGbrMeshPlan (v11.2.0)', (done) => {
+    service.getGbrMeshPlan('lab-1').subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.defectVolumeMm3).toBe(450.0);
+      expect(plan.recommendedGraftVolumeMm3).toBe(517.5);
+      expect(plan.meshThicknessMm).toBe(0.15);
+      expect(plan.porosityPercent).toBe(50.0);
+      expect(plan.fixationScrewsCount).toBe(4);
+      expect(plan.hasSafetyCorridorViolation).toBeFalse();
+      expect(plan.isFabricationApproved).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/gbr-mesh`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      defectVolumeMm3: 450.0,
+      recommendedGraftVolumeMm3: 517.5,
+      meshThicknessMm: 0.15,
+      porosityPercent: 50.0,
+      poreDiameterMm: 1.0,
+      tentPoleCrestalClearanceMm: 2.5,
+      fixationScrewsCount: 4,
+      hasSafetyCorridorViolation: false,
+      isFabricationApproved: true,
+      statusMessage: 'GBR titanium mesh scaffold designed.',
+      fixationScrews: [],
+      flatPatternContourPointsCount: 32,
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should persist 3D GBR titanium mesh plan via saveGbrMeshPlan (v11.2.0)', (done) => {
+    const saveReq: SaveGbrMeshPlanRequest = {
+      defectVolumeMm3: 600.0,
+      meshThicknessMm: 0.18,
+      porosityPercent: 48.0,
+      poreDiameterMm: 1.1,
+      tentPoleCrestalClearanceMm: 2.8,
+      isFabricationApproved: true
+    };
+
+    service.saveGbrMeshPlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.defectVolumeMm3).toBe(600.0);
+      expect(plan.recommendedGraftVolumeMm3).toBe(690.0);
+      expect(plan.meshThicknessMm).toBe(0.18);
+      expect(plan.hasSafetyCorridorViolation).toBeFalse();
+      expect(plan.isFabricationApproved).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/gbr-mesh`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.defectVolumeMm3).toBe(600.0);
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      defectVolumeMm3: 600.0,
+      recommendedGraftVolumeMm3: 690.0,
+      meshThicknessMm: 0.18,
+      porosityPercent: 48.0,
+      poreDiameterMm: 1.1,
+      tentPoleCrestalClearanceMm: 2.8,
+      fixationScrewsCount: 4,
+      hasSafetyCorridorViolation: false,
+      isFabricationApproved: true,
+      statusMessage: 'GBR plan saved.',
+      fixationScrews: [],
+      flatPatternContourPointsCount: 32,
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should compute fallback GBR plan and flag BR-GBR-03 warning on safety corridor breach', (done) => {
+    const saveReq: SaveGbrMeshPlanRequest = {
+      defectVolumeMm3: 500.0,
+      fixationScrews: [
+        { screwId: 's-1', positionX: 0, positionY: 0, positionZ: 0, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.0, nerveClearanceMm: 0.8, isCorticalEngaged: true, hasSafetyCorridorViolation: true }
+      ]
+    };
+
+    service.saveGbrMeshPlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.hasSafetyCorridorViolation).toBeTrue();
+      expect(plan.isFabricationApproved).toBeFalse();
+      expect(plan.statusMessage).toContain('BR-GBR-03 WARNING');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/gbr-mesh`);
     expect(req.request.method).toBe('POST');
     req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
   });

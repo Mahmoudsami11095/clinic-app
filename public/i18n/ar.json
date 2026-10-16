@@ -1270,7 +1270,22 @@
     "aligner_ipr": "جدول حك المينا (IPR)",
     "saving_aligner": "جاري حفظ خطة التقويم...",
     "save_aligner": "حفظ خطة التقويم",
-    "export_aligner_series": "تصدير نماذج التقويم 3D STL"
+    "export_aligner_series": "تصدير نماذج التقويم 3D STL",
+    "gbr_btn": "شبكة التجدد العظمي",
+    "toggle_gbr": "مولد شبكات التيتانيوم للتجدد العظمي الموجه (v11.2.0)",
+    "gbr_panel_title": "مولد شبكات التيتانيوم الذكي (GBR)",
+    "gbr_defect_volume": "حجم الفقد العظمي",
+    "gbr_graft_volume": "الطعم الموصى به (+15% فائض حيوي)",
+    "gbr_mesh_thickness": "سماكة صفيحة التيتانيوم",
+    "gbr_porosity": "نسبة المسامية السداسية (%)",
+    "gbr_pore_diameter": "قطر المسام",
+    "gbr_screws_count": "مسامير التثبيت القشرية",
+    "gbr_safety_compliant": "الممرات الآمنة محققة (≥1.5 مم / ≥2.0 مم)",
+    "gbr_safety_warning": "تحذير اقتراب المسامير (<1.5 مم / <2.0 مم)",
+    "gbr_safety_warning_desc": "أحد مسامير التثبيت ينتهك المنطقة الآمنة لجذور الأسنان أو العصب السنخي السفلي.",
+    "saving_gbr": "جاري حفظ خطة الشبكة...",
+    "save_gbr": "حفظ خطة شبكة التيتانيوم",
+    "export_gbr_template": "تصدير قالب القص وملف 3D STL"
   },
   "subscription": {
     "title": "اشتراك العيادة وحوكمة الحصص",

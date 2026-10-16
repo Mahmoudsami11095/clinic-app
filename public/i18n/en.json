@@ -1270,7 +1270,22 @@
     "aligner_ipr": "Arch IPR Schedule",
     "saving_aligner": "Saving Aligner Plan...",
     "save_aligner": "Save Aligner Plan",
-    "export_aligner_series": "Export 3D Aligner STL Series"
+    "export_aligner_series": "Export 3D Aligner STL Series",
+    "gbr_btn": "GBR Mesh",
+    "toggle_gbr": "AI Guided Bone Regeneration Titanium Mesh Generator (v11.2.0)",
+    "gbr_panel_title": "AI GBR Titanium Mesh Generator",
+    "gbr_defect_volume": "Defect Volume",
+    "gbr_graft_volume": "Recommended Graft (+15% Overfill)",
+    "gbr_mesh_thickness": "Titanium Foil Thickness",
+    "gbr_porosity": "Lattice Porosity (%)",
+    "gbr_pore_diameter": "Pore Diameter",
+    "gbr_screws_count": "Fixation Screws",
+    "gbr_safety_compliant": "Safety Corridors Clear (≥1.5mm / ≥2.0mm)",
+    "gbr_safety_warning": "Screw Corridor Warning (<1.5mm / <2.0mm)",
+    "gbr_safety_warning_desc": "One or more fixation screws violate root apex or alveolar nerve safety zones.",
+    "saving_gbr": "Saving GBR Plan...",
+    "save_gbr": "Save GBR Mesh Plan",
+    "export_gbr_template": "Export Pre-Bent STL & Cutting Template"
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",

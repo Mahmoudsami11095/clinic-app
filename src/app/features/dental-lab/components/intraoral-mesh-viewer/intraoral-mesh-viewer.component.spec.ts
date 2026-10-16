@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan, AlignerPlan } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan, AlignerPlan, GbrTitaniumMeshPlan } from '../../services/lab-work-order.service';
 
 describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
@@ -1295,6 +1295,183 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
 
     component.toggleAligner();
     expect(() => component.exportAlignerSeries()).not.toThrow();
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
+  });
+
+  // --- Release v11.2.0 AI Guided Bone Regeneration (GBR) Titanium Mesh Generator Tests ---
+
+  it('should toggle GBR mode and enforce mutual exclusivity across all CAD/CAM modes (REQ-GBR-01)', () => {
+    // 1. Caliper vs GBR
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    // 2. Heatmap vs GBR
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+
+    // 3. Articulator vs GBR
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isArticulatorActive()).toBeFalse();
+
+    // 4. Margin vs GBR
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isMarginActive()).toBeFalse();
+
+    // 5. CAM vs GBR
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    // 6. Surgical Guide vs GBR
+    component.toggleGuide();
+    expect(component.isGuideActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isGuideActive()).toBeFalse();
+
+    // 7. Crown vs GBR
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+
+    // 8. Fusion vs GBR
+    component.toggleFusion();
+    expect(component.isFusionActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isFusionActive()).toBeFalse();
+
+    // 9. Aligner vs GBR
+    component.toggleAligner();
+    expect(component.isAlignerActive()).toBeTrue();
+    expect(component.isGbrActive()).toBeFalse();
+
+    component.toggleGbr();
+    expect(component.isGbrActive()).toBeTrue();
+    expect(component.isAlignerActive()).toBeFalse();
+  });
+
+  it('should adjust defect volume and dynamically compute recommended graft volume with +15% overfill (BR-GBR-01)', () => {
+    component.toggleGbr();
+    expect(component.defectVolumeMm3()).toBe(450.0);
+    expect(component.recommendedGraftVolumeMm3()).toBe(517.5); // 450 * 1.15
+
+    component.adjustDefectVolume(150); // 600 mm3
+    expect(component.defectVolumeMm3()).toBe(600.0);
+    expect(component.recommendedGraftVolumeMm3()).toBe(690.0); // 600 * 1.15
+
+    component.adjustDefectVolume(-200); // 400 mm3
+    expect(component.defectVolumeMm3()).toBe(400.0);
+    expect(component.recommendedGraftVolumeMm3()).toBe(460.0); // 400 * 1.15
+  });
+
+  it('should adjust mesh thickness and porosity percentage within safety bounds (BR-GBR-02)', () => {
+    component.toggleGbr();
+    expect(component.meshThicknessMm()).toBe(0.15);
+    expect(component.porosityPercent()).toBe(50.0);
+
+    component.setMeshThickness(0.20);
+    expect(component.meshThicknessMm()).toBe(0.20);
+
+    component.adjustPorosity(5);
+    expect(component.porosityPercent()).toBe(55.0);
+
+    // Test upper clamp for porosity (max 60%)
+    component.adjustPorosity(20);
+    expect(component.porosityPercent()).toBe(60.0);
+
+    // Test lower clamp for porosity (min 40%)
+    component.adjustPorosity(-30);
+    expect(component.porosityPercent()).toBe(40.0);
+  });
+
+  it('should evaluate fixation screw safety corridors and flag warning on root/nerve breach (BR-GBR-03)', () => {
+    component.toggleGbr();
+    // Default screws all comply (nerve >= 2.0 mm, root >= 1.5 mm)
+    expect(component.hasGbrSafetyWarning()).toBeFalse();
+
+    // Introduce safety corridor violation (nerve clearance 0.8 mm < 2.0 mm)
+    component.gbrScrews.update(screws => [
+      ...screws.slice(0, 3),
+      { ...screws[3], nerveClearanceMm: 0.8, hasSafetyCorridorViolation: true }
+    ]);
+    expect(component.hasGbrSafetyWarning()).toBeTrue();
+
+    // Restore compliant clearance
+    component.gbrScrews.update(screws => [
+      ...screws.slice(0, 3),
+      { ...screws[3], nerveClearanceMm: 2.5, hasSafetyCorridorViolation: false }
+    ]);
+    expect(component.hasGbrSafetyWarning()).toBeFalse();
+  });
+
+  it('should save GBR mesh plan via LabWorkOrderService', () => {
+    const mockPlan: GbrTitaniumMeshPlan = {
+      orderId: 'lab-test-01',
+      patientId: 'pat-seed',
+      defectVolumeMm3: 500.0,
+      recommendedGraftVolumeMm3: 575.0,
+      meshThicknessMm: 0.15,
+      porosityPercent: 50.0,
+      poreDiameterMm: 1.0,
+      tentPoleCrestalClearanceMm: 2.5,
+      fixationScrewsCount: 4,
+      hasSafetyCorridorViolation: false,
+      isFabricationApproved: true,
+      statusMessage: 'GBR mesh plan approved.',
+      fixationScrews: [],
+      flatPatternContourPointsCount: 32,
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'saveGbrMeshPlan').and.returnValue(of(mockPlan));
+
+    component.toggleGbr();
+    component.saveGbrPlan();
+
+    expect(labService.saveGbrMeshPlan).toHaveBeenCalled();
+    expect(component.savedGbr()).toEqual(mockPlan);
+    expect(component.isSavingGbr()).toBeFalse();
+  });
+
+  it('should export GBR pre-bent STL and cutting template cleanly (BR-GBR-04)', () => {
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/gbr-mesh-template');
+    spyOn(URL, 'revokeObjectURL');
+
+    component.toggleGbr();
+    expect(() => component.exportGbrTemplate()).not.toThrow();
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
