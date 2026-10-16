@@ -395,6 +395,75 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       evaluatedAtUtc: new Date().toISOString()
     });
   });
+
+  it('should fetch CAM toolpath via getCamToolpath (v10.0.0)', (done) => {
+    service.getCamToolpath('lab-1').subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.blankMaterial).toBe('Zirconia');
+      expect(res.shrinkageFactor).toBe(1.2450);
+      expect(res.layers.length).toBeGreaterThan(0);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/cam/toolpath`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      toolpathId: 'CAM-LAB-1',
+      blankMaterial: 'Zirconia',
+      blankThicknessMm: 14.0,
+      shrinkageFactor: 1.2450,
+      spindleRpm: 24000,
+      feedRateMmMin: 1200,
+      estimatedMillingMinutes: 14.5,
+      totalGCodeLines: 1420,
+      totalToolpathLengthMm: 185.4,
+      burChangeCount: 3,
+      marginProtectionEnforced: true,
+      statusMessage: 'Zirconia 5-axis toolpath generated.',
+      gcodeContent: '%\nG90 G21 G17 G40 G49 G80 G94\nM30\n%',
+      layers: [
+        { layerIndex: 1, passType: 'Roughing', zHeightMm: 14.0, pointCount: 64, estimatedSeconds: 35.0 }
+      ],
+      generatedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should generate 5-axis G-code via generateGCode (v10.0.0)', (done) => {
+    service.generateGCode('lab-1', {
+      blankMaterial: 'PMMA',
+      feedRateMmMin: 1200
+    }).subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.blankMaterial).toBe('PMMA');
+      expect(res.marginProtectionEnforced).toBeTrue();
+      expect(res.gcodeContent).toContain('M08');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/cam/gcode`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.blankMaterial).toBe('PMMA');
+    req.flush({
+      orderId: 'lab-1',
+      toolpathId: 'CAM-LAB-1-PMMA',
+      blankMaterial: 'PMMA',
+      blankThicknessMm: 16.0,
+      shrinkageFactor: 1.0000,
+      spindleRpm: 20000,
+      feedRateMmMin: 1200,
+      estimatedMillingMinutes: 12.0,
+      totalGCodeLines: 950,
+      totalToolpathLengthMm: 140.2,
+      burChangeCount: 3,
+      marginProtectionEnforced: true,
+      statusMessage: 'PMMA 5-axis toolpath generated with wet coolant.',
+      gcodeContent: '%\nM08 (COOLANT FLOOD ON)\nM30\n%',
+      layers: [],
+      generatedAtUtc: new Date().toISOString()
+    });
+  });
 });
+
 
 

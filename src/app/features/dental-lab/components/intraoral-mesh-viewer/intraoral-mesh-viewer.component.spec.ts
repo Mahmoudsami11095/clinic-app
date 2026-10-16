@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -584,6 +584,180 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     expect(component.savedMargin()).toBeTruthy();
     expect(component.savedMargin()?.isApproved).toBeTrue();
     expect(component.savedMargin()?.perimeterMm).toBe(33.80);
+  });
+
+  // --- Release v10.0.0 Dental CAM Toolpath & Direct G-Code Tests ---
+
+  it('should toggle CAM mode and enforce mutual exclusivity across all analysis modes (REQ-CAM-01)', () => {
+    // 1. Caliper vs CAM
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    // 2. Heatmap vs CAM
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+
+    // 3. Articulator vs CAM
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isArticulatorActive()).toBeFalse();
+
+    // 4. Margin vs CAM
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isMarginActive()).toBeFalse();
+
+    // Toggle off
+    component.toggleCam();
+    expect(component.isCamActive()).toBeFalse();
+  });
+
+  it('should switch blank milling material and update kinematics and shrinkage factors (REQ-CAM-02)', () => {
+    // Default: Zirconia
+    expect(component.camMaterial()).toBe('Zirconia');
+    expect(component.camSpindleRpm()).toBe(24000);
+    expect(component.camFeedRate()).toBe(1200);
+    expect(component.camShrinkage()).toBe(1.2450);
+
+    // Switch to PMMA
+    component.setCamMaterial('PMMA');
+    expect(component.camMaterial()).toBe('PMMA');
+    expect(component.camSpindleRpm()).toBe(18000);
+    expect(component.camFeedRate()).toBe(1500);
+    expect(component.camShrinkage()).toBe(1.0);
+
+    // Switch to Titanium
+    component.setCamMaterial('Titanium');
+    expect(component.camMaterial()).toBe('Titanium');
+    expect(component.camSpindleRpm()).toBe(12000);
+    expect(component.camFeedRate()).toBe(600);
+    expect(component.camShrinkage()).toBe(1.0);
+  });
+
+  it('should adjust spindle RPM and feed rate within clinical safety thresholds (REQ-CAM-03)', () => {
+    component.setCamMaterial('Zirconia');
+
+    component.adjustCamSpindle(2000);
+    expect(component.camSpindleRpm()).toBe(26000);
+
+    component.adjustCamSpindle(-4000);
+    expect(component.camSpindleRpm()).toBe(22000);
+
+    component.adjustCamFeed(100);
+    expect(component.camFeedRate()).toBe(1300);
+
+    component.adjustCamFeed(-200);
+    expect(component.camFeedRate()).toBe(1100);
+
+    // Test bounds clamping
+    component.adjustCamSpindle(100000);
+    expect(component.camSpindleRpm()).toBe(60000);
+
+    component.adjustCamSpindle(-100000);
+    expect(component.camSpindleRpm()).toBe(8000);
+
+    component.adjustCamFeed(10000);
+    expect(component.camFeedRate()).toBe(2000);
+
+    component.adjustCamFeed(-10000);
+    expect(component.camFeedRate()).toBe(200);
+  });
+
+  it('should generate CAM toolpath and 5-axis G-code via labWorkOrderService (REQ-CAM-04)', () => {
+    spyOn(labService, 'generateGCode').and.returnValue(of({
+      orderId: 'lab-test-01',
+      toolpathId: 'TP-MOCK-1',
+      blankMaterial: 'Zirconia',
+      blankThicknessMm: 14.0,
+      shrinkageFactor: 1.2450,
+      spindleRpm: 24000,
+      feedRateMmMin: 1200,
+      totalGCodeLines: 1540,
+      estimatedMillingMinutes: 14.2,
+      totalToolpathLengthMm: 340.5,
+      burChangeCount: 3,
+      marginProtectionEnforced: true,
+      statusMessage: 'Compliant CAM toolpath',
+      gcodeContent: 'G90 G21 G17 G40 G49 G80 G94\nM06 T01\nM30',
+      generatedAtUtc: new Date().toISOString(),
+      layers: [
+        { layerIndex: 1, passType: 'Roughing', zHeightMm: 8.5, pointCount: 32, estimatedSeconds: 240 },
+        { layerIndex: 2, passType: 'SemiFinishing', zHeightMm: 4.2, pointCount: 48, estimatedSeconds: 320 },
+        { layerIndex: 3, passType: 'MarginDetail', zHeightMm: 0.0, pointCount: 64, estimatedSeconds: 310 }
+      ]
+    }));
+
+    component.generateCamGCode();
+
+    expect(component.camToolpath()).toBeTruthy();
+    expect(component.camToolpath()?.totalGCodeLines).toBe(1540);
+    expect(component.camToolpath()?.layers.length).toBe(3);
+    expect(component.isGeneratingGCode()).toBeFalse();
+  });
+
+  it('should build offline fallback G-code when service is unavailable or errors (BR-CAM-04)', () => {
+    spyOn(labService, 'generateGCode').and.returnValue(throwError(() => new Error('Service Offline')));
+    component.setCamMaterial('PMMA');
+    component.generateCamGCode();
+
+    expect(component.camToolpath()).toBeTruthy();
+    expect(component.camToolpath()?.blankMaterial).toBe('PMMA');
+    expect(component.camToolpath()?.gcodeContent).toContain('M06 T01');
+  });
+
+  it('should download G-code file with valid NC headers (REQ-CAM-05)', () => {
+    spyOn(labService, 'generateGCode').and.returnValue(of({
+      orderId: 'lab-test-01',
+      toolpathId: 'TP-MOCK-1',
+      blankMaterial: 'Zirconia',
+      blankThicknessMm: 14.0,
+      shrinkageFactor: 1.2450,
+      spindleRpm: 24000,
+      feedRateMmMin: 1200,
+      totalGCodeLines: 1540,
+      estimatedMillingMinutes: 14.2,
+      totalToolpathLengthMm: 340.5,
+      burChangeCount: 3,
+      marginProtectionEnforced: true,
+      statusMessage: 'Compliant CAM toolpath',
+      gcodeContent: 'G90 G21 G17 G40 G49 G80 G94\nM06 T01\nM30',
+      generatedAtUtc: new Date().toISOString(),
+      layers: []
+    }));
+
+    component.generateCamGCode();
+
+    const anchorSpy = jasmine.createSpyObj('HTMLAnchorElement', ['click']);
+    anchorSpy.download = '';
+    spyOn(document, 'createElement').and.callFake((tagName: string) => {
+      if (tagName === 'a') return anchorSpy as any;
+      return document.createElement(tagName);
+    });
+    spyOn(document.body, 'appendChild').and.stub();
+    spyOn(document.body, 'removeChild').and.stub();
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/test');
+    spyOn(URL, 'revokeObjectURL').and.stub();
+
+    component.downloadGCodeFile();
+
+    expect(anchorSpy.download).toContain('.nc');
+    expect(anchorSpy.click).toHaveBeenCalled();
   });
 });
 
