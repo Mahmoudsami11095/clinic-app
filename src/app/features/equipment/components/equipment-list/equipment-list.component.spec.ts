@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EquipmentListComponent } from './equipment-list.component';
 import { EquipmentService } from '../../services/equipment.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -8,9 +10,27 @@ import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { Equipment } from '../../models/equipment.model';
 
+import { provideTranslateService } from '@ngx-translate/core';
+import { SterilizationService } from '../../services/sterilization.service';
+
 describe('EquipmentListComponent', () => {
   let component: EquipmentListComponent;
   let fixture: ComponentFixture<EquipmentListComponent>;
+
+  const mockSterilizationService = {
+    getLiveTelemetry: jasmine.createSpy('getLiveTelemetry').and.returnValue(of({
+      autoclaveSerialNumber: 'MELAG-VAC-8821',
+      chamberModel: 'Melag Vacuklav 40 B+ Evolution',
+      chamberTemperatureC: 134.6,
+      chamberPressureBar: 2.14,
+      waterConductivityMicroSiemens: 4.1,
+      cyclePhase: 'Plateau',
+      elapsedSeconds: 165,
+      timestampUtc: new Date().toISOString()
+    })),
+    getCycles: jasmine.createSpy('getCycles').and.returnValue(of([])),
+    validateCycle: jasmine.createSpy('validateCycle').and.returnValue(of({ isSterilizationValidated: true }))
+  };
 
   const mockEquipmentList: Equipment[] = [
     {
@@ -89,7 +109,11 @@ describe('EquipmentListComponent', () => {
         { provide: EquipmentService, useValue: mockEquipmentService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: ClinicService, useValue: mockClinicService },
-        { provide: ToastrService, useValue: mockToastr }
+        { provide: ToastrService, useValue: mockToastr },
+        { provide: SterilizationService, useValue: mockSterilizationService },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService({ fallbackLang: 'en' })
       ]
     }).compileComponents();
 
