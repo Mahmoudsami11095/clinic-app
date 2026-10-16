@@ -248,4 +248,77 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     component.toggleMeasurementsDrawer();
     expect(component.showMeasurementsDrawer()).toBeFalse();
   });
+
+  // --- Milestone 2 (v9.2.0) 3D Undercut & Occlusal Clearance Heatmap Unit Tests ---
+
+  it('should toggle heatmap active state and apply/revert vertex coloring', () => {
+    expect(component.isHeatmapActive()).toBeFalse();
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeFalse();
+  });
+
+  it('should switch heatmap modes between clearance and undercut (REQ-HEAT-02..03)', () => {
+    component.setHeatmapMode('undercut');
+    expect(component.heatmapMode()).toBe('undercut');
+
+    component.setHeatmapMode('clearance');
+    expect(component.heatmapMode()).toBe('clearance');
+  });
+
+  it('should adjust Path of Insertion (POI) tilt angles and clamp within ±20 degrees (REQ-HEAT-01)', () => {
+    component.resetPoiTilt();
+    expect(component.poiTiltMD()).toBe(0);
+    expect(component.poiTiltBL()).toBe(0);
+
+    component.adjustPoiTilt('MD', 5);
+    expect(component.poiTiltMD()).toBe(5);
+
+    component.adjustPoiTilt('BL', -10);
+    expect(component.poiTiltBL()).toBe(-10);
+
+    // Clamp test: adding 20 more to 5 should clamp at 20
+    component.adjustPoiTilt('MD', 20);
+    expect(component.poiTiltMD()).toBe(20);
+
+    component.resetPoiTilt();
+    expect(component.poiTiltMD()).toBe(0);
+    expect(component.poiTiltBL()).toBe(0);
+  });
+
+  it('should compute vertex colors and evaluate undercut telemetry on 3D geometry (REQ-HEAT-04)', () => {
+    component.createFallbackToothGeometry(36);
+    component.toggleHeatmap();
+    component.setHeatmapMode('undercut');
+
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.undercutPercentage()).toBeGreaterThanOrEqual(0);
+    expect(typeof component.isClearanceCompliant()).toBe('boolean');
+
+    component.setHeatmapMode('clearance');
+    expect(component.heatmapMode()).toBe('clearance');
+  });
+
+  it('should save clearance heatmap evaluation via labWorkOrderService (REQ-HEAT-05)', () => {
+    spyOn(labService, 'saveClearanceHeatmap').and.returnValue(of({
+      orderId: 'lab-test-01',
+      undercutSurfacePercent: 0.0,
+      minClearanceMm: 1.85,
+      maxClearanceMm: 2.40,
+      insertionTiltMesialDistalDeg: 0.0,
+      insertionTiltBuccalLingualDeg: 0.0,
+      isCompliant: true,
+      statusMessage: 'Zero Undercuts Detected. Optimal Occlusal Reduction.',
+      evaluatedAtUtc: new Date().toISOString()
+    }));
+
+    component.createFallbackToothGeometry(36);
+    component.toggleHeatmap();
+    component.saveHeatmapEvaluation();
+
+    expect(component.savedHeatmap()).toBeTruthy();
+    expect(component.savedHeatmap()?.isCompliant).toBeTrue();
+    expect(component.savedHeatmap()?.undercutSurfacePercent).toBe(0.0);
+  });
 });

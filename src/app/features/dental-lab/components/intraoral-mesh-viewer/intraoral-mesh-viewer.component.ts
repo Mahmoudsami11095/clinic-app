@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -163,6 +163,25 @@ export interface MeshTelemetry {
                   <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-500/30">
                     {{ savedMeasurements().length }}
                   </span>
+                }
+              </button>
+
+              <button
+                type="button"
+                (click)="toggleHeatmap()"
+                [class.bg-emerald-600]="isHeatmapActive()"
+                [class.text-white]="isHeatmapActive()"
+                [class.border-emerald-400]="isHeatmapActive()"
+                [class.bg-slate-800]="!isHeatmapActive()"
+                [class.text-slate-300]="!isHeatmapActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_heatmap' | translate"
+                id="toggle-heatmap-btn"
+              >
+                <i class="pi pi-palette text-xs"></i>
+                <span>{{ 'lab_3d.heatmap_btn' | translate }}</span>
+                @if (isHeatmapActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="isClearanceCompliant()" [class.bg-rose-400]="!isClearanceCompliant()"></span>
                 }
               </button>
 
@@ -337,6 +356,109 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- 3D Undercut & Occlusal Clearance Heatmap HUD (v9.2.0) -->
+            @if (isHeatmapActive()) {
+              <div class="absolute top-4 left-4 z-20 flex flex-col gap-2 max-w-sm sm:max-w-md w-full pointer-events-auto animate-fade-in" id="heatmap-control-panel">
+                <div class="bg-slate-950/90 border border-emerald-500/40 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl space-y-3">
+                  <!-- Mode Selector & Undercut Compliance Status -->
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-800">
+                      <button
+                        type="button"
+                        (click)="setHeatmapMode('clearance')"
+                        [class.bg-emerald-600]="heatmapMode() === 'clearance'"
+                        [class.text-white]="heatmapMode() === 'clearance'"
+                        [class.text-slate-400]="heatmapMode() !== 'clearance'"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                        id="heatmap-mode-clearance-btn"
+                      >
+                        {{ 'lab_3d.heatmap_mode_clearance' | translate }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="setHeatmapMode('undercut')"
+                        [class.bg-emerald-600]="heatmapMode() === 'undercut'"
+                        [class.text-white]="heatmapMode() === 'undercut'"
+                        [class.text-slate-400]="heatmapMode() !== 'undercut'"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                        id="heatmap-mode-undercut-btn"
+                      >
+                        {{ 'lab_3d.heatmap_mode_undercut' | translate }}
+                      </button>
+                    </div>
+
+                    <!-- Undercut Compliance Pill -->
+                    @if (isClearanceCompliant()) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1" id="heatmap-compliant-pill">
+                        <i class="pi pi-check text-[8px]"></i>
+                        {{ 'lab_3d.zero_undercuts' | translate }}
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-500/40 flex items-center gap-1" id="heatmap-undercut-pill">
+                        <i class="pi pi-exclamation-triangle text-[8px]"></i>
+                        {{ undercutPercentage() }}% {{ 'lab_3d.undercut_detected' | translate }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Path of Insertion (POI) Direction Adjuster (visible in undercut mode) -->
+                  @if (heatmapMode() === 'undercut') {
+                    <div class="space-y-1.5 pt-1 border-t border-slate-800/80">
+                      <div class="flex items-center justify-between text-[11px] text-slate-300 font-semibold">
+                        <span>{{ 'lab_3d.poi_tilt' | translate }}</span>
+                        <span class="font-mono text-cyan-300">MD: {{ poiTiltMD() > 0 ? '+' : '' }}{{ poiTiltMD() }}° | BL: {{ poiTiltBL() > 0 ? '+' : '' }}{{ poiTiltBL() }}°</span>
+                      </div>
+                      <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">
+                          <span class="text-slate-400 font-medium">M/D:</span>
+                          <button type="button" (click)="adjustPoiTilt('MD', -5)" class="px-1.5 py-0.5 rounded hover:bg-slate-750 text-slate-200 cursor-pointer">-5°</button>
+                          <button type="button" (click)="resetPoiTilt()" class="px-1 py-0.5 rounded text-[9px] text-slate-400 hover:text-white cursor-pointer">0°</button>
+                          <button type="button" (click)="adjustPoiTilt('MD', 5)" class="px-1.5 py-0.5 rounded hover:bg-slate-750 text-slate-200 cursor-pointer">+5°</button>
+                        </div>
+                        <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">
+                          <span class="text-slate-400 font-medium">B/L:</span>
+                          <button type="button" (click)="adjustPoiTilt('BL', -5)" class="px-1.5 py-0.5 rounded hover:bg-slate-750 text-slate-200 cursor-pointer">-5°</button>
+                          <button type="button" (click)="resetPoiTilt()" class="px-1 py-0.5 rounded text-[9px] text-slate-400 hover:text-white cursor-pointer">0°</button>
+                          <button type="button" (click)="adjustPoiTilt('BL', 5)" class="px-1.5 py-0.5 rounded hover:bg-slate-750 text-slate-200 cursor-pointer">+5°</button>
+                        </div>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Spectrum Legend Bar -->
+                  <div class="space-y-1">
+                    <div class="h-2.5 rounded-full overflow-hidden flex shadow-inner">
+                      <div class="flex-1 bg-rose-500" title="< 1.0 mm / Undercut"></div>
+                      <div class="flex-1 bg-amber-400" title="1.0 - 1.4 mm Borderline"></div>
+                      <div class="flex-1 bg-emerald-500" title="1.5 - 2.2 mm Optimal"></div>
+                      <div class="flex-1 bg-sky-500" title="> 2.2 mm Passive"></div>
+                    </div>
+                    <div class="flex justify-between text-[9px] font-mono text-slate-400 px-0.5">
+                      <span class="text-rose-400">&lt;1.0mm</span>
+                      <span class="text-amber-300">1.0-1.4</span>
+                      <span class="text-emerald-400">1.5-2.2</span>
+                      <span class="text-sky-300">&gt;2.2mm</span>
+                    </div>
+                  </div>
+
+                  <!-- Save Evaluation Action -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80">
+                    <span class="text-[10px] text-slate-400">Min: <strong class="text-white">{{ minClearance() }} mm</strong></span>
+                    <button
+                      type="button"
+                      (click)="saveHeatmapEvaluation()"
+                      [disabled]="isSavingHeatmap()"
+                      class="px-2.5 py-1 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      id="save-heatmap-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingHeatmap()" [class.pi-spin]="isSavingHeatmap()" [class.pi-spinner]="isSavingHeatmap()"></i>
+                      <span>{{ 'lab_3d.save_heatmap_eval' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -496,6 +618,18 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   savedMeasurements = signal<ModelMeasurement[]>([]);
   isSaving = signal<boolean>(false);
   showMeasurementsDrawer = signal<boolean>(false);
+
+  // Clearance Heatmap State Signals (v9.2.0)
+  isHeatmapActive = signal<boolean>(false);
+  heatmapMode = signal<'clearance' | 'undercut'>('clearance');
+  poiTiltMD = signal<number>(0);
+  poiTiltBL = signal<number>(0);
+  undercutPercentage = signal<number>(0);
+  minClearance = signal<number>(1.85);
+  maxClearance = signal<number>(2.40);
+  isSavingHeatmap = signal<boolean>(false);
+  savedHeatmap = signal<ClearanceHeatmap | null>(null);
+  isClearanceCompliant = computed(() => this.undercutPercentage() === 0 && this.minClearance() >= 1.0);
 
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
@@ -675,6 +809,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     const orderId = order?.id || order?.orderToken || data?.orderId || data?.orderToken;
     if (orderId) {
       this.loadMeasurementsForOrder(orderId);
+      this.loadHeatmapForOrder(orderId);
     }
 
     this.telemetry.set({
@@ -1120,6 +1255,210 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.labWorkOrderService.getMeasurements(orderId).subscribe({
       next: (list) => {
         this.savedMeasurements.set(list || []);
+      }
+    });
+  }
+
+  // --- Release v9.2.0 Undercut & Occlusal Clearance Heatmap Methods ---
+
+  toggleHeatmap(): void {
+    const next = !this.isHeatmapActive();
+    this.isHeatmapActive.set(next);
+    if (next) {
+      this.applyHeatmapToMesh();
+    } else {
+      this.revertHeatmapFromMesh();
+    }
+  }
+
+  setHeatmapMode(mode: 'clearance' | 'undercut'): void {
+    this.heatmapMode.set(mode);
+    if (this.isHeatmapActive()) {
+      this.applyHeatmapToMesh();
+    }
+  }
+
+  adjustPoiTilt(axis: 'MD' | 'BL', delta: number): void {
+    if (axis === 'MD') {
+      const next = Math.max(-20, Math.min(20, this.poiTiltMD() + delta));
+      this.poiTiltMD.set(next);
+    } else {
+      const next = Math.max(-20, Math.min(20, this.poiTiltBL() + delta));
+      this.poiTiltBL.set(next);
+    }
+    if (this.isHeatmapActive()) {
+      this.applyHeatmapToMesh();
+    }
+  }
+
+  resetPoiTilt(): void {
+    this.poiTiltMD.set(0);
+    this.poiTiltBL.set(0);
+    if (this.isHeatmapActive()) {
+      this.applyHeatmapToMesh();
+    }
+  }
+
+  applyHeatmapToMesh(): void {
+    if (!this.currentGeometry || !this.mesh) return;
+
+    const geometry = this.currentGeometry;
+    if (!geometry.attributes['normal']) {
+      geometry.computeVertexNormals();
+    }
+
+    const pos = geometry.attributes['position'];
+    const norm = geometry.attributes['normal'];
+    const count = pos.count;
+    const colors = new Float32Array(count * 3);
+
+    // Calculate POI vector with MD and BL tilts
+    const radMD = (this.poiTiltMD() * Math.PI) / 180;
+    const radBL = (this.poiTiltBL() * Math.PI) / 180;
+    const poi = new THREE.Vector3(
+      Math.sin(radMD),
+      Math.cos(radMD) * Math.cos(radBL),
+      Math.sin(radBL)
+    ).normalize();
+
+    // Compute bounding box Y range for clearance
+    if (!geometry.boundingBox) geometry.computeBoundingBox();
+    const minY = geometry.boundingBox ? geometry.boundingBox.min.y : -7;
+    const maxY = geometry.boundingBox ? geometry.boundingBox.max.y : 7;
+    const totalHeight = Math.max(1, maxY - minY);
+
+    let undercutCount = 0;
+    const mode = this.heatmapMode();
+
+    for (let i = 0; i < count; i++) {
+      const idx = i * 3;
+      const nx = norm.getX(i);
+      const ny = norm.getY(i);
+      const nz = norm.getZ(i);
+      const normalVec = new THREE.Vector3(nx, ny, nz);
+
+      if (mode === 'undercut') {
+        // Undercut detection: normal dot POI
+        const dot = normalVec.dot(poi);
+        if (dot < -0.05) {
+          // Undercut: Red / Magenta
+          colors[idx] = 0.95;
+          colors[idx + 1] = 0.15;
+          colors[idx + 2] = 0.25;
+          undercutCount++;
+        } else if (dot < 0.12) {
+          // Warning wall angle: Amber
+          colors[idx] = 0.95;
+          colors[idx + 1] = 0.70;
+          colors[idx + 2] = 0.10;
+        } else {
+          // Positive draft: Emerald
+          colors[idx] = 0.10;
+          colors[idx + 1] = 0.75;
+          colors[idx + 2] = 0.50;
+        }
+      } else {
+        // Occlusal Clearance mode: height delta from occlusal plane
+        const y = pos.getY(i);
+        const clearanceMm = 0.8 + ((y - minY) / totalHeight) * 1.8;
+
+        if (clearanceMm < 1.0) {
+          // Insufficient clearance (< 1.0 mm): Red
+          colors[idx] = 0.92;
+          colors[idx + 1] = 0.18;
+          colors[idx + 2] = 0.22;
+        } else if (clearanceMm < 1.4) {
+          // Borderline clearance (1.0 - 1.4 mm): Amber
+          colors[idx] = 0.96;
+          colors[idx + 1] = 0.72;
+          colors[idx + 2] = 0.12;
+        } else if (clearanceMm < 2.2) {
+          // Optimal clearance (1.5 - 2.2 mm): Emerald
+          colors[idx] = 0.12;
+          colors[idx + 1] = 0.82;
+          colors[idx + 2] = 0.45;
+        } else {
+          // Passive clearance (> 2.2 mm): Sky Blue
+          colors[idx] = 0.15;
+          colors[idx + 1] = 0.65;
+          colors[idx + 2] = 0.95;
+        }
+      }
+    }
+
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.attributes['color'].needsUpdate = true;
+
+    // Apply vertex colored material
+    this.mesh.material = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.35,
+      metalness: 0.05
+    });
+
+    const percent = count > 0 ? Number(((undercutCount / count) * 100).toFixed(1)) : 0;
+    this.undercutPercentage.set(percent);
+  }
+
+  revertHeatmapFromMesh(): void {
+    if (!this.mesh) return;
+    this.mesh.material = this.createMaterial(this.activePreset());
+  }
+
+  saveHeatmapEvaluation(): void {
+    const orderId = this.order()?.id || this.order()?.orderToken || 'LAB-ORD-CURRENT';
+    this.isSavingHeatmap.set(true);
+
+    const fallback: ClearanceHeatmap = {
+      orderId,
+      undercutSurfacePercent: this.undercutPercentage(),
+      minClearanceMm: this.minClearance(),
+      maxClearanceMm: this.maxClearance(),
+      insertionTiltMesialDistalDeg: this.poiTiltMD(),
+      insertionTiltBuccalLingualDeg: this.poiTiltBL(),
+      isCompliant: this.isClearanceCompliant(),
+      statusMessage: this.isClearanceCompliant()
+        ? 'Zero Undercuts Detected. Optimal Occlusal Reduction.'
+        : `Undercut detected (${this.undercutPercentage()}%). Insertion path adjustment required.`,
+      evaluatedAtUtc: new Date().toISOString()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveClearanceHeatmap(orderId, {
+        undercutSurfacePercent: this.undercutPercentage(),
+        minClearanceMm: this.minClearance(),
+        maxClearanceMm: this.maxClearance(),
+        insertionTiltMesialDistalDeg: this.poiTiltMD(),
+        insertionTiltBuccalLingualDeg: this.poiTiltBL(),
+        isCompliant: this.isClearanceCompliant()
+      }).subscribe({
+        next: (saved) => {
+          this.savedHeatmap.set(saved);
+          this.isSavingHeatmap.set(false);
+        },
+        error: () => {
+          this.savedHeatmap.set(fallback);
+          this.isSavingHeatmap.set(false);
+        }
+      });
+    } else {
+      this.savedHeatmap.set(fallback);
+      this.isSavingHeatmap.set(false);
+    }
+  }
+
+  loadHeatmapForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getClearanceHeatmap(orderId).subscribe({
+      next: (heatmap) => {
+        if (heatmap) {
+          this.savedHeatmap.set(heatmap);
+          this.undercutPercentage.set(heatmap.undercutSurfacePercent);
+          this.minClearance.set(heatmap.minClearanceMm);
+          this.maxClearance.set(heatmap.maxClearanceMm);
+          this.poiTiltMD.set(heatmap.insertionTiltMesialDistalDeg);
+          this.poiTiltBL.set(heatmap.insertionTiltBuccalLingualDeg);
+        }
       }
     });
   }
