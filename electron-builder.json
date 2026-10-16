@@ -55,6 +55,7 @@
   },
   "linux": {
     "category": "MedicalSoftware",
+    "maintainer": "ClinicCorp AI <devops@cliniccorp.ai>",
     "target": [
       {
         "target": "AppImage",

@@ -37,10 +37,14 @@ jobs:
             artifact-pattern: dist-electron/*.exe
           - os: macos-latest
             target-name: macOS Universal
-            artifact-pattern: dist-electron/*.dmg
+            artifact-pattern: |
+              dist-electron/*.dmg
+              dist-electron/*.zip
           - os: ubuntu-latest
             target-name: Linux x64
-            artifact-pattern: dist-electron/*.AppImage
+            artifact-pattern: |
+              dist-electron/*.AppImage
+              dist-electron/*.deb
 
     steps:
       - name: Checkout Code
