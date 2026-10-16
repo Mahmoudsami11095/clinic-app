@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -340,8 +340,25 @@ export interface MeshTelemetry {
               >
                 <i class="pi pi-th-large text-xs"></i>
                 <span>{{ 'lab_3d.gbr_btn' | translate }}</span>
-                @if (isGbrActive()) {
-                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasGbrSafetyWarning()" [class.bg-rose-400]="hasGbrSafetyWarning()"></span>
+              </button>
+
+              <!-- AI 3D RPD Framework & Clasp Surveyor Toggle (v11.3.0) -->
+              <button
+                type="button"
+                (click)="toggleRpd()"
+                [class.bg-purple-600]="isRpdActive()"
+                [class.text-white]="isRpdActive()"
+                [class.border-purple-400]="isRpdActive()"
+                [class.bg-slate-800]="!isRpdActive()"
+                [class.text-slate-300]="!isRpdActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_rpd' | translate"
+                id="toggle-rpd-btn"
+              >
+                <i class="pi pi-compass text-xs"></i>
+                <span>{{ 'lab_3d.rpd_btn' | translate }}</span>
+                @if (isRpdActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasTissueImpingementWarning()" [class.bg-rose-400]="hasTissueImpingementWarning()"></span>
                 }
               </button>
 
@@ -1693,6 +1710,162 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- AI 3D Removable Partial Denture (RPD) Framework & Clasp Surveyor Panel (v11.3.0) -->
+            @if (isRpdActive()) {
+              <div
+                class="absolute bottom-6 left-6 w-96 bg-slate-950/90 border border-purple-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md z-10 font-cairo animate-fade-in"
+                id="rpd-surveyor-panel"
+              >
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping"></span>
+                    <h4 class="text-xs font-bold text-purple-400 tracking-wider">
+                      {{ 'lab_3d.rpd_panel_title' | translate }}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="toggleRpd()"
+                    class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                  >
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+
+                <div class="space-y-3 pt-3">
+                  <!-- Arch & Kennedy Classification Selector -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <label class="text-slate-400 block">{{ 'lab_3d.rpd_arch' | translate }}:</label>
+                      <select
+                        [ngModel]="selectedArch()"
+                        (ngModelChange)="setArch($event)"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-white font-semibold text-[10px] focus:outline-none"
+                        id="rpd-arch-select"
+                      >
+                        <option value="Mandibular">{{ 'lab_3d.rpd_arch_mandibular' | translate }}</option>
+                        <option value="Maxillary">{{ 'lab_3d.rpd_arch_maxillary' | translate }}</option>
+                      </select>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <label class="text-slate-400 block">{{ 'lab_3d.rpd_kennedy' | translate }}:</label>
+                      <select
+                        [ngModel]="selectedKennedy()"
+                        (ngModelChange)="setKennedy($event)"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-white font-semibold text-[10px] focus:outline-none"
+                        id="rpd-kennedy-select"
+                      >
+                        <option value="ClassI">Kennedy Class I</option>
+                        <option value="ClassII">Kennedy Class II</option>
+                        <option value="ClassIII">Kennedy Class III</option>
+                        <option value="ClassIV">Kennedy Class IV</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Major Connector & Floor of Mouth Depth -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <label class="text-slate-400 block">{{ 'lab_3d.rpd_connector' | translate }}:</label>
+                      <select
+                        [ngModel]="selectedMajorConnector()"
+                        (ngModelChange)="setMajorConnector($event)"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-purple-300 font-semibold text-[10px] focus:outline-none"
+                        id="rpd-connector-select"
+                      >
+                        @if (selectedArch() === 'Mandibular') {
+                          <option value="LingualBar">{{ 'lab_3d.rpd_connector_lingual_bar' | translate }}</option>
+                          <option value="LingualPlate">{{ 'lab_3d.rpd_connector_lingual_plate' | translate }}</option>
+                        } @else {
+                          <option value="PalatalStrap">{{ 'lab_3d.rpd_connector_palatal_strap' | translate }}</option>
+                          <option value="Horseshoe">{{ 'lab_3d.rpd_connector_horseshoe' | translate }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.rpd_floor_depth' | translate }}:</span>
+                        <strong class="text-purple-300 font-mono">{{ floorOfMouthDepthMm() }} mm</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustFloorDepth(-0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">-0.5</button>
+                        <button type="button" (click)="adjustFloorDepth(0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">+0.5</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Path of Insertion Tilt Angles (BR-RPD-01) -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 flex items-center justify-between">
+                      <span class="text-slate-400">{{ 'lab_3d.rpd_tilt_bl' | translate }}:</span>
+                      <strong class="text-cyan-300 font-mono">{{ tiltBuccolingualDeg() }}°</strong>
+                    </div>
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 flex items-center justify-between">
+                      <span class="text-slate-400">{{ 'lab_3d.rpd_tilt_md' | translate }}:</span>
+                      <strong class="text-cyan-300 font-mono">{{ tiltMesiodistalDeg() }}°</strong>
+                    </div>
+                  </div>
+
+                  <!-- Clasp Assemblies List (BR-RPD-03) -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1.5">
+                    <span class="text-[10px] text-slate-400 font-bold block">{{ 'lab_3d.rpd_clasps_title' | translate }}:</span>
+                    <div class="space-y-1 max-h-24 overflow-y-auto pr-1">
+                      @for (clasp of rpdClasps(); track clasp.toothFdi) {
+                        <div class="flex items-center justify-between bg-slate-950 p-1.5 rounded-lg text-[9px] border border-slate-800">
+                          <span class="text-white font-bold">Tooth #{{ clasp.toothFdi }} ({{ clasp.claspType }})</span>
+                          <span class="px-1.5 py-0.5 rounded text-[8px] font-bold"
+                            [class.bg-amber-950]="clasp.undercutDepthMm === 0.25"
+                            [class.text-amber-400]="clasp.undercutDepthMm === 0.25"
+                            [class.border-amber-800]="clasp.undercutDepthMm === 0.25"
+                            [class.bg-emerald-950]="clasp.undercutDepthMm === 0.50"
+                            [class.text-emerald-400]="clasp.undercutDepthMm === 0.50"
+                            [class.border-emerald-800]="clasp.undercutDepthMm === 0.50"
+                            [class.border]="true"
+                          >
+                            {{ clasp.restSeatType }} Rest • {{ clasp.undercutDepthMm }}mm Undercut
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Tissue Impingement Warning Banner (BR-RPD-02) -->
+                  @if (hasTissueImpingementWarning()) {
+                    <p class="text-[10px] text-rose-400 bg-rose-950/40 border border-rose-800/40 p-1.5 rounded-lg font-semibold animate-pulse" id="rpd-warning-banner">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      {{ 'lab_3d.rpd_impingement_desc' | translate }}
+                    </p>
+                  }
+
+                  <!-- Actions: Save Plan & Export SLM (BR-RPD-04) -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80 gap-2">
+                    <button
+                      type="button"
+                      (click)="saveRpdPlan()"
+                      [disabled]="isSavingRpd()"
+                      class="flex-1 py-1.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      id="save-rpd-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingRpd()" [class.pi-spin]="isSavingRpd()" [class.pi-spinner]="isSavingRpd()"></i>
+                      <span>{{ isSavingRpd() ? ('lab_3d.saving_rpd' | translate) : ('lab_3d.save_rpd' | translate) }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="exportRpdSlm()"
+                      class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      id="export-rpd-slm-btn"
+                    >
+                      <i class="pi pi-download"></i>
+                      <span>{{ 'lab_3d.export_rpd_slm' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -1983,6 +2156,24 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   recommendedGraftVolumeMm3 = computed(() => Math.round(this.defectVolumeMm3() * 1.15 * 10) / 10);
   hasGbrSafetyWarning = computed(() => this.gbrScrews().some(s => s.hasSafetyCorridorViolation || s.nerveClearanceMm < 2.0 || s.boneClearanceMm < 1.5));
 
+  // AI 3D Removable Partial Denture (RPD) Framework & Clasp Surveyor Signals (v11.3.0)
+  isRpdActive = signal<boolean>(false);
+  selectedArch = signal<'Maxillary' | 'Mandibular'>('Mandibular');
+  selectedKennedy = signal<'ClassI' | 'ClassII' | 'ClassIII' | 'ClassIV'>('ClassII');
+  selectedMajorConnector = signal<'PalatalStrap' | 'Horseshoe' | 'LingualBar' | 'LingualPlate'>('LingualBar');
+  majorConnectorThicknessMm = signal<number>(1.2);
+  floorOfMouthDepthMm = signal<number>(8.5);
+  tiltBuccolingualDeg = signal<number>(2.5);
+  tiltMesiodistalDeg = signal<number>(-1.5);
+  rpdClasps = signal<RpdClaspAssembly[]>([
+    { toothFdi: '35', claspType: 'Akers', restSeatType: 'Occlusal', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true },
+    { toothFdi: '47', claspType: 'Akers', restSeatType: 'Occlusal', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true },
+    { toothFdi: '44', claspType: 'RoachIBar', restSeatType: 'Cingulum', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true }
+  ]);
+  isSavingRpd = signal<boolean>(false);
+  savedRpd = signal<RpdSurveyorPlan | null>(null);
+  hasTissueImpingementWarning = computed(() => this.selectedArch() === 'Mandibular' && this.selectedMajorConnector() === 'LingualBar' && this.floorOfMouthDepthMm() < 7.0);
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -2004,6 +2195,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private fusionGroup: THREE.Group = new THREE.Group();
   private alignerGroup: THREE.Group = new THREE.Group();
   private gbrGroup: THREE.Group = new THREE.Group();
+  private rpdGroup: THREE.Group = new THREE.Group();
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -2134,6 +2326,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.gbrGroup = new THREE.Group();
     this.scene.add(this.gbrGroup);
 
+    // AI 3D Removable Partial Denture Framework Group (v11.3.0)
+    this.rpdGroup = new THREE.Group();
+    this.scene.add(this.rpdGroup);
+
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     this.camera.position.set(0, 20, 50);
@@ -2236,6 +2432,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       this.loadFusionForOrder(orderId);
       this.loadAlignerForOrder(orderId);
       this.loadGbrForOrder(orderId);
+      this.loadRpdForOrder(orderId);
     }
 
     this.telemetry.set({
@@ -2504,6 +2701,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isGbrActive()) {
         this.toggleGbr();
       }
+      if (this.isRpdActive()) {
+        this.toggleRpd();
+      }
     } else {
       this.clearCaliper();
     }
@@ -2746,6 +2946,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isGbrActive()) {
         this.toggleGbr();
       }
+      if (this.isRpdActive()) {
+        this.toggleRpd();
+      }
       this.applyHeatmapToMesh();
     } else {
       this.revertHeatmapFromMesh();
@@ -2976,6 +3179,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       }
       if (this.isGbrActive()) {
         this.toggleGbr();
+      }
+      if (this.isRpdActive()) {
+        this.toggleRpd();
       }
       this.rebuildArticulatorMesh();
     } else {
@@ -3220,6 +3426,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
       if (this.isGbrActive()) this.toggleGbr();
+      if (this.isRpdActive()) this.toggleRpd();
       this.autoTraceMargin();
     } else {
       this.clearMargin();
@@ -3400,6 +3607,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
       if (this.isGbrActive()) this.toggleGbr();
+      if (this.isRpdActive()) this.toggleRpd();
       this.generateCamGCode();
     } else {
       this.clearCamToolpaths();
@@ -3671,6 +3879,7 @@ M30 ; Program End`,
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
       if (this.isGbrActive()) this.toggleGbr();
+      if (this.isRpdActive()) this.toggleRpd();
       this.rebuildSurgicalGuideVisuals();
     } else {
       this.clearSurgicalGuide();
@@ -3947,6 +4156,7 @@ M30 ; Program End`,
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
       if (this.isGbrActive()) this.toggleGbr();
+      if (this.isRpdActive()) this.toggleRpd();
       this.rebuildCrownVisuals();
     } else {
       this.clearCrownVisuals();
@@ -4143,6 +4353,7 @@ M30 ; Program End`,
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isAlignerActive()) this.toggleAligner();
       if (this.isGbrActive()) this.toggleGbr();
+      if (this.isRpdActive()) this.toggleRpd();
       this.rebuildFusionVisuals();
     } else {
       this.clearFusionVisuals();
@@ -4346,6 +4557,7 @@ M30 ; Program End`,
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isGbrActive()) this.toggleGbr();
+      if (this.isRpdActive()) this.toggleRpd();
       this.rebuildAlignerVisuals();
     } else {
       this.clearAlignerVisuals();
@@ -4538,6 +4750,7 @@ M30 ; Program End`,
       if (this.isCrownActive()) this.toggleCrown();
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isRpdActive()) this.toggleRpd();
       this.rebuildGbrVisuals();
     } else {
       this.clearGbrVisuals();
@@ -4752,6 +4965,241 @@ M30 ; Program End`,
     });
   }
 
+  // --- Release v11.3.0 AI 3D Removable Partial Denture (RPD) Framework & Clasp Surveyor Methods ---
+
+  toggleRpd(): void {
+    const next = !this.isRpdActive();
+    this.isRpdActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) this.toggleCaliper();
+      if (this.isHeatmapActive()) this.toggleHeatmap();
+      if (this.isArticulatorActive()) this.toggleArticulator();
+      if (this.isMarginActive()) this.toggleMargin();
+      if (this.isCamActive()) this.toggleCam();
+      if (this.isGuideActive()) this.toggleGuide();
+      if (this.isCrownActive()) this.toggleCrown();
+      if (this.isFusionActive()) this.toggleFusion();
+      if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isGbrActive()) this.toggleGbr();
+      this.rebuildRpdVisuals();
+    } else {
+      this.clearRpdVisuals();
+    }
+  }
+
+  setArch(arch: 'Maxillary' | 'Mandibular'): void {
+    this.selectedArch.set(arch);
+    if (arch === 'Mandibular' && (this.selectedMajorConnector() === 'PalatalStrap' || this.selectedMajorConnector() === 'Horseshoe')) {
+      this.selectedMajorConnector.set('LingualBar');
+    } else if (arch === 'Maxillary' && (this.selectedMajorConnector() === 'LingualBar' || this.selectedMajorConnector() === 'LingualPlate')) {
+      this.selectedMajorConnector.set('PalatalStrap');
+    }
+    if (this.isRpdActive()) {
+      this.rebuildRpdVisuals();
+    }
+  }
+
+  setKennedy(kennedy: 'ClassI' | 'ClassII' | 'ClassIII' | 'ClassIV'): void {
+    this.selectedKennedy.set(kennedy);
+    if (this.isRpdActive()) {
+      this.rebuildRpdVisuals();
+    }
+  }
+
+  setMajorConnector(conn: 'PalatalStrap' | 'Horseshoe' | 'LingualBar' | 'LingualPlate'): void {
+    this.selectedMajorConnector.set(conn);
+    if (this.isRpdActive()) {
+      this.rebuildRpdVisuals();
+    }
+  }
+
+  adjustFloorDepth(delta: number): void {
+    this.floorOfMouthDepthMm.update(v => Math.round(Math.max(3.0, Math.min(15.0, v + delta)) * 10) / 10);
+    if (this.isRpdActive()) {
+      this.rebuildRpdVisuals();
+    }
+  }
+
+  rebuildRpdVisuals(): void {
+    if (!this.rpdGroup) {
+      this.rpdGroup = new THREE.Group();
+      if (this.scene) this.scene.add(this.rpdGroup);
+    }
+    this.clearRpdVisuals();
+
+    const arch = this.selectedArch();
+    const thickness = this.majorConnectorThicknessMm();
+    const tiltBL = this.tiltBuccolingualDeg();
+    const tiltMD = this.tiltMesiodistalDeg();
+    const clasps = this.rpdClasps();
+
+    // 1. Major Connector Curvilinear Band (Cobalt-Chromium luster)
+    const isMax = arch === 'Maxillary';
+    const connectorRadius = isMax ? 13.0 : 11.0;
+    const connectorArc = isMax ? Math.PI * 0.75 : Math.PI * 0.60;
+    const connectorGeo = new THREE.TorusGeometry(connectorRadius, thickness * 0.75, 16, 32, connectorArc);
+    const connectorMat = new THREE.MeshStandardMaterial({
+      color: 0x9333ea, // royal purple Co-Cr
+      roughness: 0.20,
+      metalness: 0.85,
+      side: THREE.DoubleSide
+    });
+    const connectorMesh = new THREE.Mesh(connectorGeo, connectorMat);
+    connectorMesh.rotation.x = Math.PI / 2;
+    connectorMesh.position.set(0, isMax ? 2.5 : -1.5, 0);
+    this.rpdGroup.add(connectorMesh);
+
+    // 2. Path of Insertion Surveyor Spindle Rod
+    const spindleGeo = new THREE.CylinderGeometry(0.35, 0.35, 18.0, 16);
+    const spindleMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      roughness: 0.3,
+      metalness: 0.7,
+      transparent: true,
+      opacity: 0.8
+    });
+    const spindleMesh = new THREE.Mesh(spindleGeo, spindleMat);
+    spindleMesh.rotation.z = THREE.MathUtils.degToRad(tiltMD);
+    spindleMesh.rotation.x = THREE.MathUtils.degToRad(tiltBL);
+    spindleMesh.position.set(0, 7.0, 0);
+    this.rpdGroup.add(spindleMesh);
+
+    // 3. Rest Seats & Retentive Clasps
+    clasps.forEach((clasp, idx) => {
+      const angle = (idx - (clasps.length - 1) / 2) * 0.65;
+      const posX = Math.sin(angle) * (connectorRadius + 3.0);
+      const posZ = Math.cos(angle) * (connectorRadius + 3.0);
+
+      // Occlusal/Cingulum Rest Seat (Golden spoon)
+      const restGeo = new THREE.SphereGeometry(1.0, 16, 16);
+      const restMat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.3, metalness: 0.9 });
+      const restMesh = new THREE.Mesh(restGeo, restMat);
+      restMesh.scale.set(1.1, 0.5, 0.9);
+      restMesh.position.set(posX, 1.8, posZ);
+      this.rpdGroup.add(restMesh);
+
+      // Circumferential/Infrabulge Clasp Ring
+      const claspGeo = new THREE.TorusGeometry(1.8, 0.35, 12, 24, Math.PI * 1.1);
+      const claspMat = new THREE.MeshStandardMaterial({
+        color: clasp.claspType === 'Akers' ? 0xc084fc : 0x22d3ee,
+        roughness: 0.25,
+        metalness: 0.85
+      });
+      const claspMesh = new THREE.Mesh(claspGeo, claspMat);
+      claspMesh.position.set(posX, 1.2, posZ);
+      claspMesh.rotation.x = Math.PI / 2;
+      this.rpdGroup.add(claspMesh);
+    });
+  }
+
+  clearRpdVisuals(): void {
+    if (!this.rpdGroup) return;
+    while (this.rpdGroup.children.length > 0) {
+      const obj = this.rpdGroup.children[0];
+      this.rpdGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+  }
+
+  saveRpdPlan(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingRpd.set(true);
+
+    const req: SaveRpdPlanRequest = {
+      arch: this.selectedArch(),
+      kennedyClassification: this.selectedKennedy(),
+      tiltBuccolingualDeg: this.tiltBuccolingualDeg(),
+      tiltMesiodistalDeg: this.tiltMesiodistalDeg(),
+      majorConnectorType: this.selectedMajorConnector(),
+      majorConnectorThicknessMm: this.majorConnectorThicknessMm(),
+      floorOfMouthDepthMm: this.floorOfMouthDepthMm(),
+      isFabricationApproved: !this.hasTissueImpingementWarning(),
+      clasps: this.rpdClasps()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveRpdPlan(orderId, req).subscribe({
+        next: (plan) => {
+          this.savedRpd.set(plan);
+          this.selectedArch.set(plan.arch);
+          this.selectedKennedy.set(plan.kennedyClassification);
+          this.selectedMajorConnector.set(plan.majorConnectorType);
+          this.majorConnectorThicknessMm.set(plan.majorConnectorThicknessMm);
+          this.floorOfMouthDepthMm.set(plan.floorOfMouthDepthMm);
+          this.tiltBuccolingualDeg.set(plan.tiltBuccolingualDeg);
+          this.tiltMesiodistalDeg.set(plan.tiltMesiodistalDeg);
+          if (plan.clasps && plan.clasps.length > 0) {
+            this.rpdClasps.set(plan.clasps);
+          }
+          this.isSavingRpd.set(false);
+          this.rebuildRpdVisuals();
+        },
+        error: () => {
+          this.isSavingRpd.set(false);
+        }
+      });
+    } else {
+      this.isSavingRpd.set(false);
+    }
+  }
+
+  exportRpdSlm(): void {
+    const plan = this.savedRpd() || {
+      orderId: this.order()?.id || 'LAB-CURRENT',
+      patientId: 'pat-seed',
+      arch: this.selectedArch(),
+      kennedyClassification: this.selectedKennedy(),
+      tiltBuccolingualDeg: this.tiltBuccolingualDeg(),
+      tiltMesiodistalDeg: this.tiltMesiodistalDeg(),
+      majorConnectorType: this.selectedMajorConnector(),
+      majorConnectorThicknessMm: this.majorConnectorThicknessMm(),
+      floorOfMouthDepthMm: this.floorOfMouthDepthMm(),
+      hasTissueImpingementWarning: this.hasTissueImpingementWarning(),
+      isFabricationApproved: !this.hasTissueImpingementWarning(),
+      statusMessage: 'RPD SLM framework exported.',
+      clasps: this.rpdClasps(),
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    const json = JSON.stringify(plan, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `RPD_Framework_${plan.orderId}_${plan.arch}_${plan.kennedyClassification}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  loadRpdForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getRpdPlan(orderId).subscribe({
+      next: (plan) => {
+        if (plan) {
+          this.savedRpd.set(plan);
+          this.selectedArch.set(plan.arch);
+          this.selectedKennedy.set(plan.kennedyClassification);
+          this.selectedMajorConnector.set(plan.majorConnectorType);
+          this.majorConnectorThicknessMm.set(plan.majorConnectorThicknessMm);
+          this.floorOfMouthDepthMm.set(plan.floorOfMouthDepthMm);
+          this.tiltBuccolingualDeg.set(plan.tiltBuccolingualDeg);
+          this.tiltMesiodistalDeg.set(plan.tiltMesiodistalDeg);
+          if (plan.clasps && plan.clasps.length > 0) {
+            this.rpdClasps.set(plan.clasps);
+          }
+          if (this.isRpdActive()) {
+            this.rebuildRpdVisuals();
+          }
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -4807,6 +5255,11 @@ M30 ; Program End`,
     this.clearGbrVisuals();
     if (this.gbrGroup && this.scene) {
       this.scene.remove(this.gbrGroup);
+    }
+
+    this.clearRpdVisuals();
+    if (this.rpdGroup && this.scene) {
+      this.scene.remove(this.rpdGroup);
     }
 
     if (this.mesh) {

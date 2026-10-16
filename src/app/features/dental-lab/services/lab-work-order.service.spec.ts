@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest, AlignerPlan, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, SaveGbrMeshPlanRequest } from './lab-work-order.service';
+import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest, AlignerPlan, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, SaveGbrMeshPlanRequest, RpdSurveyorPlan, SaveRpdPlanRequest } from './lab-work-order.service';
 import { environment } from '../../../../environments/environment';
 
 describe('LabWorkOrderService (Release v8.4.0)', () => {
@@ -920,6 +920,101 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
     });
 
     const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/gbr-mesh`);
+    expect(req.request.method).toBe('POST');
+    req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+  });
+
+  it('should fetch RPD surveyor plan via getRpdPlan (v11.3.0)', (done) => {
+    service.getRpdPlan('lab-1').subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.arch).toBe('Mandibular');
+      expect(plan.kennedyClassification).toBe('ClassII');
+      expect(plan.tiltBuccolingualDeg).toBe(2.5);
+      expect(plan.majorConnectorType).toBe('LingualBar');
+      expect(plan.isFabricationApproved).toBeTrue();
+      expect(plan.clasps.length).toBeGreaterThan(0);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/rpd`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      arch: 'Mandibular',
+      kennedyClassification: 'ClassII',
+      tiltBuccolingualDeg: 2.5,
+      tiltMesiodistalDeg: -1.5,
+      majorConnectorType: 'LingualBar',
+      majorConnectorThicknessMm: 1.2,
+      floorOfMouthDepthMm: 8.5,
+      hasTissueImpingementWarning: false,
+      isFabricationApproved: true,
+      statusMessage: 'RPD plan fetched.',
+      clasps: [
+        { toothFdi: '35', claspType: 'Akers', restSeatType: 'Occlusal', undercutDepthMm: 0.25, hasReciprocalArm: true, isSurveyCompliant: true }
+      ],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should persist RPD plan via saveRpdPlan (v11.3.0)', (done) => {
+    const saveReq: SaveRpdPlanRequest = {
+      arch: 'Maxillary',
+      kennedyClassification: 'ClassIII',
+      tiltBuccolingualDeg: 1.0,
+      tiltMesiodistalDeg: 0.5,
+      majorConnectorType: 'PalatalStrap',
+      majorConnectorThicknessMm: 1.2,
+      floorOfMouthDepthMm: 9.0,
+      isFabricationApproved: true
+    };
+
+    service.saveRpdPlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.arch).toBe('Maxillary');
+      expect(plan.majorConnectorType).toBe('PalatalStrap');
+      expect(plan.isFabricationApproved).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/rpd`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.arch).toBe('Maxillary');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      arch: 'Maxillary',
+      kennedyClassification: 'ClassIII',
+      tiltBuccolingualDeg: 1.0,
+      tiltMesiodistalDeg: 0.5,
+      majorConnectorType: 'PalatalStrap',
+      majorConnectorThicknessMm: 1.2,
+      floorOfMouthDepthMm: 9.0,
+      hasTissueImpingementWarning: false,
+      isFabricationApproved: true,
+      statusMessage: 'RPD framework saved.',
+      clasps: [],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should compute fallback RPD plan and flag BR-RPD-02 warning on floor of mouth impingement', (done) => {
+    const saveReq: SaveRpdPlanRequest = {
+      arch: 'Mandibular',
+      majorConnectorType: 'LingualBar',
+      floorOfMouthDepthMm: 5.2
+    };
+
+    service.saveRpdPlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.hasTissueImpingementWarning).toBeTrue();
+      expect(plan.isFabricationApproved).toBeFalse();
+      expect(plan.statusMessage).toContain('BR-RPD-02 WARNING');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/rpd`);
     expect(req.request.method).toBe('POST');
     req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
   });
