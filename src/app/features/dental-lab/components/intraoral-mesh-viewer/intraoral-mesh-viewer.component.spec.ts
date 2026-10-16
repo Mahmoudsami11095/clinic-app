@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabWorkOrderService } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide } from '../../services/lab-work-order.service';
 
 describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
@@ -757,6 +757,141 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     component.downloadGCodeFile();
 
     expect(anchorSpy.download).toContain('.nc');
+    expect(anchorSpy.click).toHaveBeenCalled();
+  });
+
+  // --- Release v10.1.0: 3D Implant Surgical Guide & Stent Generator Tests ---
+
+  it('should toggle surgical guide mode and enforce mutual exclusivity across analysis modes', () => {
+    // Activate other modes first
+    component.isCaliperActive.set(true);
+    component.isCamActive.set(true);
+    expect(component.isGuideActive()).toBeFalse();
+
+    component.toggleGuide();
+    expect(component.isGuideActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+    expect(component.isHeatmapActive()).toBeFalse();
+    expect(component.isArticulatorActive()).toBeFalse();
+    expect(component.isMarginActive()).toBeFalse();
+    expect(component.isCamActive()).toBeFalse();
+
+    component.toggleGuide();
+    expect(component.isGuideActive()).toBeFalse();
+  });
+
+  it('should update sleeve telemetry when switching implant systems', () => {
+    component.setGuideImplantSystem('StraumannBLX');
+    expect(component.guideImplantSystem()).toBe('StraumannBLX');
+    expect(component.guideSleeveDiameter()).toBe(4.8);
+    expect(component.guideSleeveInnerDiameter()).toBe(4.0);
+    expect(component.guideDrillOffset()).toBe(10.0);
+
+    component.setGuideImplantSystem('ZimmerTSV');
+    expect(component.guideImplantSystem()).toBe('ZimmerTSV');
+    expect(component.guideSleeveDiameter()).toBe(5.2);
+    expect(component.guideSleeveInnerDiameter()).toBe(4.4);
+    expect(component.guideDrillOffset()).toBe(9.0);
+
+    component.setGuideImplantSystem('NobelActive');
+    expect(component.guideImplantSystem()).toBe('NobelActive');
+    expect(component.guideSleeveDiameter()).toBe(5.0);
+    expect(component.guideSleeveInnerDiameter()).toBe(4.2);
+    expect(component.guideDrillOffset()).toBe(9.0);
+  });
+
+  it('should clamp and adjust angulation within anatomical limits', () => {
+    // Bucco-Lingual [-15, +15]
+    component.adjustGuideAngle('BL', 5);
+    expect(component.guideBuccoLingualAngle()).toBe(5.0);
+    component.adjustGuideAngle('BL', 20);
+    expect(component.guideBuccoLingualAngle()).toBe(15.0);
+    component.adjustGuideAngle('BL', -40);
+    expect(component.guideBuccoLingualAngle()).toBe(-15.0);
+
+    // Mesio-Distal [-10, +10]
+    component.adjustGuideAngle('MD', -5);
+    expect(component.guideMesioDistalAngle()).toBe(-5.0);
+    component.adjustGuideAngle('MD', -10);
+    expect(component.guideMesioDistalAngle()).toBe(-10.0);
+    component.adjustGuideAngle('MD', 30);
+    expect(component.guideMesioDistalAngle()).toBe(10.0);
+  });
+
+  it('should adjust drill offset within valid limits', () => {
+    component.guideDrillOffset.set(9.0);
+    component.adjustGuideOffset(1.0);
+    expect(component.guideDrillOffset()).toBe(10.0);
+    component.adjustGuideOffset(-10.0);
+    expect(component.guideDrillOffset()).toBe(7.0); // clamped at 7.0 min
+  });
+
+  it('should toggle seating inspection window', () => {
+    expect(component.guideHasInspectionWindow()).toBeTrue();
+    component.toggleGuideInspectionWindow();
+    expect(component.guideHasInspectionWindow()).toBeFalse();
+    component.toggleGuideInspectionWindow();
+    expect(component.guideHasInspectionWindow()).toBeTrue();
+  });
+
+  it('should flag safety warning when clearance is below 2.0 mm (BR-SG-01)', () => {
+    component.guideSafetyClearance.set(3.4);
+    expect(component.hasGuideSafetyWarning()).toBeFalse();
+
+    component.guideSafetyClearance.set(1.8);
+    expect(component.hasGuideSafetyWarning()).toBeTrue();
+
+    component.guideSafetyClearance.set(2.0);
+    expect(component.hasGuideSafetyWarning()).toBeFalse();
+  });
+
+  it('should save surgical guide plan via labWorkOrderService', () => {
+    const mockGuide: ImplantSurgicalGuide = {
+      orderId: 'lab-test-01',
+      implantSystem: 'StraumannBLX',
+      sleeveDiameterMm: 4.8,
+      sleeveInnerDiameterMm: 4.0,
+      sleeveHeightMm: 5.0,
+      drillOffsetMm: 10.0,
+      buccoLingualAngleDeg: 2.0,
+      mesioDistalAngleDeg: 1.0,
+      stentWallThicknessMm: 2.5,
+      safetyClearanceMm: 3.2,
+      hasInspectionWindow: true,
+      hasSafetyWarning: false,
+      statusMessage: 'Surgical guide approved.',
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'saveSurgicalGuide').and.returnValue(of(mockGuide));
+
+    component.setGuideImplantSystem('StraumannBLX');
+    component.saveSurgicalGuidePlan();
+
+    expect(labService.saveSurgicalGuide).toHaveBeenCalled();
+    expect(component.savedGuide()).toEqual(mockGuide);
+    expect(component.isSavingGuide()).toBeFalse();
+  });
+
+  it('should export surgical guide manufacturing dossier JSON (BR-SG-04)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+
+    const anchorSpy = jasmine.createSpyObj('HTMLAnchorElement', ['click']);
+    anchorSpy.download = '';
+    spyOn(document, 'createElement').and.callFake((tagName: string) => {
+      if (tagName === 'a') return anchorSpy as any;
+      return document.createElement(tagName);
+    });
+    spyOn(document.body, 'appendChild').and.stub();
+    spyOn(document.body, 'removeChild').and.stub();
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/guide-dossier');
+    spyOn(URL, 'revokeObjectURL').and.stub();
+
+    component.exportGuideDossier();
+
+    expect(anchorSpy.download).toContain('SurgicalGuide_lab-test-01_');
+    expect(anchorSpy.download).toContain('.json');
     expect(anchorSpy.click).toHaveBeenCalled();
   });
 });

@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest } from './lab-work-order.service';
+import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest } from './lab-work-order.service';
+import { environment } from '../../../../environments/environment';
 
 describe('LabWorkOrderService (Release v8.4.0)', () => {
   let service: LabWorkOrderService;
@@ -455,13 +456,113 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       estimatedMillingMinutes: 12.0,
       totalGCodeLines: 950,
       totalToolpathLengthMm: 140.2,
-      burChangeCount: 3,
       marginProtectionEnforced: true,
       statusMessage: 'PMMA 5-axis toolpath generated with wet coolant.',
       gcodeContent: '%\nM08 (COOLANT FLOOD ON)\nM30\n%',
       layers: [],
       generatedAtUtc: new Date().toISOString()
     });
+  });
+
+  it('should fetch implant surgical guide plan via getSurgicalGuide (v10.1.0)', (done) => {
+    service.getSurgicalGuide('lab-1').subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.implantSystem).toBe('NobelActive');
+      expect(res.sleeveDiameterMm).toBe(5.0);
+      expect(res.drillOffsetMm).toBe(9.0);
+      expect(res.safetyClearanceMm).toBe(3.4);
+      expect(res.hasSafetyWarning).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/labworkorders/lab-1/surgical-guide`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      implantSystem: 'NobelActive',
+      sleeveDiameterMm: 5.0,
+      sleeveInnerDiameterMm: 4.2,
+      sleeveHeightMm: 5.0,
+      drillOffsetMm: 9.0,
+      buccoLingualAngleDeg: 0.0,
+      mesioDistalAngleDeg: 0.0,
+      stentWallThicknessMm: 2.5,
+      safetyClearanceMm: 3.4,
+      hasInspectionWindow: true,
+      hasSafetyWarning: false,
+      statusMessage: 'Implant surgical guide plan active (NobelActive). Anatomical clearance: 3.4 mm.',
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should fallback to default surgical guide on HTTP error in getSurgicalGuide', (done) => {
+    service.getSurgicalGuide('lab-fallback-1').subscribe(res => {
+      expect(res.orderId).toBe('lab-fallback-1');
+      expect(res.implantSystem).toBe('NobelActive');
+      expect(res.safetyClearanceMm).toBe(3.4);
+      expect(res.hasSafetyWarning).toBeFalse();
+      expect(res.hasInspectionWindow).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/labworkorders/lab-fallback-1/surgical-guide`);
+    expect(req.request.method).toBe('GET');
+    req.flush('Error fetching guide', { status: 500, statusText: 'Server Error' });
+  });
+
+  it('should save implant surgical guide plan via saveSurgicalGuide (v10.1.0)', (done) => {
+    const saveReq: SaveImplantSurgicalGuideRequest = {
+      implantSystem: 'StraumannBLX',
+      sleeveDiameterMm: 4.8,
+      sleeveInnerDiameterMm: 4.0,
+      sleeveHeightMm: 5.0,
+      drillOffsetMm: 10.0,
+      buccoLingualAngleDeg: 4.5,
+      mesioDistalAngleDeg: -2.0,
+      stentWallThicknessMm: 2.8,
+      safetyClearanceMm: 3.1,
+      hasInspectionWindow: true
+    };
+
+    service.saveSurgicalGuide('lab-1', saveReq).subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.implantSystem).toBe('StraumannBLX');
+      expect(res.drillOffsetMm).toBe(10.0);
+      expect(res.safetyClearanceMm).toBe(3.1);
+      expect(res.hasSafetyWarning).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/labworkorders/lab-1/surgical-guide`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.implantSystem).toBe('StraumannBLX');
+    req.flush({
+      orderId: 'lab-1',
+      ...saveReq,
+      hasSafetyWarning: false,
+      statusMessage: 'Surgical guide approved (StraumannBLX). Titanium master sleeve ⌀4.8 mm, offset 10.0 mm. Anatomical safety clearance: 3.1 mm.',
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should compute offline fallback and enforce BR-SG-01 in saveSurgicalGuide on HTTP error', (done) => {
+    const saveReq: SaveImplantSurgicalGuideRequest = {
+      implantSystem: 'NobelActive',
+      safetyClearanceMm: 1.5,
+      stentWallThicknessMm: 2.0 // Below 2.5 mm clamp
+    };
+
+    service.saveSurgicalGuide('lab-1', saveReq).subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.hasSafetyWarning).toBeTrue();
+      expect(res.statusMessage).toContain('BR-SG-01 WARNING');
+      expect(res.stentWallThicknessMm).toBe(2.5); // Clamped to 2.5 mm
+      done();
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/labworkorders/lab-1/surgical-guide`);
+    expect(req.request.method).toBe('POST');
+    req.flush('Error saving guide', { status: 500, statusText: 'Server Error' });
   });
 });
 

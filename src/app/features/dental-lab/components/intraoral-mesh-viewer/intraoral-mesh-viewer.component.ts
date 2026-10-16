@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -242,6 +242,26 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.cam_btn' | translate }}</span>
                 @if (isCamActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse bg-cyan-400"></span>
+                }
+              </button>
+
+              <!-- 3D Implant Surgical Guide & Stent Generator Toggle (v10.1.0) -->
+              <button
+                type="button"
+                (click)="toggleGuide()"
+                [class.bg-amber-600]="isGuideActive()"
+                [class.text-white]="isGuideActive()"
+                [class.border-amber-400]="isGuideActive()"
+                [class.bg-slate-800]="!isGuideActive()"
+                [class.text-slate-300]="!isGuideActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_guide' | translate"
+                id="toggle-guide-btn"
+              >
+                <i class="pi pi-shield text-xs"></i>
+                <span>{{ 'lab_3d.guide_btn' | translate }}</span>
+                @if (isGuideActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasGuideSafetyWarning()" [class.bg-rose-400]="hasGuideSafetyWarning()"></span>
                 }
               </button>
 
@@ -920,6 +940,176 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- 3D Implant Surgical Guide & Stent Generator HUD Panel (Release v10.1.0) -->
+            @if (isGuideActive()) {
+              <div
+                class="absolute top-20 start-6 w-84 z-20 pointer-events-auto animate-fade-in"
+                id="guide-control-panel"
+              >
+                <div class="bg-slate-950/90 border border-amber-500/40 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl space-y-3">
+                  <!-- Header & Status -->
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <i class="pi pi-shield text-amber-400"></i>
+                      <span>{{ 'lab_3d.guide_title' | translate }}</span>
+                    </span>
+
+                    @if (hasGuideSafetyWarning()) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-500/40 flex items-center gap-1" id="guide-safety-pill">
+                        <i class="pi pi-exclamation-triangle text-[8px]"></i>
+                        {{ 'lab_3d.guide_warning_status' | translate }}
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1" id="guide-safety-pill">
+                        <i class="pi pi-check text-[8px]"></i>
+                        {{ 'lab_3d.guide_safe_status' | translate }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Implant System Preset Selector -->
+                  <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      {{ 'lab_3d.implant_system' | translate }}
+                    </label>
+                    <div class="grid grid-cols-3 gap-1.5">
+                      <button
+                        type="button"
+                        (click)="setGuideImplantSystem('NobelActive')"
+                        [class.bg-amber-600]="guideImplantSystem() === 'NobelActive'"
+                        [class.text-white]="guideImplantSystem() === 'NobelActive'"
+                        [class.border-amber-400]="guideImplantSystem() === 'NobelActive'"
+                        [class.bg-slate-900]="guideImplantSystem() !== 'NobelActive'"
+                        [class.text-slate-300]="guideImplantSystem() !== 'NobelActive'"
+                        class="py-1 px-2 rounded-lg text-[10px] font-bold border border-slate-800 transition-all cursor-pointer text-center"
+                        id="guide-system-nobel-btn"
+                      >
+                        {{ 'lab_3d.guide_preset_nobel' | translate }}
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="setGuideImplantSystem('StraumannBLX')"
+                        [class.bg-amber-600]="guideImplantSystem() === 'StraumannBLX'"
+                        [class.text-white]="guideImplantSystem() === 'StraumannBLX'"
+                        [class.border-amber-400]="guideImplantSystem() === 'StraumannBLX'"
+                        [class.bg-slate-900]="guideImplantSystem() !== 'StraumannBLX'"
+                        [class.text-slate-300]="guideImplantSystem() !== 'StraumannBLX'"
+                        class="py-1 px-2 rounded-lg text-[10px] font-bold border border-slate-800 transition-all cursor-pointer text-center"
+                        id="guide-system-straumann-btn"
+                      >
+                        {{ 'lab_3d.guide_preset_straumann' | translate }}
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="setGuideImplantSystem('ZimmerTSV')"
+                        [class.bg-amber-600]="guideImplantSystem() === 'ZimmerTSV'"
+                        [class.text-white]="guideImplantSystem() === 'ZimmerTSV'"
+                        [class.border-amber-400]="guideImplantSystem() === 'ZimmerTSV'"
+                        [class.bg-slate-900]="guideImplantSystem() !== 'ZimmerTSV'"
+                        [class.text-slate-300]="guideImplantSystem() !== 'ZimmerTSV'"
+                        class="py-1 px-2 rounded-lg text-[10px] font-bold border border-slate-800 transition-all cursor-pointer text-center"
+                        id="guide-system-zimmer-btn"
+                      >
+                        {{ 'lab_3d.guide_preset_zimmer' | translate }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Telemetry Grid -->
+                  <div class="grid grid-cols-3 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-0.5">
+                      <span class="text-slate-400 block">{{ 'lab_3d.sleeve_outer_diameter' | translate }}</span>
+                      <span class="font-mono text-amber-300 font-bold text-xs" id="guide-sleeve-val">⌀{{ guideSleeveDiameter().toFixed(1) }} mm</span>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-0.5">
+                      <span class="text-slate-400 block">{{ 'lab_3d.drill_offset' | translate }}</span>
+                      <span class="font-mono text-amber-300 font-bold text-xs" id="guide-offset-val">{{ guideDrillOffset().toFixed(1) }} mm</span>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-0.5">
+                      <span class="text-slate-400 block">{{ 'lab_3d.safety_clearance' | translate }}</span>
+                      <span class="font-mono font-bold text-xs" [class.text-rose-400]="hasGuideSafetyWarning()" [class.text-emerald-300]="!hasGuideSafetyWarning()" id="guide-clearance-val">{{ guideSafetyClearance().toFixed(1) }} mm</span>
+                    </div>
+                  </div>
+
+                  <!-- Angulation Controls (BL & MD) -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.buccolingual_angle' | translate }}</span>
+                        <strong class="text-white">{{ guideBuccoLingualAngle() }}°</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustGuideAngle('BL', -2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">-2°</button>
+                        <button type="button" (click)="adjustGuideAngle('BL', 2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">+2°</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.mesiodistal_angle' | translate }}</span>
+                        <strong class="text-white">{{ guideMesioDistalAngle() }}°</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustGuideAngle('MD', -2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">-2°</button>
+                        <button type="button" (click)="adjustGuideAngle('MD', 2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">+2°</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Inspection Window Toggle & Offset Adjustment -->
+                  <div class="flex items-center justify-between gap-2 text-[10px] bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <button
+                      type="button"
+                      (click)="toggleGuideInspectionWindow()"
+                      [class.bg-emerald-600]="guideHasInspectionWindow()"
+                      [class.text-white]="guideHasInspectionWindow()"
+                      [class.bg-slate-800]="!guideHasInspectionWindow()"
+                      [class.text-slate-400]="!guideHasInspectionWindow()"
+                      class="px-2 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer"
+                      id="guide-toggle-window-btn"
+                    >
+                      <i class="pi pi-eye text-[9px]"></i>
+                      <span>{{ 'lab_3d.inspection_window' | translate }}</span>
+                    </button>
+
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400 text-[9px]">Offset:</span>
+                      <button type="button" (click)="adjustGuideOffset(-0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">-0.5</button>
+                      <button type="button" (click)="adjustGuideOffset(0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">+0.5</button>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons: Save Plan & Export Dossier -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80 gap-2">
+                    <button
+                      type="button"
+                      (click)="saveSurgicalGuidePlan()"
+                      [disabled]="isSavingGuide()"
+                      class="flex-1 py-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      id="save-guide-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingGuide()" [class.pi-spin]="isSavingGuide()" [class.pi-spinner]="isSavingGuide()"></i>
+                      <span>{{ isSavingGuide() ? ('lab_3d.saving_surgical_guide' | translate) : ('lab_3d.save_surgical_guide' | translate) }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="exportGuideDossier()"
+                      class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      id="export-guide-btn"
+                    >
+                      <i class="pi pi-download"></i>
+                      <span>{{ 'lab_3d.export_guide_dossier' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -1132,6 +1322,22 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   isGeneratingGCode = signal<boolean>(false);
   camToolpath = signal<CamToolpathResult | null>(null);
 
+  // 3D Implant Surgical Guide & Stent Generator State Signals (v10.1.0)
+  isGuideActive = signal<boolean>(false);
+  guideImplantSystem = signal<'NobelActive' | 'StraumannBLX' | 'ZimmerTSV'>('NobelActive');
+  guideSleeveDiameter = signal<number>(5.0);
+  guideSleeveInnerDiameter = signal<number>(4.2);
+  guideSleeveHeight = signal<number>(5.0);
+  guideDrillOffset = signal<number>(9.0);
+  guideBuccoLingualAngle = signal<number>(0.0);
+  guideMesioDistalAngle = signal<number>(0.0);
+  guideStentThickness = signal<number>(2.5);
+  guideSafetyClearance = signal<number>(3.4);
+  guideHasInspectionWindow = signal<boolean>(true);
+  isSavingGuide = signal<boolean>(false);
+  savedGuide = signal<ImplantSurgicalGuide | null>(null);
+  hasGuideSafetyWarning = computed(() => this.guideSafetyClearance() < 2.0);
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -1148,6 +1354,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private controls!: OrbitControls;
   private mesh: THREE.Mesh | null = null;
   private wireframeMesh: THREE.LineSegments | null = null;
+  private guideGroup: THREE.Group = new THREE.Group();
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -1217,11 +1424,13 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.isArticulatorActive.set(false);
     this.isMarginActive.set(false);
     this.isCamActive.set(false);
+    this.isGuideActive.set(false);
     this.isExcursionPlaying.set(false);
     this.clearCaliper();
     this.clearArticulator();
     this.clearMargin();
     this.clearCamToolpaths();
+    this.clearSurgicalGuide();
   }
 
   private initThreeJs(): void {
@@ -1255,6 +1464,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     // CAM Toolpath Group (v10.0.0)
     this.camToolpathGroup = new THREE.Group();
     this.scene.add(this.camToolpathGroup);
+
+    // 3D Implant Surgical Guide Group (v10.1.0)
+    this.guideGroup = new THREE.Group();
+    this.scene.add(this.guideGroup);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -1606,6 +1819,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isCamActive()) {
         this.toggleCam();
       }
+      if (this.isGuideActive()) {
+        this.toggleGuide();
+      }
     } else {
       this.clearCaliper();
     }
@@ -1833,6 +2049,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isCamActive()) {
         this.toggleCam();
       }
+      if (this.isGuideActive()) {
+        this.toggleGuide();
+      }
       this.applyHeatmapToMesh();
     } else {
       this.revertHeatmapFromMesh();
@@ -2048,6 +2267,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       }
       if (this.isCamActive()) {
         this.toggleCam();
+      }
+      if (this.isGuideActive()) {
+        this.toggleGuide();
       }
       this.rebuildArticulatorMesh();
     } else {
@@ -2287,6 +2509,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isHeatmapActive()) this.toggleHeatmap();
       if (this.isArticulatorActive()) this.toggleArticulator();
       if (this.isCamActive()) this.toggleCam();
+      if (this.isGuideActive()) this.toggleGuide();
       this.autoTraceMargin();
     } else {
       this.clearMargin();
@@ -2462,6 +2685,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isHeatmapActive()) this.toggleHeatmap();
       if (this.isArticulatorActive()) this.toggleArticulator();
       if (this.isMarginActive()) this.toggleMargin();
+      if (this.isGuideActive()) this.toggleGuide();
       this.generateCamGCode();
     } else {
       this.clearCamToolpaths();
@@ -2718,6 +2942,278 @@ M30 ; Program End`,
     });
   }
 
+  // --- Release v10.1.0 3D Implant Surgical Guide & Stent Generator Methods ---
+
+  toggleGuide(): void {
+    const next = !this.isGuideActive();
+    this.isGuideActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) this.toggleCaliper();
+      if (this.isHeatmapActive()) this.toggleHeatmap();
+      if (this.isArticulatorActive()) this.toggleArticulator();
+      if (this.isMarginActive()) this.toggleMargin();
+      if (this.isCamActive()) this.toggleCam();
+      this.rebuildSurgicalGuideVisuals();
+    } else {
+      this.clearSurgicalGuide();
+    }
+  }
+
+  setGuideImplantSystem(system: 'NobelActive' | 'StraumannBLX' | 'ZimmerTSV'): void {
+    this.guideImplantSystem.set(system);
+    if (system === 'NobelActive') {
+      this.guideSleeveDiameter.set(5.0);
+      this.guideSleeveInnerDiameter.set(4.2);
+      this.guideDrillOffset.set(9.0);
+    } else if (system === 'StraumannBLX') {
+      this.guideSleeveDiameter.set(4.8);
+      this.guideSleeveInnerDiameter.set(4.0);
+      this.guideDrillOffset.set(10.0);
+    } else {
+      this.guideSleeveDiameter.set(5.2);
+      this.guideSleeveInnerDiameter.set(4.4);
+      this.guideDrillOffset.set(9.0);
+    }
+    if (this.isGuideActive()) {
+      this.rebuildSurgicalGuideVisuals();
+    }
+  }
+
+  adjustGuideAngle(axis: 'BL' | 'MD', delta: number): void {
+    if (axis === 'BL') {
+      this.guideBuccoLingualAngle.update(v => Math.max(-15, Math.min(15, v + delta)));
+    } else {
+      this.guideMesioDistalAngle.update(v => Math.max(-10, Math.min(10, v + delta)));
+    }
+    if (this.isGuideActive()) {
+      this.rebuildSurgicalGuideVisuals();
+    }
+  }
+
+  adjustGuideOffset(delta: number): void {
+    this.guideDrillOffset.update(v => Math.max(7.0, Math.min(14.0, Number((v + delta).toFixed(1)))));
+    if (this.isGuideActive()) {
+      this.rebuildSurgicalGuideVisuals();
+    }
+  }
+
+  toggleGuideInspectionWindow(): void {
+    this.guideHasInspectionWindow.update(v => !v);
+    if (this.isGuideActive()) {
+      this.rebuildSurgicalGuideVisuals();
+    }
+  }
+
+  rebuildSurgicalGuideVisuals(): void {
+    if (!this.guideGroup) {
+      this.guideGroup = new THREE.Group();
+      if (this.scene) this.scene.add(this.guideGroup);
+    }
+    this.clearSurgicalGuide();
+
+    const outerDia = this.guideSleeveDiameter();
+    const innerDia = this.guideSleeveInnerDiameter();
+    const sleeveHeight = this.guideSleeveHeight();
+    const offset = this.guideDrillOffset();
+    const blAngle = this.guideBuccoLingualAngle();
+    const mdAngle = this.guideMesioDistalAngle();
+    const wallThick = this.guideStentThickness();
+    const clearance = this.guideSafetyClearance();
+    const hasWindow = this.guideHasInspectionWindow();
+
+    const blRad = THREE.MathUtils.degToRad(blAngle);
+    const mdRad = THREE.MathUtils.degToRad(mdAngle);
+
+    // 1. Titanium Master Guide Sleeve (Metallic Gold Cylinder)
+    const sleeveRadius = outerDia / 2.0;
+    const sleeveGeo = new THREE.CylinderGeometry(sleeveRadius, sleeveRadius, sleeveHeight, 32);
+    const sleeveMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.85,
+      roughness: 0.25
+    });
+    const sleeveMesh = new THREE.Mesh(sleeveGeo, sleeveMat);
+    sleeveMesh.position.set(0, offset, 0);
+    sleeveMesh.rotation.x = blRad;
+    sleeveMesh.rotation.z = mdRad;
+    this.guideGroup.add(sleeveMesh);
+
+    // 2. Internal Drill Bore Hole Channel (Dark Anodized Tube)
+    const boreRadius = innerDia / 2.0;
+    const boreGeo = new THREE.CylinderGeometry(boreRadius, boreRadius, sleeveHeight + 0.2, 32);
+    const boreMat = new THREE.MeshBasicMaterial({
+      color: 0x1e293b,
+      wireframe: true
+    });
+    const boreMesh = new THREE.Mesh(boreGeo, boreMat);
+    boreMesh.position.set(0, offset, 0);
+    boreMesh.rotation.x = blRad;
+    boreMesh.rotation.z = mdRad;
+    this.guideGroup.add(boreMesh);
+
+    // 3. Biocompatible Surgical Stent Resin Envelope (Translucent Medical Cyan)
+    const stentRadius = sleeveRadius + wallThick;
+    const stentHeight = offset + sleeveHeight / 2.0;
+    const stentGeo = new THREE.CylinderGeometry(stentRadius, stentRadius + 2.0, stentHeight, 32);
+    const stentMat = new THREE.MeshPhysicalMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.35,
+      roughness: 0.2,
+      transmission: 0.5
+    });
+    const stentMesh = new THREE.Mesh(stentGeo, stentMat);
+    stentMesh.position.set(0, stentHeight / 2.0, 0);
+    this.guideGroup.add(stentMesh);
+
+    // 4. Seating Verification & Coolant Irrigation Inspection Window
+    if (hasWindow) {
+      const windowBoxGeo = new THREE.BoxGeometry(innerDia + 1.0, 4.0, stentRadius + 1.5);
+      const windowEdges = new THREE.EdgesGeometry(windowBoxGeo);
+      const windowMat = new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 });
+      const windowWireframe = new THREE.LineSegments(windowEdges, windowMat);
+      windowWireframe.position.set(0, offset - 3.0, 0);
+      this.guideGroup.add(windowWireframe);
+    }
+
+    // 5. Central Drill Trajectory Axis Line
+    const drillAxisPoints = [
+      new THREE.Vector3(0, offset + sleeveHeight, 0),
+      new THREE.Vector3(0, -12.0, 0)
+    ];
+    drillAxisPoints[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), blRad);
+    drillAxisPoints[0].applyAxisAngle(new THREE.Vector3(0, 0, 1), mdRad);
+    drillAxisPoints[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), blRad);
+    drillAxisPoints[1].applyAxisAngle(new THREE.Vector3(0, 0, 1), mdRad);
+
+    const drillAxisGeo = new THREE.BufferGeometry().setFromPoints(drillAxisPoints);
+    const drillAxisMat = new THREE.LineDashedMaterial({
+      color: 0xfbbf24,
+      dashSize: 1.0,
+      gapSize: 0.5
+    });
+    const drillAxisLine = new THREE.Line(drillAxisGeo, drillAxisMat);
+    drillAxisLine.computeLineDistances();
+    this.guideGroup.add(drillAxisLine);
+
+    // 6. Critical Anatomical Clearance Buffer Sphere (Nerve / Root Safety Zone)
+    const isWarning = this.hasGuideSafetyWarning();
+    const safetyGeo = new THREE.SphereGeometry(clearance, 16, 16);
+    const safetyMat = new THREE.MeshBasicMaterial({
+      color: isWarning ? 0xf43f5e : 0x10b981,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.5
+    });
+    const safetySphere = new THREE.Mesh(safetyGeo, safetyMat);
+    safetySphere.position.copy(drillAxisPoints[1]);
+    this.guideGroup.add(safetySphere);
+  }
+
+  clearSurgicalGuide(): void {
+    if (!this.guideGroup) return;
+    while (this.guideGroup.children.length > 0) {
+      const obj = this.guideGroup.children[0];
+      this.guideGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+  }
+
+  saveSurgicalGuidePlan(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingGuide.set(true);
+
+    const req: SaveImplantSurgicalGuideRequest = {
+      implantSystem: this.guideImplantSystem(),
+      sleeveDiameterMm: this.guideSleeveDiameter(),
+      sleeveInnerDiameterMm: this.guideSleeveInnerDiameter(),
+      sleeveHeightMm: this.guideSleeveHeight(),
+      drillOffsetMm: this.guideDrillOffset(),
+      buccoLingualAngleDeg: this.guideBuccoLingualAngle(),
+      mesioDistalAngleDeg: this.guideMesioDistalAngle(),
+      stentWallThicknessMm: this.guideStentThickness(),
+      safetyClearanceMm: this.guideSafetyClearance(),
+      hasInspectionWindow: this.guideHasInspectionWindow()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveSurgicalGuide(orderId, req).subscribe({
+        next: (guide) => {
+          this.savedGuide.set(guide);
+          this.isSavingGuide.set(false);
+          this.rebuildSurgicalGuideVisuals();
+        },
+        error: () => {
+          this.isSavingGuide.set(false);
+        }
+      });
+    } else {
+      this.isSavingGuide.set(false);
+    }
+  }
+
+  exportGuideDossier(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-ORDER';
+    const dossier = {
+      orderId,
+      implantSystem: this.guideImplantSystem(),
+      sleeveOuterDiameterMm: this.guideSleeveDiameter(),
+      sleeveInnerDiameterMm: this.guideSleeveInnerDiameter(),
+      sleeveHeightMm: this.guideSleeveHeight(),
+      drillOffsetMm: this.guideDrillOffset(),
+      buccoLingualAngleDeg: this.guideBuccoLingualAngle(),
+      mesioDistalAngleDeg: this.guideMesioDistalAngle(),
+      stentWallThicknessMm: this.guideStentThickness(),
+      safetyClearanceMm: this.guideSafetyClearance(),
+      hasInspectionWindow: this.guideHasInspectionWindow(),
+      hasSafetyWarning: this.hasGuideSafetyWarning(),
+      generatedAtUtc: new Date().toISOString(),
+      governanceRules: [
+        'BR-SG-01: Critical anatomical safety buffer clearance >= 2.0mm',
+        'BR-SG-02: Minimum surgical stent biocompatible resin wall thickness >= 2.5mm',
+        'BR-SG-03: Passive seating verification and saline irrigation inspection window active'
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(dossier, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SurgicalGuide_${orderId}_${this.guideImplantSystem()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  loadSurgicalGuideForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getSurgicalGuide(orderId).subscribe({
+      next: (guide) => {
+        if (guide) {
+          this.savedGuide.set(guide);
+          this.guideImplantSystem.set(guide.implantSystem);
+          this.guideSleeveDiameter.set(guide.sleeveDiameterMm);
+          this.guideSleeveInnerDiameter.set(guide.sleeveInnerDiameterMm);
+          this.guideDrillOffset.set(guide.drillOffsetMm);
+          this.guideBuccoLingualAngle.set(guide.buccoLingualAngleDeg);
+          this.guideMesioDistalAngle.set(guide.mesioDistalAngleDeg);
+          this.guideStentThickness.set(guide.stentWallThicknessMm);
+          this.guideSafetyClearance.set(guide.safetyClearanceMm);
+          this.guideHasInspectionWindow.set(guide.hasInspectionWindow);
+          if (this.isGuideActive()) {
+            this.rebuildSurgicalGuideVisuals();
+          }
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -2748,6 +3244,11 @@ M30 ; Program End`,
     this.clearCamToolpaths();
     if (this.camToolpathGroup && this.scene) {
       this.scene.remove(this.camToolpathGroup);
+    }
+
+    this.clearSurgicalGuide();
+    if (this.guideGroup && this.scene) {
+      this.scene.remove(this.guideGroup);
     }
 
     if (this.mesh) {
