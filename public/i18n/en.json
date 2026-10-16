@@ -1227,7 +1227,20 @@
     "export_guide_dossier": "Export Guide Dossier (.json)",
     "guide_preset_nobel": "NobelActive",
     "guide_preset_straumann": "Straumann BLX",
-    "guide_preset_zimmer": "Zimmer TSV"
+    "guide_preset_zimmer": "Zimmer TSV",
+    "crown_btn": "Crown Design",
+    "toggle_crown": "AI Dental Crown Auto-Design & Morphological Fit (v10.2.0)",
+    "crown_panel_title": "AI Crown Morphological Engine",
+    "crown_compliant": "Pass (≥1.5mm)",
+    "crown_warning": "Occlusal Warning (<1.5mm)",
+    "crown_tooth_type": "Tooth Anatomy Preset",
+    "cement_spacer": "Die Cement Spacer (BR-CROWN-01)",
+    "occlusal_reduction": "Occlusal Reduction",
+    "proximal_contact": "Proximal Contact Tension",
+    "occlusal_warning_desc": "Occlusal thickness is below 1.5 mm minimum required for Zirconia restorations.",
+    "saving_crown": "Saving Plan...",
+    "save_crown": "Save Crown Plan",
+    "send_to_cam": "Approve & Send to CAM"
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",

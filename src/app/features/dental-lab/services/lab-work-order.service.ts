@@ -242,6 +242,34 @@ export interface SaveImplantSurgicalGuideRequest {
   hasInspectionWindow?: boolean;
 }
 
+export interface CrownMorphologyPlan {
+  orderId: string;
+  toothType: 'Molar' | 'Premolar' | 'Canine' | 'Incisor';
+  cementSpacerMicrons: number;
+  marginCollarMm: number;
+  occlusalReductionMm: number;
+  proximalContactStrength: 'Tight' | 'Normal' | 'Light';
+  proximalContact?: 'Tight' | 'Normal' | 'Light';
+  cuspHeightScale: number;
+  cuspScale?: number;
+  isRestorationApproved: boolean;
+  hasOcclusalWarning: boolean;
+  statusMessage: string;
+  designedAtUtc: string;
+}
+
+export interface SaveCrownMorphologyRequest {
+  toothType?: 'Molar' | 'Premolar' | 'Canine' | 'Incisor';
+  cementSpacerMicrons?: number;
+  marginCollarMm?: number;
+  occlusalReductionMm?: number;
+  proximalContactStrength?: 'Tight' | 'Normal' | 'Light';
+  proximalContact?: 'Tight' | 'Normal' | 'Light';
+  cuspHeightScale?: number;
+  cuspScale?: number;
+  isRestorationApproved?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -884,6 +912,65 @@ export class LabWorkOrderService {
           hasSafetyWarning: hasWarning,
           statusMessage: message,
           plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  getCrownMorphology(orderId: string): Observable<CrownMorphologyPlan> {
+    return this.http.get<CrownMorphologyPlan>(`${this.apiUrl}/${orderId}/crown`).pipe(
+      catchError(() => {
+        const fallback: CrownMorphologyPlan = {
+          orderId,
+          toothType: 'Molar',
+          cementSpacerMicrons: 40,
+          marginCollarMm: 0.5,
+          occlusalReductionMm: 1.8,
+          proximalContactStrength: 'Normal',
+          proximalContact: 'Normal',
+          cuspHeightScale: 1.0,
+          cuspScale: 1.0,
+          isRestorationApproved: true,
+          hasOcclusalWarning: false,
+          statusMessage: 'Crown morphology auto-designed (Molar). Die cement spacer: 40 µm, occlusal reduction: 1.8 mm.',
+          designedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveCrownMorphology(orderId: string, request: SaveCrownMorphologyRequest): Observable<CrownMorphologyPlan> {
+    return this.http.post<CrownMorphologyPlan>(`${this.apiUrl}/${orderId}/crown`, request).pipe(
+      catchError(() => {
+        const toothType = request.toothType || 'Molar';
+        const spacer = Math.max(20, Math.min(100, request.cementSpacerMicrons ?? 40));
+        const collar = Math.max(0.5, request.marginCollarMm ?? 0.5);
+        const reduction = Math.max(1.0, request.occlusalReductionMm ?? 1.8);
+        const hasWarning = reduction < 1.5;
+        const contact = request.proximalContactStrength || request.proximalContact || 'Normal';
+        const cuspScale = Math.max(0.8, Math.min(1.2, request.cuspHeightScale ?? request.cuspScale ?? 1.0));
+        const approved = request.isRestorationApproved ?? !hasWarning;
+
+        const message = hasWarning
+          ? `BR-CROWN-03 WARNING: Occlusal reduction (${reduction.toFixed(1)} mm) is below 1.5 mm minimum required for Zirconia restorations.`
+          : `Crown morphology auto-designed (${toothType}). Cement spacer: ${spacer} µm, collar: ${collar.toFixed(1)} mm. Occlusal reduction: ${reduction.toFixed(1)} mm. Proximal contact: ${contact}.`;
+
+        const fallback: CrownMorphologyPlan = {
+          orderId,
+          toothType,
+          cementSpacerMicrons: spacer,
+          marginCollarMm: collar,
+          occlusalReductionMm: reduction,
+          proximalContactStrength: contact,
+          proximalContact: contact,
+          cuspHeightScale: cuspScale,
+          cuspScale: cuspScale,
+          isRestorationApproved: approved,
+          hasOcclusalWarning: hasWarning,
+          statusMessage: message,
+          designedAtUtc: new Date().toISOString()
         };
         return of(fallback);
       })

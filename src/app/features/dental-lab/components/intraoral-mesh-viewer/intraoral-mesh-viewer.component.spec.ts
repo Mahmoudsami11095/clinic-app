@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan } from '../../services/lab-work-order.service';
 
 describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
@@ -893,6 +893,135 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     expect(anchorSpy.download).toContain('SurgicalGuide_lab-test-01_');
     expect(anchorSpy.download).toContain('.json');
     expect(anchorSpy.click).toHaveBeenCalled();
+  });
+
+  // --- Release v10.2.0 AI Dental Crown Auto-Design & Morphological Fit Tests ---
+
+  it('should toggle crown morphology mode and enforce mutual exclusivity across all other modes (REQ-CROWN-01)', () => {
+    // 1. Caliper vs Crown
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    // 2. Heatmap vs Crown
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+
+    // 3. Articulator vs Crown
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isArticulatorActive()).toBeFalse();
+
+    // 4. Margin vs Crown
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isMarginActive()).toBeFalse();
+
+    // 5. CAM vs Crown
+    component.toggleCam();
+    expect(component.isCamActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    // 6. Guide vs Crown
+    component.toggleGuide();
+    expect(component.isGuideActive()).toBeTrue();
+    expect(component.isCrownActive()).toBeFalse();
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isGuideActive()).toBeFalse();
+  });
+
+  it('should select crown tooth type and trigger visual rebuild (REQ-CROWN-02)', () => {
+    component.toggleCrown();
+    expect(component.crownToothType()).toBe('Molar');
+
+    component.selectCrownToothType('Premolar');
+    expect(component.crownToothType()).toBe('Premolar');
+
+    component.selectCrownToothType('Canine');
+    expect(component.crownToothType()).toBe('Canine');
+
+    component.selectCrownToothType('Incisor');
+    expect(component.crownToothType()).toBe('Incisor');
+  });
+
+  it('should adjust occlusal reduction and compute occlusal warning (BR-CROWN-03)', () => {
+    component.toggleCrown();
+    component.crownOcclusalReduction.set(1.8);
+    expect(component.hasOcclusalWarning()).toBeFalse();
+
+    // Reduce by 0.4 -> 1.4 mm triggers occlusal reduction warning (< 1.5 mm)
+    component.adjustOcclusalReduction(-0.4);
+    expect(component.crownOcclusalReduction()).toBe(1.4);
+    expect(component.hasOcclusalWarning()).toBeTrue();
+
+    // Increase by 0.2 -> 1.6 mm restores compliance
+    component.adjustOcclusalReduction(0.2);
+    expect(component.crownOcclusalReduction()).toBe(1.6);
+    expect(component.hasOcclusalWarning()).toBeFalse();
+  });
+
+  it('should change cement spacer within clinical tolerance (BR-CROWN-01)', () => {
+    component.toggleCrown();
+    expect(component.crownCementSpacer()).toBe(40);
+
+    const mockEvent = { target: { value: '55' } } as unknown as Event;
+    component.onCementSpacerChange(mockEvent);
+    expect(component.crownCementSpacer()).toBe(55);
+  });
+
+  it('should save crown design via labWorkOrderService (BR-CROWN-02)', () => {
+    const mockPlan: CrownMorphologyPlan = {
+      orderId: 'lab-test-01',
+      toothType: 'Molar',
+      cementSpacerMicrons: 40,
+      marginCollarMm: 0.5,
+      occlusalReductionMm: 1.8,
+      proximalContactStrength: 'Normal',
+      proximalContact: 'Normal',
+      cuspHeightScale: 1.0,
+      cuspScale: 1.0,
+      isRestorationApproved: true,
+      hasOcclusalWarning: false,
+      statusMessage: 'Morphological fit compliant.',
+      designedAtUtc: new Date().toISOString()
+    };
+
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'saveCrownMorphology').and.returnValue(of(mockPlan));
+
+    component.toggleCrown();
+    component.saveCrownDesign();
+
+    expect(labService.saveCrownMorphology).toHaveBeenCalled();
+    expect(component.savedCrown()).toEqual(mockPlan);
+    expect(component.isSavingCrown()).toBeFalse();
+  });
+
+  it('should send crown to CAM milling engine seamlessly (BR-CROWN-04)', () => {
+    component.toggleCrown();
+    expect(component.isCrownActive()).toBeTrue();
+    expect(component.isCamActive()).toBeFalse();
+
+    component.sendCrownToCam();
+
+    expect(component.isCrownActive()).toBeFalse();
+    expect(component.isCamActive()).toBeTrue();
   });
 });
 
