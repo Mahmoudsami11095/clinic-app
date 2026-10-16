@@ -12,6 +12,21 @@ test.describe('Release v9.0.0 - v9.3.0: Interactive 3D Intraoral Mesh Viewer, Ca
   });
 
   async function open3DViewerInDropzone(page: Page) {
+    // Catch-all route to intercept any unmocked Azure backend requests and prevent 401 logout redirects
+    await page.route(/azurewebsites\.net/i, async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-allow-methods': 'GET, POST, OPTIONS, PUT, DELETE',
+          'access-control-allow-headers': '*',
+          'content-type': 'application/json'
+        },
+        contentType: 'application/json',
+        body: '{}'
+      });
+    });
+
     // Intercept partner order API call to provide consistent requisition metadata
     await page.route(/\/diagnostics\/orders/i, async (route) => {
       await route.fulfill({
@@ -102,6 +117,54 @@ test.describe('Release v9.0.0 - v9.3.0: Interactive 3D Intraoral Mesh Viewer, Ca
             { x: 5.1, y: 0.1, z: -4.6, index: 7 }
           ],
           evaluatedAtUtc: new Date().toISOString()
+        })
+      });
+    });
+
+    // Intercept CAM toolpath & G-code generator endpoints (v10.0.0)
+    await page.route(/\/cam/i, async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-headers': '*',
+          'content-type': 'application/json'
+        },
+        contentType: 'application/json',
+        body: JSON.stringify({
+          orderId: 'ord-123456',
+          toolpathId: 'TP-ORD-A1B2C3',
+          blankMaterial: 'Zirconia',
+          blankThicknessMm: 14.0,
+          shrinkageFactor: 1.2450,
+          spindleRpm: 24000,
+          feedRateMmMin: 1200,
+          estimatedMillingMinutes: 14.5,
+          totalGCodeLines: 1420,
+          totalToolpathLengthMm: 342.8,
+          burChangeCount: 3,
+          marginProtectionEnforced: true,
+          statusMessage: 'Dental CAM 5-axis toolpath generated (Zirconia). ISO 6983 compliant.',
+          gcodeContent: `; --- SMART CLINIC DENTAL CAM 5-AXIS POST-PROCESSOR ---
+G90 G21 G17 G40 G49 G80 G94
+G54
+M06 T01
+S24000 M03
+M10
+G04 P2.0
+G00 X0.000 Y0.000 Z15.000 A0.000 B0.000
+G01 Z8.500 F1200
+M05
+M11
+G91 G28 Z0.
+M30`,
+          layers: [
+            { layerIndex: 1, passType: 'Roughing', zHeightMm: 8.5, pointCount: 32, estimatedSeconds: 240 },
+            { layerIndex: 2, passType: 'SemiFinishing', zHeightMm: 4.2, pointCount: 48, estimatedSeconds: 320 },
+            { layerIndex: 3, passType: 'MarginDetail', zHeightMm: 0.0, pointCount: 64, estimatedSeconds: 310 }
+          ],
+          generatedAtUtc: new Date().toISOString()
         })
       });
     });
@@ -404,6 +467,71 @@ test.describe('Release v9.0.0 - v9.3.0: Interactive 3D Intraoral Mesh Viewer, Ca
       await saveMarginBtn.click();
       await page.waitForTimeout(500);
     }
+
+    // Close modal
+    const closeBtn = page.locator('#close-mesh-viewer-btn');
+    if (await closeBtn.isVisible()) {
+      await closeBtn.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(300);
+    }
+  });
+
+  test('7. Milestone 3 (v10.0.0): Dental CAM Toolpath Engine & Direct 5-Axis G-Code Generator', async ({ page }) => {
+    const modal = await open3DViewerInDropzone(page);
+
+    // Toggle CAM Milling Mode
+    const camBtn = modal.locator('#toggle-cam-btn');
+    await expect(camBtn).toBeVisible({ timeout: 5000 });
+    await camBtn.click();
+    await page.waitForTimeout(400);
+
+    // Verify CAM Control Panel HUD is displayed
+    const panel = modal.locator('#cam-control-panel');
+    await expect(panel).toBeVisible({ timeout: 5000 });
+
+    // Verify Safety Buffer pill is visible
+    const safetyPill = modal.locator('#cam-safety-pill');
+    await expect(safetyPill).toBeVisible();
+
+    // Verify Telemetry elements (time, lines, stages)
+    const timeVal = modal.locator('#cam-time-val');
+    await expect(timeVal).toBeVisible();
+
+    const linesVal = modal.locator('#cam-lines-val');
+    await expect(linesVal).toBeVisible();
+
+    const stagesVal = modal.locator('#cam-stages-val');
+    await expect(stagesVal).toBeVisible();
+
+    // Switch Milling Blank Material: PMMA
+    const pmmaBtn = modal.locator('#cam-material-pmma-btn');
+    await expect(pmmaBtn).toBeVisible();
+    await pmmaBtn.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Switch Milling Blank Material: Titanium
+    const titaniumBtn = modal.locator('#cam-material-titanium-btn');
+    await expect(titaniumBtn).toBeVisible();
+    await titaniumBtn.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Switch back to Zirconia
+    const zirconiaBtn = modal.locator('#cam-material-zirconia-btn');
+    await expect(zirconiaBtn).toBeVisible();
+    await zirconiaBtn.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Trigger G-Code Calculation
+    const generateGcodeBtn = modal.locator('#generate-gcode-btn');
+    await expect(generateGcodeBtn).toBeVisible();
+    await generateGcodeBtn.click({ force: true });
+    await page.waitForTimeout(500);
+
+    // Verify Download .NC Button is ready
+    const downloadGcodeBtn = modal.locator('#download-gcode-btn');
+    await expect(downloadGcodeBtn).toBeVisible();
+
+    await page.screenshot({ path: path.join(screenshotsDir, '07-3d-dental-cam-toolpath.png'), fullPage: true });
 
     // Close modal
     const closeBtn = page.locator('#close-mesh-viewer-btn');
