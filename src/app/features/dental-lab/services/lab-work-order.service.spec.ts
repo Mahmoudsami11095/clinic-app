@@ -329,5 +329,72 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       evaluatedAtUtc: new Date().toISOString()
     });
   });
+
+  it('should fetch 3D gingival margin line via getMarginLine (v9.4.0)', (done) => {
+    service.getMarginLine('lab-1').subscribe(margin => {
+      expect(margin.orderId).toBe('lab-1');
+      expect(margin.profileType).toBe('Chamfer');
+      expect(margin.isClosed).toBeTrue();
+      expect(margin.perimeterMm).toBe(32.50);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/margin-line`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      profileType: 'Chamfer',
+      perimeterMm: 32.50,
+      averageWidthMm: 0.60,
+      smoothingTension: 0.50,
+      isClosed: true,
+      isApproved: false,
+      hasMarginWarning: false,
+      statusMessage: 'Auto-detected closed gingival finish line. Ready for clinical verification.',
+      points: [
+        { x: 5.0, y: 0.1, z: 0.0, index: 0 },
+        { x: 0.0, y: 0.1, z: 5.0, index: 1 }
+      ],
+      evaluatedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should persist approved gingival finish line via saveMarginLine (v9.4.0)', (done) => {
+    service.saveMarginLine('lab-1', {
+      profileType: 'Chamfer',
+      perimeterMm: 33.80,
+      averageWidthMm: 0.65,
+      smoothingTension: 0.50,
+      isClosed: true,
+      isApproved: true,
+      hasMarginWarning: false,
+      points: []
+    }).subscribe(saved => {
+      expect(saved.orderId).toBe('lab-1');
+      expect(saved.profileType).toBe('Chamfer');
+      expect(saved.isApproved).toBeTrue();
+      expect(saved.perimeterMm).toBe(33.80);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl'].replace('/lab-orders', '')}/labworkorders/lab-1/margin-line`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.profileType).toBe('Chamfer');
+    expect(req.request.body.isApproved).toBeTrue();
+    req.flush({
+      orderId: 'lab-1',
+      profileType: 'Chamfer',
+      perimeterMm: 33.80,
+      averageWidthMm: 0.65,
+      smoothingTension: 0.50,
+      isClosed: true,
+      isApproved: true,
+      hasMarginWarning: false,
+      statusMessage: 'Gingival finish line validated (Chamfer, 33.8 mm perimeter). Ready for CAM toolpathing.',
+      points: [],
+      evaluatedAtUtc: new Date().toISOString()
+    });
+  });
 });
+
 
