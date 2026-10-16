@@ -23,7 +23,8 @@
     "docs:serve": "npx @compodoc/compodoc -s -d documentation -p 8080",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:desktop": "playwright test e2e/desktop-electron.spec.ts"
   },
   "prettier": {
     "printWidth": 100,
