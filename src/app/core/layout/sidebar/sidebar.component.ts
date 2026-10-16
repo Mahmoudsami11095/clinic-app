@@ -26,6 +26,7 @@ export class Sidebar {
     { labelKey: 'sidebar.clinics', route: '/clinics', icon: 'pi pi-building', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.patients', route: '/patients', icon: 'pi pi-users', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.chair_board', route: '/chair-board', icon: 'pi pi-th-large', roles: ['admin', 'doctor', 'assistant'] },
+    { labelKey: 'sidebar.dental_lab', route: '/dental-lab', icon: 'pi pi-box', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.appointments', route: '/appointments', icon: 'pi pi-calendar', roles: ['admin', 'doctor', 'assistant', 'patient'] },
     { labelKey: 'sidebar.radiology', route: '/radiology', icon: 'pi pi-camera', roles: ['admin', 'doctor', 'assistant'] },
     { labelKey: 'sidebar.billing', route: '/billing', icon: 'pi pi-wallet', roles: ['admin', 'doctor', 'assistant', 'patient'] },

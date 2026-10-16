@@ -124,6 +124,12 @@ export const routes: Routes = [
         data: { roles: ['admin', 'doctor', 'assistant'] }
       },
       {
+        path: 'dental-lab',
+        loadComponent: () => import('./features/dental-lab/components/lab-work-orders-board/lab-work-orders-board.component').then(m => m.LabWorkOrdersBoardComponent),
+        canActivate: [roleGuard, subscriptionGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
+      },
+      {
         path: 'radiology',
         loadChildren: () => import('./features/radiology/radiology.routes').then(m => m.radiologyRoutes),
         canActivate: [roleGuard, subscriptionGuard],
