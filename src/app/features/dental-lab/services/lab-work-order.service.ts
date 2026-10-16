@@ -341,6 +341,47 @@ export interface SaveAlignerPlanRequest {
   isTreatmentApproved?: boolean;
 }
 
+export interface GbrFixationScrew {
+  screwId: string;
+  positionX: number;
+  positionY: number;
+  positionZ: number;
+  diameterMm: number;
+  lengthMm: number;
+  boneClearanceMm: number;
+  nerveClearanceMm: number;
+  isCorticalEngaged: boolean;
+  hasSafetyCorridorViolation: boolean;
+}
+
+export interface GbrTitaniumMeshPlan {
+  orderId: string;
+  patientId: string;
+  defectVolumeMm3: number;
+  recommendedGraftVolumeMm3: number;
+  meshThicknessMm: number;
+  porosityPercent: number;
+  poreDiameterMm: number;
+  tentPoleCrestalClearanceMm: number;
+  fixationScrewsCount: number;
+  hasSafetyCorridorViolation: boolean;
+  isFabricationApproved: boolean;
+  statusMessage: string;
+  fixationScrews: GbrFixationScrew[];
+  flatPatternContourPointsCount: number;
+  plannedAtUtc: string;
+}
+
+export interface SaveGbrMeshPlanRequest {
+  defectVolumeMm3?: number;
+  meshThicknessMm?: number;
+  porosityPercent?: number;
+  poreDiameterMm?: number;
+  tentPoleCrestalClearanceMm?: number;
+  isFabricationApproved?: boolean;
+  fixationScrews?: GbrFixationScrew[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1207,6 +1248,87 @@ export class LabWorkOrderService {
           isTreatmentApproved: request.isTreatmentApproved ?? !hasViolation,
           statusMessage: status,
           stages,
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  getGbrMeshPlan(orderId: string): Observable<GbrTitaniumMeshPlan> {
+    return this.http.get<GbrTitaniumMeshPlan>(`${this.apiUrl}/${orderId}/gbr-mesh`).pipe(
+      catchError(() => {
+        const defectVolumeMm3 = 450.0;
+        const recommendedGraftVolumeMm3 = 517.5;
+        const fixationScrews: GbrFixationScrew[] = [
+          { screwId: 'screw-1', positionX: -6.5, positionY: -4.2, positionZ: 2.1, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.4, nerveClearanceMm: 3.2, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+          { screwId: 'screw-2', positionX: -2.1, positionY: -5.0, positionZ: 1.8, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.1, nerveClearanceMm: 2.8, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+          { screwId: 'screw-3', positionX: 3.2, positionY: -4.8, positionZ: 2.0, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.6, nerveClearanceMm: 3.5, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+          { screwId: 'screw-4', positionX: 7.0, positionY: -3.9, positionZ: 2.2, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.8, nerveClearanceMm: 3.9, isCorticalEngaged: true, hasSafetyCorridorViolation: false }
+        ];
+
+        const fallback: GbrTitaniumMeshPlan = {
+          orderId,
+          patientId: 'pat-seed',
+          defectVolumeMm3,
+          recommendedGraftVolumeMm3,
+          meshThicknessMm: 0.15,
+          porosityPercent: 50.0,
+          poreDiameterMm: 1.0,
+          tentPoleCrestalClearanceMm: 2.5,
+          fixationScrewsCount: fixationScrews.length,
+          hasSafetyCorridorViolation: false,
+          isFabricationApproved: true,
+          statusMessage: 'GBR titanium mesh scaffold designed. Defect volume: 450 mm³, graft volume: 517.5 mm³ (+15% overfill).',
+          fixationScrews,
+          flatPatternContourPointsCount: 32,
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveGbrMeshPlan(orderId: string, request: SaveGbrMeshPlanRequest): Observable<GbrTitaniumMeshPlan> {
+    return this.http.post<GbrTitaniumMeshPlan>(`${this.apiUrl}/${orderId}/gbr-mesh`, request).pipe(
+      catchError(() => {
+        const defectVol = Math.max(50.0, Math.min(2500.0, request.defectVolumeMm3 ?? 450.0));
+        const graftVol = Math.round(defectVol * 1.15 * 10) / 10;
+        const thickness = Math.max(0.10, Math.min(0.20, request.meshThicknessMm ?? 0.15));
+        const porosity = Math.max(40.0, Math.min(60.0, request.porosityPercent ?? 50.0));
+        const poreDiameter = Math.max(0.8, Math.min(1.2, request.poreDiameterMm ?? 1.0));
+        const crestClearance = Math.max(1.5, Math.min(5.0, request.tentPoleCrestalClearanceMm ?? 2.5));
+
+        const screwsList = (request.fixationScrews && request.fixationScrews.length > 0)
+          ? request.fixationScrews
+          : [
+              { screwId: 'screw-1', positionX: -6.5, positionY: -4.2, positionZ: 2.1, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.4, nerveClearanceMm: 3.2, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+              { screwId: 'screw-2', positionX: -2.1, positionY: -5.0, positionZ: 1.8, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.1, nerveClearanceMm: 2.8, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+              { screwId: 'screw-3', positionX: 3.2, positionY: -4.8, positionZ: 2.0, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.6, nerveClearanceMm: 3.5, isCorticalEngaged: true, hasSafetyCorridorViolation: false },
+              { screwId: 'screw-4', positionX: 7.0, positionY: -3.9, positionZ: 2.2, diameterMm: 1.5, lengthMm: 4.0, boneClearanceMm: 2.8, nerveClearanceMm: 3.9, isCorticalEngaged: true, hasSafetyCorridorViolation: false }
+            ];
+
+        const hasViolation = screwsList.some(s => s.nerveClearanceMm < 2.0 || s.boneClearanceMm < 1.5 || s.hasSafetyCorridorViolation);
+
+        const status = hasViolation
+          ? 'BR-GBR-03 WARNING: Fixation screw safety corridor violated (root clearance < 1.5 mm or nerve clearance < 2.0 mm). Relocate screws to healthy basal cortical bone.'
+          : `Guided bone regeneration (GBR) titanium mesh plan approved. Defect volume: ${defectVol.toFixed(1)} mm³, graft volume: ${graftVol.toFixed(1)} mm³ (+15% overfill), ${screwsList.length} fixation screws verified.`;
+
+        const fallback: GbrTitaniumMeshPlan = {
+          orderId,
+          patientId: 'pat-seed',
+          defectVolumeMm3: defectVol,
+          recommendedGraftVolumeMm3: graftVol,
+          meshThicknessMm: thickness,
+          porosityPercent: porosity,
+          poreDiameterMm: poreDiameter,
+          tentPoleCrestalClearanceMm: crestClearance,
+          fixationScrewsCount: screwsList.length,
+          hasSafetyCorridorViolation: hasViolation,
+          isFabricationApproved: request.isFabricationApproved ?? !hasViolation,
+          statusMessage: status,
+          fixationScrews: screwsList,
+          flatPatternContourPointsCount: 32,
           plannedAtUtc: new Date().toISOString()
         };
         return of(fallback);
