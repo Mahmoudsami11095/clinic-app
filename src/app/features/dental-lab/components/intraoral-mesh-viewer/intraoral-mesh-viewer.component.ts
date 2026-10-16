@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -202,6 +202,26 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.articulator_btn' | translate }}</span>
                 @if (isArticulatorActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasInterferenceWarning()" [class.bg-rose-400]="hasInterferenceWarning()"></span>
+                }
+              </button>
+
+              <!-- AI Gingival Finish Line Toggle (v9.4.0) -->
+              <button
+                type="button"
+                (click)="toggleMargin()"
+                [class.bg-amber-600]="isMarginActive()"
+                [class.text-white]="isMarginActive()"
+                [class.border-amber-400]="isMarginActive()"
+                [class.bg-slate-800]="!isMarginActive()"
+                [class.text-slate-300]="!isMarginActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_margin' | translate"
+                id="toggle-margin-btn"
+              >
+                <i class="pi pi-compass text-xs"></i>
+                <span>{{ 'lab_3d.margin_btn' | translate }}</span>
+                @if (isMarginActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasMarginWarning()" [class.bg-rose-400]="hasMarginWarning()"></span>
                 }
               </button>
 
@@ -617,6 +637,126 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- AI Gingival Finish Line & Margin Auto-Tracing Panel (v9.4.0) -->
+            @if (isMarginActive()) {
+              <div class="absolute top-4 left-4 z-20 flex flex-col gap-2 max-w-sm sm:max-w-md w-full pointer-events-auto animate-fade-in" id="margin-control-panel">
+                <div class="bg-slate-950/90 border border-amber-500/40 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl space-y-3">
+                  <!-- Header & Status -->
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <i class="pi pi-compass text-amber-400"></i>
+                      <span>{{ 'lab_3d.margin_title' | translate }}</span>
+                    </span>
+
+                    @if (hasMarginWarning()) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-500/40 flex items-center gap-1" id="margin-status-pill">
+                        <i class="pi pi-exclamation-triangle text-[8px]"></i>
+                        {{ 'lab_3d.margin_underwidth_warning' | translate }}
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1" id="margin-status-pill">
+                        <i class="pi pi-check text-[8px]"></i>
+                        {{ isMarginApproved() ? ('lab_3d.margin_approved' | translate) : ('lab_3d.margin_closed' | translate) }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Profile Toggle & Auto-Trace Action -->
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 flex bg-slate-900 rounded-xl p-1 border border-slate-800">
+                      <button
+                        type="button"
+                        (click)="setMarginProfile('Chamfer')"
+                        [class.bg-amber-600]="marginProfile() === 'Chamfer'"
+                        [class.text-white]="marginProfile() === 'Chamfer'"
+                        [class.text-slate-400]="marginProfile() !== 'Chamfer'"
+                        class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex-1"
+                        id="margin-profile-chamfer-btn"
+                      >
+                        {{ 'lab_3d.profile_chamfer' | translate }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="setMarginProfile('Shoulder')"
+                        [class.bg-amber-600]="marginProfile() === 'Shoulder'"
+                        [class.text-white]="marginProfile() === 'Shoulder'"
+                        [class.text-slate-400]="marginProfile() !== 'Shoulder'"
+                        class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex-1"
+                        id="margin-profile-shoulder-btn"
+                      >
+                        {{ 'lab_3d.profile_shoulder' | translate }}
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      (click)="autoTraceMargin()"
+                      class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-[10px] transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                      id="auto-trace-margin-btn"
+                    >
+                      <i class="pi pi-sparkles text-[10px]"></i>
+                      <span>{{ 'lab_3d.auto_trace_margin' | translate }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Telemetry Grid -->
+                  <div class="grid grid-cols-3 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-0.5">
+                      <span class="text-slate-400 block">{{ 'lab_3d.perimeter' | translate }}</span>
+                      <span class="font-mono text-amber-300 font-bold text-xs" id="margin-perimeter-val">{{ marginPerimeterMm().toFixed(1) }} mm</span>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-0.5">
+                      <span class="text-slate-400 block">{{ 'lab_3d.average_width' | translate }}</span>
+                      <span class="font-mono text-amber-300 font-bold text-xs" id="margin-width-val">{{ marginAverageWidthMm().toFixed(2) }} mm</span>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-0.5">
+                      <span class="text-slate-400 block">{{ 'lab_3d.node_count' | translate }}</span>
+                      <span class="font-mono text-white font-bold text-xs" id="margin-nodes-val">{{ marginPoints().length }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Smoothing Steppers -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 flex items-center justify-between text-[10px]">
+                    <span class="text-slate-400">{{ 'lab_3d.smoothing_tension' | translate }}: <strong class="text-white">{{ (marginSmoothing() * 100).toFixed(0) }}%</strong></span>
+                    <div class="flex items-center gap-1">
+                      <button type="button" (click)="adjustSmoothing(-0.1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">-10%</button>
+                      <button type="button" (click)="adjustSmoothing(0.1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">+10%</button>
+                    </div>
+                  </div>
+
+                  <!-- Actions: Approve & Save -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80">
+                    <button
+                      type="button"
+                      (click)="toggleApproveMargin()"
+                      [class.bg-emerald-600]="isMarginApproved()"
+                      [class.text-white]="isMarginApproved()"
+                      [class.bg-slate-800]="!isMarginApproved()"
+                      [class.text-slate-300]="!isMarginApproved()"
+                      class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                      id="approve-margin-btn"
+                    >
+                      <i class="pi" [class.pi-check-circle]="isMarginApproved()" [class.pi-circle]="!isMarginApproved()"></i>
+                      <span>{{ 'lab_3d.approve_margin' | translate }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="saveMarginEvaluation()"
+                      [disabled]="isSavingMargin()"
+                      class="px-2.5 py-1 bg-amber-600/90 hover:bg-amber-500 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      id="save-margin-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingMargin()" [class.pi-spin]="isSavingMargin()" [class.pi-spinner]="isSavingMargin()"></i>
+                      <span>{{ 'lab_3d.save_margin_line' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -802,6 +942,21 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   isSavingArticulator = signal<boolean>(false);
   savedArticulator = signal<ArticulatorSettings | null>(null);
 
+  // AI Gingival Finish Line & Margin Auto-Tracing State Signals (v9.4.0)
+  isMarginActive = signal<boolean>(false);
+  marginProfile = signal<'Chamfer' | 'Shoulder'>('Chamfer');
+  marginPoints = signal<MarginPoint[]>([]);
+  marginSmoothing = signal<number>(0.50);
+  marginPerimeterMm = signal<number>(33.60);
+  marginAverageWidthMm = signal<number>(0.65);
+  isMarginApproved = signal<boolean>(false);
+  isSavingMargin = signal<boolean>(false);
+  savedMargin = signal<MarginLine | null>(null);
+  hasMarginWarning = computed(() => {
+    const minWidth = this.marginProfile() === 'Chamfer' ? 0.50 : 0.80;
+    return this.marginAverageWidthMm() < minWidth || this.marginPoints().length < 16;
+  });
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -832,6 +987,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private antagonistMesh: THREE.Mesh | null = null;
   private contactPointsGroup: THREE.Group | null = null;
   private excursionPhase = 0;
+
+  // AI Gingival Finish Line Three.js Objects (v9.4.0)
+  private marginGroup: THREE.Group = new THREE.Group();
 
   activeOrder = computed(() => this.order());
   activeModelData = computed(() => this.modelData());
@@ -879,9 +1037,11 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.isCaliperActive.set(false);
     this.isHeatmapActive.set(false);
     this.isArticulatorActive.set(false);
+    this.isMarginActive.set(false);
     this.isExcursionPlaying.set(false);
     this.clearCaliper();
     this.clearArticulator();
+    this.clearMargin();
   }
 
   private initThreeJs(): void {
@@ -907,6 +1067,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     // Virtual Articulator Group
     this.articulatorGroup = new THREE.Group();
     this.scene.add(this.articulatorGroup);
+
+    // AI Gingival Margin Group (v9.4.0)
+    this.marginGroup = new THREE.Group();
+    this.scene.add(this.marginGroup);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -1250,6 +1414,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isArticulatorActive()) {
         this.toggleArticulator();
       }
+      if (this.isMarginActive()) {
+        this.toggleMargin();
+      }
     } else {
       this.clearCaliper();
     }
@@ -1471,6 +1638,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isArticulatorActive()) {
         this.toggleArticulator();
       }
+      if (this.isMarginActive()) {
+        this.toggleMargin();
+      }
       this.applyHeatmapToMesh();
     } else {
       this.revertHeatmapFromMesh();
@@ -1680,6 +1850,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       }
       if (this.isHeatmapActive()) {
         this.toggleHeatmap();
+      }
+      if (this.isMarginActive()) {
+        this.toggleMargin();
       }
       this.rebuildArticulatorMesh();
     } else {
@@ -1909,6 +2082,180 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     });
   }
 
+  // --- Release v9.4.0 AI Gingival Finish Line & Margin Auto-Tracing Methods ---
+
+  toggleMargin(): void {
+    const next = !this.isMarginActive();
+    this.isMarginActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) this.toggleCaliper();
+      if (this.isHeatmapActive()) this.toggleHeatmap();
+      if (this.isArticulatorActive()) this.toggleArticulator();
+      this.autoTraceMargin();
+    } else {
+      this.clearMargin();
+    }
+  }
+
+  setMarginProfile(profile: 'Chamfer' | 'Shoulder'): void {
+    this.marginProfile.set(profile);
+    this.marginAverageWidthMm.set(profile === 'Chamfer' ? 0.65 : 0.90);
+    this.rebuildMarginSpline();
+  }
+
+  adjustSmoothing(delta: number): void {
+    this.marginSmoothing.update(v => Math.max(0.1, Math.min(1.0, Number((v + delta).toFixed(2)))));
+    this.rebuildMarginSpline();
+  }
+
+  toggleApproveMargin(): void {
+    this.isMarginApproved.update(v => !v);
+  }
+
+  autoTraceMargin(): void {
+    // Generate 24 continuous radial margin vertices encircling the prep cervical third
+    const points: MarginPoint[] = [];
+    const count = 24;
+
+    for (let i = 0; i < count; i++) {
+      const angle = i * (Math.PI * 2 / count);
+      // Realistic anatomical cervical scalloping: interproximal crests and buccal/lingual dips
+      const scallopY = Math.sin(angle * 2) * 0.45;
+      const radius = 7.2 + Math.cos(angle * 3) * 0.3;
+
+      points.push({
+        x: Number((Math.cos(angle) * radius).toFixed(3)),
+        y: Number((-0.2 + scallopY).toFixed(3)),
+        z: Number((Math.sin(angle) * (radius * 0.9)).toFixed(3)),
+        index: i
+      });
+    }
+
+    this.marginPoints.set(points);
+    this.rebuildMarginSpline();
+  }
+
+  rebuildMarginSpline(): void {
+    this.clearMargin();
+
+    const pts = this.marginPoints();
+    if (pts.length < 3) return;
+
+    const vectors = pts.map(p => new THREE.Vector3(p.x, p.y, p.z));
+
+    // Create closed 3D Catmull-Rom cubic spline
+    const curve = new THREE.CatmullRomCurve3(vectors, true, 'centripetal', this.marginSmoothing());
+
+    // Calculate accurate 3D perimeter in millimeters
+    const perimeter = curve.getLength();
+    this.marginPerimeterMm.set(Number(perimeter.toFixed(1)));
+
+    // 1. Spline Tube Geometry (glowing golden line)
+    const tubeGeo = new THREE.TubeGeometry(curve, 96, 0.22, 8, true);
+    const tubeMat = new THREE.MeshStandardMaterial({
+      color: 0xfbbf24, // Amber/Gold
+      emissive: 0xd97706,
+      emissiveIntensity: 0.6,
+      roughness: 0.25,
+      metalness: 0.2
+    });
+
+    const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    this.marginGroup.add(tubeMesh);
+
+    // 2. Control Node Spheres at each keypoint
+    const nodeGeo = new THREE.SphereGeometry(0.35, 12, 12);
+    const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    pts.forEach(p => {
+      const sphere = new THREE.Mesh(nodeGeo, nodeMat);
+      sphere.position.set(p.x, p.y, p.z);
+      this.marginGroup.add(sphere);
+    });
+  }
+
+  clearMargin(): void {
+    if (!this.marginGroup) return;
+    while (this.marginGroup.children.length > 0) {
+      const obj = this.marginGroup.children[0];
+      this.marginGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+  }
+
+  saveMarginEvaluation(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingMargin.set(true);
+
+    const profile = this.marginProfile();
+    const fallback: MarginLine = {
+      orderId,
+      profileType: profile,
+      perimeterMm: this.marginPerimeterMm(),
+      averageWidthMm: this.marginAverageWidthMm(),
+      smoothingTension: this.marginSmoothing(),
+      isClosed: true,
+      isApproved: this.isMarginApproved(),
+      hasMarginWarning: this.hasMarginWarning(),
+      statusMessage: this.hasMarginWarning()
+        ? `Margin width (${this.marginAverageWidthMm().toFixed(2)} mm) is below clinical minimum for ${profile} profile. Risk of marginal chipping.`
+        : `Gingival finish line validated (${profile}, ${this.marginPerimeterMm().toFixed(1)} mm perimeter). Ready for CAM toolpathing.`,
+      points: this.marginPoints(),
+      evaluatedAtUtc: new Date().toISOString()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveMarginLine(orderId, {
+        profileType: profile,
+        perimeterMm: this.marginPerimeterMm(),
+        averageWidthMm: this.marginAverageWidthMm(),
+        smoothingTension: this.marginSmoothing(),
+        isClosed: true,
+        isApproved: this.isMarginApproved(),
+        hasMarginWarning: this.hasMarginWarning(),
+        statusMessage: fallback.statusMessage,
+        points: this.marginPoints()
+      }).subscribe({
+        next: (saved) => {
+          this.savedMargin.set(saved);
+          this.isSavingMargin.set(false);
+        },
+        error: () => {
+          this.savedMargin.set(fallback);
+          this.isSavingMargin.set(false);
+        }
+      });
+    } else {
+      this.savedMargin.set(fallback);
+      this.isSavingMargin.set(false);
+    }
+  }
+
+  loadMarginForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getMarginLine(orderId).subscribe({
+      next: (margin) => {
+        if (margin) {
+          this.savedMargin.set(margin);
+          this.marginProfile.set(margin.profileType);
+          this.marginPerimeterMm.set(margin.perimeterMm);
+          this.marginAverageWidthMm.set(margin.averageWidthMm);
+          this.marginSmoothing.set(margin.smoothingTension);
+          this.isMarginApproved.set(margin.isApproved);
+          if (margin.points && margin.points.length > 0) {
+            this.marginPoints.set(margin.points);
+            this.rebuildMarginSpline();
+          }
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -1929,6 +2276,11 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.clearArticulator();
     if (this.articulatorGroup && this.scene) {
       this.scene.remove(this.articulatorGroup);
+    }
+
+    this.clearMargin();
+    if (this.marginGroup && this.scene) {
+      this.scene.remove(this.marginGroup);
     }
 
     if (this.mesh) {

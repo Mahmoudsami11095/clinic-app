@@ -467,5 +467,124 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     expect(component.savedArticulator()?.excursionType).toBe('Centric');
     expect(component.savedArticulator()?.hasInterferenceWarning).toBeFalse();
   });
+
+  // --- Release v9.4.0 AI Gingival Finish Line & Margin Auto-Tracing Unit Tests ---
+
+  it('should toggle margin active state and auto-trace continuous closed loop (REQ-MAR-01)', () => {
+    expect(component.isMarginActive()).toBeFalse();
+    component.toggleMargin();
+
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.marginPoints().length).toBeGreaterThanOrEqual(16);
+    expect(component.marginPerimeterMm()).toBeGreaterThan(0);
+    expect(component['marginGroup'].children.length).toBeGreaterThan(0);
+
+    // Toggle off cleans up margin group
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeFalse();
+    expect(component['marginGroup'].children.length).toBe(0);
+  });
+
+  it('should automatically deactivate other modes when margin is activated', () => {
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+    expect(component.isMarginActive()).toBeFalse();
+
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isMarginActive()).toBeFalse();
+
+    component.toggleMargin();
+    expect(component.isMarginActive()).toBeTrue();
+    expect(component.isArticulatorActive()).toBeFalse();
+  });
+
+  it('should switch margin profile between Chamfer and Shoulder and update nominal width', () => {
+    component.toggleMargin();
+
+    component.setMarginProfile('Chamfer');
+    expect(component.marginProfile()).toBe('Chamfer');
+    expect(component.marginAverageWidthMm()).toBe(0.65);
+
+    component.setMarginProfile('Shoulder');
+    expect(component.marginProfile()).toBe('Shoulder');
+    expect(component.marginAverageWidthMm()).toBe(0.90);
+  });
+
+  it('should adjust spline smoothing tension clamped between 0.1 and 1.0 (REQ-MAR-02)', () => {
+    component.toggleMargin();
+    expect(component.marginSmoothing()).toBe(0.50);
+
+    component.adjustSmoothing(0.2);
+    expect(component.marginSmoothing()).toBe(0.70);
+
+    // Clamp upper
+    component.adjustSmoothing(0.5);
+    expect(component.marginSmoothing()).toBe(1.0);
+
+    // Clamp lower
+    component.adjustSmoothing(-1.2);
+    expect(component.marginSmoothing()).toBe(0.1);
+  });
+
+  it('should flag underwidth warning when margin width is below material threshold (BR-MAR-02)', () => {
+    component.toggleMargin();
+    component.setMarginProfile('Chamfer');
+
+    // 0.65 mm is compliant (>= 0.50 mm)
+    component.marginAverageWidthMm.set(0.65);
+    expect(component.hasMarginWarning()).toBeFalse();
+
+    // 0.40 mm triggers warning for Chamfer
+    component.marginAverageWidthMm.set(0.40);
+    expect(component.hasMarginWarning()).toBeTrue();
+
+    // Switch to Shoulder where threshold is 0.80 mm
+    component.setMarginProfile('Shoulder');
+    component.marginAverageWidthMm.set(0.70);
+    expect(component.hasMarginWarning()).toBeTrue();
+
+    component.marginAverageWidthMm.set(0.95);
+    expect(component.hasMarginWarning()).toBeFalse();
+  });
+
+  it('should toggle approval state and persist margin evaluation via labWorkOrderService (REQ-MAR-04)', () => {
+    spyOn(labService, 'saveMarginLine').and.returnValue(of({
+      orderId: 'lab-test-01',
+      profileType: 'Chamfer',
+      perimeterMm: 33.80,
+      averageWidthMm: 0.65,
+      smoothingTension: 0.50,
+      isClosed: true,
+      isApproved: true,
+      hasMarginWarning: false,
+      statusMessage: 'Gingival finish line validated (Chamfer, 33.8 mm perimeter). Ready for CAM toolpathing.',
+      points: [],
+      evaluatedAtUtc: new Date().toISOString()
+    }));
+
+    component.toggleMargin();
+    expect(component.isMarginApproved()).toBeFalse();
+    component.toggleApproveMargin();
+    expect(component.isMarginApproved()).toBeTrue();
+
+    component.saveMarginEvaluation();
+
+    expect(component.savedMargin()).toBeTruthy();
+    expect(component.savedMargin()?.isApproved).toBeTrue();
+    expect(component.savedMargin()?.perimeterMm).toBe(33.80);
+  });
 });
+
 

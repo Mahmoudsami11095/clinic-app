@@ -70,6 +70,50 @@ test.describe('Release v9.0.0 - v9.3.0: Interactive 3D Intraoral Mesh Viewer, Ca
       });
     });
 
+    // Intercept margin line & finish line persistence calls (v9.4.0)
+    await page.route(/\/labworkorders\/.*\/margin-line/i, async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-headers': '*',
+          'content-type': 'application/json'
+        },
+        contentType: 'application/json',
+        body: JSON.stringify({
+          orderId: 'ord-123456',
+          profileType: 'Chamfer',
+          perimeterMm: 45.2,
+          averageWidthMm: 0.65,
+          smoothingTension: 0.5,
+          isClosed: true,
+          isApproved: true,
+          hasMarginWarning: false,
+          statusMessage: 'Gingival finish line validated (Chamfer, 45.2 mm perimeter). Ready for CAM toolpathing.',
+          points: [
+            { x: 7.2, y: -0.2, z: 0.0, index: 0 },
+            { x: 5.1, y: 0.1, z: 4.6, index: 1 },
+            { x: 0.0, y: -0.2, z: 6.5, index: 2 },
+            { x: -5.1, y: 0.1, z: 4.6, index: 3 },
+            { x: -7.2, y: -0.2, z: 0.0, index: 4 },
+            { x: -5.1, y: 0.1, z: -4.6, index: 5 },
+            { x: 0.0, y: -0.2, z: -6.5, index: 6 },
+            { x: 5.1, y: 0.1, z: -4.6, index: 7 }
+          ],
+          evaluatedAtUtc: new Date().toISOString()
+        })
+      });
+    });
+
+    // Mock background app polling routes
+    await page.route(/\/notifications/i, async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    });
+    await page.route(/\/subscription/i, async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"isSubscribed":true,"tier":"Enterprise"}' });
+    });
+
 
     await page.goto('/partner-dropzone?order=ORD-A1B2C3');
     await page.waitForLoadState('domcontentloaded');
@@ -305,5 +349,69 @@ test.describe('Release v9.0.0 - v9.3.0: Interactive 3D Intraoral Mesh Viewer, Ca
       await page.waitForTimeout(300);
     }
   });
+
+  test('6. Milestone 2 (v9.4.0): AI Gingival Finish Line & Margin Auto-Tracing', async ({ page }) => {
+    const modal = await open3DViewerInDropzone(page);
+
+    // Toggle Margin Tracing Mode
+    const marginBtn = modal.locator('#toggle-margin-btn');
+    await expect(marginBtn).toBeVisible({ timeout: 5000 });
+    await marginBtn.click();
+    await page.waitForTimeout(400);
+
+    // Verify Margin Control Panel HUD is displayed
+    const panel = modal.locator('#margin-control-panel');
+    await expect(panel).toBeVisible({ timeout: 5000 });
+
+    // Verify Telemetry elements (perimeter, width, node count)
+    const perimeterVal = modal.locator('#margin-perimeter-val');
+    await expect(perimeterVal).toBeVisible();
+
+    const widthVal = modal.locator('#margin-width-val');
+    await expect(widthVal).toBeVisible();
+
+    const nodesVal = modal.locator('#margin-nodes-val');
+    await expect(nodesVal).toBeVisible();
+
+    // Toggle Profile: Shoulder vs Chamfer
+    const shoulderBtn = modal.locator('#margin-profile-shoulder-btn');
+    await expect(shoulderBtn).toBeVisible();
+    await shoulderBtn.click();
+    await page.waitForTimeout(300);
+
+    const chamferBtn = modal.locator('#margin-profile-chamfer-btn');
+    await expect(chamferBtn).toBeVisible();
+    await chamferBtn.click();
+    await page.waitForTimeout(300);
+
+    // Click Auto-Trace
+    const autoTraceBtn = modal.locator('#auto-trace-margin-btn');
+    await expect(autoTraceBtn).toBeVisible();
+    await autoTraceBtn.click();
+    await page.waitForTimeout(400);
+
+    // Toggle Approve Margin
+    const approveBtn = modal.locator('#approve-margin-btn');
+    await expect(approveBtn).toBeVisible();
+    await approveBtn.click();
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: path.join(screenshotsDir, '06-3d-gingival-finish-line.png'), fullPage: true });
+
+    // Save Margin Evaluation
+    const saveMarginBtn = modal.locator('#save-margin-btn');
+    if (await saveMarginBtn.isVisible()) {
+      await saveMarginBtn.click();
+      await page.waitForTimeout(500);
+    }
+
+    // Close modal
+    const closeBtn = page.locator('#close-mesh-viewer-btn');
+    if (await closeBtn.isVisible()) {
+      await closeBtn.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(300);
+    }
+  });
 });
+
 
