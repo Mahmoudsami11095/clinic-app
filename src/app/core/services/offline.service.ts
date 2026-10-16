@@ -2,6 +2,7 @@ import { Injectable, inject, signal, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { NativeDesktopService } from './desktop/native-desktop.service';
 
 export interface PendingAction {
   id: string;
@@ -18,6 +19,7 @@ export interface PendingAction {
 export class OfflineService {
   private http = inject(HttpClient);
   private toastr = inject(ToastrService);
+  private desktop = inject(NativeDesktopService);
 
   readonly isOnline = signal<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
   readonly isReconnected = signal<boolean>(false);
@@ -71,6 +73,12 @@ export class OfflineService {
         };
         localStorage.setItem(this.STORAGE_PREFIX + key, JSON.stringify(item));
       }
+      // Replicate to native desktop storage if running in desktop mode
+      if (this.desktop.isDesktop()) {
+        this.desktop.saveOfflineSnapshot(key, data).catch((e) => {
+          console.warn('Native desktop snapshot sync failed', e);
+        });
+      }
     } catch (e) {
       console.warn('Could not save offline cache snapshot:', e);
     }
@@ -92,6 +100,19 @@ export class OfflineService {
       console.warn('Could not read offline cache snapshot:', e);
     }
     return null;
+  }
+
+  /**
+   * Retrieve a snapshot asynchronously (prioritizes native desktop storage)
+   */
+  async getSnapshotAsync<T>(key: string): Promise<T | null> {
+    if (this.desktop.isDesktop()) {
+      const desktopData = await this.desktop.loadOfflineSnapshot<T>(key);
+      if (desktopData !== null) {
+        return desktopData;
+      }
+    }
+    return this.getSnapshot<T>(key);
   }
 
   /**

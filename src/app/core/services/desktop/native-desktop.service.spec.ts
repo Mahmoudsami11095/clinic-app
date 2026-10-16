@@ -47,4 +47,26 @@ describe('NativeDesktopService', () => {
     const info = await service.getSystemInfo();
     expect(info).toBeNull();
   });
+
+  it('should save and load offline snapshot in browser fallback mode', async () => {
+    const key = 'test_operatory_snapshot';
+    const data = { chairId: 'ch-1', patientName: 'Nour El-Din', status: 'occupied' };
+
+    const saveSuccess = await service.saveOfflineSnapshot(key, data);
+    expect(saveSuccess).toBeTrue();
+
+    const loaded = await service.loadOfflineSnapshot<typeof data>(key);
+    expect(loaded).toEqual(data);
+
+    const clearSuccess = await service.clearOfflineSnapshot(key);
+    expect(clearSuccess).toBeTrue();
+
+    const afterClear = await service.loadOfflineSnapshot(key);
+    expect(afterClear).toBeNull();
+  });
+
+  it('should return null for getOfflineStorageInfo when bridge is absent', async () => {
+    const info = await service.getOfflineStorageInfo();
+    expect(info).toBeNull();
+  });
 });

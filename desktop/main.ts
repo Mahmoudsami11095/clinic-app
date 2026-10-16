@@ -283,6 +283,68 @@ function registerIpcHandlers(): void {
       }
     }
   );
+
+  // Offline Encrypted Local Storage (BR-DESK-06)
+  const getOfflineDir = () => {
+    const dir = path.join(app.getPath('userData'), 'offline_cache');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    return dir;
+  };
+
+  ipcMain.handle('desktop:save-snapshot', async (_, payload: { key: string; data: string }) => {
+    try {
+      const sanitizedKey = payload.key.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const dir = getOfflineDir();
+      const targetFile = path.join(dir, `${sanitizedKey}.json`);
+      const tempFile = path.join(dir, `${sanitizedKey}.${Date.now()}.tmp`);
+      await fs.promises.writeFile(tempFile, payload.data, 'utf-8');
+      await fs.promises.rename(tempFile, targetFile);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Storage write failed' };
+    }
+  });
+
+  ipcMain.handle('desktop:load-snapshot', async (_, key: string) => {
+    try {
+      const sanitizedKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const targetFile = path.join(getOfflineDir(), `${sanitizedKey}.json`);
+      if (!fs.existsSync(targetFile)) return null;
+      return await fs.promises.readFile(targetFile, 'utf-8');
+    } catch {
+      return null;
+    }
+  });
+
+  ipcMain.handle('desktop:clear-snapshot', async (_, key: string) => {
+    try {
+      const sanitizedKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const targetFile = path.join(getOfflineDir(), `${sanitizedKey}.json`);
+      if (fs.existsSync(targetFile)) {
+        await fs.promises.unlink(targetFile);
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message };
+    }
+  });
+
+  ipcMain.handle('desktop:storage-info', async () => {
+    try {
+      const dir = getOfflineDir();
+      const files = await fs.promises.readdir(dir);
+      let totalSize = 0;
+      for (const file of files) {
+        const stats = await fs.promises.stat(path.join(dir, file));
+        totalSize += stats.size;
+      }
+      return { dir, fileCount: files.length, totalBytes: totalSize };
+    } catch {
+      return { dir: '', fileCount: 0, totalBytes: 0 };
+    }
+  });
 }
 
 // App Lifecycle

@@ -31,6 +31,12 @@ export interface DesktopSystemInfo {
   nodeVersion: string;
 }
 
+export interface DesktopStorageInfo {
+  dir: string;
+  fileCount: number;
+  totalBytes: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -201,6 +207,68 @@ export class NativeDesktopService {
   async getSystemInfo(): Promise<DesktopSystemInfo | null> {
     if (this.bridge?.system?.getSystemInfo) {
       return await this.bridge.system.getSystemInfo();
+    }
+    return null;
+  }
+
+  async saveOfflineSnapshot<T>(key: string, data: T): Promise<boolean> {
+    const serialized = JSON.stringify(data);
+    if (this.bridge?.storage?.saveSnapshot) {
+      const res = await this.bridge.storage.saveSnapshot(key, serialized);
+      return res?.success ?? false;
+    }
+    // Web Fallback: localStorage
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(`desktop_offline_${key}`, serialized);
+        return true;
+      } catch (e) {
+        console.warn('Fallback offline save failed', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async loadOfflineSnapshot<T>(key: string): Promise<T | null> {
+    if (this.bridge?.storage?.loadSnapshot) {
+      const raw = await this.bridge.storage.loadSnapshot(key);
+      if (raw) {
+        try {
+          return JSON.parse(raw) as T;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    }
+    // Web Fallback: localStorage
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(`desktop_offline_${key}`);
+        return raw ? (JSON.parse(raw) as T) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  async clearOfflineSnapshot(key: string): Promise<boolean> {
+    if (this.bridge?.storage?.clearSnapshot) {
+      const res = await this.bridge.storage.clearSnapshot(key);
+      return res?.success ?? false;
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(`desktop_offline_${key}`);
+      return true;
+    }
+    return false;
+  }
+
+  async getOfflineStorageInfo(): Promise<DesktopStorageInfo | null> {
+    if (this.bridge?.storage?.getStorageInfo) {
+      return await this.bridge.storage.getStorageInfo();
     }
     return null;
   }
