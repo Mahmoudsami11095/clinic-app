@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest } from './lab-work-order.service';
+import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest } from './lab-work-order.service';
 import { environment } from '../../../../environments/environment';
 
 describe('LabWorkOrderService (Release v8.4.0)', () => {
@@ -563,6 +563,91 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/labworkorders/lab-1/surgical-guide`);
     expect(req.request.method).toBe('POST');
     req.flush('Error saving guide', { status: 500, statusText: 'Server Error' });
+  });
+
+  // --- Release v10.2.0 AI Dental Crown Auto-Design & Morphological Fit Tests ---
+
+  it('should fetch crown morphology plan via getCrownMorphology (v10.2.0)', (done) => {
+    service.getCrownMorphology('lab-1').subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.toothType).toBe('Molar');
+      expect(plan.cementSpacerMicrons).toBe(40);
+      expect(plan.hasOcclusalWarning).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/crown`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      toothType: 'Molar',
+      cementSpacerMicrons: 40,
+      marginCollarMm: 0.5,
+      occlusalReductionMm: 1.8,
+      proximalContactStrength: 'Normal',
+      proximalContact: 'Normal',
+      cuspHeightScale: 1.0,
+      cuspScale: 1.0,
+      isRestorationApproved: true,
+      hasOcclusalWarning: false,
+      statusMessage: 'Morphological fit compliant. Die spacer: 40 µm, occlusal reduction: 1.8 mm.',
+      designedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should save crown morphology plan via saveCrownMorphology (v10.2.0)', (done) => {
+    const saveReq: SaveCrownMorphologyRequest = {
+      toothType: 'Premolar',
+      cementSpacerMicrons: 45,
+      marginCollarMm: 0.5,
+      occlusalReductionMm: 1.6,
+      proximalContactStrength: 'Tight',
+      proximalContact: 'Tight',
+      cuspHeightScale: 1.05,
+      cuspScale: 1.05
+    };
+
+    service.saveCrownMorphology('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.toothType).toBe('Premolar');
+      expect(plan.cementSpacerMicrons).toBe(45);
+      expect(plan.proximalContactStrength).toBe('Tight');
+      expect(plan.hasOcclusalWarning).toBeFalse();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/crown`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.toothType).toBe('Premolar');
+    req.flush({
+      orderId: 'lab-1',
+      ...saveReq,
+      isRestorationApproved: true,
+      hasOcclusalWarning: false,
+      statusMessage: 'Morphological fit compliant.',
+      designedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should compute fallback plan and enforce BR-CROWN-03 warning on HTTP error', (done) => {
+    const saveReq: SaveCrownMorphologyRequest = {
+      toothType: 'Incisor',
+      cementSpacerMicrons: 15, // Below 20 µm clamp
+      occlusalReductionMm: 1.2  // Triggers occlusal warning (< 1.5 mm)
+    };
+
+    service.saveCrownMorphology('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.toothType).toBe('Incisor');
+      expect(plan.cementSpacerMicrons).toBe(20); // Clamped to 20 µm
+      expect(plan.hasOcclusalWarning).toBeTrue();
+      expect(plan.statusMessage).toContain('BR-CROWN-03 WARNING');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/crown`);
+    expect(req.request.method).toBe('POST');
+    req.flush('Error saving crown', { status: 500, statusText: 'Server Error' });
   });
 });
 

@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -262,6 +262,26 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.guide_btn' | translate }}</span>
                 @if (isGuideActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasGuideSafetyWarning()" [class.bg-rose-400]="hasGuideSafetyWarning()"></span>
+                }
+              </button>
+
+              <!-- AI Dental Crown Auto-Design & Morphological Fit Toggle (v10.2.0) -->
+              <button
+                type="button"
+                (click)="toggleCrown()"
+                [class.bg-indigo-600]="isCrownActive()"
+                [class.text-white]="isCrownActive()"
+                [class.border-indigo-400]="isCrownActive()"
+                [class.bg-slate-800]="!isCrownActive()"
+                [class.text-slate-300]="!isCrownActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_crown' | translate"
+                id="toggle-crown-btn"
+              >
+                <i class="pi pi-crown text-xs"></i>
+                <span>{{ 'lab_3d.crown_btn' | translate }}</span>
+                @if (isCrownActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasOcclusalWarning()" [class.bg-rose-400]="hasOcclusalWarning()"></span>
                 }
               </button>
 
@@ -1110,6 +1130,138 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- AI Dental Crown Auto-Design Control Panel (v10.2.0) -->
+            @if (isCrownActive()) {
+              <div
+                class="absolute bottom-6 left-6 w-84 bg-slate-950/90 border border-indigo-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md z-10 font-cairo animate-fade-in"
+                id="crown-morphology-panel"
+              >
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="p-1 rounded bg-indigo-500/20 text-indigo-400">
+                      <i class="pi pi-crown text-xs"></i>
+                    </span>
+                    <h3 class="text-xs font-bold text-white tracking-tight">
+                      {{ 'lab_3d.crown_panel_title' | translate }}
+                    </h3>
+                  </div>
+                  <span
+                    class="px-2 py-0.5 rounded text-[10px] font-bold"
+                    [class.bg-emerald-950]="!hasOcclusalWarning()"
+                    [class.text-emerald-400]="!hasOcclusalWarning()"
+                    [class.border-emerald-500/30]="!hasOcclusalWarning()"
+                    [class.bg-rose-950]="hasOcclusalWarning()"
+                    [class.text-rose-400]="hasOcclusalWarning()"
+                    [class.border-rose-500/30]="hasOcclusalWarning()"
+                  >
+                    {{ hasOcclusalWarning() ? ('lab_3d.crown_warning' | translate) : ('lab_3d.crown_compliant' | translate) }}
+                  </span>
+                </div>
+
+                <div class="mt-3 space-y-2.5 text-xs">
+                  <!-- Tooth Morphology Type Selector -->
+                  <div class="flex items-center justify-between text-slate-300">
+                    <span class="text-[11px]">{{ 'lab_3d.crown_tooth_type' | translate }}:</span>
+                    <div class="flex items-center gap-1">
+                      @for (t of crownToothTypes; track t) {
+                        <button
+                          type="button"
+                          (click)="selectCrownToothType(t)"
+                          [class.bg-indigo-600]="crownToothType() === t"
+                          [class.text-white]="crownToothType() === t"
+                          [class.bg-slate-850]="crownToothType() !== t"
+                          [class.text-slate-400]="crownToothType() !== t"
+                          class="px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer hover:text-white"
+                        >
+                          {{ t }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Die Cement Spacer (BR-CROWN-01: 20-100 um) -->
+                  <div class="space-y-1 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <div class="flex items-center justify-between text-slate-400 text-[10px]">
+                      <span>{{ 'lab_3d.cement_spacer' | translate }}</span>
+                      <strong class="text-indigo-300 font-mono">{{ crownCementSpacer() }} µm</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="20"
+                      max="100"
+                      step="5"
+                      [value]="crownCementSpacer()"
+                      (input)="onCementSpacerChange($event)"
+                      class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    />
+                    <div class="flex justify-between text-[9px] text-slate-500">
+                      <span>20 µm</span>
+                      <span>Collar: {{ crownMarginCollar() }} mm</span>
+                      <span>100 µm</span>
+                    </div>
+                  </div>
+
+                  <!-- Occlusal Reduction & Proximal Contact -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.occlusal_reduction' | translate }}</span>
+                        <strong [class.text-rose-400]="hasOcclusalWarning()" [class.text-emerald-400]="!hasOcclusalWarning()">{{ crownOcclusalReduction() }} mm</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustOcclusalReduction(-0.1)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">-0.1</button>
+                        <button type="button" (click)="adjustOcclusalReduction(0.1)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">+0.1</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.proximal_contact' | translate }}</span>
+                        <strong class="text-white">{{ crownProximalContact() }}</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="setProximalContact('Light')" [class.text-indigo-400]="crownProximalContact() === 'Light'" class="px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] cursor-pointer">L</button>
+                        <button type="button" (click)="setProximalContact('Normal')" [class.text-indigo-400]="crownProximalContact() === 'Normal'" class="px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] cursor-pointer">N</button>
+                        <button type="button" (click)="setProximalContact('Tight')" [class.text-indigo-400]="crownProximalContact() === 'Tight'" class="px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] cursor-pointer">T</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Status Message -->
+                  @if (hasOcclusalWarning()) {
+                    <p class="text-[10px] text-rose-400 bg-rose-950/40 border border-rose-800/40 p-1.5 rounded-lg">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      {{ 'lab_3d.occlusal_warning_desc' | translate }}
+                    </p>
+                  }
+
+                  <!-- Action Buttons: Save & Send to CAM -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80 gap-2">
+                    <button
+                      type="button"
+                      (click)="saveCrownDesign()"
+                      [disabled]="isSavingCrown()"
+                      class="flex-1 py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      id="save-crown-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingCrown()" [class.pi-spin]="isSavingCrown()" [class.pi-spinner]="isSavingCrown()"></i>
+                      <span>{{ isSavingCrown() ? ('lab_3d.saving_crown' | translate) : ('lab_3d.save_crown' | translate) }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="sendCrownToCam()"
+                      class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      id="send-crown-cam-btn"
+                    >
+                      <i class="pi pi-cog"></i>
+                      <span>{{ 'lab_3d.send_to_cam' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -1338,6 +1490,19 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   savedGuide = signal<ImplantSurgicalGuide | null>(null);
   hasGuideSafetyWarning = computed(() => this.guideSafetyClearance() < 2.0);
 
+  // AI Dental Crown Auto-Design & Morphological Fit State Signals (v10.2.0)
+  isCrownActive = signal<boolean>(false);
+  crownToothType = signal<'Molar' | 'Premolar' | 'Canine' | 'Incisor'>('Molar');
+  readonly crownToothTypes: ('Molar' | 'Premolar' | 'Canine' | 'Incisor')[] = ['Molar', 'Premolar', 'Canine', 'Incisor'];
+  crownCementSpacer = signal<number>(40);
+  crownMarginCollar = signal<number>(0.5);
+  crownOcclusalReduction = signal<number>(1.8);
+  crownProximalContact = signal<'Tight' | 'Normal' | 'Light'>('Normal');
+  crownCuspScale = signal<number>(1.0);
+  isSavingCrown = signal<boolean>(false);
+  savedCrown = signal<CrownMorphologyPlan | null>(null);
+  hasOcclusalWarning = computed(() => this.crownOcclusalReduction() < 1.5);
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -1355,6 +1520,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private mesh: THREE.Mesh | null = null;
   private wireframeMesh: THREE.LineSegments | null = null;
   private guideGroup: THREE.Group = new THREE.Group();
+  private crownGroup: THREE.Group = new THREE.Group();
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -1469,6 +1635,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.guideGroup = new THREE.Group();
     this.scene.add(this.guideGroup);
 
+    // AI Dental Crown Morphology Group (v10.2.0)
+    this.crownGroup = new THREE.Group();
+    this.scene.add(this.crownGroup);
+
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     this.camera.position.set(0, 20, 50);
@@ -1566,6 +1736,8 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       this.loadArticulatorForOrder(orderId);
       this.loadMarginForOrder(orderId);
       this.loadCamToolpathForOrder(orderId);
+      this.loadSurgicalGuideForOrder(orderId);
+      this.loadCrownForOrder(orderId);
     }
 
     this.telemetry.set({
@@ -1822,6 +1994,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isGuideActive()) {
         this.toggleGuide();
       }
+      if (this.isCrownActive()) {
+        this.toggleCrown();
+      }
     } else {
       this.clearCaliper();
     }
@@ -2052,6 +2227,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isGuideActive()) {
         this.toggleGuide();
       }
+      if (this.isCrownActive()) {
+        this.toggleCrown();
+      }
       this.applyHeatmapToMesh();
     } else {
       this.revertHeatmapFromMesh();
@@ -2270,6 +2448,9 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       }
       if (this.isGuideActive()) {
         this.toggleGuide();
+      }
+      if (this.isCrownActive()) {
+        this.toggleCrown();
       }
       this.rebuildArticulatorMesh();
     } else {
@@ -2510,6 +2691,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isArticulatorActive()) this.toggleArticulator();
       if (this.isCamActive()) this.toggleCam();
       if (this.isGuideActive()) this.toggleGuide();
+      if (this.isCrownActive()) this.toggleCrown();
       this.autoTraceMargin();
     } else {
       this.clearMargin();
@@ -2686,6 +2868,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       if (this.isArticulatorActive()) this.toggleArticulator();
       if (this.isMarginActive()) this.toggleMargin();
       if (this.isGuideActive()) this.toggleGuide();
+      if (this.isCrownActive()) this.toggleCrown();
       this.generateCamGCode();
     } else {
       this.clearCamToolpaths();
@@ -2953,6 +3136,7 @@ M30 ; Program End`,
       if (this.isArticulatorActive()) this.toggleArticulator();
       if (this.isMarginActive()) this.toggleMargin();
       if (this.isCamActive()) this.toggleCam();
+      if (this.isCrownActive()) this.toggleCrown();
       this.rebuildSurgicalGuideVisuals();
     } else {
       this.clearSurgicalGuide();
@@ -3214,6 +3398,199 @@ M30 ; Program End`,
     });
   }
 
+  // --- Release v10.2.0 AI Dental Crown Auto-Design & Morphological Fit Engine Methods ---
+
+  toggleCrown(): void {
+    const next = !this.isCrownActive();
+    this.isCrownActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) this.toggleCaliper();
+      if (this.isHeatmapActive()) this.toggleHeatmap();
+      if (this.isArticulatorActive()) this.toggleArticulator();
+      if (this.isMarginActive()) this.toggleMargin();
+      if (this.isCamActive()) this.toggleCam();
+      if (this.isGuideActive()) this.toggleGuide();
+      this.rebuildCrownVisuals();
+    } else {
+      this.clearCrownVisuals();
+    }
+  }
+
+  selectCrownToothType(type: 'Molar' | 'Premolar' | 'Canine' | 'Incisor' | string): void {
+    if (type === 'Premolar' || type === 'Canine' || type === 'Incisor') {
+      this.crownToothType.set(type);
+    } else {
+      this.crownToothType.set('Molar');
+    }
+    if (this.isCrownActive()) {
+      this.rebuildCrownVisuals();
+    }
+  }
+
+  onCementSpacerChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const val = Number(target.value);
+    this.crownCementSpacer.set(val);
+    if (this.isCrownActive()) {
+      this.rebuildCrownVisuals();
+    }
+  }
+
+  adjustOcclusalReduction(delta: number): void {
+    this.crownOcclusalReduction.update(v => Math.max(0.8, Math.min(3.0, Number((v + delta).toFixed(1)))));
+    if (this.isCrownActive()) {
+      this.rebuildCrownVisuals();
+    }
+  }
+
+  setProximalContact(contact: 'Tight' | 'Normal' | 'Light'): void {
+    this.crownProximalContact.set(contact);
+    if (this.isCrownActive()) {
+      this.rebuildCrownVisuals();
+    }
+  }
+
+  rebuildCrownVisuals(): void {
+    if (!this.crownGroup) {
+      this.crownGroup = new THREE.Group();
+      if (this.scene) this.scene.add(this.crownGroup);
+    }
+    this.clearCrownVisuals();
+
+    const toothType = this.crownToothType();
+    const spacerMicrons = this.crownCementSpacer();
+    const occlusal = this.crownOcclusalReduction();
+    const contact = this.crownProximalContact();
+
+    // 1. Outer Crown Anatomical Mesh: High-fidelity natural tooth shader
+    let crownGeo: THREE.BufferGeometry;
+    if (toothType === 'Molar') {
+      crownGeo = new THREE.CylinderGeometry(7.0, 6.2, 8.5 * (occlusal / 1.8), 32);
+    } else if (toothType === 'Premolar') {
+      crownGeo = new THREE.CylinderGeometry(5.2, 4.8, 8.0 * (occlusal / 1.8), 32);
+    } else if (toothType === 'Canine') {
+      crownGeo = new THREE.ConeGeometry(5.0, 9.5 * (occlusal / 1.8), 32);
+    } else {
+      // Incisor
+      crownGeo = new THREE.BoxGeometry(7.5, 9.0 * (occlusal / 1.8), 3.5);
+    }
+
+    const crownMat = new THREE.MeshPhysicalMaterial({
+      color: 0xfaf5ee,
+      roughness: 0.25,
+      metalness: 0.05,
+      transmission: 0.25,
+      thickness: 1.5,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.1
+    });
+    const crownMesh = new THREE.Mesh(crownGeo, crownMat);
+    crownMesh.position.set(0, 5, 0);
+    this.crownGroup.add(crownMesh);
+
+    // 2. Internal Die Cement Spacer Envelope (Cyan translucent inner shell)
+    const spacerScale = 0.88 - (spacerMicrons / 1000);
+    const spacerGeo = crownGeo.clone();
+    spacerGeo.scale(spacerScale, 0.85, spacerScale);
+    const spacerMat = new THREE.MeshBasicMaterial({
+      color: 0x06b6d4,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.5
+    });
+    const spacerMesh = new THREE.Mesh(spacerGeo, spacerMat);
+    spacerMesh.position.set(0, 4.8, 0);
+    this.crownGroup.add(spacerMesh);
+
+    // 3. Mesial & Distal Contact Markers
+    const contactColor = contact === 'Tight' ? 0xef4444 : (contact === 'Normal' ? 0x10b981 : 0x38bdf8);
+    const contactGeo = new THREE.SphereGeometry(0.8, 16, 16);
+    const contactMat = new THREE.MeshBasicMaterial({ color: contactColor });
+
+    const mesialContact = new THREE.Mesh(contactGeo, contactMat);
+    mesialContact.position.set(-6.5, 5, 0);
+    this.crownGroup.add(mesialContact);
+
+    const distalContact = new THREE.Mesh(contactGeo, contactMat);
+    distalContact.position.set(6.5, 5, 0);
+    this.crownGroup.add(distalContact);
+  }
+
+  clearCrownVisuals(): void {
+    if (!this.crownGroup) return;
+    while (this.crownGroup.children.length > 0) {
+      const obj = this.crownGroup.children[0];
+      this.crownGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+  }
+
+  saveCrownDesign(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingCrown.set(true);
+
+    const req: SaveCrownMorphologyRequest = {
+      toothType: this.crownToothType(),
+      cementSpacerMicrons: this.crownCementSpacer(),
+      marginCollarMm: this.crownMarginCollar(),
+      occlusalReductionMm: this.crownOcclusalReduction(),
+      proximalContactStrength: this.crownProximalContact(),
+      proximalContact: this.crownProximalContact(),
+      cuspHeightScale: this.crownCuspScale(),
+      cuspScale: this.crownCuspScale(),
+      isRestorationApproved: true
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveCrownMorphology(orderId, req).subscribe({
+        next: (plan) => {
+          this.savedCrown.set(plan);
+          this.isSavingCrown.set(false);
+          this.rebuildCrownVisuals();
+        },
+        error: () => {
+          this.isSavingCrown.set(false);
+        }
+      });
+    } else {
+      this.isSavingCrown.set(false);
+    }
+  }
+
+  sendCrownToCam(): void {
+    if (this.isCrownActive()) {
+      this.toggleCrown();
+    }
+    if (!this.isCamActive()) {
+      this.toggleCam();
+    }
+  }
+
+  loadCrownForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getCrownMorphology(orderId).subscribe({
+      next: (plan) => {
+        if (plan) {
+          this.savedCrown.set(plan);
+          this.crownToothType.set(plan.toothType);
+          this.crownCementSpacer.set(plan.cementSpacerMicrons);
+          this.crownMarginCollar.set(plan.marginCollarMm);
+          this.crownOcclusalReduction.set(plan.occlusalReductionMm);
+          this.crownProximalContact.set(plan.proximalContactStrength || (plan.proximalContact as any) || 'Normal');
+          this.crownCuspScale.set(plan.cuspHeightScale ?? (plan.cuspScale as any) ?? 1.0);
+          if (this.isCrownActive()) {
+            this.rebuildCrownVisuals();
+          }
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -3249,6 +3626,11 @@ M30 ; Program End`,
     this.clearSurgicalGuide();
     if (this.guideGroup && this.scene) {
       this.scene.remove(this.guideGroup);
+    }
+
+    this.clearCrownVisuals();
+    if (this.crownGroup && this.scene) {
+      this.scene.remove(this.crownGroup);
     }
 
     if (this.mesh) {

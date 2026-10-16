@@ -1227,7 +1227,20 @@
     "export_guide_dossier": "تصدير وثيقة الدليل (.json)",
     "guide_preset_nobel": "نوبل أكتيف",
     "guide_preset_straumann": "ستراومان BLX",
-    "guide_preset_zimmer": "زيمر TSV"
+    "guide_preset_zimmer": "زيمر TSV",
+    "crown_btn": "تصميم التاج",
+    "toggle_crown": "التصميم الآلي لتاج الأسنان والملائمة الشكلية (v10.2.0)",
+    "crown_panel_title": "محرك التصميم الآلي للتيجان",
+    "crown_compliant": "مطابق (≥1.5 مم)",
+    "crown_warning": "تحذير إطباقي (<1.5 مم)",
+    "crown_tooth_type": "النمط التشريحي للسن",
+    "cement_spacer": "فراغ الملاط الداخلي (BR-CROWN-01)",
+    "occlusal_reduction": "الإنقاص الإطباقي",
+    "proximal_contact": "شدة التماس الملاصق",
+    "occlusal_warning_desc": "سماكة الإنقاص الإطباقي أقل من الحد الأدنى 1.5 مم المطلوب لترميمات الزيركونيا.",
+    "saving_crown": "جاري الحفظ...",
+    "save_crown": "حفظ خطة التاج",
+    "send_to_cam": "اعتماد وإرسال للخراطة"
   },
   "subscription": {
     "title": "اشتراك العيادة وحوكمة الحصص",
