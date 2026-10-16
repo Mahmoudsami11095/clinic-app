@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { DiagnosticPartnerService, DiagnosticRequisitionOrder, PartnerUploadResult } from '../../core/services/diagnostic-partner.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { IntraoralMeshViewerComponent } from '../dental-lab/components/intraoral-mesh-viewer/intraoral-mesh-viewer.component';
 
 @Component({
   selector: 'app-partner-dropzone',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, IntraoralMeshViewerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white py-10 px-4 sm:px-6 lg:px-8 font-cairo">
@@ -169,6 +170,17 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
                         <span class="truncate max-w-xs font-mono text-slate-300">{{ file.name }}</span>
                         <div class="flex items-center gap-2">
                           <span class="text-2xs text-slate-500">{{ (file.size / 1024).toFixed(0) }} KB</span>
+                          @if (isMeshFile(file.name)) {
+                            <button
+                              type="button"
+                              (click)="preview3D(file)"
+                              class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-600/30 flex items-center gap-1 cursor-pointer"
+                              title="Preview 3D Mesh in Browser"
+                            >
+                              <i class="pi pi-box text-[9px]"></i>
+                              <span>3D</span>
+                            </button>
+                          }
                           <button
                             type="button"
                             (click)="removeFile(idx)"
@@ -245,6 +257,12 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
         }
 
+        <!-- 3D Intraoral Mesh Preview Modal -->
+        <app-intraoral-mesh-viewer
+          [rawFile]="previewRawFile()"
+          [(visible)]="showDropzone3DViewer"
+        />
+
       </div>
     </div>
   `
@@ -266,6 +284,9 @@ export class PartnerDropzoneComponent implements OnInit {
   readonly isSubmitting = signal<boolean>(false);
   readonly uploadSuccess = signal<boolean>(false);
   readonly uploadResult = signal<PartnerUploadResult | null>(null);
+
+  readonly previewRawFile = signal<File | null>(null);
+  readonly showDropzone3DViewer = signal<boolean>(false);
 
   ngOnInit(): void {
     const orderToken = this.route.snapshot.queryParamMap.get('order');
@@ -327,6 +348,16 @@ export class PartnerDropzoneComponent implements OnInit {
 
   removeFile(index: number): void {
     this.selectedFiles.update(current => current.filter((_, i) => i !== index));
+  }
+
+  isMeshFile(name: string): boolean {
+    const ext = name.toLowerCase();
+    return ext.endsWith('.stl') || ext.endsWith('.ply');
+  }
+
+  preview3D(file: File): void {
+    this.previewRawFile.set(file);
+    this.showDropzone3DViewer.set(true);
   }
 
   uploadResults(): void {

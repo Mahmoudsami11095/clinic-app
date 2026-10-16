@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LabWorkOrderService, LabWorkOrder, FittingEligibilityResult } from '../../services/lab-work-order.service';
+import { IntraoralMeshViewerComponent } from '../intraoral-mesh-viewer/intraoral-mesh-viewer.component';
 
 @Component({
   selector: 'app-lab-work-orders-board',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, IntraoralMeshViewerComponent],
   template: `
     <div class="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in text-slate-100">
       <!-- Header -->
@@ -21,7 +22,7 @@ import { LabWorkOrderService, LabWorkOrder, FittingEligibilityResult } from '../
               <h1 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
                 {{ 'lab.title' | translate }}
                 <span class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  Release v8.4.0
+                  Release v9.0.0
                 </span>
               </h1>
               <p class="text-sm text-slate-400 mt-0.5">
@@ -121,8 +122,16 @@ import { LabWorkOrderService, LabWorkOrder, FittingEligibilityResult } from '../
                   <span class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-bold">Shade: {{ order.shade }}</span>
                 </div>
 
-                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                  <span class="text-[10px] text-slate-400 truncate max-w-28">{{ order.labPartnerName }}</span>
+                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1">
+                  <button
+                    type="button"
+                    (click)="open3DViewer(order)"
+                    class="px-2 py-1 rounded-md text-[10px] font-bold bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="View 3D Intraoral Impression"
+                  >
+                    <i class="pi pi-box text-[9px]"></i>
+                    <span>3D Scan</span>
+                  </button>
                   <button
                     type="button"
                     (click)="advanceStatus(order, 'Milling')"
@@ -169,8 +178,16 @@ import { LabWorkOrderService, LabWorkOrder, FittingEligibilityResult } from '../
                   </p>
                 }
 
-                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                  <span class="text-[10px] text-slate-400 truncate max-w-28">{{ order.labTrackingNumber || 'In Milling' }}</span>
+                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1">
+                  <button
+                    type="button"
+                    (click)="open3DViewer(order)"
+                    class="px-2 py-1 rounded-md text-[10px] font-bold bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="View 3D Intraoral Impression"
+                  >
+                    <i class="pi pi-box text-[9px]"></i>
+                    <span>3D Scan</span>
+                  </button>
                   <button
                     type="button"
                     (click)="advanceStatus(order, 'Shipped')"
@@ -216,8 +233,16 @@ import { LabWorkOrderService, LabWorkOrder, FittingEligibilityResult } from '../
                   <span>{{ order.labTrackingNumber || 'Courier in Transit' }}</span>
                 </div>
 
-                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                  <span class="text-[10px] text-slate-400">In Transit</span>
+                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1">
+                  <button
+                    type="button"
+                    (click)="open3DViewer(order)"
+                    class="px-2 py-1 rounded-md text-[10px] font-bold bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="View 3D Intraoral Impression"
+                  >
+                    <i class="pi pi-box text-[9px]"></i>
+                    <span>3D Scan</span>
+                  </button>
                   <button
                     type="button"
                     (click)="advanceStatus(order, 'ReceivedByClinic')"
@@ -263,6 +288,19 @@ import { LabWorkOrderService, LabWorkOrder, FittingEligibilityResult } from '../
                 <div class="p-2 bg-emerald-950/30 border border-emerald-500/20 rounded-lg text-[10px] text-emerald-200 flex items-center gap-1.5">
                   <i class="pi pi-calendar-plus text-emerald-400"></i>
                   <span>Eligible for Fitting Booking</span>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1">
+                  <button
+                    type="button"
+                    (click)="open3DViewer(order)"
+                    class="px-2 py-1 rounded-md text-[10px] font-bold bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="View 3D Intraoral Impression"
+                  >
+                    <i class="pi pi-box text-[9px]"></i>
+                    <span>View 3D Scan</span>
+                  </button>
+                  <span class="text-[10px] text-emerald-400 font-semibold">&check; Verified</span>
                 </div>
               </div>
             } @empty {
@@ -473,6 +511,12 @@ import { LabWorkOrderService, LabWorkOrder, FittingEligibilityResult } from '../
           </div>
         </div>
       }
+
+      <!-- 3D Intraoral Mesh Viewer Modal -->
+      <app-intraoral-mesh-viewer
+        [order]="selected3DOrder()"
+        [(visible)]="show3DViewerModal"
+      />
     </div>
   `
 })
@@ -489,6 +533,8 @@ export class LabWorkOrdersBoardComponent implements OnInit {
   // Modals
   showNewOrderModal = signal<boolean>(false);
   showEligibilityCheckerModal = signal<boolean>(false);
+  show3DViewerModal = signal<boolean>(false);
+  selected3DOrder = signal<LabWorkOrder | null>(null);
   eligibilityResult = signal<FittingEligibilityResult | null>(null);
 
   // New Order Form Model
@@ -544,5 +590,10 @@ export class LabWorkOrdersBoardComponent implements OnInit {
     this.labService.checkFittingEligibility(this.checkPatientId, this.checkToothNumber).subscribe(res => {
       this.eligibilityResult.set(res);
     });
+  }
+
+  open3DViewer(order: LabWorkOrder): void {
+    this.selected3DOrder.set(order);
+    this.show3DViewerModal.set(true);
   }
 }

@@ -90,4 +90,15 @@ describe('PartnerDropzoneComponent', () => {
     expect(component.uploadSuccess()).toBeTrue();
     expect(component.uploadResult()?.filesProcessed).toBe(1);
   });
+
+  it('should detect 3D mesh files and trigger preview (v9.0.0)', () => {
+    expect(component.isMeshFile('scan.stl')).toBeTrue();
+    expect(component.isMeshFile('scan.ply')).toBeTrue();
+    expect(component.isMeshFile('report.pdf')).toBeFalse();
+
+    const fakeFile = new File(['mock stl'], 'scan.stl', { type: 'application/octet-stream' });
+    component.preview3D(fakeFile);
+    expect(component.previewRawFile()).toBe(fakeFile);
+    expect(component.showDropzone3DViewer()).toBeTrue();
+  });
 });
