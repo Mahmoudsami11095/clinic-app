@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import * as THREE from 'three';
 import { IntraoralMeshViewerComponent, MaterialPreset } from './intraoral-mesh-viewer.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan, AlignerPlan, GbrTitaniumMeshPlan, RpdSurveyorPlan } from '../../services/lab-work-order.service';
+import { LabWorkOrder, LabWorkOrderService, ImplantSurgicalGuide, CrownMorphologyPlan, DualModalityFusionPlan, AlignerPlan, GbrTitaniumMeshPlan, RpdSurveyorPlan, DsdSmilePlan } from '../../services/lab-work-order.service';
 
 describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
   let component: IntraoralMeshViewerComponent;
@@ -1580,6 +1580,108 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
 
     component.toggleRpd();
     expect(() => component.exportRpdSlm()).not.toThrow();
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
+  });
+
+  // --- Release v11.4.0 AI 2D/3D Digital Smile Design (DSD) & Golden Proportion Simulation Tests ---
+
+  it('should toggle DSD aesthetic mode and enforce mutual exclusivity across all tool modes (BR-DSD-01)', () => {
+    component.isRpdActive.set(true);
+    component.isGbrActive.set(true);
+    component.isAlignerActive.set(true);
+
+    component.toggleDsd();
+
+    expect(component.isDsdActive()).toBeTrue();
+    expect(component.isRpdActive()).toBeFalse();
+    expect(component.isGbrActive()).toBeFalse();
+    expect(component.isAlignerActive()).toBeFalse();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    // Toggling DSD off clears visuals
+    component.toggleDsd();
+    expect(component.isDsdActive()).toBeFalse();
+  });
+
+  it('should adjust facial midline offset, interpupillary angle tilt, and central incisor dimensions (BR-DSD-01)', () => {
+    component.toggleDsd();
+
+    expect(component.dsdMidlineOffset()).toBe(0.0);
+    expect(component.dsdIpaAngle()).toBe(0.0);
+
+    component.adjustDsdMidline(0.5);
+    expect(component.dsdMidlineOffset()).toBe(0.5);
+
+    component.adjustDsdIpa(-1.0);
+    expect(component.dsdIpaAngle()).toBe(-1.0);
+
+    component.adjustDsdWidth(0.4);
+    expect(component.dsdCiWidth()).toBe(8.9);
+
+    component.adjustDsdLength(0.5);
+    expect(component.dsdCiLength()).toBe(11.0);
+  });
+
+  it('should calculate ideal central incisor W/L ratio and detect divine golden proportion deviation (BR-DSD-02)', () => {
+    component.dsdCiWidth.set(8.8);
+    component.dsdCiLength.set(11.0);
+
+    // 8.8 / 11.0 = 80.0% -> Ideal (75% - 85%)
+    expect(component.dsdCurrentRatio()).toBe(80.0);
+    expect(component.dsdIsRatioIdeal()).toBeTrue();
+
+    // Auto-harmonize proportions with phi = 1.618
+    component.autoHarmonizeDsd();
+    expect(component.dsdProportions().length).toBe(6);
+    expect(component.hasDsdDeviation()).toBeFalse();
+
+    // Inject >15% deviation
+    component.dsdProportions.set([
+      { toothFdi: '13', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '12', widthMm: 5.25, lengthMm: 9.45, widthToLengthRatio: 55.6, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '11', widthMm: 8.8, lengthMm: 11.0, widthToLengthRatio: 80.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '21', widthMm: 8.8, lengthMm: 11.0, widthToLengthRatio: 80.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '22', widthMm: 3.8, lengthMm: 9.45, widthToLengthRatio: 40.2, goldenRatioDeviationPercent: -27.6, isGoldenProportionCompliant: false },
+      { toothFdi: '23', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true }
+    ]);
+
+    expect(component.hasDsdDeviation()).toBeTrue();
+  });
+
+  it('should save DSD smile plan via LabWorkOrderService (BR-DSD-04)', () => {
+    const mockPlan: DsdSmilePlan = {
+      orderId: 'lab-test-01',
+      patientId: 'pat-seed',
+      facialMidlineOffsetMm: 0.5,
+      interpupillaryAngleDeg: -0.5,
+      smileArcCurvatureRadiusMm: 42.0,
+      centralIncisorWidthMm: 8.5,
+      centralIncisorLengthMm: 10.5,
+      targetWidthToLengthRatio: 80.0,
+      isAestheticHarmonized: true,
+      statusMessage: 'DSD plan approved.',
+      proportions: [],
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'saveDsdSmilePlan').and.returnValue(of(mockPlan));
+
+    component.toggleDsd();
+    component.saveDsdPlan();
+
+    expect(labService.saveDsdSmilePlan).toHaveBeenCalled();
+    expect(component.savedDsd()).toEqual(mockPlan);
+    expect(component.isSavingDsd()).toBeFalse();
+  });
+
+  it('should export DSD aesthetic veneer mock-up JSON cleanly (BR-DSD-04)', () => {
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/dsd-mockup');
+    spyOn(URL, 'revokeObjectURL');
+
+    component.toggleDsd();
+    expect(() => component.exportDsdMockup()).not.toThrow();
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
