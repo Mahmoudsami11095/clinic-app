@@ -84,4 +84,12 @@ describe('OfflineService - Level 1 (SW/Unit)', () => {
     expect(service.pendingActions().length).toBe(0);
     expect(toastrSpy.success).toHaveBeenCalledWith('All offline changes synchronized successfully!', 'Sync Complete');
   });
+
+  it('6. should retrieve snapshot asynchronously via getSnapshotAsync', async () => {
+    const testData = { clinicId: 'c1', name: 'Downtown Branch' };
+    service.saveSnapshot('active_clinic', testData);
+
+    const retrieved = await service.getSnapshotAsync<typeof testData>('active_clinic');
+    expect(retrieved).toEqual(testData);
+  });
 });

@@ -88,6 +88,17 @@ const desktopAPI = {
       ipcRenderer.invoke('desktop:update-tray-status', payload)
   },
 
+  storage: {
+    saveSnapshot: (key: string, data: string): Promise<{ success: boolean; error?: string }> =>
+      ipcRenderer.invoke('desktop:save-snapshot', { key, data }),
+    loadSnapshot: (key: string): Promise<string | null> =>
+      ipcRenderer.invoke('desktop:load-snapshot', key),
+    clearSnapshot: (key: string): Promise<{ success: boolean; error?: string }> =>
+      ipcRenderer.invoke('desktop:clear-snapshot', key),
+    getStorageInfo: (): Promise<{ dir: string; fileCount: number; totalBytes: number }> =>
+      ipcRenderer.invoke('desktop:storage-info')
+  },
+
   system: {
     getSystemInfo: (): Promise<SystemInfo> => ipcRenderer.invoke('desktop:get-system-info')
   }
