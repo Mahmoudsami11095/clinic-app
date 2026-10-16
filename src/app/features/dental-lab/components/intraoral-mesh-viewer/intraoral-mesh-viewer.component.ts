@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest, DsdSmilePlan, DsdToothProportion, SaveDsdSmilePlanRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -359,6 +359,28 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.rpd_btn' | translate }}</span>
                 @if (isRpdActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasTissueImpingementWarning()" [class.bg-rose-400]="hasTissueImpingementWarning()"></span>
+                }
+              </button>
+
+              <!-- AI 2D/3D Digital Smile Design & Golden Proportion (v11.4.0) -->
+              <button
+                type="button"
+                (click)="toggleDsd()"
+                [class.bg-gradient-to-r]="isDsdActive()"
+                [class.from-amber-600]="isDsdActive()"
+                [class.to-yellow-500]="isDsdActive()"
+                [class.text-white]="isDsdActive()"
+                [class.border-yellow-400]="isDsdActive()"
+                [class.bg-slate-800]="!isDsdActive()"
+                [class.text-slate-300]="!isDsdActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_dsd' | translate"
+                id="toggle-dsd-btn"
+              >
+                <i class="pi pi-star text-xs text-amber-300"></i>
+                <span>{{ 'lab_3d.dsd_btn' | translate }}</span>
+                @if (isDsdActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasDsdDeviation() && dsdIsRatioIdeal()" [class.bg-amber-400]="hasDsdDeviation() || !dsdIsRatioIdeal()"></span>
                 }
               </button>
 
@@ -1866,6 +1888,166 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- AI Digital Smile Design & Golden Proportion Aesthetic Simulation Panel (BR-DSD-01..04) -->
+            @if (isDsdActive()) {
+              <div
+                class="absolute bottom-4 left-4 z-10 w-80 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-yellow-500/30 p-3 shadow-2xl animate-fade-in text-white text-xs select-none"
+                id="dsd-aesthetic-panel"
+              >
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-ping"></span>
+                    <h4 class="text-xs font-bold text-yellow-400 tracking-wider">
+                      {{ 'lab_3d.dsd_panel_title' | translate }}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="toggleDsd()"
+                    class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                  >
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+
+                <div class="space-y-3 pt-3">
+                  <!-- Facial Midline & Interpupillary Angle (BR-DSD-01) -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.dsd_midline_offset' | translate }}:</span>
+                        <strong class="text-yellow-300 font-mono">{{ dsdMidlineOffset() }} mm</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustDsdMidline(-0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">-0.5</button>
+                        <button type="button" (click)="adjustDsdMidline(0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">+0.5</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.dsd_ipa_tilt' | translate }}:</span>
+                        <strong class="text-yellow-300 font-mono">{{ dsdIpaAngle() }}°</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustDsdIpa(-0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">-0.5</button>
+                        <button type="button" (click)="adjustDsdIpa(0.5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">+0.5</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Central Incisor Dimensions & Width/Length Proportion Ratio (BR-DSD-01) -->
+                  <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.dsd_ci_width' | translate }}:</span>
+                        <strong class="text-amber-300 font-mono">{{ dsdCiWidth() }} mm</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustDsdWidth(-0.2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">-0.2</button>
+                        <button type="button" (click)="adjustDsdWidth(0.2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">+0.2</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex items-center justify-between text-slate-400">
+                        <span>{{ 'lab_3d.dsd_ci_length' | translate }}:</span>
+                        <strong class="text-amber-300 font-mono">{{ dsdCiLength() }} mm</strong>
+                      </div>
+                      <div class="flex items-center gap-1 justify-end">
+                        <button type="button" (click)="adjustDsdLength(-0.2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">-0.2</button>
+                        <button type="button" (click)="adjustDsdLength(0.2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer text-[9px]">+0.2</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- W/L Ratio Indicator & Consonant Smile Arc Radius -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1.5 text-[10px]">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">{{ 'lab_3d.dsd_target_wl_ratio' | translate }}:</span>
+                      <span class="font-mono font-bold" [class.text-emerald-400]="dsdIsRatioIdeal()" [class.text-amber-400]="!dsdIsRatioIdeal()">
+                        {{ dsdCurrentRatio() }}%
+                        <span class="text-[9px] text-slate-500 font-normal">({{ 'lab_3d.dsd_ideal_ratio_hint' | translate }})</span>
+                      </span>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                      <span class="text-slate-400">{{ 'lab_3d.dsd_smile_arc_radius' | translate }}:</span>
+                      <strong class="text-cyan-300 font-mono">{{ dsdSmileArcRadius() }} mm</strong>
+                    </div>
+                  </div>
+
+                  <!-- 6 Anterior Proportions Table (FDI 13-23) (BR-DSD-02) -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] text-slate-400 font-bold block">{{ 'lab_3d.dsd_proportions_table' | translate }}:</span>
+                      <button
+                        type="button"
+                        (click)="autoHarmonizeDsd()"
+                        class="text-[9px] text-yellow-400 hover:text-yellow-300 font-semibold cursor-pointer underline flex items-center gap-1"
+                        id="dsd-auto-harmonize-btn"
+                      >
+                        <i class="pi pi-sparkles text-[8px]"></i>
+                        {{ 'lab_3d.dsd_auto_harmonize' | translate }}
+                      </button>
+                    </div>
+
+                    <div class="space-y-1 max-h-24 overflow-y-auto pr-1">
+                      @for (prop of dsdProportions(); track prop.toothFdi) {
+                        <div class="flex items-center justify-between bg-slate-950 p-1.5 rounded-lg text-[9px] border border-slate-800">
+                          <span class="text-white font-bold">Tooth #{{ prop.toothFdi }}</span>
+                          <span class="text-slate-300 font-mono">{{ prop.widthMm }}×{{ prop.lengthMm }}mm</span>
+                          <span class="px-1.5 py-0.5 rounded text-[8px] font-bold"
+                            [class.bg-emerald-950]="prop.isGoldenProportionCompliant"
+                            [class.text-emerald-400]="prop.isGoldenProportionCompliant"
+                            [class.border-emerald-800]="prop.isGoldenProportionCompliant"
+                            [class.bg-rose-950]="!prop.isGoldenProportionCompliant"
+                            [class.text-rose-400]="!prop.isGoldenProportionCompliant"
+                            [class.border-rose-800]="!prop.isGoldenProportionCompliant"
+                            [class.border]="true"
+                          >
+                            {{ prop.isGoldenProportionCompliant ? ('lab_3d.dsd_compliant_badge' | translate) : (prop.goldenRatioDeviationPercent + '%') }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Deviation Warning Banner (BR-DSD-02) -->
+                  @if (hasDsdDeviation()) {
+                    <p class="text-[10px] text-amber-300 bg-amber-950/40 border border-amber-800/40 p-1.5 rounded-lg font-semibold animate-pulse" id="dsd-warning-banner">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      {{ 'lab_3d.dsd_deviation_warning' | translate }}
+                    </p>
+                  }
+
+                  <!-- Actions: Save DSD Plan & Export Mock-Up (BR-DSD-04) -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80 gap-2">
+                    <button
+                      type="button"
+                      (click)="saveDsdPlan()"
+                      [disabled]="isSavingDsd()"
+                      class="flex-1 py-1.5 px-3 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      id="save-dsd-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingDsd()" [class.pi-spin]="isSavingDsd()" [class.pi-spinner]="isSavingDsd()"></i>
+                      <span>{{ isSavingDsd() ? ('lab_3d.saving_dsd' | translate) : ('lab_3d.save_dsd' | translate) }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="exportDsdMockup()"
+                      class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      id="export-dsd-mockup-btn"
+                    >
+                      <i class="pi pi-download"></i>
+                      <span>{{ 'lab_3d.export_dsd_mockup' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -2174,6 +2356,40 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   savedRpd = signal<RpdSurveyorPlan | null>(null);
   hasTissueImpingementWarning = computed(() => this.selectedArch() === 'Mandibular' && this.selectedMajorConnector() === 'LingualBar' && this.floorOfMouthDepthMm() < 7.0);
 
+  // AI 2D/3D Digital Smile Design (DSD) & Golden Proportion Signals (v11.4.0)
+  isDsdActive = signal<boolean>(false);
+  dsdMidlineOffset = signal<number>(0.0);
+  dsdIpaAngle = signal<number>(0.0);
+  dsdSmileArcRadius = signal<number>(42.0);
+  dsdCiWidth = signal<number>(8.5);
+  dsdCiLength = signal<number>(10.5);
+  dsdTargetRatio = signal<number>(80.0);
+  dsdProportions = signal<DsdToothProportion[]>([
+    { toothFdi: '13', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+    { toothFdi: '12', widthMm: 5.25, lengthMm: 9.45, widthToLengthRatio: 55.6, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+    { toothFdi: '11', widthMm: 8.5, lengthMm: 10.5, widthToLengthRatio: 81.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+    { toothFdi: '21', widthMm: 8.5, lengthMm: 10.5, widthToLengthRatio: 81.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+    { toothFdi: '22', widthMm: 5.25, lengthMm: 9.45, widthToLengthRatio: 55.6, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+    { toothFdi: '23', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true }
+  ]);
+  isSavingDsd = signal<boolean>(false);
+  savedDsd = signal<DsdSmilePlan | null>(null);
+
+  dsdCurrentRatio = computed(() => {
+    const w = this.dsdCiWidth();
+    const l = this.dsdCiLength();
+    return l > 0 ? Math.round((w / l) * 1000) / 10 : 80.0;
+  });
+
+  dsdIsRatioIdeal = computed(() => {
+    const r = this.dsdCurrentRatio();
+    return r >= 75.0 && r <= 85.0;
+  });
+
+  hasDsdDeviation = computed(() => {
+    return this.dsdProportions().some(p => Math.abs(p.goldenRatioDeviationPercent) > 15.0);
+  });
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -2196,6 +2412,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private alignerGroup: THREE.Group = new THREE.Group();
   private gbrGroup: THREE.Group = new THREE.Group();
   private rpdGroup: THREE.Group = new THREE.Group();
+  private dsdGroup: THREE.Group = new THREE.Group();
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -2330,6 +2547,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.rpdGroup = new THREE.Group();
     this.scene.add(this.rpdGroup);
 
+    // AI 2D/3D Digital Smile Design & Golden Proportion Group (v11.4.0)
+    this.dsdGroup = new THREE.Group();
+    this.scene.add(this.dsdGroup);
+
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     this.camera.position.set(0, 20, 50);
@@ -2433,6 +2654,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       this.loadAlignerForOrder(orderId);
       this.loadGbrForOrder(orderId);
       this.loadRpdForOrder(orderId);
+      this.loadDsdForOrder(orderId);
     }
 
     this.telemetry.set({
@@ -4981,6 +5203,7 @@ M30 ; Program End`,
       if (this.isFusionActive()) this.toggleFusion();
       if (this.isAlignerActive()) this.toggleAligner();
       if (this.isGbrActive()) this.toggleGbr();
+      if (this.isDsdActive()) this.toggleDsd();
       this.rebuildRpdVisuals();
     } else {
       this.clearRpdVisuals();
@@ -5200,6 +5423,260 @@ M30 ; Program End`,
     });
   }
 
+  // --- Release v11.4.0 AI 2D/3D Digital Smile Design (DSD) & Golden Proportion Aesthetic Simulation Methods ---
+
+  toggleDsd(): void {
+    const next = !this.isDsdActive();
+    this.isDsdActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) this.toggleCaliper();
+      if (this.isHeatmapActive()) this.toggleHeatmap();
+      if (this.isArticulatorActive()) this.toggleArticulator();
+      if (this.isMarginActive()) this.toggleMargin();
+      if (this.isCamActive()) this.toggleCam();
+      if (this.isGuideActive()) this.toggleGuide();
+      if (this.isCrownActive()) this.toggleCrown();
+      if (this.isFusionActive()) this.toggleFusion();
+      if (this.isAlignerActive()) this.toggleAligner();
+      if (this.isGbrActive()) this.toggleGbr();
+      if (this.isRpdActive()) this.toggleRpd();
+      this.rebuildDsdVisuals();
+    } else {
+      this.clearDsdVisuals();
+    }
+  }
+
+  adjustDsdMidline(delta: number): void {
+    this.dsdMidlineOffset.update(v => Math.round(Math.max(-3.0, Math.min(3.0, v + delta)) * 10) / 10);
+    if (this.isDsdActive()) {
+      this.rebuildDsdVisuals();
+    }
+  }
+
+  adjustDsdIpa(delta: number): void {
+    this.dsdIpaAngle.update(v => Math.round(Math.max(-5.0, Math.min(5.0, v + delta)) * 10) / 10);
+    if (this.isDsdActive()) {
+      this.rebuildDsdVisuals();
+    }
+  }
+
+  adjustDsdWidth(delta: number): void {
+    this.dsdCiWidth.update(v => Math.round(Math.max(7.0, Math.min(10.5, v + delta)) * 10) / 10);
+    this.recalculateDsdProportions();
+    if (this.isDsdActive()) {
+      this.rebuildDsdVisuals();
+    }
+  }
+
+  adjustDsdLength(delta: number): void {
+    this.dsdCiLength.update(v => Math.round(Math.max(8.5, Math.min(13.0, v + delta)) * 10) / 10);
+    this.recalculateDsdProportions();
+    if (this.isDsdActive()) {
+      this.rebuildDsdVisuals();
+    }
+  }
+
+  autoHarmonizeDsd(): void {
+    this.recalculateDsdProportions();
+    if (this.isDsdActive()) {
+      this.rebuildDsdVisuals();
+    }
+  }
+
+  recalculateDsdProportions(): void {
+    const widthCI = this.dsdCiWidth();
+    const lengthCI = this.dsdCiLength();
+    const widthLI = Math.round((widthCI / 1.618) * 100) / 100;
+    const widthC = Math.round((widthLI / 1.618) * 100) / 100;
+    const lengthLI = Math.round(lengthCI * 0.90 * 100) / 100;
+    const lengthC = Math.round(lengthCI * 1.05 * 100) / 100;
+    const actualRatio = Math.round((widthCI / lengthCI) * 1000) / 10;
+
+    this.dsdProportions.set([
+      { toothFdi: '13', widthMm: widthC, lengthMm: lengthC, widthToLengthRatio: Math.round((widthC / lengthC) * 1000) / 10, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '12', widthMm: widthLI, lengthMm: lengthLI, widthToLengthRatio: Math.round((widthLI / lengthLI) * 1000) / 10, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '11', widthMm: widthCI, lengthMm: lengthCI, widthToLengthRatio: actualRatio, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '21', widthMm: widthCI, lengthMm: lengthCI, widthToLengthRatio: actualRatio, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '22', widthMm: widthLI, lengthMm: lengthLI, widthToLengthRatio: Math.round((widthLI / lengthLI) * 1000) / 10, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+      { toothFdi: '23', widthMm: widthC, lengthMm: lengthC, widthToLengthRatio: Math.round((widthC / lengthC) * 1000) / 10, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true }
+    ]);
+  }
+
+  rebuildDsdVisuals(): void {
+    if (!this.dsdGroup) {
+      this.dsdGroup = new THREE.Group();
+      if (this.scene) this.scene.add(this.dsdGroup);
+    }
+    this.clearDsdVisuals();
+
+    const midline = this.dsdMidlineOffset();
+    const ipa = this.dsdIpaAngle();
+    const arcRadius = this.dsdSmileArcRadius();
+
+    // 1. Facial Midline Indicator (Vertical Golden Guide)
+    const midlineMat = new THREE.LineBasicMaterial({ color: 0xfacc15, linewidth: 2 });
+    const midlinePoints = [
+      new THREE.Vector3(midline, 22.0, 5.0),
+      new THREE.Vector3(midline, -15.0, 5.0)
+    ];
+    const midlineGeo = new THREE.BufferGeometry().setFromPoints(midlinePoints);
+    const midlineLine = new THREE.Line(midlineGeo, midlineMat);
+    midlineLine.rotation.z = THREE.MathUtils.degToRad(ipa);
+    this.dsdGroup.add(midlineLine);
+
+    // 2. Interpupillary Horizontal Alignment Reference Line
+    const ipaMat = new THREE.LineDashedMaterial({ color: 0x38bdf8, dashSize: 1, gapSize: 0.5 });
+    const ipaPoints = [
+      new THREE.Vector3(-35.0, 15.0, 5.0),
+      new THREE.Vector3(35.0, 15.0, 5.0)
+    ];
+    const ipaGeo = new THREE.BufferGeometry().setFromPoints(ipaPoints);
+    const ipaLine = new THREE.Line(ipaGeo, ipaMat);
+    ipaLine.computeLineDistances();
+    ipaLine.rotation.z = THREE.MathUtils.degToRad(ipa);
+    this.dsdGroup.add(ipaLine);
+
+    // 3. Consonant Smile Arc Spline (BR-DSD-03)
+    const arcPoints: THREE.Vector3[] = [];
+    for (let x = -24; x <= 24; x += 2) {
+      const y = -((x * x) / (2 * arcRadius)) + 2.0;
+      arcPoints.push(new THREE.Vector3(x + midline, y, 6.0));
+    }
+    const arcCurve = new THREE.CatmullRomCurve3(arcPoints);
+    const arcGeo = new THREE.BufferGeometry().setFromPoints(arcCurve.getPoints(50));
+    const arcMat = new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 });
+    const arcMesh = new THREE.Line(arcGeo, arcMat);
+    this.dsdGroup.add(arcMesh);
+
+    // 4. Anterior Aesthetic Tooth Boundary Wireframes (FDI 13-23)
+    const proportions = this.dsdProportions();
+    let leftOffset = midline;
+    let rightOffset = midline;
+
+    proportions.forEach(prop => {
+      const isRightQuadrant = prop.toothFdi.startsWith('1');
+      const w = prop.widthMm;
+      const h = prop.lengthMm;
+      const centerX = isRightQuadrant ? (leftOffset - w / 2) : (rightOffset + w / 2);
+      if (isRightQuadrant) leftOffset -= w;
+      else rightOffset += w;
+
+      const toothBoxGeo = new THREE.PlaneGeometry(w * 0.95, h * 0.95);
+      const toothWireMat = new THREE.MeshBasicMaterial({
+        color: prop.isGoldenProportionCompliant ? 0xf59e0b : 0xf43f5e,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.8
+      });
+      const toothBox = new THREE.Mesh(toothBoxGeo, toothWireMat);
+      toothBox.position.set(centerX, 5.0, 5.5);
+      this.dsdGroup.add(toothBox);
+    });
+  }
+
+  clearDsdVisuals(): void {
+    if (!this.dsdGroup) return;
+    while (this.dsdGroup.children.length > 0) {
+      const obj = this.dsdGroup.children[0];
+      this.dsdGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+  }
+
+  saveDsdPlan(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingDsd.set(true);
+
+    const req: SaveDsdSmilePlanRequest = {
+      facialMidlineOffsetMm: this.dsdMidlineOffset(),
+      interpupillaryAngleDeg: this.dsdIpaAngle(),
+      smileArcCurvatureRadiusMm: this.dsdSmileArcRadius(),
+      centralIncisorWidthMm: this.dsdCiWidth(),
+      centralIncisorLengthMm: this.dsdCiLength(),
+      targetWidthToLengthRatio: this.dsdTargetRatio(),
+      isAestheticHarmonized: !this.hasDsdDeviation() && this.dsdIsRatioIdeal(),
+      proportions: this.dsdProportions()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveDsdSmilePlan(orderId, req).subscribe({
+        next: (plan) => {
+          this.savedDsd.set(plan);
+          this.dsdMidlineOffset.set(plan.facialMidlineOffsetMm);
+          this.dsdIpaAngle.set(plan.interpupillaryAngleDeg);
+          this.dsdSmileArcRadius.set(plan.smileArcCurvatureRadiusMm);
+          this.dsdCiWidth.set(plan.centralIncisorWidthMm);
+          this.dsdCiLength.set(plan.centralIncisorLengthMm);
+          this.dsdTargetRatio.set(plan.targetWidthToLengthRatio);
+          if (plan.proportions && plan.proportions.length > 0) {
+            this.dsdProportions.set(plan.proportions);
+          }
+          this.isSavingDsd.set(false);
+          this.rebuildDsdVisuals();
+        },
+        error: () => {
+          this.isSavingDsd.set(false);
+        }
+      });
+    } else {
+      this.isSavingDsd.set(false);
+    }
+  }
+
+  exportDsdMockup(): void {
+    const plan = this.savedDsd() || {
+      orderId: this.order()?.id || 'LAB-CURRENT',
+      patientId: 'pat-seed',
+      facialMidlineOffsetMm: this.dsdMidlineOffset(),
+      interpupillaryAngleDeg: this.dsdIpaAngle(),
+      smileArcCurvatureRadiusMm: this.dsdSmileArcRadius(),
+      centralIncisorWidthMm: this.dsdCiWidth(),
+      centralIncisorLengthMm: this.dsdCiLength(),
+      targetWidthToLengthRatio: this.dsdTargetRatio(),
+      isAestheticHarmonized: !this.hasDsdDeviation() && this.dsdIsRatioIdeal(),
+      statusMessage: 'Digital Smile Design aesthetic veneer mock-up exported.',
+      proportions: this.dsdProportions(),
+      plannedAtUtc: new Date().toISOString()
+    };
+
+    const json = JSON.stringify(plan, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `DSD_Aesthetic_Mockup_${plan.orderId}_Tooth11.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  loadDsdForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getDsdPlan(orderId).subscribe({
+      next: (plan) => {
+        if (plan) {
+          this.savedDsd.set(plan);
+          this.dsdMidlineOffset.set(plan.facialMidlineOffsetMm);
+          this.dsdIpaAngle.set(plan.interpupillaryAngleDeg);
+          this.dsdSmileArcRadius.set(plan.smileArcCurvatureRadiusMm);
+          this.dsdCiWidth.set(plan.centralIncisorWidthMm);
+          this.dsdCiLength.set(plan.centralIncisorLengthMm);
+          this.dsdTargetRatio.set(plan.targetWidthToLengthRatio);
+          if (plan.proportions && plan.proportions.length > 0) {
+            this.dsdProportions.set(plan.proportions);
+          }
+          if (this.isDsdActive()) {
+            this.rebuildDsdVisuals();
+          }
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -5260,6 +5737,11 @@ M30 ; Program End`,
     this.clearRpdVisuals();
     if (this.rpdGroup && this.scene) {
       this.scene.remove(this.rpdGroup);
+    }
+
+    this.clearDsdVisuals();
+    if (this.dsdGroup && this.scene) {
+      this.scene.remove(this.dsdGroup);
     }
 
     if (this.mesh) {

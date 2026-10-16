@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest, AlignerPlan, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, SaveGbrMeshPlanRequest, RpdSurveyorPlan, SaveRpdPlanRequest } from './lab-work-order.service';
+import { LabWorkOrderService, CreateLabWorkOrderRequest, UpdateLabStatusRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, SaveDualModalityFusionRequest, AlignerPlan, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, SaveGbrMeshPlanRequest, RpdSurveyorPlan, SaveRpdPlanRequest, DsdSmilePlan, SaveDsdSmilePlanRequest } from './lab-work-order.service';
 import { environment } from '../../../../environments/environment';
 
 describe('LabWorkOrderService (Release v8.4.0)', () => {
@@ -1015,6 +1015,109 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
     });
 
     const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/rpd`);
+    expect(req.request.method).toBe('POST');
+    req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+  });
+
+  // --- Release v11.4.0 AI Digital Smile Design (DSD) & Golden Proportion Tests ---
+
+  it('should fetch DSD smile plan via getDsdPlan (v11.4.0)', (done) => {
+    service.getDsdPlan('lab-1').subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.centralIncisorWidthMm).toBe(8.5);
+      expect(plan.centralIncisorLengthMm).toBe(10.5);
+      expect(plan.targetWidthToLengthRatio).toBe(80.0);
+      expect(plan.isAestheticHarmonized).toBeTrue();
+      expect(plan.proportions.length).toBe(6);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/dsd`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      facialMidlineOffsetMm: 0.0,
+      interpupillaryAngleDeg: 0.0,
+      smileArcCurvatureRadiusMm: 42.0,
+      centralIncisorWidthMm: 8.5,
+      centralIncisorLengthMm: 10.5,
+      targetWidthToLengthRatio: 80.0,
+      isAestheticHarmonized: true,
+      statusMessage: 'Digital Smile Design plan active.',
+      proportions: [
+        { toothFdi: '13', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '12', widthMm: 5.25, lengthMm: 9.45, widthToLengthRatio: 55.6, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '11', widthMm: 8.5, lengthMm: 10.5, widthToLengthRatio: 81.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '21', widthMm: 8.5, lengthMm: 10.5, widthToLengthRatio: 81.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '22', widthMm: 5.25, lengthMm: 9.45, widthToLengthRatio: 55.6, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '23', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true }
+      ],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should save DSD smile plan via saveDsdSmilePlan (v11.4.0)', (done) => {
+    const saveReq: SaveDsdSmilePlanRequest = {
+      facialMidlineOffsetMm: 0.5,
+      interpupillaryAngleDeg: -1.0,
+      centralIncisorWidthMm: 8.8,
+      centralIncisorLengthMm: 11.0,
+      targetWidthToLengthRatio: 80.0,
+      isAestheticHarmonized: true
+    };
+
+    service.saveDsdSmilePlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.centralIncisorWidthMm).toBe(8.8);
+      expect(plan.centralIncisorLengthMm).toBe(11.0);
+      expect(plan.isAestheticHarmonized).toBeTrue();
+      expect(plan.statusMessage).toContain('approved');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/dsd`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.centralIncisorWidthMm).toBe(8.8);
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-seed',
+      facialMidlineOffsetMm: 0.5,
+      interpupillaryAngleDeg: -1.0,
+      smileArcCurvatureRadiusMm: 42.0,
+      centralIncisorWidthMm: 8.8,
+      centralIncisorLengthMm: 11.0,
+      targetWidthToLengthRatio: 80.0,
+      isAestheticHarmonized: true,
+      statusMessage: 'Digital Smile Design (DSD) aesthetic plan approved.',
+      proportions: [],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should compute fallback DSD plan and flag BR-DSD-02 warning on >15% golden ratio deviation', (done) => {
+    const saveReq: SaveDsdSmilePlanRequest = {
+      centralIncisorWidthMm: 8.5,
+      centralIncisorLengthMm: 10.5,
+      proportions: [
+        { toothFdi: '13', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '12', widthMm: 5.25, lengthMm: 9.45, widthToLengthRatio: 55.6, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '11', widthMm: 8.5, lengthMm: 10.5, widthToLengthRatio: 81.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '21', widthMm: 8.5, lengthMm: 10.5, widthToLengthRatio: 81.0, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true },
+        { toothFdi: '22', widthMm: 3.8, lengthMm: 9.45, widthToLengthRatio: 40.2, goldenRatioDeviationPercent: -27.6, isGoldenProportionCompliant: false },
+        { toothFdi: '23', widthMm: 3.25, lengthMm: 11.0, widthToLengthRatio: 29.5, goldenRatioDeviationPercent: 0.0, isGoldenProportionCompliant: true }
+      ]
+    };
+
+    service.saveDsdSmilePlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.isAestheticHarmonized).toBeFalse();
+      expect(plan.statusMessage).toContain('BR-DSD-02 WARNING');
+      expect(plan.statusMessage).toContain('veneer mock-up');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/dsd`);
     expect(req.request.method).toBe('POST');
     req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
   });
