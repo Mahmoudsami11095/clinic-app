@@ -1245,7 +1245,19 @@
     "occlusal_warning_desc": "Occlusal thickness is below 1.5 mm minimum required for Zirconia restorations.",
     "saving_crown": "Saving Plan...",
     "save_crown": "Save Crown Plan",
-    "send_to_cam": "Approve & Send to CAM"
+    "send_to_cam": "Approve & Send to CAM",
+    "fusion_btn": "3D Fusion",
+    "toggle_fusion": "Dual-Modality CBCT-DICOM & STL 3D Multi-Modal Fusion Engine (v11.0.0)",
+    "fusion_panel_title": "Dual-Modality 3D Fusion Engine",
+    "fusion_compliant": "RMS Compliant (≤0.35mm)",
+    "fusion_warning": "High RMS (>0.35mm)",
+    "fusion_nerve_warning": "CRITICAL NERVE BUFFER WARNING",
+    "fusion_nerve_warning_desc": "Subsurface clearance to mandibular canal (< 2.0 mm) violates 2.0 mm anatomical safety buffer.",
+    "fusion_bone_opacity": "Bone vs. Soft-Tissue Blending",
+    "fusion_nerve_distance": "Mandibular Nerve Buffer",
+    "saving_fusion": "Saving Multi-Modal Plan...",
+    "save_fusion": "Save Fusion Plan",
+    "export_fusion_dossier": "Export Multi-Modal Dossier"
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",
