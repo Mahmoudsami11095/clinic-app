@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white">
+<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white" [attr.dir]="languageService.currentLang() === 'ar' ? 'rtl' : 'ltr'">
   
   <!-- Navigation Header -->
   <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
@@ -11,7 +11,7 @@
           <span>Smart Clinic</span>
           <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono">v{{ appVersion() }}</span>
         </h1>
-        <p class="text-[11px] text-slate-400">Enterprise Mobile Companion</p>
+        <p class="text-[11px] text-slate-400">{{ 'app_center.subtitle' | translate }}</p>
       </div>
     </div>
 
@@ -33,215 +33,417 @@
   </header>
 
   <!-- Hero Section -->
-  <main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
+  <main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-10">
     
-    <div class="text-center space-y-4 max-w-2xl mx-auto">
+    <div class="text-center space-y-4 max-w-3xl mx-auto">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium">
         <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>{{ 'mobile.badge_native_experience' | translate }}</span>
+        <span>{{ 'app_center.badge_unified_ecosystem' | translate }}</span>
       </div>
 
       <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-        {{ 'mobile.hero_title_1' | translate }}
+        {{ 'app_center.hero_title_1' | translate }}
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-400 to-teal-300">
-          {{ 'mobile.hero_title_2' | translate }}
+          {{ 'app_center.hero_title_2' | translate }}
         </span>
       </h2>
 
-      <p class="text-slate-400 text-sm sm:text-base leading-relaxed">
-        {{ 'mobile.hero_subtitle' | translate }}
+      <p class="text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+        {{ 'app_center.hero_desc' | translate }}
       </p>
+
+      <!-- Segmented Platform Switcher Tabs -->
+      <div class="inline-flex p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl gap-1.5 mt-6">
+        <button 
+          type="button"
+          (click)="selectTab('desktop')"
+          [class.bg-indigo-600]="activeTab() === 'desktop'"
+          [class.text-white]="activeTab() === 'desktop'"
+          [class.text-slate-400]="activeTab() !== 'desktop'"
+          class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer">
+          <i class="pi pi-desktop text-sm"></i>
+          <span>{{ 'app_center.tab_desktop' | translate }}</span>
+          @if (isDesktop()) {
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          }
+        </button>
+
+        <button 
+          type="button"
+          (click)="selectTab('mobile')"
+          [class.bg-indigo-600]="activeTab() === 'mobile'"
+          [class.text-white]="activeTab() === 'mobile'"
+          [class.text-slate-400]="activeTab() !== 'mobile'"
+          class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer">
+          <i class="pi pi-mobile text-sm"></i>
+          <span>{{ 'app_center.tab_mobile' | translate }}</span>
+          @if (isAndroid() || isIOS()) {
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          }
+        </button>
+
+        <button 
+          type="button"
+          (click)="selectTab('pwa')"
+          [class.bg-indigo-600]="activeTab() === 'pwa'"
+          [class.text-white]="activeTab() === 'pwa'"
+          [class.text-slate-400]="activeTab() !== 'pwa'"
+          class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer">
+          <i class="pi pi-globe text-sm"></i>
+          <span>{{ 'app_center.tab_pwa' | translate }}</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Targeted Download Action Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-
-      <!-- Android Download Card -->
-      <div 
-        [class.ring-2]="isAndroid()" 
-        [class.ring-indigo-500]="isAndroid()"
-        class="rounded-3xl p-6 sm:p-8 bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+    <!-- TAB 1: DESKTOP APPS -->
+    @if (activeTab() === 'desktop') {
+      <div class="space-y-10 animate-in fade-in duration-300">
         
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <i class="pi pi-android text-2xl"></i>
+        <!-- Detected System Alert Banner -->
+        @if (isDesktop()) {
+          <div class="max-w-2xl mx-auto rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <i class="pi pi-check-circle text-lg"></i>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-indigo-200">
+                  {{ 'app_center.detected_os' | translate }}: 
+                  <span class="font-bold text-white capitalize">{{ detectedDesktopPlatform() }}</span>
+                </p>
+                <p class="text-[11px] text-slate-400">{{ 'app_center.detected_os_hint' | translate }}</p>
+              </div>
             </div>
-            @if (isAndroid()) {
-              <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
-                {{ 'mobile.detected_device' | translate }}
-              </span>
-            }
+            <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
+              {{ 'app_center.recommended' | translate }}
+            </span>
           </div>
+        }
 
-          <h3 class="text-xl font-bold text-white">{{ 'mobile.android_title' | translate }}</h3>
-          <p class="text-slate-400 text-xs leading-relaxed">
-            {{ 'mobile.android_desc' | translate }}
-          </p>
-        </div>
-
-        <div class="space-y-3 pt-2">
-          <a 
-            [href]="apkDownloadUrl()" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-emerald-600/30 cursor-pointer">
-            <i class="pi pi-download"></i>
-            <span>{{ 'mobile.btn_download_apk' | translate }}</span>
-          </a>
-
-          <button 
-            type="button" 
-            (click)="installPwa()"
-            class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700 cursor-pointer">
-            <i class="pi pi-bolt text-indigo-400"></i>
-            <span>{{ 'mobile.btn_install_pwa' | translate }}</span>
-          </button>
-
-          <p class="text-[11px] text-center text-slate-500">
-            {{ 'mobile.android_meta' | translate }}
-          </p>
-        </div>
-      </div>
-
-      <!-- iOS Download & Setup Card -->
-      <div 
-        [class.ring-2]="isIOS()" 
-        [class.ring-indigo-500]="isIOS()"
-        class="rounded-3xl p-6 sm:p-8 bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
-        
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div class="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
-              <i class="pi pi-apple text-2xl"></i>
-            </div>
-            @if (isIOS()) {
-              <span class="px-2.5 py-1 rounded-full bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase tracking-wider">
-                {{ 'mobile.detected_device' | translate }}
-              </span>
-            }
-          </div>
-
-          <h3 class="text-xl font-bold text-white">{{ 'mobile.ios_title' | translate }}</h3>
+        <!-- 3 Desktop Target Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           
-          <!-- 3-Step Safari Instructions -->
-          <div class="space-y-2 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 text-xs">
-            <div class="flex items-start gap-2.5">
-              <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
-              <span class="text-slate-300">{{ 'mobile.ios_step_1' | translate }}</span>
+          <!-- Windows Card -->
+          <div 
+            [class.ring-2]="isWindows()" 
+            [class.ring-indigo-500]="isWindows()"
+            class="rounded-3xl p-6 bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <i class="pi pi-microsoft text-2xl"></i>
+                </div>
+                @if (isWindows()) {
+                  <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">
+                    {{ 'mobile.detected_device' | translate }}
+                  </span>
+                }
+              </div>
+
+              <div>
+                <h3 class="text-lg font-bold text-white">Windows 10 / 11</h3>
+                <p class="text-slate-400 text-xs mt-1">x64 & ARM64 • NSIS Installer & Portable</p>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">Thermal Print</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">HIPAA Veil</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">System Tray</span>
+              </div>
             </div>
-            <div class="flex items-start gap-2.5">
-              <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
-              <span class="text-slate-300">{{ 'mobile.ios_step_2' | translate }}</span>
+
+            <div class="space-y-2.5 pt-2">
+              <a 
+                [href]="windowsSetupUrl()" 
+                target="_blank" 
+                class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/30 cursor-pointer">
+                <i class="pi pi-download"></i>
+                <span>{{ 'app_center.btn_download_installer' | translate }} (.exe)</span>
+              </a>
+
+              <a 
+                [href]="windowsPortableUrl()" 
+                target="_blank" 
+                class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700 cursor-pointer">
+                <i class="pi pi-box text-indigo-400"></i>
+                <span>{{ 'app_center.btn_download_portable' | translate }} (.exe)</span>
+              </a>
             </div>
-            <div class="flex items-start gap-2.5">
-              <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
-              <span class="text-slate-300">{{ 'mobile.ios_step_3' | translate }}</span>
+          </div>
+
+          <!-- macOS Card -->
+          <div 
+            [class.ring-2]="isMacOS()" 
+            [class.ring-indigo-500]="isMacOS()"
+            class="rounded-3xl p-6 bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <i class="pi pi-apple text-2xl"></i>
+                </div>
+                @if (isMacOS()) {
+                  <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">
+                    {{ 'mobile.detected_device' | translate }}
+                  </span>
+                }
+              </div>
+
+              <div>
+                <h3 class="text-lg font-bold text-white">Apple macOS</h3>
+                <p class="text-slate-400 text-xs mt-1">Universal Binary • Apple Silicon M1-M4 & Intel</p>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">Menu Bar Radar</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">Retina Display</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">Hardened Security</span>
+              </div>
             </div>
+
+            <div class="space-y-2.5 pt-2">
+              <a 
+                [href]="macDmgUrl()" 
+                target="_blank" 
+                class="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-600/30 cursor-pointer">
+                <i class="pi pi-download"></i>
+                <span>{{ 'app_center.btn_download_dmg' | translate }} (.dmg)</span>
+              </a>
+
+              <a 
+                [href]="macDmgUrl()" 
+                target="_blank" 
+                class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700 cursor-pointer">
+                <i class="pi pi-file text-indigo-400"></i>
+                <span>{{ 'app_center.btn_download_zip' | translate }} (.zip)</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Linux Card -->
+          <div 
+            [class.ring-2]="isLinux()" 
+            [class.ring-indigo-500]="isLinux()"
+            class="rounded-3xl p-6 bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
+                  <i class="pi pi-server text-2xl"></i>
+                </div>
+                @if (isLinux()) {
+                  <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">
+                    {{ 'mobile.detected_device' | translate }}
+                  </span>
+                }
+              </div>
+
+              <div>
+                <h3 class="text-lg font-bold text-white">Linux</h3>
+                <p class="text-slate-400 text-xs mt-1">Ubuntu, Debian, Fedora, Arch • AppImage & DEB</p>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">Zero Dependencies</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">Tray Status</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px]">USB Device Bridge</span>
+              </div>
+            </div>
+
+            <div class="space-y-2.5 pt-2">
+              <a 
+                [href]="linuxAppImageUrl()" 
+                target="_blank" 
+                class="w-full py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-teal-600/30 cursor-pointer">
+                <i class="pi pi-download"></i>
+                <span>{{ 'app_center.btn_download_appimage' | translate }} (.AppImage)</span>
+              </a>
+
+              <a 
+                [href]="linuxAppImageUrl()" 
+                target="_blank" 
+                class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700 cursor-pointer">
+                <i class="pi pi-box text-indigo-400"></i>
+                <span>{{ 'app_center.btn_download_deb' | translate }} (.deb)</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Desktop Hardware & Capabilities Grid -->
+        <div class="rounded-3xl p-6 sm:p-8 bg-slate-900/60 border border-slate-800/80 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="pi pi-cog text-indigo-400"></i>
+                <span>{{ 'app_center.hardware_features_title' | translate }}</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-1">{{ 'app_center.hardware_features_desc' | translate }}</p>
+            </div>
+
+            <button 
+              type="button" 
+              (click)="testThermalPrint()"
+              class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 border border-slate-700 cursor-pointer transition-colors self-start sm:self-auto">
+              <i class="pi pi-print text-emerald-400"></i>
+              <span>{{ 'app_center.btn_test_thermal_receipt' | translate }}</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+              <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <i class="pi pi-print text-sm"></i>
+              </div>
+              <h4 class="text-xs font-bold text-white">{{ 'app_center.feat_silent_print' | translate }}</h4>
+              <p class="text-[11px] text-slate-400 leading-relaxed">{{ 'app_center.feat_silent_print_desc' | translate }}</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <i class="pi pi-shield text-sm"></i>
+              </div>
+              <h4 class="text-xs font-bold text-white">{{ 'app_center.feat_hipaa_veil' | translate }}</h4>
+              <p class="text-[11px] text-slate-400 leading-relaxed">{{ 'app_center.feat_hipaa_veil_desc' | translate }}</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <i class="pi pi-bell text-sm"></i>
+              </div>
+              <h4 class="text-xs font-bold text-white">{{ 'app_center.feat_tray_radar' | translate }}</h4>
+              <p class="text-[11px] text-slate-400 leading-relaxed">{{ 'app_center.feat_tray_radar_desc' | translate }}</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                <i class="pi pi-bolt text-sm"></i>
+              </div>
+              <h4 class="text-xs font-bold text-white">{{ 'app_center.feat_global_hotkeys' | translate }}</h4>
+              <p class="text-[11px] text-slate-400 leading-relaxed">{{ 'app_center.feat_global_hotkeys_desc' | translate }}</p>
+            </div>
+
           </div>
         </div>
 
-        <div class="space-y-3 pt-2">
-          <a 
-            [href]="ipaDownloadUrl()" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="w-full py-3.5 px-4 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-sky-600/30 cursor-pointer">
-            <i class="pi pi-apple"></i>
-            <span>{{ 'mobile.btn_download_ios_package' | translate }}</span>
-          </a>
-
-          <p class="text-[11px] text-center text-slate-500">
-            {{ 'mobile.ios_meta' | translate }}
-          </p>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Desktop QR Code Scanner Handoff -->
-    @if (isDesktop()) {
-      <div class="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/20 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 shadow-2xl">
-        <div class="w-32 h-32 bg-white p-3 rounded-2xl shadow-md shrink-0 flex items-center justify-center">
-          <!-- Stylized Platform QR Code SVG -->
-          <svg viewBox="0 0 100 100" class="w-full h-full text-slate-900 fill-current">
-            <path d="M10,10 h30 v30 h-30 z M15,15 v20 h20 v-20 z M20,20 h10 v10 h-10 z"/>
-            <path d="M60,10 h30 v30 h-30 z M65,15 v20 h20 v-20 z M70,20 h10 v10 h-10 z"/>
-            <path d="M10,60 h30 v30 h-30 z M15,65 v20 h20 v-20 z M20,70 h10 v10 h-10 z"/>
-            <rect x="45" y="15" width="8" height="8"/>
-            <rect x="45" y="30" width="8" height="8"/>
-            <rect x="15" y="45" width="8" height="8"/>
-            <rect x="30" y="45" width="8" height="8"/>
-            <rect x="45" y="45" width="10" height="10"/>
-            <rect x="65" y="45" width="8" height="8"/>
-            <rect x="80" y="45" width="8" height="8"/>
-            <rect x="60" y="60" width="8" height="8"/>
-            <rect x="75" y="60" width="15" height="8"/>
-            <rect x="60" y="75" width="15" height="15"/>
-            <rect x="80" y="80" width="10" height="10"/>
-          </svg>
-        </div>
-
-        <div class="space-y-2 text-center sm:text-start">
-          <h4 class="text-lg font-bold text-white">{{ 'mobile.qr_title' | translate }}</h4>
-          <p class="text-sm text-slate-400 max-w-xl">
-            {{ 'mobile.qr_subtitle' | translate }}
-          </p>
-          <div class="pt-1 text-xs text-indigo-400 font-mono">
-            https://clinic-app-ten-topaz.vercel.app/download
-          </div>
-        </div>
       </div>
     }
 
-    <!-- Mobile Feature Showcase Grid -->
-    <div class="space-y-6 pt-6">
-      <div class="text-center space-y-2">
-        <h3 class="text-2xl font-bold text-white">{{ 'mobile.features_title' | translate }}</h3>
-        <p class="text-sm text-slate-400">{{ 'mobile.features_subtitle' | translate }}</p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- TAB 2: MOBILE APPS -->
+    @if (activeTab() === 'mobile') {
+      <div class="space-y-10 animate-in fade-in duration-300">
         
-        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-            <i class="pi pi-camera text-lg"></i>
-          </div>
-          <h4 class="text-sm font-bold text-white">{{ 'mobile.feat_camera_title' | translate }}</h4>
-          <p class="text-xs text-slate-400 leading-relaxed">{{ 'mobile.feat_camera_desc' | translate }}</p>
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+          
+          <!-- Android Card -->
+          <div 
+            [class.ring-2]="isAndroid()" 
+            [class.ring-indigo-500]="isAndroid()"
+            class="rounded-3xl p-6 sm:p-8 bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <i class="pi pi-android text-2xl"></i>
+                </div>
+                @if (isAndroid()) {
+                  <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
+                    {{ 'mobile.detected_device' | translate }}
+                  </span>
+                }
+              </div>
 
-        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
-            <i class="pi pi-cloud-download text-lg"></i>
-          </div>
-          <h4 class="text-sm font-bold text-white">{{ 'mobile.feat_offline_title' | translate }}</h4>
-          <p class="text-xs text-slate-400 leading-relaxed">{{ 'mobile.feat_offline_desc' | translate }}</p>
-        </div>
+              <h3 class="text-xl font-bold text-white">{{ 'mobile.android_title' | translate }}</h3>
+              <p class="text-slate-400 text-xs leading-relaxed">
+                {{ 'mobile.android_desc' | translate }}
+              </p>
+            </div>
 
-        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-            <i class="pi pi-bell text-lg"></i>
+            <div class="space-y-3 pt-2">
+              <a 
+                [href]="apkDownloadUrl()" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-emerald-600/30 cursor-pointer">
+                <i class="pi pi-download"></i>
+                <span>{{ 'mobile.btn_download_apk' | translate }}</span>
+              </a>
+            </div>
           </div>
-          <h4 class="text-sm font-bold text-white">{{ 'mobile.feat_push_title' | translate }}</h4>
-          <p class="text-xs text-slate-400 leading-relaxed">{{ 'mobile.feat_push_desc' | translate }}</p>
-        </div>
 
-        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
-            <i class="pi pi-shield text-lg"></i>
+          <!-- iOS Card -->
+          <div 
+            [class.ring-2]="isIOS()" 
+            [class.ring-indigo-500]="isIOS()"
+            class="rounded-3xl p-6 sm:p-8 bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <i class="pi pi-apple text-2xl"></i>
+                </div>
+                @if (isIOS()) {
+                  <span class="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-bold uppercase tracking-wider">
+                    {{ 'mobile.detected_device' | translate }}
+                  </span>
+                }
+              </div>
+
+              <h3 class="text-xl font-bold text-white">{{ 'mobile.ios_title' | translate }}</h3>
+              <p class="text-slate-400 text-xs leading-relaxed">
+                {{ 'mobile.ios_desc' | translate }}
+              </p>
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <a 
+                [href]="ipaDownloadUrl()" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="w-full py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-blue-600/30 cursor-pointer">
+                <i class="pi pi-download"></i>
+                <span>{{ 'mobile.btn_download_ipa' | translate }}</span>
+              </a>
+            </div>
           </div>
-          <h4 class="text-sm font-bold text-white">{{ 'mobile.feat_hipaa_title' | translate }}</h4>
-          <p class="text-xs text-slate-400 leading-relaxed">{{ 'mobile.feat_hipaa_desc' | translate }}</p>
+
         </div>
 
       </div>
-    </div>
+    }
+
+    <!-- TAB 3: CLOUD PWA -->
+    @if (activeTab() === 'pwa') {
+      <div class="max-w-2xl mx-auto rounded-3xl p-8 bg-slate-900/90 border border-slate-800 space-y-6 text-center animate-in fade-in duration-300 shadow-xl">
+        <div class="w-16 h-16 rounded-3xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto shadow-inner">
+          <i class="pi pi-globe text-3xl"></i>
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-xl font-bold text-white">{{ 'app_center.pwa_title' | translate }}</h3>
+          <p class="text-slate-400 text-xs leading-relaxed max-w-md mx-auto">
+            {{ 'app_center.pwa_desc' | translate }}
+          </p>
+        </div>
+
+        <button 
+          type="button" 
+          (click)="installPwa()"
+          class="py-3 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm inline-flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-indigo-600/30 cursor-pointer">
+          <i class="pi pi-bolt"></i>
+          <span>{{ 'mobile.btn_install_pwa' | translate }}</span>
+        </button>
+      </div>
+    }
 
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-    Smart Clinic System © 2026 • Encrypted Healthcare Cloud Suite
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
+    <p>{{ 'mobile.footer_copy' | translate }}</p>
   </footer>
+
 </div>

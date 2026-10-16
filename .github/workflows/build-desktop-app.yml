@@ -1,0 +1,76 @@
+name: Build Desktop Application Suite (Electron)
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'desktop/**'
+      - 'electron-builder.json'
+      - 'package.json'
+      - '.github/workflows/build-desktop-app.yml'
+  pull_request:
+    branches:
+      - master
+      - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'desktop/**'
+      - 'electron-builder.json'
+      - 'package.json'
+      - '.github/workflows/build-desktop-app.yml'
+  workflow_dispatch:
+
+jobs:
+  build-desktop:
+    name: Package Desktop App (${{ matrix.target-name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target-name: Windows x64
+            artifact-pattern: dist-electron/*.exe
+          - os: macos-latest
+            target-name: macOS Universal
+            artifact-pattern: dist-electron/*.dmg
+          - os: ubuntu-latest
+            target-name: Linux x64
+            artifact-pattern: dist-electron/*.AppImage
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install Linux Dependencies (Ubuntu only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools libfuse2
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build Angular Web Bundle & Compile Electron Main
+        run: npm run desktop:build
+
+      - name: Package Desktop Binary via Electron Builder
+        run: npx electron-builder --publish never
+
+      - name: Upload Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartClinic-Desktop-${{ matrix.target-name }}
+          path: ${{ matrix.artifact-pattern }}
+          retention-days: 30

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { MobileDownloadComponent } from './mobile-download.component';
 import { NativeDeviceService } from '../../core/services/mobile/native-device.service';
+import { NativeDesktopService } from '../../core/services/desktop/native-desktop.service';
 import { PwaInstallService } from '../../core/services/pwa-install.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { signal } from '@angular/core';
@@ -10,6 +11,7 @@ describe('MobileDownloadComponent', () => {
   let component: MobileDownloadComponent;
   let fixture: ComponentFixture<MobileDownloadComponent>;
   let mockDeviceService: any;
+  let mockDesktopService: any;
   let mockPwaService: any;
   let mockLanguageService: any;
 
@@ -17,7 +19,17 @@ describe('MobileDownloadComponent', () => {
     mockDeviceService = {
       platform: signal('android'),
       isIOS: signal(false),
-      isAndroid: signal(true)
+      isAndroid: signal(true),
+      isNative: signal(true)
+    };
+
+    mockDesktopService = {
+      isDesktop: signal(false),
+      platform: signal('web'),
+      isWindows: signal(false),
+      isMacOS: signal(false),
+      isLinux: signal(false),
+      printThermalReceipt: jasmine.createSpy('printThermalReceipt').and.resolveTo({ success: true })
     };
 
     mockPwaService = {
@@ -36,6 +48,7 @@ describe('MobileDownloadComponent', () => {
       providers: [
         provideRouter([]),
         { provide: NativeDeviceService, useValue: mockDeviceService },
+        { provide: NativeDesktopService, useValue: mockDesktopService },
         { provide: PwaInstallService, useValue: mockPwaService },
         { provide: LanguageService, useValue: mockLanguageService }
       ]
@@ -70,5 +83,21 @@ describe('MobileDownloadComponent', () => {
 
     expect(component.isIOS()).toBeTrue();
     expect(component.isAndroid()).toBeFalse();
+  });
+
+  it('should allow switching between desktop, mobile, and pwa tabs', () => {
+    component.selectTab('desktop');
+    expect(component.activeTab()).toBe('desktop');
+
+    component.selectTab('pwa');
+    expect(component.activeTab()).toBe('pwa');
+
+    component.selectTab('mobile');
+    expect(component.activeTab()).toBe('mobile');
+  });
+
+  it('should invoke thermal print test via desktop service', async () => {
+    await component.testThermalPrint();
+    expect(mockDesktopService.printThermalReceipt).toHaveBeenCalled();
   });
 });
