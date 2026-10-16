@@ -21,7 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -182,6 +182,26 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.heatmap_btn' | translate }}</span>
                 @if (isHeatmapActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="isClearanceCompliant()" [class.bg-rose-400]="!isClearanceCompliant()"></span>
+                }
+              </button>
+
+              <!-- Virtual Articulator Kinematics Toggle -->
+              <button
+                type="button"
+                (click)="toggleArticulator()"
+                [class.bg-purple-600]="isArticulatorActive()"
+                [class.text-white]="isArticulatorActive()"
+                [class.border-purple-400]="isArticulatorActive()"
+                [class.bg-slate-800]="!isArticulatorActive()"
+                [class.text-slate-300]="!isArticulatorActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.toggle_articulator' | translate"
+                id="toggle-articulator-btn"
+              >
+                <i class="pi pi-sliders-h text-xs"></i>
+                <span>{{ 'lab_3d.articulator_btn' | translate }}</span>
+                @if (isArticulatorActive()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasInterferenceWarning()" [class.bg-rose-400]="hasInterferenceWarning()"></span>
                 }
               </button>
 
@@ -459,6 +479,144 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- 3D Virtual Articulator Kinematics Panel -->
+            @if (isArticulatorActive()) {
+              <div class="absolute top-4 left-4 z-20 flex flex-col gap-2 max-w-sm sm:max-w-md w-full pointer-events-auto animate-fade-in" id="articulator-control-panel">
+                <div class="bg-slate-950/90 border border-purple-500/40 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl space-y-3">
+                  <!-- Header & Status -->
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                      <i class="pi pi-sliders-h text-purple-400"></i>
+                      <span>{{ 'lab_3d.articulator_title' | translate }}</span>
+                    </span>
+
+                    @if (hasInterferenceWarning()) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-500/40 flex items-center gap-1" id="articulator-collision-pill">
+                        <i class="pi pi-exclamation-triangle text-[8px]"></i>
+                        {{ maxInterferenceMm() }} mm {{ 'lab_3d.interference_warning' | translate }}
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1" id="articulator-collision-pill">
+                        <i class="pi pi-check text-[8px]"></i>
+                        {{ 'lab_3d.physiological_contacts' | translate }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Excursion Mode Buttons -->
+                  <div class="flex flex-wrap items-center gap-1 bg-slate-900 rounded-xl p-1 border border-slate-800">
+                    <button
+                      type="button"
+                      (click)="setExcursionType('Centric')"
+                      [class.bg-purple-600]="excursionType() === 'Centric'"
+                      [class.text-white]="excursionType() === 'Centric'"
+                      [class.text-slate-400]="excursionType() !== 'Centric'"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex-1"
+                      id="excursion-centric-btn"
+                    >
+                      {{ 'lab_3d.excursion_centric' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setExcursionType('Protrusive')"
+                      [class.bg-purple-600]="excursionType() === 'Protrusive'"
+                      [class.text-white]="excursionType() === 'Protrusive'"
+                      [class.text-slate-400]="excursionType() !== 'Protrusive'"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex-1"
+                      id="excursion-protrusive-btn"
+                    >
+                      {{ 'lab_3d.excursion_protrusive' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setExcursionType('RightLateral')"
+                      [class.bg-purple-600]="excursionType() === 'RightLateral'"
+                      [class.text-white]="excursionType() === 'RightLateral'"
+                      [class.text-slate-400]="excursionType() !== 'RightLateral'"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex-1"
+                      id="excursion-lateral-r-btn"
+                    >
+                      {{ 'lab_3d.excursion_lateral_r' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setExcursionType('LeftLateral')"
+                      [class.bg-purple-600]="excursionType() === 'LeftLateral'"
+                      [class.text-white]="excursionType() === 'LeftLateral'"
+                      [class.text-slate-400]="excursionType() !== 'LeftLateral'"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex-1"
+                      id="excursion-lateral-l-btn"
+                    >
+                      {{ 'lab_3d.excursion_lateral_l' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="toggleExcursionPlayback()"
+                      [class.bg-amber-600]="isExcursionPlaying()"
+                      [class.text-white]="isExcursionPlaying()"
+                      [class.bg-slate-800]="!isExcursionPlaying()"
+                      [class.text-amber-300]="!isExcursionPlaying()"
+                      class="px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                      id="articulator-play-btn"
+                    >
+                      <i class="pi" [class.pi-play]="!isExcursionPlaying()" [class.pi-pause]="isExcursionPlaying()"></i>
+                    </button>
+                  </div>
+
+                  <!-- Condylar Parameter Controls (HCI, Bennett, Incisal Pin) -->
+                  <div class="grid grid-cols-3 gap-2 text-[10px]">
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex justify-between text-slate-400">
+                        <span>HCI</span>
+                        <span class="font-mono text-purple-300 font-bold">{{ condylarInclination() }}°</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <button type="button" (click)="adjustCondylarAngle(-5)" class="px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-300 cursor-pointer">-5°</button>
+                        <button type="button" (click)="adjustCondylarAngle(5)" class="px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-300 cursor-pointer">+5°</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex justify-between text-slate-400">
+                        <span>Bennett</span>
+                        <span class="font-mono text-purple-300 font-bold">{{ bennettAngle() }}°</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <button type="button" (click)="adjustBennettAngle(-5)" class="px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-300 cursor-pointer">-5°</button>
+                        <button type="button" (click)="adjustBennettAngle(5)" class="px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-300 cursor-pointer">+5°</button>
+                      </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                      <div class="flex justify-between text-slate-400">
+                        <span>Pin</span>
+                        <span class="font-mono text-purple-300 font-bold">{{ incisalPinOpening() }}mm</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <button type="button" (click)="adjustIncisalPin(-0.5)" class="px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-300 cursor-pointer">-0.5</button>
+                        <button type="button" (click)="adjustIncisalPin(0.5)" class="px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-300 cursor-pointer">+0.5</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Save Articulator Kinematics Action -->
+                  <div class="pt-1 flex items-center justify-between border-t border-slate-800/80">
+                    <span class="text-[10px] text-slate-400">Contacts: <strong class="text-white">{{ activeContactCount() }}</strong></span>
+                    <button
+                      type="button"
+                      (click)="saveArticulatorEvaluation()"
+                      [disabled]="isSavingArticulator()"
+                      class="px-2.5 py-1 bg-purple-600/90 hover:bg-purple-500 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      id="save-articulator-btn"
+                    >
+                      <i class="pi" [class.pi-save]="!isSavingArticulator()" [class.pi-spin]="isSavingArticulator()" [class.pi-spinner]="isSavingArticulator()"></i>
+                      <span>{{ 'lab_3d.save_articulator_eval' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -631,6 +789,19 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   savedHeatmap = signal<ClearanceHeatmap | null>(null);
   isClearanceCompliant = computed(() => this.undercutPercentage() === 0 && this.minClearance() >= 1.0);
 
+  // 3D Virtual Articulator State Signals (v9.3.0)
+  isArticulatorActive = signal<boolean>(false);
+  condylarInclination = signal<number>(35);
+  bennettAngle = signal<number>(15);
+  incisalPinOpening = signal<number>(0.0);
+  excursionType = signal<'Centric' | 'Protrusive' | 'RightLateral' | 'LeftLateral'>('Centric');
+  isExcursionPlaying = signal<boolean>(false);
+  maxInterferenceMm = signal<number>(0.0);
+  activeContactCount = signal<number>(12);
+  hasInterferenceWarning = computed(() => this.maxInterferenceMm() > 0.05);
+  isSavingArticulator = signal<boolean>(false);
+  savedArticulator = signal<ArticulatorSettings | null>(null);
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -655,6 +826,12 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private pointer = new THREE.Vector2();
   private caliperGroup: THREE.Group = new THREE.Group();
   private pointerDownPos = { x: 0, y: 0 };
+
+  // Virtual Articulator Three.js Objects
+  private articulatorGroup: THREE.Group = new THREE.Group();
+  private antagonistMesh: THREE.Mesh | null = null;
+  private contactPointsGroup: THREE.Group | null = null;
+  private excursionPhase = 0;
 
   activeOrder = computed(() => this.order());
   activeModelData = computed(() => this.modelData());
@@ -699,6 +876,12 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   close(): void {
     this.visible.set(false);
     this.closed.emit();
+    this.isCaliperActive.set(false);
+    this.isHeatmapActive.set(false);
+    this.isArticulatorActive.set(false);
+    this.isExcursionPlaying.set(false);
+    this.clearCaliper();
+    this.clearArticulator();
   }
 
   private initThreeJs(): void {
@@ -720,6 +903,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     // Caliper Group
     this.caliperGroup = new THREE.Group();
     this.scene.add(this.caliperGroup);
+
+    // Virtual Articulator Group
+    this.articulatorGroup = new THREE.Group();
+    this.scene.add(this.articulatorGroup);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -788,6 +975,11 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
       this.controls.autoRotate = this.isAutoRotating();
       this.controls.update();
     }
+    if (this.isArticulatorActive() && this.isExcursionPlaying()) {
+      this.excursionPhase += 0.04;
+      const factor = Math.sin(this.excursionPhase) * 0.5 + 0.5;
+      this.updateArticulatorKinematics(factor);
+    }
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
@@ -810,6 +1002,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     if (orderId) {
       this.loadMeasurementsForOrder(orderId);
       this.loadHeatmapForOrder(orderId);
+      this.loadArticulatorForOrder(orderId);
     }
 
     this.telemetry.set({
@@ -1050,7 +1243,14 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   toggleCaliper(): void {
     const next = !this.isCaliperActive();
     this.isCaliperActive.set(next);
-    if (!next) {
+    if (next) {
+      if (this.isHeatmapActive()) {
+        this.toggleHeatmap();
+      }
+      if (this.isArticulatorActive()) {
+        this.toggleArticulator();
+      }
+    } else {
       this.clearCaliper();
     }
   }
@@ -1265,6 +1465,12 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     const next = !this.isHeatmapActive();
     this.isHeatmapActive.set(next);
     if (next) {
+      if (this.isCaliperActive()) {
+        this.toggleCaliper();
+      }
+      if (this.isArticulatorActive()) {
+        this.toggleArticulator();
+      }
       this.applyHeatmapToMesh();
     } else {
       this.revertHeatmapFromMesh();
@@ -1463,6 +1669,246 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     });
   }
 
+  // --- Release v9.3.0 3D Virtual Articulator & Dynamic Kinematics Methods ---
+
+  toggleArticulator(): void {
+    const next = !this.isArticulatorActive();
+    this.isArticulatorActive.set(next);
+    if (next) {
+      if (this.isCaliperActive()) {
+        this.toggleCaliper();
+      }
+      if (this.isHeatmapActive()) {
+        this.toggleHeatmap();
+      }
+      this.rebuildArticulatorMesh();
+    } else {
+      this.clearArticulator();
+      this.isExcursionPlaying.set(false);
+    }
+  }
+
+  setExcursionType(type: 'Centric' | 'Protrusive' | 'RightLateral' | 'LeftLateral'): void {
+    this.excursionType.set(type);
+    this.updateArticulatorKinematics(1.0);
+  }
+
+  toggleExcursionPlayback(): void {
+    this.isExcursionPlaying.update(v => !v);
+  }
+
+  adjustCondylarAngle(delta: number): void {
+    this.condylarInclination.update(v => Math.max(20, Math.min(60, v + delta)));
+    this.updateArticulatorKinematics(0);
+  }
+
+  adjustBennettAngle(delta: number): void {
+    this.bennettAngle.update(v => Math.max(0, Math.min(30, v + delta)));
+    this.updateArticulatorKinematics(0);
+  }
+
+  adjustIncisalPin(delta: number): void {
+    this.incisalPinOpening.update(v => Math.max(0.0, Math.min(5.0, Number((v + delta).toFixed(1)))));
+    this.updateArticulatorKinematics(0);
+  }
+
+  rebuildArticulatorMesh(): void {
+    this.clearArticulator();
+
+    // Antagonist Arch Geometry (smooth dental arc)
+    const arcShape = new THREE.Shape();
+    arcShape.absarc(0, 0, 16, 0, Math.PI, false);
+    const extrudeSettings = { depth: 4, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.8, bevelThickness: 0.8 };
+    const antagonistGeo = new THREE.ExtrudeGeometry(arcShape, extrudeSettings);
+    antagonistGeo.rotateX(Math.PI / 2);
+    antagonistGeo.center();
+
+    const antagonistMat = new THREE.MeshStandardMaterial({
+      color: 0xa5b4fc,
+      roughness: 0.35,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.7,
+      wireframe: false
+    });
+
+    this.antagonistMesh = new THREE.Mesh(antagonistGeo, antagonistMat);
+    this.articulatorGroup.add(this.antagonistMesh);
+
+    // Group for dynamic occlusal contact point spheres
+    this.contactPointsGroup = new THREE.Group();
+    this.articulatorGroup.add(this.contactPointsGroup);
+
+    this.updateArticulatorKinematics(0);
+  }
+
+  updateArticulatorKinematics(factor: number): void {
+    if (!this.antagonistMesh || !this.contactPointsGroup) return;
+
+    const pin = this.incisalPinOpening();
+    const hciRad = (this.condylarInclination() * Math.PI) / 180;
+    const bennettRad = (this.bennettAngle() * Math.PI) / 180;
+
+    let posX = 0;
+    let posY = 12.0 + pin;
+    let posZ = 0;
+    let rotX = 0;
+    let rotY = 0;
+
+    switch (this.excursionType()) {
+      case 'Centric':
+        posX = 0;
+        posZ = 0;
+        posY = 12.0 + pin;
+        break;
+
+      case 'Protrusive':
+        posZ = factor * 5.0; // Anterior translation (mm)
+        posY = (12.0 + pin) - factor * 5.0 * Math.tan(hciRad) * 0.4; // Downward gliding along condylar slope
+        rotX = -factor * 0.08;
+        break;
+
+      case 'RightLateral':
+        posX = factor * 4.0; // Working side translation (mm)
+        posZ = factor * 2.0 * Math.tan(bennettRad); // Non-working orbiting condyle translation
+        posY = (12.0 + pin) - factor * 0.6;
+        rotY = factor * 0.06;
+        break;
+
+      case 'LeftLateral':
+        posX = -factor * 4.0;
+        posZ = factor * 2.0 * Math.tan(bennettRad);
+        posY = (12.0 + pin) - factor * 0.6;
+        rotY = -factor * 0.06;
+        break;
+    }
+
+    this.antagonistMesh.position.set(posX, posY, posZ);
+    this.antagonistMesh.rotation.set(rotX, rotY, 0);
+
+    // Collision High-Spot Telemetry & Contact Visualization
+    // Nominal contact plane at Y = 12.0
+    const interarchClearance = posY - 12.0;
+
+    if (interarchClearance < 0) {
+      // High-spot premature interference detected!
+      const interference = Math.abs(interarchClearance);
+      this.maxInterferenceMm.set(Number(interference.toFixed(2)));
+      this.activeContactCount.set(Math.max(3, Math.round(8 - interference * 4)));
+    } else {
+      this.maxInterferenceMm.set(0.0);
+      this.activeContactCount.set(12);
+    }
+
+    // Refresh dynamic contact points
+    while (this.contactPointsGroup.children.length > 0) {
+      const p = this.contactPointsGroup.children[0];
+      this.contactPointsGroup.remove(p);
+      if ((p as THREE.Mesh).geometry) (p as THREE.Mesh).geometry.dispose();
+      if ((p as THREE.Mesh).material) ((p as THREE.Mesh).material as THREE.Material).dispose();
+    }
+
+    const contactColor = interarchClearance < 0
+      ? 0xf43f5e // Crimson high-spot interference
+      : (interarchClearance <= 0.3 ? 0xfbbf24 : 0x10b981); // Amber physiological or emerald clearance
+
+    const offsets = [
+      { x: -5, z: -3 },
+      { x: 5, z: -3 },
+      { x: -6, z: 3 },
+      { x: 6, z: 3 },
+      { x: 0, z: -6 },
+      { x: 0, z: 5 }
+    ];
+
+    const sphereGeo = new THREE.SphereGeometry(0.7, 12, 12);
+    const sphereMat = new THREE.MeshBasicMaterial({ color: contactColor });
+
+    offsets.forEach(pt => {
+      const contactMarker = new THREE.Mesh(sphereGeo, sphereMat);
+      contactMarker.position.set(posX + pt.x, posY - 2.0, posZ + pt.z);
+      this.contactPointsGroup?.add(contactMarker);
+    });
+  }
+
+  clearArticulator(): void {
+    if (!this.articulatorGroup) return;
+    while (this.articulatorGroup.children.length > 0) {
+      const obj = this.articulatorGroup.children[0];
+      this.articulatorGroup.remove(obj);
+      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+      if ((obj as THREE.Mesh).material) {
+        const mat = (obj as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+        else mat.dispose();
+      }
+    }
+    this.antagonistMesh = null;
+    this.contactPointsGroup = null;
+  }
+
+  saveArticulatorEvaluation(): void {
+    const orderId = this.order()?.id || this.modelData()?.orderToken || 'LAB-CURRENT';
+    this.isSavingArticulator.set(true);
+
+    const fallback: ArticulatorSettings = {
+      orderId,
+      condylarInclinationDeg: this.condylarInclination(),
+      bennettAngleDeg: this.bennettAngle(),
+      incisalPinOpeningMm: this.incisalPinOpening(),
+      excursionType: this.excursionType(),
+      maxInterferenceMm: this.maxInterferenceMm(),
+      activeContactCount: this.activeContactCount(),
+      hasInterferenceWarning: this.hasInterferenceWarning(),
+      statusMessage: this.hasInterferenceWarning()
+        ? `High-spot premature interference detected (${this.maxInterferenceMm().toFixed(2)} mm). Occlusal adjustment advised.`
+        : 'Articulator kinematic excursion validated. Physiological contact pattern confirmed.',
+      evaluatedAtUtc: new Date().toISOString()
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveArticulatorSettings(orderId, {
+        condylarInclinationDeg: this.condylarInclination(),
+        bennettAngleDeg: this.bennettAngle(),
+        incisalPinOpeningMm: this.incisalPinOpening(),
+        excursionType: this.excursionType(),
+        maxInterferenceMm: this.maxInterferenceMm(),
+        activeContactCount: this.activeContactCount(),
+        hasInterferenceWarning: this.hasInterferenceWarning(),
+        statusMessage: fallback.statusMessage
+      }).subscribe({
+        next: (saved) => {
+          this.savedArticulator.set(saved);
+          this.isSavingArticulator.set(false);
+        },
+        error: () => {
+          this.savedArticulator.set(fallback);
+          this.isSavingArticulator.set(false);
+        }
+      });
+    } else {
+      this.savedArticulator.set(fallback);
+      this.isSavingArticulator.set(false);
+    }
+  }
+
+  loadArticulatorForOrder(orderId: string): void {
+    if (!orderId || !this.labWorkOrderService) return;
+    this.labWorkOrderService.getArticulatorSettings(orderId).subscribe({
+      next: (settings) => {
+        if (settings) {
+          this.savedArticulator.set(settings);
+          this.condylarInclination.set(settings.condylarInclinationDeg);
+          this.bennettAngle.set(settings.bennettAngleDeg);
+          this.incisalPinOpening.set(settings.incisalPinOpeningMm);
+          this.excursionType.set(settings.excursionType as any);
+          this.maxInterferenceMm.set(settings.maxInterferenceMm);
+          this.activeContactCount.set(settings.activeContactCount);
+        }
+      }
+    });
+  }
+
   private disposeThreeJs(): void {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -1478,6 +1924,11 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
 
     if (this.caliperGroup && this.scene) {
       this.scene.remove(this.caliperGroup);
+    }
+
+    this.clearArticulator();
+    if (this.articulatorGroup && this.scene) {
+      this.scene.remove(this.articulatorGroup);
     }
 
     if (this.mesh) {

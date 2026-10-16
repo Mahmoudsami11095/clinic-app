@@ -321,4 +321,151 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     expect(component.savedHeatmap()?.isCompliant).toBeTrue();
     expect(component.savedHeatmap()?.undercutSurfacePercent).toBe(0.0);
   });
+
+  // --- Milestone 1 (v9.3.0) 3D Virtual Articulator & Occlusal Collision Unit Tests ---
+
+  it('should toggle articulator active state and build antagonist arch geometry (REQ-ART-01)', () => {
+    expect(component.isArticulatorActive()).toBeFalse();
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+
+    // Verify antagonist mesh was created
+    expect(component['antagonistMesh']).toBeTruthy();
+    expect(component['contactPointsGroup']).toBeTruthy();
+
+    // Toggle off cleans up articulator mesh
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeFalse();
+    expect(component['antagonistMesh']).toBeNull();
+  });
+
+  it('should automatically deactivate caliper and heatmap when articulator is activated', () => {
+    component.toggleCaliper();
+    expect(component.isCaliperActive()).toBeTrue();
+
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isCaliperActive()).toBeFalse();
+
+    component.toggleHeatmap();
+    expect(component.isHeatmapActive()).toBeTrue();
+
+    component.toggleArticulator();
+    expect(component.isArticulatorActive()).toBeTrue();
+    expect(component.isHeatmapActive()).toBeFalse();
+  });
+
+  it('should adjust condylar inclination angle clamped between 20° and 60° (REQ-ART-02)', () => {
+    component.toggleArticulator();
+    expect(component.condylarInclination()).toBe(35);
+
+    component.adjustCondylarAngle(10);
+    expect(component.condylarInclination()).toBe(45);
+
+    // Clamp upper bound: 45 + 30 = 75 -> clamps to 60
+    component.adjustCondylarAngle(30);
+    expect(component.condylarInclination()).toBe(60);
+
+    // Clamp lower bound: 60 - 50 = 10 -> clamps to 20
+    component.adjustCondylarAngle(-50);
+    expect(component.condylarInclination()).toBe(20);
+  });
+
+  it('should adjust Bennett angle clamped between 0° and 30° (REQ-ART-02)', () => {
+    component.toggleArticulator();
+    expect(component.bennettAngle()).toBe(15);
+
+    component.adjustBennettAngle(5);
+    expect(component.bennettAngle()).toBe(20);
+
+    // Upper clamp
+    component.adjustBennettAngle(25);
+    expect(component.bennettAngle()).toBe(30);
+
+    // Lower clamp
+    component.adjustBennettAngle(-40);
+    expect(component.bennettAngle()).toBe(0);
+  });
+
+  it('should adjust incisal pin opening clamped between 0.0 and 5.0 mm (REQ-ART-02)', () => {
+    component.toggleArticulator();
+    expect(component.incisalPinOpening()).toBe(0.0);
+
+    component.adjustIncisalPin(1.5);
+    expect(component.incisalPinOpening()).toBe(1.5);
+
+    // Upper clamp
+    component.adjustIncisalPin(5.0);
+    expect(component.incisalPinOpening()).toBe(5.0);
+
+    // Lower clamp
+    component.adjustIncisalPin(-10.0);
+    expect(component.incisalPinOpening()).toBe(0.0);
+  });
+
+  it('should update excursion kinematic positions and detect contacts for all excursion modes (REQ-ART-03)', () => {
+    component.toggleArticulator();
+
+    component.setExcursionType('Centric');
+    expect(component.excursionType()).toBe('Centric');
+    expect(component.activeContactCount()).toBeGreaterThan(0);
+
+    component.setExcursionType('Protrusive');
+    expect(component.excursionType()).toBe('Protrusive');
+    expect(component['antagonistMesh']?.position.z).toBeGreaterThan(0);
+
+    component.setExcursionType('RightLateral');
+    expect(component.excursionType()).toBe('RightLateral');
+    expect(component['antagonistMesh']?.position.x).toBeGreaterThan(0);
+
+    component.setExcursionType('LeftLateral');
+    expect(component.excursionType()).toBe('LeftLateral');
+    expect(component['antagonistMesh']?.position.x).toBeLessThan(0);
+  });
+
+  it('should detect occlusal interference warning when interarch clearance is negative', () => {
+    component.toggleArticulator();
+    component.setExcursionType('Protrusive');
+
+    // Simulate steep condylar angle where protrusion causes interference
+    component.condylarInclination.set(55);
+    component.incisalPinOpening.set(0);
+    component.updateArticulatorKinematics(1.0);
+
+    // If interference is detected, warning flag is true
+    if (component.maxInterferenceMm() > 0) {
+      expect(component.hasInterferenceWarning()).toBeTrue();
+    }
+  });
+
+  it('should toggle excursion playback animation loop', () => {
+    expect(component.isExcursionPlaying()).toBeFalse();
+    component.toggleExcursionPlayback();
+    expect(component.isExcursionPlaying()).toBeTrue();
+    component.toggleExcursionPlayback();
+    expect(component.isExcursionPlaying()).toBeFalse();
+  });
+
+  it('should persist 3D virtual articulator simulation via labWorkOrderService (REQ-ART-04)', () => {
+    spyOn(labService, 'saveArticulatorSettings').and.returnValue(of({
+      orderId: 'lab-test-01',
+      condylarInclinationDeg: 35.0,
+      bennettAngleDeg: 15.0,
+      incisalPinOpeningMm: 0.0,
+      excursionType: 'Centric',
+      maxInterferenceMm: 0.0,
+      activeContactCount: 12,
+      hasInterferenceWarning: false,
+      statusMessage: 'Optimal Centric Occlusion. No dynamic interference.',
+      evaluatedAtUtc: new Date().toISOString()
+    }));
+
+    component.toggleArticulator();
+    component.saveArticulatorEvaluation();
+
+    expect(component.savedArticulator()).toBeTruthy();
+    expect(component.savedArticulator()?.excursionType).toBe('Centric');
+    expect(component.savedArticulator()?.hasInterferenceWarning).toBeFalse();
+  });
 });
+

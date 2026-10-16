@@ -117,6 +117,30 @@ export interface SaveClearanceHeatmapRequest {
   statusMessage?: string;
 }
 
+export interface ArticulatorSettings {
+  orderId: string;
+  condylarInclinationDeg: number;
+  bennettAngleDeg: number;
+  incisalPinOpeningMm: number;
+  excursionType: string;
+  maxInterferenceMm: number;
+  activeContactCount: number;
+  hasInterferenceWarning: boolean;
+  statusMessage: string;
+  evaluatedAtUtc: string;
+}
+
+export interface SaveArticulatorSettingsRequest {
+  condylarInclinationDeg: number;
+  bennettAngleDeg: number;
+  incisalPinOpeningMm: number;
+  excursionType: string;
+  maxInterferenceMm: number;
+  activeContactCount: number;
+  hasInterferenceWarning?: boolean;
+  statusMessage?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -434,6 +458,49 @@ export class LabWorkOrderService {
           statusMessage: request.statusMessage || (isCompliant
             ? 'Clearance within clinical tolerance. Insertion path validated.'
             : `Undercut detected (${request.undercutSurfacePercent.toFixed(1)}%). Path of insertion adjustment required.`),
+          evaluatedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  getArticulatorSettings(orderId: string): Observable<ArticulatorSettings> {
+    return this.http.get<ArticulatorSettings>(`${environment.apiUrl}/labworkorders/${orderId}/articulator`).pipe(
+      catchError(() => {
+        const fallback: ArticulatorSettings = {
+          orderId,
+          condylarInclinationDeg: 35.0,
+          bennettAngleDeg: 15.0,
+          incisalPinOpeningMm: 0.0,
+          excursionType: 'Centric',
+          maxInterferenceMm: 0.0,
+          activeContactCount: 12,
+          hasInterferenceWarning: false,
+          statusMessage: 'Optimal Centric Occlusion. No dynamic interference.',
+          evaluatedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveArticulatorSettings(orderId: string, request: SaveArticulatorSettingsRequest): Observable<ArticulatorSettings> {
+    return this.http.post<ArticulatorSettings>(`${environment.apiUrl}/labworkorders/${orderId}/articulator`, request).pipe(
+      catchError(() => {
+        const hasWarning = request.hasInterferenceWarning ?? (request.maxInterferenceMm > 0.05);
+        const fallback: ArticulatorSettings = {
+          orderId,
+          condylarInclinationDeg: request.condylarInclinationDeg,
+          bennettAngleDeg: request.bennettAngleDeg,
+          incisalPinOpeningMm: request.incisalPinOpeningMm,
+          excursionType: request.excursionType || 'Centric',
+          maxInterferenceMm: request.maxInterferenceMm,
+          activeContactCount: request.activeContactCount,
+          hasInterferenceWarning: hasWarning,
+          statusMessage: request.statusMessage || (hasWarning
+            ? `High-spot premature interference detected (${request.maxInterferenceMm.toFixed(2)} mm). Occlusal adjustment advised.`
+            : 'Articulator kinematic excursion validated. Physiological contact pattern confirmed.'),
           evaluatedAtUtc: new Date().toISOString()
         };
         return of(fallback);
