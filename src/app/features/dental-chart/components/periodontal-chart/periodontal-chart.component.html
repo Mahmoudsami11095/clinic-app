@@ -1,0 +1,508 @@
+<div class="perio-container">
+  <!-- Voice Dictation & Header Toolbar -->
+  <header class="perio-header glass-panel">
+    <div class="header-main">
+      <div class="title-wrap">
+        <div class="perio-icon">
+          <i class="pi pi-chart-line"></i>
+        </div>
+        <div>
+          <h2>{{ 'periodontal.title' | translate }}</h2>
+          <p class="subtitle">{{ 'periodontal.subtitle' | translate }}</p>
+        </div>
+      </div>
+
+      <!-- Voice Dictation Action Bar (BR-PERIO-04) -->
+      <div class="voice-toolbar">
+        <button
+          type="button"
+          class="voice-mic-btn"
+          [class.listening]="voiceService.isListening()"
+          (click)="voiceService.toggleListening()"
+          [title]="(voiceService.isListening() ? 'periodontal.stop_listening' : 'periodontal.start_listening') | translate"
+        >
+          <i class="pi" [ngClass]="voiceService.isListening() ? 'pi-spin pi-spinner' : 'pi-microphone'"></i>
+          <span>{{ (voiceService.isListening() ? 'periodontal.stop_listening' : 'periodontal.start_listening') | translate }}</span>
+          @if (voiceService.isListening()) {
+            <span class="mic-wave">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+            </span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="audio-feedback-btn"
+          [class.active]="voiceService.audioFeedbackEnabled()"
+          (click)="voiceService.toggleAudioFeedback()"
+          [title]="'periodontal.audio_feedback' | translate"
+        >
+          <i class="pi" [ngClass]="voiceService.audioFeedbackEnabled() ? 'pi-volume-up' : 'pi-volume-off'"></i>
+        </button>
+
+        <!-- Save Examination Action -->
+        <button
+          type="button"
+          class="save-btn"
+          [disabled]="isSaving()"
+          (click)="saveExam()"
+        >
+          <i class="pi" [ngClass]="isSaving() ? 'pi-spin pi-spinner' : 'pi-check-circle'"></i>
+          <span>{{ 'periodontal.save_perio_exam' | translate }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Voice Recognition Stream Display -->
+    <div class="voice-status-bar">
+      <div class="status-left">
+        <span class="pulse-dot" [class.active]="voiceService.isListening()"></span>
+        <span class="voice-status-text">
+          @if (voiceService.isListening()) {
+            {{ 'periodontal.voice_listening' | translate }}
+          } @else if (!voiceService.isSupported()) {
+            {{ 'periodontal.voice_not_supported' | translate }}
+          } @else {
+            {{ voiceService.lastActionMessage() || ('periodontal.voice_commands_guide' | translate) }}
+          }
+        </span>
+      </div>
+
+      <!-- Quick Voice Simulator Input for Chairside or Automated Tests -->
+      <div class="voice-simulator-wrap">
+        <input
+          type="text"
+          [(ngModel)]="activeSimulationPrompt"
+          class="sim-input"
+          placeholder="e.g. Tooth 16, 5 3 4, bleed mesial, mobility 1"
+          (keydown.enter)="triggerVoiceSimulation()"
+        />
+        <button type="button" class="sim-btn" (click)="triggerVoiceSimulation()">
+          {{ 'periodontal.simulate_dictation' | translate }}
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (saveSuccessMessage()) {
+    <div class="save-toast glass-panel">
+      <i class="pi pi-check text-emerald-500"></i>
+      <span>{{ saveSuccessMessage()! | translate }}</span>
+    </div>
+  }
+
+  <!-- Main Periodontal Workspace -->
+  <div class="perio-grid">
+    <!-- Left Column: Dental Arch Tooth Selector & 6-Point Site Editor -->
+    <section class="chart-section glass-panel">
+      <!-- Upper Jaw (Maxillary) Arch -->
+      <div class="arch-container">
+        <div class="arch-header">
+          <i class="pi pi-angle-up"></i>
+          <span>{{ 'periodontal.maxillary_arch' | translate }}</span>
+        </div>
+        <div class="teeth-row">
+          @for (tooth of maxillaryTeeth(); track tooth.toothNumber) {
+            <button
+              type="button"
+              class="tooth-card"
+              [class.selected]="selectedToothNumber() === tooth.toothNumber"
+              [class.missing]="tooth.isMissing"
+              [class.implant]="tooth.isImplant"
+              (click)="selectTooth(tooth.toothNumber)"
+            >
+              <span class="tooth-num">{{ getToothDisplayLabel(tooth.toothNumber) }}</span>
+              @if (!tooth.isMissing) {
+                <div class="tooth-indicators">
+                  @if (tooth.furcationGrade > 0) {
+                    <span class="badge-furcation" title="Furcation Class {{ tooth.furcationGrade }}">F{{ tooth.furcationGrade }}</span>
+                  }
+                  @if (tooth.mobilityGrade > 0) {
+                    <span class="badge-mobility" title="Miller Mobility Grade {{ tooth.mobilityGrade }}">M{{ tooth.mobilityGrade }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="badge-missing">X</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Lower Jaw (Mandibular) Arch -->
+      <div class="arch-container">
+        <div class="arch-header">
+          <i class="pi pi-angle-down"></i>
+          <span>{{ 'periodontal.mandibular_arch' | translate }}</span>
+        </div>
+        <div class="teeth-row">
+          @for (tooth of mandibularTeeth(); track tooth.toothNumber) {
+            <button
+              type="button"
+              class="tooth-card"
+              [class.selected]="selectedToothNumber() === tooth.toothNumber"
+              [class.missing]="tooth.isMissing"
+              [class.implant]="tooth.isImplant"
+              (click)="selectTooth(tooth.toothNumber)"
+            >
+              <span class="tooth-num">{{ getToothDisplayLabel(tooth.toothNumber) }}</span>
+              @if (!tooth.isMissing) {
+                <div class="tooth-indicators">
+                  @if (tooth.furcationGrade > 0) {
+                    <span class="badge-furcation" title="Furcation Class {{ tooth.furcationGrade }}">F{{ tooth.furcationGrade }}</span>
+                  }
+                  @if (tooth.mobilityGrade > 0) {
+                    <span class="badge-mobility" title="Miller Mobility Grade {{ tooth.mobilityGrade }}">M{{ tooth.mobilityGrade }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="badge-missing">X</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Detailed 6-Point Probing Matrix for Selected Tooth -->
+      @if (selectedTooth(); as tooth) {
+        <div class="tooth-inspector glass-panel">
+          <div class="inspector-header">
+            <div class="inspector-title">
+              <span class="tooth-badge">Tooth {{ getToothDisplayLabel(tooth.toothNumber) }}</span>
+              <span class="fdi-tag">FDI #{{ tooth.toothNumber }}</span>
+            </div>
+
+            <!-- Quick Tooth Level Toggles -->
+            <div class="tooth-quick-actions">
+              <button
+                type="button"
+                class="pill-btn"
+                [class.active]="tooth.isMissing"
+                (click)="toggleMissing(tooth.toothNumber)"
+              >
+                {{ 'periodontal.missing_tooth' | translate }}
+              </button>
+              <button
+                type="button"
+                class="pill-btn"
+                [class.active]="tooth.isImplant"
+                (click)="toggleImplant(tooth.toothNumber)"
+              >
+                {{ 'periodontal.implant_tooth' | translate }}
+              </button>
+            </div>
+          </div>
+
+          @if (!tooth.isMissing) {
+            <!-- Furcation & Mobility Selectors -->
+            <div class="indices-bar">
+              <div class="index-group">
+                <span class="group-label">{{ 'periodontal.furcation' | translate }}:</span>
+                <div class="btn-group">
+                  @for (f of [0, 1, 2, 3]; track f) {
+                    <button
+                      type="button"
+                      class="mini-btn"
+                      [class.active]="tooth.furcationGrade === f"
+                      (click)="setFurcation(tooth.toothNumber, f)"
+                    >
+                      {{ f === 0 ? '0' : 'Cl ' + f }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="index-group">
+                <span class="group-label">{{ 'periodontal.mobility' | translate }}:</span>
+                <div class="btn-group">
+                  @for (m of [0, 1, 2, 3]; track m) {
+                    <button
+                      type="button"
+                      class="mini-btn"
+                      [class.active]="tooth.mobilityGrade === m"
+                      (click)="setMobility(tooth.toothNumber, m)"
+                    >
+                      {{ m === 0 ? '0' : 'Gr ' + m }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- 6-Point Site Matrix (3 Facial/Buccal, 3 Lingual/Palatal) -->
+            <div class="sites-matrix">
+              <!-- Facial / Buccal Sites -->
+              <div class="aspect-panel facial">
+                <div class="aspect-label">
+                  <i class="pi pi-eye"></i>
+                  <span>{{ 'periodontal.facial_buccal' | translate }}</span>
+                </div>
+                <div class="sites-row">
+                  @for (site of tooth.sites.slice(0, 3); track site.siteLocation; let idx = $index) {
+                    <div class="site-cell" [class.deep-pocket]="site.probingDepthMm >= 5" [class.bop]="site.hasBleedingOnProbing">
+                      <span class="site-name">{{ site.siteLocation }}</span>
+                      
+                      <div class="probing-field">
+                        <label>{{ 'periodontal.probing_depth' | translate }}</label>
+                        <div class="depth-stepper">
+                          <button type="button" (click)="updateProbingDepth(tooth.toothNumber, idx, site.probingDepthMm - 1)">-</button>
+                          <input
+                            type="number"
+                            min="1"
+                            max="15"
+                            [value]="site.probingDepthMm"
+                            (change)="updateProbingDepth(tooth.toothNumber, idx, +$any($event.target).value)"
+                            [class.depth-normal]="site.probingDepthMm <= 3"
+                            [class.depth-warning]="site.probingDepthMm === 4"
+                            [class.depth-danger]="site.probingDepthMm >= 5"
+                          />
+                          <button type="button" (click)="updateProbingDepth(tooth.toothNumber, idx, site.probingDepthMm + 1)">+</button>
+                        </div>
+                      </div>
+
+                      <div class="cal-field">
+                        <span class="cal-label">CAL:</span>
+                        <span class="cal-val">{{ site.clinicalAttachmentLossMm }} mm</span>
+                      </div>
+
+                      <div class="toggles-row">
+                        <button
+                          type="button"
+                          class="toggle-bop-btn"
+                          [class.active]="site.hasBleedingOnProbing"
+                          (click)="toggleBop(tooth.toothNumber, idx)"
+                          title="Bleeding On Probing (BOP)"
+                        >
+                          <i class="pi pi-tint"></i>
+                          <span>BOP</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="toggle-pus-btn"
+                          [class.active]="site.hasSuppuration"
+                          (click)="toggleSuppuration(tooth.toothNumber, idx)"
+                          title="Suppuration / Pus"
+                        >
+                          <i class="pi pi-exclamation-triangle"></i>
+                          <span>PUS</span>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Lingual / Palatal Sites -->
+              <div class="aspect-panel lingual">
+                <div class="aspect-label">
+                  <i class="pi pi-comments"></i>
+                  <span>{{ 'periodontal.lingual_palatal' | translate }}</span>
+                </div>
+                <div class="sites-row">
+                  @for (site of tooth.sites.slice(3, 6); track site.siteLocation; let idx = $index) {
+                    <div class="site-cell" [class.deep-pocket]="site.probingDepthMm >= 5" [class.bop]="site.hasBleedingOnProbing">
+                      <span class="site-name">{{ site.siteLocation }}</span>
+                      
+                      <div class="probing-field">
+                        <label>{{ 'periodontal.probing_depth' | translate }}</label>
+                        <div class="depth-stepper">
+                          <button type="button" (click)="updateProbingDepth(tooth.toothNumber, idx + 3, site.probingDepthMm - 1)">-</button>
+                          <input
+                            type="number"
+                            min="1"
+                            max="15"
+                            [value]="site.probingDepthMm"
+                            (change)="updateProbingDepth(tooth.toothNumber, idx + 3, +$any($event.target).value)"
+                            [class.depth-normal]="site.probingDepthMm <= 3"
+                            [class.depth-warning]="site.probingDepthMm === 4"
+                            [class.depth-danger]="site.probingDepthMm >= 5"
+                          />
+                          <button type="button" (click)="updateProbingDepth(tooth.toothNumber, idx + 3, site.probingDepthMm + 1)">+</button>
+                        </div>
+                      </div>
+
+                      <div class="cal-field">
+                        <span class="cal-label">CAL:</span>
+                        <span class="cal-val">{{ site.clinicalAttachmentLossMm }} mm</span>
+                      </div>
+
+                      <div class="toggles-row">
+                        <button
+                          type="button"
+                          class="toggle-bop-btn"
+                          [class.active]="site.hasBleedingOnProbing"
+                          (click)="toggleBop(tooth.toothNumber, idx + 3)"
+                          title="Bleeding On Probing (BOP)"
+                        >
+                          <i class="pi pi-tint"></i>
+                          <span>BOP</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="toggle-pus-btn"
+                          [class.active]="site.hasSuppuration"
+                          (click)="toggleSuppuration(tooth.toothNumber, idx + 3)"
+                          title="Suppuration / Pus"
+                        >
+                          <i class="pi pi-exclamation-triangle"></i>
+                          <span>PUS</span>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Right Column: Real-Time AAP/EFP 2018 Staging & Grading Diagnostics -->
+    <aside class="diagnostics-section glass-panel">
+      <div class="diag-header">
+        <i class="pi pi-shield"></i>
+        <h3>{{ 'periodontal.staging_and_grading' | translate }}</h3>
+      </div>
+
+      <!-- Live Staging & Grading Badges -->
+      <div class="score-cards-grid">
+        <div class="badge-card stage-card" [class.danger]="assessment().stage.includes('III') || assessment().stage.includes('IV')">
+          <span class="badge-label">{{ 'periodontal.staging' | translate }}</span>
+          <span class="badge-value">{{ assessment().stage }}</span>
+          <p class="badge-desc">{{ assessment().stageDescription }}</p>
+        </div>
+
+        <div class="badge-card grade-card" [class.grade-c]="assessment().grade.includes('C')">
+          <span class="badge-label">{{ 'periodontal.grading' | translate }}</span>
+          <span class="badge-value">{{ assessment().grade }}</span>
+          <p class="badge-desc">{{ assessment().gradeDescription }}</p>
+        </div>
+      </div>
+
+      <!-- Real-Time Metric Gauges -->
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <div class="metric-top">
+            <span class="metric-name">{{ 'periodontal.bop_score' | translate }}</span>
+            <span class="metric-number" [class.text-rose-500]="assessment().bopPercentage >= 30.0">{{ assessment().bopPercentage }}%</span>
+          </div>
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              [style.width.%]="assessment().bopPercentage"
+              [class.bg-emerald-500]="assessment().bopPercentage < 10"
+              [class.bg-amber-500]="assessment().bopPercentage >= 10 && assessment().bopPercentage <= 30"
+              [class.bg-rose-500]="assessment().bopPercentage > 30"
+            ></div>
+          </div>
+          <span class="metric-sub">{{ assessment().inflammationExtent }}</span>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-top">
+            <span class="metric-name">{{ 'periodontal.deep_pockets' | translate }}</span>
+            <span class="metric-number" [class.text-rose-500]="assessment().deepPocketsCount > 0">{{ assessment().deepPocketsCount }}</span>
+          </div>
+          <span class="metric-sub">Max PPD: {{ assessment().maxPpdMm }}mm | Max CAL: {{ assessment().maxCalMm }}mm</span>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-top">
+            <span class="metric-name">{{ 'periodontal.furcation_count' | translate }}</span>
+            <span class="metric-number">{{ assessment().furcationTeethCount }}</span>
+          </div>
+          <span class="metric-sub">{{ 'periodontal.mobile_count' | translate }}: {{ assessment().mobileTeethCount }}</span>
+        </div>
+      </div>
+
+      <!-- Modifiable Systemic Risk Factors -->
+      <div class="risk-modifiers-panel">
+        <h4>{{ 'periodontal.risk_factors' | translate }}</h4>
+
+        <div class="risk-row">
+          <div class="risk-label-wrap">
+            <span>{{ 'periodontal.patient_age' | translate }}</span>
+            <strong>{{ patientAge() }} yrs</strong>
+          </div>
+          <input
+            type="range"
+            min="18"
+            max="95"
+            [value]="patientAge()"
+            (input)="patientAge.set(+$any($event.target).value)"
+            class="range-slider"
+          />
+        </div>
+
+        <div class="risk-row">
+          <div class="risk-label-wrap">
+            <span>{{ 'periodontal.bone_loss_pct' | translate }}</span>
+            <strong>{{ boneLossPercentage() }}%</strong>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            [value]="boneLossPercentage()"
+            (input)="boneLossPercentage.set(+$any($event.target).value)"
+            class="range-slider"
+          />
+        </div>
+
+        <div class="risk-check-row">
+          <label class="checkbox-wrap">
+            <input
+              type="checkbox"
+              [checked]="isSmoker()"
+              (change)="isSmoker.set($any($event.target).checked)"
+            />
+            <span>{{ 'periodontal.is_smoker' | translate }}</span>
+          </label>
+
+          @if (isSmoker()) {
+            <div class="cigs-input-wrap">
+              <label>{{ 'periodontal.cigarettes_per_day' | translate }}</label>
+              <input
+                type="number"
+                min="1"
+                max="60"
+                [value]="cigarettesPerDay()"
+                (change)="cigarettesPerDay.set(+$any($event.target).value)"
+                class="num-input"
+              />
+            </div>
+          }
+        </div>
+
+        <div class="risk-row">
+          <div class="risk-label-wrap">
+            <span>{{ 'periodontal.hba1c_level' | translate }}</span>
+            <strong>{{ hbA1c() ? hbA1c() + '%' : 'None' }}</strong>
+          </div>
+          <input
+            type="number"
+            step="0.1"
+            min="4.0"
+            max="15.0"
+            placeholder="e.g. 7.2"
+            [value]="hbA1c() ?? ''"
+            (change)="hbA1c.set($any($event.target).value ? +$any($event.target).value : null)"
+            class="num-input-full"
+          />
+        </div>
+      </div>
+
+      <!-- Clinical Diagnostic Narrative Summary -->
+      <div class="summary-box">
+        <div class="summary-header">
+          <i class="pi pi-info-circle"></i>
+          <span>{{ 'periodontal.clinical_summary' | translate }}</span>
+        </div>
+        <p class="summary-text">{{ assessment().clinicalRiskSummary }}</p>
+      </div>
+    </aside>
+  </div>
+</div>

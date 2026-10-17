@@ -67,6 +67,13 @@
         <i class="pi pi-table"></i>
         <span>{{ 'dental.view_skeuomorphic_grid' | translate }}</span>
       </button>
+      <button 
+        class="toggle-btn" 
+        [class.active]="activeView() === 'perio'" 
+        (click)="setView('perio')">
+        <i class="pi pi-chart-line"></i>
+        <span>{{ 'dental.view_periodontal' | translate }}</span>
+      </button>
     </div>
   </header>
 
@@ -87,8 +94,10 @@
           <span class="text-xs text-slate-400">3D Interactive Anatomy View</span>
         </div>
       }
-    } @else {
+    } @else if (activeView() === 'grid') {
       <app-skeuomorphic-dental-chart class="view-component" [dentition]="activeDentition()"></app-skeuomorphic-dental-chart>
+    } @else {
+      <app-periodontal-chart class="view-component"></app-periodontal-chart>
     }
   </main>
 </div>

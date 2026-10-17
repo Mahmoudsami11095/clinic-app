@@ -7,5 +7,12 @@ export const dentalChartRoutes: Routes = [
       import('./dental-chart.component').then(
         m => m.DentalChartComponent
       )
+  },
+  {
+    path: 'periodontal',
+    loadComponent: () =>
+      import('./components/periodontal-chart/periodontal-chart.component').then(
+        m => m.PeriodontalChartComponent
+      )
   }
 ];
