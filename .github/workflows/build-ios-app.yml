@@ -68,6 +68,40 @@ jobs:
           zip -r SmartClinic-iOS-Simulator.zip App.app
           mv SmartClinic-iOS-Simulator.zip ../../../../
 
+      - name: Boot iOS Simulator & Smoke Test Application Launch
+        run: |
+          echo "Listing available iOS Simulator devices..."
+          xcrun simctl list devices available
+          
+          # Find available iPhone or iPad simulator runtime
+          TARGET_UDID=$(xcrun simctl list devices available | grep -E "iPhone|iPad" | head -n 1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
+          echo "Selected Simulator Target UDID: $TARGET_UDID"
+          
+          if [ -n "$TARGET_UDID" ]; then
+            echo "Booting simulator $TARGET_UDID..."
+            xcrun simctl boot "$TARGET_UDID" || true
+            
+            echo "Installing built App.app onto simulator..."
+            xcrun simctl install "$TARGET_UDID" build/Build/Products/Debug-iphonesimulator/App.app
+            
+            echo "Launching Smart Clinic (ai.cliniccorp.mobile)..."
+            LAUNCH_OUTPUT=$(xcrun simctl launch "$TARGET_UDID" ai.cliniccorp.mobile)
+            echo "Launch result: $LAUNCH_OUTPUT"
+            
+            # Wait for Web runtime to initialize
+            sleep 4
+            
+            mkdir -p simulator-artifacts
+            xcrun simctl io "$TARGET_UDID" screenshot simulator-artifacts/ios-simulator-smoke-boot.png || true
+            echo "Simulator smoke screenshot saved."
+            
+            # Terminate and shutdown cleanly
+            xcrun simctl terminate "$TARGET_UDID" ai.cliniccorp.mobile || true
+            xcrun simctl shutdown "$TARGET_UDID" || true
+          else
+            echo "No simulator found, skipping live runtime smoke launch."
+          fi
+
       - name: Build iOS Device Binary (Payload / Unsigned IPA)
         run: |
           xcodebuild \
@@ -86,6 +120,31 @@ jobs:
           zip -r SmartClinic-iOS-Unsigned.ipa Payload
           rm -rf Payload
 
+      - name: Generate App Store Connect / TestFlight Export Template
+        run: |
+          mkdir -p testflight-staging
+          cat << 'EOF' > testflight-staging/exportOptions-appstore.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store</string>
+  <key>destination</key>
+  <string>upload</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>stripSwiftSymbols</key>
+  <true/>
+  <key>uploadBitcode</key>
+  <false/>
+  <key>uploadSymbols</key>
+  <true/>
+</dict>
+</plist>
+EOF
+          echo "TestFlight export configuration staged."
+
       - name: Upload iOS Simulator App (.zip)
         uses: actions/upload-artifact@v4
         with:
@@ -93,9 +152,25 @@ jobs:
           path: SmartClinic-iOS-Simulator.zip
           retention-days: 30
 
+      - name: Upload iOS Simulator Smoke Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartClinic-iOS-Simulator-Smoke
+          path: simulator-artifacts/*
+          retention-days: 14
+
       - name: Upload iOS Device Package (.ipa)
         uses: actions/upload-artifact@v4
         with:
           name: SmartClinic-iOS-Unsigned-IPA
           path: SmartClinic-iOS-Unsigned.ipa
           retention-days: 30
+
+      - name: Upload TestFlight Export Staging Template
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartClinic-iOS-TestFlight-Template
+          path: testflight-staging/*
+          retention-days: 14
+
