@@ -1,6 +1,8 @@
+import { AppointmentDto } from '@clinic/api';
+
 export type AppointmentStatusType = 'scheduled' | 'waiting' | 'in_consultation' | 'completed' | 'cancelled';
 
-export interface Appointment {
+export interface Appointment extends Partial<AppointmentDto> {
   id: string;
   patientId: string;
   doctorId: string;
@@ -23,6 +25,8 @@ export interface Appointment {
   // REQ-CLI-03: Multi-Branch & Multi-Room Management
   roomNumber?: string;
 }
+
+export type { AppointmentDto };
 
 export interface AppointmentWithDetails extends Appointment {
   patientName: string;

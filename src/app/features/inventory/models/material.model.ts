@@ -1,4 +1,6 @@
-export interface Material {
+import { MaterialDto, ConsumedMaterialDto } from '@clinic/api';
+
+export interface Material extends Partial<MaterialDto> {
   id?: string;
   clinicId?: string;
   doctorId?: string;
@@ -19,8 +21,10 @@ export interface Material {
   purchaseOrderRef?: string;
   imageUrl?: string;
 }
+export type { MaterialDto };
 
 export interface ConsumedMaterial {
   materialId: string;
   quantity: number;
 }
+export type { ConsumedMaterialDto };

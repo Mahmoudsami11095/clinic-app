@@ -43,7 +43,9 @@ export interface PaymentPlan {
   installments: PaymentPlanInstallment[];
 }
 
-export interface CreatePaymentPlanRequest {
+import { CreatePaymentPlanDto, RecordInstallmentPaymentDto } from '@clinic/api';
+
+export interface CreatePaymentPlanRequest extends Partial<CreatePaymentPlanDto> {
   clinicId: string;
   patientId: string;
   doctorId: string;
@@ -58,13 +60,15 @@ export interface CreatePaymentPlanRequest {
   startDate: string;
   notes?: string;
 }
+export type { CreatePaymentPlanDto };
 
-export interface RecordInstallmentPaymentRequest {
+export interface RecordInstallmentPaymentRequest extends Partial<RecordInstallmentPaymentDto> {
   amount: number;
   paymentMethod: string;
   transactionReference?: string;
   notes?: string;
 }
+export type { RecordInstallmentPaymentDto };
 
 export interface PaymentPlanSummary {
   totalPlans: number;

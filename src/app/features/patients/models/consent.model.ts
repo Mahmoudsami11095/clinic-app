@@ -32,7 +32,9 @@ export interface InformedConsentDocument {
   countersignedAt?: string;
 }
 
-export interface CreateInformedConsentRequest {
+import { CreateInformedConsentDto } from '@clinic/api';
+
+export interface CreateInformedConsentRequest extends Partial<CreateInformedConsentDto> {
   clinicId: string;
   patientId: string;
   doctorId: string;
@@ -43,6 +45,7 @@ export interface CreateInformedConsentRequest {
   clinicalRiskDisclosures: string[];
   specialMedicalCautions?: string;
 }
+export type { CreateInformedConsentDto };
 
 export interface SignPatientConsentRequest {
   patientSignatureBase64: string;

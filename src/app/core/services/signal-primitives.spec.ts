@@ -1,7 +1,7 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { ModalComponent } from '../../shared/components/modal/modal.component';
-import { OtpInputFieldComponent } from '../../shared/components/otp-input-field/otp-input-field.component';
-import { SignaturePadModalComponent } from '../../shared/components/signature-pad-modal/signature-pad-modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
+import { OtpInputFieldComponent } from '@clinic/ui/otp-input-field/otp-input-field.component';
+import { SignaturePadModalComponent } from '@clinic/ui/signature-pad-modal/signature-pad-modal.component';
 import { LanguageService } from '../i18n/language.service';
 
 describe('Angular 19 Signal Primitives Modernization - Level 1 (SW/Unit)', () => {

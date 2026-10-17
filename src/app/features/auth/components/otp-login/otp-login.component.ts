@@ -6,7 +6,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
 import { extractErrorMessage } from '../../../../core/utils/error.utils';
-import { OtpInputFieldComponent } from '../../../../shared/components/otp-input-field/otp-input-field.component';
+import { OtpInputFieldComponent } from '@clinic/ui/otp-input-field/otp-input-field.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 function emailOrPhoneValidator(control: any) {

@@ -1,9 +1,15 @@
-export interface DoctorAvailability {
+import { DoctorDto, DoctorAvailabilityDto, DoctorClinicAvailabilityDto } from '@clinic/api';
+
+export interface DoctorAvailability extends Partial<DoctorAvailabilityDto> {
   days: string[];
   hours: string;
 }
+export type { DoctorAvailabilityDto };
 
-export interface Doctor {
+export type DoctorClinicAvailability = DoctorClinicAvailabilityDto;
+export type { DoctorClinicAvailabilityDto };
+
+export interface Doctor extends Partial<DoctorDto> {
   id: string;
   firstName: string;
   lastName: string;
@@ -17,3 +23,4 @@ export interface Doctor {
   clinicIds?: string[];
   clinicAvailabilities?: { clinicId: string; availabilityHours: string; availabilityDays: string[] }[];
 }
+export type { DoctorDto };

@@ -4,10 +4,10 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RadiologyService, RadiologyCenter, RadiologyRecord } from '../../services/radiology.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
-import { ScanViewerModalComponent } from '../../../../shared/components/scan-viewer-modal/scan-viewer-modal.component';
+import { LocationMapComponent } from '@clinic/ui/location-map/location-map.component';
+import { ScanViewerModalComponent } from '@clinic/ui/scan-viewer-modal/scan-viewer-modal.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({

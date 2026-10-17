@@ -6,8 +6,8 @@ import { ClinicService } from '../../../../core/services/clinic.service';
 import { PatientService } from '../../../patients/services/patient.service';
 import { DoctorService } from '../../../doctors/services/doctor.service';
 import { PatientRecall, RecallSummary, CreatePatientRecallRequest } from '../../models/recall.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
+import { StatusBadgeComponent } from '@clinic/ui/status-badge/status-badge.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin } from 'rxjs';
 

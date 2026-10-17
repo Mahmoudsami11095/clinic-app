@@ -34,9 +34,9 @@ export class PrescriptionService {
           const appointment = appointments.find(a => a.id === pres.appointmentId);
           return {
             ...pres,
-            patientName: formatPersonName(patient) || 'Unknown Patient',
-            doctorName: formatPersonName(doctor, 'Dr.') || 'Unknown Doctor',
-            appointmentDate: appointment ? appointment.date : pres.date
+            patientName: formatPersonName(patient as any) || 'Unknown Patient',
+            doctorName: formatPersonName(doctor as any, 'Dr.') || 'Unknown Doctor',
+            appointmentDate: (appointment ? appointment.date : pres.date) || ''
           };
         });
       })

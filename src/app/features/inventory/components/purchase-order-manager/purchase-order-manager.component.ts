@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ProcurementService, PurchaseOrder, Supplier } from '../../../../core/services/procurement/procurement.service';
 import { MaterialsService } from '../../services/materials.service';
 import { Material } from '../../models/material.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
+import { StatusBadgeComponent } from '@clinic/ui/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-purchase-order-manager',

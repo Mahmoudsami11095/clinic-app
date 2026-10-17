@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../services/doctor.service';
 import { Doctor } from '../../models/doctor.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { DoctorFormComponent } from '../doctor-form/doctor-form.component';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';

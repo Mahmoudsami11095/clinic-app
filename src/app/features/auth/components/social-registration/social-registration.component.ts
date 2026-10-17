@@ -5,15 +5,15 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService, User } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
-import { ClinicSelectionComponent } from '../../../../shared/components/clinic-selection/clinic-selection.component';
+import { ClinicSelectionComponent } from '@clinic/ui/clinic-selection/clinic-selection.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { combinePhoneNumber } from '../../../../core/utils/phone.utils';
 import { SpecializationService, SpecializationGroup } from '../../../../core/services/specialization.service';
-import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
+import { InputFieldComponent } from '@clinic/ui/input-field/input-field.component';
 
-import { RoleSelection } from '../../../../shared/components/role-selection/role-selection';
-import { ProfileDetailsForm } from '../../../../shared/components/profile-details-form/profile-details-form';
-import { VerificationStep } from '../../../../shared/components/verification-step/verification-step';
+import { RoleSelection } from '@clinic/ui/role-selection/role-selection';
+import { ProfileDetailsForm } from '@clinic/ui/profile-details-form/profile-details-form';
+import { VerificationStep } from '@clinic/ui/verification-step/verification-step';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({

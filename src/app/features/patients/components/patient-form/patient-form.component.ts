@@ -28,11 +28,11 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
   return inputDate < new Date() ? null : { futureDate: true };
 }
 
-import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
-import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+import { InputFieldComponent } from '@clinic/ui/input-field/input-field.component';
+import { PhoneInputFieldComponent } from '@clinic/ui/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../../../core/utils/phone.utils';
-import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { LocationMapComponent } from '@clinic/ui/location-map/location-map.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({

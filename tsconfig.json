@@ -14,7 +14,14 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": "./",
+    "paths": {
+      "@clinic/api": ["src/app/shared/api-client/index.ts"],
+      "@clinic/api/*": ["src/app/shared/api-client/*"],
+      "@clinic/ui": ["src/app/shared/ui/index.ts"],
+      "@clinic/ui/*": ["src/app/shared/ui/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

@@ -7,7 +7,7 @@ import { PatientService } from '../../../patients/services/patient.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
 import { Clinic } from '../../../../core/models/clinic.model';
 
-import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { LocationMapComponent } from '@clinic/ui/location-map/location-map.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { WhatsappConnectionComponent } from '../whatsapp-connection/whatsapp-connection.component';
 

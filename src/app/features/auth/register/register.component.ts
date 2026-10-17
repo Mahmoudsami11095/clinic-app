@@ -11,17 +11,17 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { extractErrorMessage } from '../../../core/utils/error.utils';
-import { InputFieldComponent } from '../../../shared/components/input-field/input-field.component';
+import { InputFieldComponent } from '@clinic/ui/input-field/input-field.component';
 import { phoneValidator } from '../../../core/validators/phone.validator';
-import { ClinicSelectionComponent } from '../../../shared/components/clinic-selection/clinic-selection.component';
+import { ClinicSelectionComponent } from '@clinic/ui/clinic-selection/clinic-selection.component';
 import { SpecializationService, SpecializationGroup } from '../../../core/services/specialization.service';
 
 declare var google: any;
 declare var AppleID: any;
 
-import { RoleSelection } from '../../../shared/components/role-selection/role-selection';
-import { ProfileDetailsForm } from '../../../shared/components/profile-details-form/profile-details-form';
-import { VerificationStep } from '../../../shared/components/verification-step/verification-step';
+import { RoleSelection } from '@clinic/ui/role-selection/role-selection';
+import { ProfileDetailsForm } from '@clinic/ui/profile-details-form/profile-details-form';
+import { VerificationStep } from '@clinic/ui/verification-step/verification-step';
 import { SocialRegistrationComponent } from '../components/social-registration/social-registration.component';
 import { WhatsappConnectionComponent } from '../../clinics/components/whatsapp-connection/whatsapp-connection.component';
 

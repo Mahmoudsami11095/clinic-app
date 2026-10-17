@@ -14,8 +14,8 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DentalService, DentalLog, ToothStatus, ConsumedMaterial, DentalProcedureStage } from '../../../../core/services/dental.service';
 import { DentalNotationService } from '../../../../core/services/dental-notation.service';
 import { ClinicalNotesService, ClinicalNote, ClinicalNoteAmendment } from '../../../../core/services/clinical-notes.service';
-import { ScanViewerModalComponent } from '../../../../shared/components/scan-viewer-modal/scan-viewer-modal.component';
-import { SignaturePadModalComponent } from '../../../../shared/components/signature-pad-modal/signature-pad-modal.component';
+import { ScanViewerModalComponent } from '@clinic/ui/scan-viewer-modal/scan-viewer-modal.component';
+import { SignaturePadModalComponent } from '@clinic/ui/signature-pad-modal/signature-pad-modal.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { ToastrService } from 'ngx-toastr';
@@ -2864,7 +2864,7 @@ export class PatientHistoryComponent implements OnInit {
                  || this.clinicService.clinics().find(c => c.id === this.patient.clinicId)
                  || this.clinicService.clinics()[0];
     return {
-      name: matched ? matched.name : (this.clinicService.activeClinicName() || 'DENTAL CLINIC'),
+      name: matched?.name || this.clinicService.activeClinicName() || 'DENTAL CLINIC',
       address: matched?.address || 'Cairo, Egypt',
       phone: matched?.phone || '+20 100 000 0000'
     };

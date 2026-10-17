@@ -67,7 +67,7 @@ export interface CommissionPayout {
   id: string;
   doctorId: string;
   doctorName: string;
-  clinicId?: string;
+  clinicId?: string | null;
   periodStart: string;
   periodEnd: string;
   totalGrossRevenue: number;
@@ -75,9 +75,9 @@ export interface CommissionPayout {
   totalNetCommission: number;
   clinicRetainedRevenue: number;
   status: 'Draft' | 'Approved' | 'Paid' | 'Voided';
-  paymentReference?: string;
-  paidAt?: string;
-  notes?: string;
+  paymentReference?: string | null;
+  paidAt?: string | null;
+  notes?: string | null;
   createdAt: string;
   items: CommissionPayoutItem[];
 }
@@ -96,15 +96,22 @@ export interface CommissionPayoutItem {
   serviceDate: string;
 }
 
-export interface CreateCommissionPayoutDto {
+import {
+  CreateCommissionPayoutDto as ApiCreateCommissionPayoutDto,
+  SettleCommissionPayoutDto as ApiSettleCommissionPayoutDto
+} from '@clinic/api';
+
+export interface CreateCommissionPayoutDto extends Partial<ApiCreateCommissionPayoutDto> {
   doctorId: string;
   clinicId?: string;
   periodStart?: string;
   periodEnd?: string;
   notes?: string;
 }
+export type { ApiCreateCommissionPayoutDto };
 
-export interface SettleCommissionPayoutDto {
+export interface SettleCommissionPayoutDto extends Partial<ApiSettleCommissionPayoutDto> {
   paymentReference: string;
   notes?: string;
 }
+export type { ApiSettleCommissionPayoutDto };

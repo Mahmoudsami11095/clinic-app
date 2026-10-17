@@ -1,4 +1,6 @@
-export interface Equipment {
+import { EquipmentDto, EquipmentMaintenanceLogRequest as ApiEquipmentMaintenanceLogRequest } from '@clinic/api';
+
+export interface Equipment extends Partial<EquipmentDto> {
   id?: string;
   clinicId: string;
   doctorId?: string;
@@ -22,8 +24,9 @@ export interface Equipment {
   isMaintenanceDue?: boolean;
   isWarrantyExpired?: boolean;
 }
+export type { EquipmentDto };
 
-export interface EquipmentMaintenanceLogRequest {
+export interface EquipmentMaintenanceLogRequest extends Partial<ApiEquipmentMaintenanceLogRequest> {
   serviceDate: string;
   nextDueDate?: string;
   notes?: string;
@@ -31,3 +34,4 @@ export interface EquipmentMaintenanceLogRequest {
   serviceProvider?: string;
   serviceContactPhone?: string;
 }
+export type { ApiEquipmentMaintenanceLogRequest };

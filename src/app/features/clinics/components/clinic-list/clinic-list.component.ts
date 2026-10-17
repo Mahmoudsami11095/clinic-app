@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ClinicService } from '../../../../core/services/clinic.service';
 import { Clinic } from '../../../../core/models/clinic.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { ClinicFormComponent } from '../clinic-form/clinic-form.component';
 import { ClinicQrModalComponent } from '../../clinic-qr-modal.component';
 import { DoctorService } from '../../../doctors/services/doctor.service';

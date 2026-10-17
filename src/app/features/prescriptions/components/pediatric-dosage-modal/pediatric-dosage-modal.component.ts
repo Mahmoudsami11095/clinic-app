@@ -1,7 +1,7 @@
 import { Component, input, output, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({

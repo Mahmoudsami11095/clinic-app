@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PatientService } from '../../services/patient.service';
 import { Patient } from '../../models/patient.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { PatientFormComponent } from '../patient-form/patient-form.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicService } from '../../../../core/services/clinic.service';

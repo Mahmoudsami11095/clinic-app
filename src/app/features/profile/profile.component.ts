@@ -11,12 +11,12 @@ import { WebAuthnService } from '../../core/auth/webauthn.service';
 import { environment } from '../../../environments/environment';
 
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
-import { InputFieldComponent } from '../../shared/components/input-field/input-field.component';
-import { PhoneInputFieldComponent } from '../../shared/components/phone-input-field/phone-input-field.component';
+import { InputFieldComponent } from '@clinic/ui/input-field/input-field.component';
+import { PhoneInputFieldComponent } from '@clinic/ui/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../core/validators/phone.validator';
 import { splitPhoneNumber } from '../../core/utils/phone.utils';
 import { ClinicService } from '../../core/services/clinic.service';
-import { LocationMapComponent } from '../../shared/components/location-map/location-map.component';
+import { LocationMapComponent } from '@clinic/ui/location-map/location-map.component';
 import { SpecializationService, SpecializationGroup } from '../../core/services/specialization.service';
 
 @Component({

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
-import { LocationMapComponent } from '../../shared/components/location-map/location-map.component';
+import { LocationMapComponent } from '@clinic/ui/location-map/location-map.component';
 
 describe('Bundle Budget & Lazy-Loading Architecture - Level 1 (SW/Unit)', () => {
   let fixture: ComponentFixture<LocationMapComponent>;

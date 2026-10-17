@@ -1,4 +1,6 @@
-export interface Patient {
+import { PatientDto } from '@clinic/api';
+
+export interface Patient extends Partial<PatientDto> {
   id: string;
   firstName: string;
   lastName: string;
@@ -25,3 +27,5 @@ export interface Patient {
   consentSignature?: string;
   consentSignedAt?: string;
 }
+
+export type { PatientDto };
