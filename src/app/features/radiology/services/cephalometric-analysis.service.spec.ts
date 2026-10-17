@@ -23,10 +23,10 @@ describe('CephalometricAnalysisService', () => {
     httpMock.verify();
   });
 
-  it('should be created and return default landmarks', () => {
+  it('should be created and return default landmarks (12 points including Prn and PogPrime)', () => {
     expect(service).toBeTruthy();
     const landmarks = service.getDefaultLandmarks();
-    expect(landmarks.length).toBe(10);
+    expect(landmarks.length).toBe(12);
     const ids = landmarks.map(l => l.id);
     expect(ids).toContain('S');
     expect(ids).toContain('N');
@@ -35,6 +35,8 @@ describe('CephalometricAnalysisService', () => {
     expect(ids).toContain('Pog');
     expect(ids).toContain('Go');
     expect(ids).toContain('Gn');
+    expect(ids).toContain('Prn');
+    expect(ids).toContain('PogPrime');
   });
 
   it('should calculate angle between points correctly (Right angle = 90 deg)', () => {
@@ -104,6 +106,78 @@ describe('CephalometricAnalysisService', () => {
       measurements: [],
       clinicalSummary: 'Test summary',
       clinicalSummaryAr: 'ملخص تجريبي'
+    });
+  });
+
+  it('should recalculate cephalometric analysis via HTTP POST', (done) => {
+    const mockRecordId = 'rec-recalc';
+    const landmarks = service.getDefaultLandmarks();
+    service.recalculate(mockRecordId, landmarks).subscribe(res => {
+      expect(res.recordId).toBe(mockRecordId);
+      expect(res.landmarks.length).toBe(12);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/records/${mockRecordId}/ceph-recalculate`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      recordId: mockRecordId,
+      patientId: 'pat-1',
+      patientName: 'Jane Doe',
+      analysisMethod: 'Steiner & Tweed Real-Time',
+      analysisDate: new Date().toISOString(),
+      skeletalClass: 'Class I',
+      skeletalClassAr: 'صنف أول',
+      growthPattern: 'Normodivergent',
+      growthPatternAr: 'طبيعي',
+      overallConfidence: 95.0,
+      landmarks,
+      measurements: [],
+      clinicalSummary: 'Recalculated summary',
+      clinicalSummaryAr: 'ملخص معاد حسابه'
+    });
+  });
+
+  it('should simulate surgical VTO and return predicted ANB & Rickett E-line', (done) => {
+    const mockRecordId = 'rec-vto';
+    const reqPayload = {
+      recordId: mockRecordId,
+      leFortIMaxillaryHorizontalMm: 3.0,
+      leFortIMaxillaryVerticalMm: 0,
+      bssoMandibularHorizontalMm: -3.5,
+      bssoMandibularVerticalMm: 0,
+      genioplastyHorizontalMm: 2.0,
+      genioplastyVerticalMm: 0
+    };
+
+    service.simulateVto(mockRecordId, reqPayload).subscribe(res => {
+      expect(res.recordId).toBe(mockRecordId);
+      expect(res.predictedSkeletalClass).toBe('Class I');
+      expect(res.predictedELine).toBeDefined();
+      expect(res.predictedELine.upperLipDistanceMm).toBeCloseTo(-1.7, 1);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/records/${mockRecordId}/ceph-vto`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      recordId: mockRecordId,
+      simulatedAtUtc: new Date().toISOString(),
+      predictedSna: 83.0,
+      predictedSnb: 80.5,
+      predictedAnb: 2.5,
+      predictedSkeletalClass: 'Class I',
+      predictedSkeletalClassAr: 'صنف أول هيكلي',
+      predictedELine: {
+        upperLipDistanceMm: -1.7,
+        lowerLipDistanceMm: -1.2,
+        upperLipStatus: 'Normal',
+        lowerLipStatus: 'Normal',
+        nasolabialAngle: 98.0
+      },
+      displacedLandmarks: service.getDefaultLandmarks(),
+      surgicalRecommendationSummary: 'Balanced profile predicted.',
+      surgicalRecommendationSummaryAr: 'توقع تناسق للوجه.'
     });
   });
 });

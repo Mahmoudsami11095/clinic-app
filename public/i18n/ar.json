@@ -1079,7 +1079,12 @@
     "ceph_reset": "إعادة تعيين المعالم",
     "ceph_save": "حفظ تقرير السيفالومتريك",
     "ceph_saving": "جارٍ الحفظ...",
-    "ceph_doctor_notes": "ملاحظات طبيب التقويم السريرية"
+    "ceph_doctor_notes": "ملاحظات طبيب التقويم السريرية",
+    "ceph_vto_title": "محاكاة VTO الجراحية للفكين والتقويم",
+    "ceph_vto_maxilla": "إزاحة الفك العلوي (Le Fort I)",
+    "ceph_vto_mandible": "إزاحة الفك السفلي (BSSO)",
+    "ceph_vto_chin": "تجميل وبروز الذقن (Genioplasty)",
+    "ceph_eline": "خط الجمال السريري (Rickett's E-Line)"
   },
   "postop": {
     "title": "متابعة التعافي والفرز السريري بعد الجراحة عبر واتساب",

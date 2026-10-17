@@ -43,6 +43,39 @@ export interface CephalometricAnalysisResult {
   clinicalSummaryAr: string;
 }
 
+export interface RickettELine {
+  upperLipDistanceMm: number;
+  lowerLipDistanceMm: number;
+  upperLipStatus: string;
+  lowerLipStatus: string;
+  nasolabialAngle: number;
+}
+
+export interface CephalometricVtoRequest {
+  recordId: string;
+  leFortIMaxillaryHorizontalMm: number;
+  leFortIMaxillaryVerticalMm: number;
+  bssoMandibularHorizontalMm: number;
+  bssoMandibularVerticalMm: number;
+  genioplastyHorizontalMm: number;
+  genioplastyVerticalMm: number;
+  baseLandmarks?: CephPoint[];
+}
+
+export interface CephalometricVtoResult {
+  recordId: string;
+  simulatedAtUtc: string;
+  predictedSna: number;
+  predictedSnb: number;
+  predictedAnb: number;
+  predictedSkeletalClass: string;
+  predictedSkeletalClassAr: string;
+  predictedELine: RickettELine;
+  displacedLandmarks: CephPoint[];
+  surgicalRecommendationSummary: string;
+  surgicalRecommendationSummaryAr: string;
+}
+
 export interface SaveCephalometricReportRequest {
   recordId: string;
   analysisMethod?: string;
@@ -71,7 +104,9 @@ export class CephalometricAnalysisService {
       { id: 'Go', name: 'Gonion (Go)', nameAr: 'زاوية الفك السفلي (Gonion)', x: 36.0, y: 68.5, confidence: 90.7 },
       { id: 'Gn', name: 'Gnathion (Gn)', nameAr: 'نقطة الفك الإطباقية (Gnathion)', x: 68.0, y: 83.0, confidence: 92.0 },
       { id: 'Or', name: 'Orbitale (Or)', nameAr: 'النقطة السفلية لحجاج العين (Orbitale)', x: 63.5, y: 39.0, confidence: 93.4 },
-      { id: 'Po', name: 'Porion (Po)', nameAr: 'النقطة العليا لمجرى السمع (Porion)', x: 33.5, y: 37.5, confidence: 89.2 }
+      { id: 'Po', name: 'Porion (Po)', nameAr: 'النقطة العليا لمجرى السمع (Porion)', x: 33.5, y: 37.5, confidence: 89.2 },
+      { id: 'Prn', name: 'Pronasale (Prn)', nameAr: 'قمة الأنف (Pronasale)', x: 76.5, y: 44.0, confidence: 94.8 },
+      { id: 'PogPrime', name: "Soft Pogonion (Pog')", nameAr: "ذقن الأنسجة الرخوة (Pog')", x: 72.8, y: 78.5, confidence: 93.5 }
     ];
   }
 
@@ -97,6 +132,78 @@ export class CephalometricAnalysisService {
             measurements: rec.measurements,
             clinicalSummary: rec.clinicalSummary,
             clinicalSummaryAr: rec.clinicalSummaryAr
+          });
+        })
+      );
+  }
+
+  recalculate(recordId: string, landmarks: CephPoint[]): Observable<CephalometricAnalysisResult> {
+    return this.http.post<CephalometricAnalysisResult>(`${this.apiUrl}/records/${recordId}/ceph-recalculate`, { recordId, landmarks })
+      .pipe(
+        catchError(() => {
+          const rec = this.recalculateAll(landmarks);
+          return of({
+            recordId,
+            patientId: 'patient-sim',
+            patientName: 'Patient Scan',
+            analysisMethod: 'Steiner, Tweed & Wits Real-Time Kinematics',
+            analysisDate: new Date().toISOString(),
+            skeletalClass: rec.skeletalClass,
+            skeletalClassAr: rec.skeletalClassAr,
+            growthPattern: rec.growthPattern,
+            growthPatternAr: rec.growthPatternAr,
+            overallConfidence: 96.5,
+            landmarks,
+            measurements: rec.measurements,
+            clinicalSummary: rec.clinicalSummary,
+            clinicalSummaryAr: rec.clinicalSummaryAr
+          });
+        })
+      );
+  }
+
+  simulateVto(recordId: string, request: CephalometricVtoRequest): Observable<CephalometricVtoResult> {
+    return this.http.post<CephalometricVtoResult>(`${this.apiUrl}/records/${recordId}/ceph-vto`, request)
+      .pipe(
+        catchError(() => {
+          const baseLandmarks = request.baseLandmarks || this.getDefaultLandmarks();
+          const shiftedLandmarks = baseLandmarks.map(lm => {
+            if (lm.id === 'A') {
+              return { ...lm, x: lm.x + (request.leFortIMaxillaryHorizontalMm * 0.8), isManuallyAdjusted: true };
+            }
+            if (['B', 'Pog', 'Me', 'Gn'].includes(lm.id)) {
+              return { ...lm, x: lm.x + (request.bssoMandibularHorizontalMm * 0.8) + (request.genioplastyHorizontalMm * 0.8), isManuallyAdjusted: true };
+            }
+            return lm;
+          });
+
+          const rec = this.recalculateAll(shiftedLandmarks);
+          const snaM = rec.measurements.find(m => m.parameter === 'SNA')?.value || 82.0;
+          const snbM = rec.measurements.find(m => m.parameter === 'SNB')?.value || 80.0;
+          const anbM = Math.round((snaM - snbM) * 10) / 10;
+          const predClass = anbM > 4.0 ? 'Class II' : (anbM < 0.0 ? 'Class III' : 'Class I');
+
+          const upperLipMm = Math.round((-3.5 + (request.leFortIMaxillaryHorizontalMm * 0.6)) * 10) / 10;
+          const lowerLipMm = Math.round((-2.0 + (request.bssoMandibularHorizontalMm * 0.75)) * 10) / 10;
+
+          return of({
+            recordId,
+            simulatedAtUtc: new Date().toISOString(),
+            predictedSna: snaM,
+            predictedSnb: snbM,
+            predictedAnb: anbM,
+            predictedSkeletalClass: predClass,
+            predictedSkeletalClassAr: predClass === 'Class I' ? 'صنف أول هيكلي' : (predClass === 'Class II' ? 'صنف ثاني هيكلي' : 'صنف ثالث هيكلي'),
+            predictedELine: {
+              upperLipDistanceMm: upperLipMm,
+              lowerLipDistanceMm: lowerLipMm,
+              upperLipStatus: upperLipMm > 0 ? 'Protruded' : (upperLipMm < -4.0 ? 'Retracted' : 'Normal'),
+              lowerLipStatus: lowerLipMm > 1.0 ? 'Protruded' : (lowerLipMm < -3.0 ? 'Retracted' : 'Normal'),
+              nasolabialAngle: Math.round(102.0 - (request.leFortIMaxillaryHorizontalMm * 1.5))
+            },
+            displacedLandmarks: shiftedLandmarks,
+            surgicalRecommendationSummary: `Surgical VTO: Le Fort I (${request.leFortIMaxillaryHorizontalMm > 0 ? '+' : ''}${request.leFortIMaxillaryHorizontalMm}mm) + BSSO (${request.bssoMandibularHorizontalMm > 0 ? '+' : ''}${request.bssoMandibularHorizontalMm}mm) restores ${predClass} sagittal balance.`,
+            surgicalRecommendationSummaryAr: `محاكاة VTO الجراحية: تقدم الفك العلوي وقص الفك السفلي يحقق توازن سهمي متناسق.`
           });
         })
       );
