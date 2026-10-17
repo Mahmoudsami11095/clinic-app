@@ -1685,6 +1685,53 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
+
+  // --- Release v11.7.0 Chairside Intraoral Scanner Integration Tests ---
+
+  it('should toggle chairside scanner panel and show active status (BR-IOS-01)', () => {
+    expect(component.isScannerActive()).toBeFalse();
+    component.toggleScannerPanel();
+    expect(component.isScannerActive()).toBeTrue();
+    expect(component.scannerService.isConnected()).toBeTrue();
+    expect(component.scannerService.activeDevice()?.brand).toBe('Medit');
+  });
+
+  it('should change scanning arch and trigger live streaming (BR-IOS-02, BR-IOS-03)', async () => {
+    component.setScannerArch('mandibular');
+    expect(component.scannerService.currentArch()).toBe('mandibular');
+
+    await component.startScannerStreaming();
+    expect(component.scannerService.isScanning()).toBeTrue();
+
+    await component.stopScannerStreaming();
+    expect(component.scannerService.isScanning()).toBeFalse();
+  });
+
+  it('should ingest direct scan dossier to lab work order cleanly (BR-IOS-04)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    const mockSession = {
+      orderId: 'lab-mock-01',
+      patientId: 'pat-201',
+      scannerBrand: 'Medit',
+      scannerModel: 'i700 Wireless',
+      scannerSerialNumber: 'MED-700-88319',
+      firmwareVersion: 'v3.2.4-opt',
+      sensorTemperatureCelsius: 37.2,
+      sha256DigitalSeal: 'urn:scan:sha256:abc',
+      isSha256Verified: true,
+      isMultiArchComplete: true,
+      statusMessage: 'Direct scan dossier ingested successfully.',
+      arches: [],
+      acquiredAtUtc: new Date().toISOString()
+    };
+    spyOn(labService, 'saveDirectScanSession').and.returnValue(of(mockSession as any));
+
+    component.ingestDirectScanToOrder();
+    expect(labService.saveDirectScanSession).toHaveBeenCalled();
+    expect(component.directScanSuccess()).toBe('Direct scan dossier ingested successfully.');
+    expect(component.isIngestingScan()).toBeFalse();
+  });
 });
+
 
 

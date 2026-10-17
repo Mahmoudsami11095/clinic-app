@@ -1336,7 +1336,17 @@
     "dsd_deviation_warning": "تحذير جمالي: أحد الأسنان الأمامية ينحرف >15% عن النسبة الذهبية. يوصى بعمل نموذج تجريبي جمالي (Mock-Up).",
     "saving_dsd": "جاري حفظ خطة الابتسامة...",
     "save_dsd": "حفظ ومزامنة خطة الابتسامة الجمالية",
-    "export_dsd_mockup": "تصدير نموذج القشور الخزفية ثلاثي الأبعاد (Mock-Up)"
+    "export_dsd_mockup": "تصدير نموذج القشور الخزفية ثلاثي الأبعاد (Mock-Up)",
+    "scanner_title": "الماسح المباشر",
+    "toggle_scanner": "تكامل ماسح الفم المباشر Chairside عبر WebUSB/WebHID (v11.7.0)",
+    "scanner_connect": "اتصال بالماسح",
+    "scanner_disconnect": "غير متصل",
+    "scanner_start_scan": "بدء المسح المباشر",
+    "scanner_stop_scan": "إيقاف المسح",
+    "scanner_completeness": "اكتمال المسح",
+    "scanner_temperature": "حرارة المجس",
+    "scanner_ingest_order": "ترحيل لطلب المختبر",
+    "scanner_ingest_success": "تم ترحيل مسح الفم المباشر إلى طلب المختبر بنجاح."
   },
   "subscription": {
     "title": "اشتراك العيادة وحوكمة الحصص",
