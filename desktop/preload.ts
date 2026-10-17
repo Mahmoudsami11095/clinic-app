@@ -48,9 +48,46 @@ export interface UpdateProgressPayload {
   totalBytes?: number;
 }
 
+export interface ScannerDeviceInfo {
+  id: string;
+  brand: 'Medit' | '3Shape' | 'Carestream' | 'Shining3D';
+  model: string;
+  vendorId: string;
+  productId: string;
+  serialNumber: string;
+  firmwareVersion: string;
+  isConnected: boolean;
+  temperatureCelsius: number;
+  calibrationDaysRemaining: number;
+}
+
+export interface ScannerPointFrame {
+  arch: 'maxillary' | 'mandibular' | 'bite';
+  timestamp: number;
+  pointsCount: number;
+  positions: number[];
+  densityPtsPerMm2?: number;
+  completenessPercent?: number;
+}
+
 const desktopAPI = {
   isDesktop: true,
   platform: process.platform,
+
+  scanner: {
+    listDevices: (): Promise<ScannerDeviceInfo[]> => ipcRenderer.invoke('desktop:scanner-list'),
+    connect: (deviceId: string): Promise<{ success: boolean; device?: ScannerDeviceInfo; error?: string }> =>
+      ipcRenderer.invoke('desktop:scanner-connect', deviceId),
+    disconnect: (): Promise<{ success: boolean }> => ipcRenderer.invoke('desktop:scanner-disconnect'),
+    startStream: (arch: 'maxillary' | 'mandibular' | 'bite'): Promise<{ success: boolean }> =>
+      ipcRenderer.invoke('desktop:scanner-start-stream', arch),
+    stopStream: (): Promise<{ success: boolean }> => ipcRenderer.invoke('desktop:scanner-stop-stream'),
+    onPointCloudFrame: (callback: (frame: ScannerPointFrame) => void) => {
+      const listener = (_: any, frame: ScannerPointFrame) => callback(frame);
+      ipcRenderer.on('desktop:scanner-point-frame', listener);
+      return () => ipcRenderer.removeListener('desktop:scanner-point-frame', listener);
+    }
+  },
 
   window: {
     minimize: (): Promise<void> => ipcRenderer.invoke('desktop:window-minimize'),

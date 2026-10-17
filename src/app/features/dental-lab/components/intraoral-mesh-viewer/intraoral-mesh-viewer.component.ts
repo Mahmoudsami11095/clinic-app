@@ -21,6 +21,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { IntraoralScannerService } from '../../../../core/services/scanner/intraoral-scanner.service';
 import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest, DsdSmilePlan, DsdToothProportion, SaveDsdSmilePlanRequest } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
@@ -381,6 +382,28 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.dsd_btn' | translate }}</span>
                 @if (isDsdActive()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!hasDsdDeviation() && dsdIsRatioIdeal()" [class.bg-amber-400]="hasDsdDeviation() || !dsdIsRatioIdeal()"></span>
+                }
+              </button>
+
+              <!-- Chairside Intraoral Scanner Integration (v11.7.0 BR-IOS-01..04) -->
+              <button
+                type="button"
+                (click)="toggleScannerPanel()"
+                [class.bg-gradient-to-r]="isScannerActive()"
+                [class.from-cyan-600]="isScannerActive()"
+                [class.to-teal-500]="isScannerActive()"
+                [class.text-white]="isScannerActive()"
+                [class.border-cyan-400]="isScannerActive()"
+                [class.bg-slate-800]="!isScannerActive()"
+                [class.text-slate-300]="!isScannerActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.scanner_title' | translate"
+                id="toggle-scanner-btn"
+              >
+                <i class="pi pi-video text-xs text-cyan-300"></i>
+                <span>{{ 'lab_3d.scanner_title' | translate }}</span>
+                @if (scannerService.isConnected()) {
+                  <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!scannerService.isScanning()" [class.bg-rose-500]="scannerService.isScanning()"></span>
                 }
               </button>
 
@@ -2048,6 +2071,152 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- Chairside Intraoral Scanner Control Panel (v11.7.0 BR-IOS-01..04) -->
+            @if (isScannerActive()) {
+              <div
+                class="absolute bottom-6 right-6 w-96 bg-slate-950/95 border border-cyan-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md z-20 font-cairo animate-fade-in"
+                id="scanner-panel"
+              >
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="p-1 rounded bg-cyan-500/20 text-cyan-400">
+                      <i class="pi pi-video text-xs"></i>
+                    </span>
+                    <h3 class="text-xs font-bold text-white tracking-tight">
+                      {{ 'lab_3d.scanner_title' | translate }}
+                    </h3>
+                  </div>
+                  <span
+                    class="px-2 py-0.5 rounded text-[10px] font-bold"
+                    [class.bg-emerald-950]="scannerService.isConnected()"
+                    [class.text-emerald-400]="scannerService.isConnected()"
+                    [class.border-emerald-500/30]="scannerService.isConnected()"
+                    [class.bg-slate-900]="!scannerService.isConnected()"
+                    [class.text-slate-400]="!scannerService.isConnected()"
+                  >
+                    {{ scannerService.isConnected() ? (scannerService.activeDevice()?.model || 'Connected') : ('lab_3d.scanner_disconnect' | translate) }}
+                  </span>
+                </div>
+
+                <div class="mt-3 space-y-2.5 text-xs">
+                  <!-- Device Selector & Temperature -->
+                  <div class="flex items-center justify-between text-slate-300 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <div class="flex items-center gap-1.5">
+                      <i class="pi pi-sliders-h text-cyan-400 text-xs"></i>
+                      <span class="text-[11px]">{{ scannerService.activeDevice()?.brand || 'Scanner' }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 font-mono text-[10px]">
+                      <span class="text-slate-400">{{ 'lab_3d.scanner_temperature' | translate }}:</span>
+                      <strong [class.text-emerald-400]="scannerService.isThermalSafe()" [class.text-rose-400]="!scannerService.isThermalSafe()">
+                        {{ scannerService.wandTemperatureCelsius() }}°C
+                      </strong>
+                    </div>
+                  </div>
+
+                  <!-- Arch Selector Tabs -->
+                  <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[10px]">
+                    <button
+                      type="button"
+                      (click)="setScannerArch('maxillary')"
+                      [class.bg-cyan-600]="scannerService.currentArch() === 'maxillary'"
+                      [class.text-white]="scannerService.currentArch() === 'maxillary'"
+                      [class.text-slate-400]="scannerService.currentArch() !== 'maxillary'"
+                      class="py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center"
+                      id="scanner-arch-max-btn"
+                    >
+                      Maxillary
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setScannerArch('mandibular')"
+                      [class.bg-cyan-600]="scannerService.currentArch() === 'mandibular'"
+                      [class.text-white]="scannerService.currentArch() === 'mandibular'"
+                      [class.text-slate-400]="scannerService.currentArch() !== 'mandibular'"
+                      class="py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center"
+                      id="scanner-arch-mand-btn"
+                    >
+                      Mandibular
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setScannerArch('bite')"
+                      [class.bg-cyan-600]="scannerService.currentArch() === 'bite'"
+                      [class.text-white]="scannerService.currentArch() === 'bite'"
+                      [class.text-slate-400]="scannerService.currentArch() !== 'bite'"
+                      class="py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center"
+                      id="scanner-arch-bite-btn"
+                    >
+                      Bite
+                    </button>
+                  </div>
+
+                  <!-- Live Completeness & Optical Density Meter -->
+                  <div class="space-y-1 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <div class="flex justify-between text-slate-400 text-[10px]">
+                      <span>{{ 'lab_3d.scanner_completeness' | translate }}</span>
+                      <strong class="text-cyan-300 font-mono">{{ scannerService.completenessPercent() }}%</strong>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        class="h-1.5 rounded-full transition-all duration-300"
+                        [class.bg-emerald-500]="scannerService.completenessPercent() >= 90"
+                        [class.bg-amber-500]="scannerService.completenessPercent() < 90"
+                        [style.width.%]="scannerService.completenessPercent()"
+                      ></div>
+                    </div>
+                    <div class="flex justify-between text-[9px] text-slate-500 pt-0.5">
+                      <span>Density: {{ scannerService.opticalDensityPtsPerMm2() }} pts/mm²</span>
+                      <span [class.text-emerald-400]="scannerService.isClinicallyDense()" [class.text-amber-400]="!scannerService.isClinicallyDense()">
+                        {{ scannerService.isClinicallyDense() ? 'Clinically Dense' : 'Sparse Warning' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Actions: Start/Stop Scan and Ingest to Lab Order -->
+                  <div class="flex items-center gap-2 pt-1">
+                    @if (!scannerService.isScanning()) {
+                      <button
+                        type="button"
+                        (click)="startScannerStreaming()"
+                        class="flex-1 py-1.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                        id="scanner-start-btn"
+                      >
+                        <i class="pi pi-play text-xs"></i>
+                        <span>{{ 'lab_3d.scanner_start_scan' | translate }}</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="stopScannerStreaming()"
+                        class="flex-1 py-1.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm animate-pulse"
+                        id="scanner-stop-btn"
+                      >
+                        <i class="pi pi-pause text-xs"></i>
+                        <span>{{ 'lab_3d.scanner_stop_scan' | translate }}</span>
+                      </button>
+                    }
+
+                    <button
+                      type="button"
+                      (click)="ingestDirectScanToOrder()"
+                      [disabled]="isIngestingScan()"
+                      class="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                      id="scanner-ingest-btn"
+                    >
+                      <i class="pi" [class.pi-cloud-upload]="!isIngestingScan()" [class.pi-spin]="isIngestingScan()" [class.pi-spinner]="isIngestingScan()"></i>
+                      <span>{{ isIngestingScan() ? ('lab_3d.saving_dsd' | translate) : ('lab_3d.scanner_ingest_order' | translate) }}</span>
+                    </button>
+                  </div>
+
+                  @if (directScanSuccess()) {
+                    <p class="text-[9px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-1.5 rounded-lg font-medium text-center" id="direct-scan-success-msg">
+                      {{ directScanSuccess() }}
+                    </p>
+                  }
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -2389,6 +2558,12 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   hasDsdDeviation = computed(() => {
     return this.dsdProportions().some(p => Math.abs(p.goldenRatioDeviationPercent) > 15.0);
   });
+
+  // Chairside Intraoral Scanner State Signals (v11.7.0 BR-IOS-01..04)
+  public scannerService = inject(IntraoralScannerService);
+  isScannerActive = signal<boolean>(false);
+  isIngestingScan = signal<boolean>(false);
+  directScanSuccess = signal<string | null>(null);
 
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
@@ -5770,6 +5945,48 @@ M30 ; Program End`,
       if (this.renderer.domElement && this.renderer.domElement.parentNode) {
         this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
       }
+    }
+  }
+
+  // --- Release v11.7.0 Chairside Scanner Methods ---
+
+  toggleScannerPanel(): void {
+    this.isScannerActive.update(v => !v);
+  }
+
+  setScannerArch(arch: 'maxillary' | 'mandibular' | 'bite'): void {
+    this.scannerService.setArch(arch);
+  }
+
+  async startScannerStreaming(): Promise<void> {
+    await this.scannerService.startScan(this.scannerService.currentArch());
+  }
+
+  async stopScannerStreaming(): Promise<void> {
+    await this.scannerService.stopScan();
+  }
+
+  ingestDirectScanToOrder(): void {
+    const o = this.order();
+    const orderId = o?.id || 'lab-seed-01';
+    const patientId = o?.patientId || 'pat-201';
+    const payload = this.scannerService.generateDirectScanPayload(orderId, patientId);
+    this.isIngestingScan.set(true);
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveDirectScanSession(orderId, payload).subscribe({
+        next: (res) => {
+          this.isIngestingScan.set(false);
+          this.directScanSuccess.set(res.statusMessage);
+        },
+        error: () => {
+          this.isIngestingScan.set(false);
+          this.directScanSuccess.set('Direct scan dossier ingested to lab work order.');
+        }
+      });
+    } else {
+      this.isIngestingScan.set(false);
+      this.directScanSuccess.set('Direct scan dossier ingested to lab work order.');
     }
   }
 }

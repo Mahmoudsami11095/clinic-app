@@ -219,6 +219,121 @@ function registerIpcHandlers(): void {
     };
   });
 
+  // --- Chairside Intraoral Scanner Integration (v11.7.0 BR-IOS-01..02) ---
+  const scannerDevices = [
+    {
+      id: 'medit-i700-01',
+      brand: 'Medit',
+      model: 'i700 Wireless',
+      vendorId: '0x3325',
+      productId: '0x1700',
+      serialNumber: 'MED-700-88319',
+      firmwareVersion: 'v3.2.4-opt',
+      isConnected: true,
+      temperatureCelsius: 37.2,
+      calibrationDaysRemaining: 18
+    },
+    {
+      id: 'trios-5-02',
+      brand: '3Shape',
+      model: 'TRIOS 5 Pod',
+      vendorId: '0x1B3B',
+      productId: '0x0501',
+      serialNumber: '3S-TR5-44912',
+      firmwareVersion: 'v5.1.0',
+      isConnected: false,
+      temperatureCelsius: 24.0,
+      calibrationDaysRemaining: 24
+    },
+    {
+      id: 'cs-3800-03',
+      brand: 'Carestream',
+      model: 'CS 3800 Wireless',
+      vendorId: '0x19B3',
+      productId: '0x3800',
+      serialNumber: 'CS-380-9921',
+      firmwareVersion: 'v4.0.2',
+      isConnected: false,
+      temperatureCelsius: 23.5,
+      calibrationDaysRemaining: 12
+    }
+  ];
+
+  let activeScannerDevice: any = scannerDevices[0];
+  let scannerStreamTimer: NodeJS.Timeout | null = null;
+  let simulatedScanStep = 0;
+
+  ipcMain.handle('desktop:scanner-list', async () => {
+    return scannerDevices;
+  });
+
+  ipcMain.handle('desktop:scanner-connect', async (_, deviceId: string) => {
+    const dev = scannerDevices.find(d => d.id === deviceId) || scannerDevices[0];
+    dev.isConnected = true;
+    activeScannerDevice = dev;
+    return { success: true, device: dev };
+  });
+
+  ipcMain.handle('desktop:scanner-disconnect', async () => {
+    if (scannerStreamTimer) {
+      clearInterval(scannerStreamTimer);
+      scannerStreamTimer = null;
+    }
+    if (activeScannerDevice) {
+      activeScannerDevice.isConnected = false;
+      activeScannerDevice = null;
+    }
+    return { success: true };
+  });
+
+  ipcMain.handle('desktop:scanner-start-stream', async (_, arch: 'maxillary' | 'mandibular' | 'bite') => {
+    if (scannerStreamTimer) clearInterval(scannerStreamTimer);
+    simulatedScanStep = 0;
+
+    scannerStreamTimer = setInterval(() => {
+      simulatedScanStep++;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        const pointsCount = 45;
+        const positions: number[] = [];
+        for (let i = 0; i < pointsCount; i++) {
+          const t = ((simulatedScanStep * pointsCount + i) % 1000) / 1000 * Math.PI;
+          const r = arch === 'mandibular' ? 18.0 : 21.0;
+          const x = Math.cos(t) * r + (Math.random() - 0.5) * 0.4;
+          const y = Math.sin(t) * (r * 1.2) + (Math.random() - 0.5) * 0.4;
+          const z = (Math.sin(t * 3) * 3.5) + (Math.random() - 0.5) * 0.3;
+          positions.push(Math.round(x * 100) / 100, Math.round(y * 100) / 100, Math.round(z * 100) / 100);
+        }
+
+        const completeness = Math.min(100, Math.round(simulatedScanStep * 3.5));
+        const density = Math.min(32.0, Math.round((12.0 + simulatedScanStep * 0.7) * 10) / 10);
+
+        mainWindow.webContents.send('desktop:scanner-point-frame', {
+          arch,
+          timestamp: Date.now(),
+          pointsCount,
+          positions,
+          densityPtsPerMm2: density,
+          completenessPercent: completeness
+        });
+
+        if (completeness >= 100 && scannerStreamTimer) {
+          clearInterval(scannerStreamTimer);
+          scannerStreamTimer = null;
+        }
+      }
+    }, 40);
+
+    return { success: true };
+  });
+
+  ipcMain.handle('desktop:scanner-stop-stream', async () => {
+    if (scannerStreamTimer) {
+      clearInterval(scannerStreamTimer);
+      scannerStreamTimer = null;
+    }
+    return { success: true };
+  });
+
   // Printer Enumeration
   ipcMain.handle('desktop:get-printers', async () => {
     if (!mainWindow) return [];

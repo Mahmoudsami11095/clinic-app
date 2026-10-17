@@ -1336,7 +1336,17 @@
     "dsd_deviation_warning": "Aesthetic Warning: Anterior teeth deviate >15% from divine golden proportion. Aesthetic veneer mock-up recommended.",
     "saving_dsd": "Saving DSD Plan...",
     "save_dsd": "Save & Synchronize DSD Plan",
-    "export_dsd_mockup": "Export 3D Aesthetic Veneer Mock-Up"
+    "export_dsd_mockup": "Export 3D Aesthetic Veneer Mock-Up",
+    "scanner_title": "Chairside Scanner",
+    "toggle_scanner": "Chairside Intraoral Scanner WebUSB/WebHID Integration (v11.7.0)",
+    "scanner_connect": "Connect Scanner",
+    "scanner_disconnect": "Disconnected",
+    "scanner_start_scan": "Start Live Scan",
+    "scanner_stop_scan": "Stop Scan",
+    "scanner_completeness": "Scan Completeness",
+    "scanner_temperature": "Wand Temp",
+    "scanner_ingest_order": "Ingest to Lab Order",
+    "scanner_ingest_success": "Direct intraoral scan dossier ingested to lab work order."
   },
   "subscription": {
     "title": "Clinic Subscription & Quota Governance",
