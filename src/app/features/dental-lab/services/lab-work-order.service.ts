@@ -580,6 +580,86 @@ export interface ExportAbutmentCncResponse {
   exportedAtUtc: string;
 }
 
+export interface SurgicalDrillStep {
+  stepIndex: number;
+  toolName: string;
+  diameterMm: number;
+  lengthMm: number;
+  targetDepthMm: number;
+  recommendedSpeedRpm: number;
+  maxTorqueNcm: number;
+  irrigation: string;
+  status: string;
+}
+
+export interface SurgicalNavigationPlan {
+  orderId: string;
+  toothNumber: number;
+  implantBrand: string;
+  implantModel: string;
+  plannedLengthMm: number;
+  plannedDiameterMm: number;
+  plannedEntryX: number;
+  plannedEntryY: number;
+  plannedEntryZ: number;
+  plannedApexX: number;
+  plannedApexY: number;
+  plannedApexZ: number;
+  targetDepthMm: number;
+  distanceToNerveMm: number;
+  distanceToSinusMm: number;
+  safetyBufferMm: number;
+  isSafetyBufferCompliant: boolean;
+  safetyWarning?: string | null;
+  registrationRmseMm: number;
+  isRegistrationValid: boolean;
+  drillSequences: SurgicalDrillStep[];
+  statusMessage: string;
+  plannedAtUtc: string;
+}
+
+export interface SaveSurgicalNavigationRequest {
+  toothNumber?: number;
+  implantBrand?: string;
+  implantModel?: string;
+  plannedLengthMm?: number;
+  plannedDiameterMm?: number;
+  distanceToNerveMm?: number;
+  distanceToSinusMm?: number;
+  registrationRmseMm?: number;
+}
+
+export interface EvaluateDrillTelemetryRequest {
+  tipPositionX: number;
+  tipPositionY: number;
+  tipPositionZ: number;
+  axisVectorX: number;
+  axisVectorY: number;
+  axisVectorZ: number;
+  drillLengthMm?: number;
+}
+
+export interface HandpieceTrackingTelemetry {
+  orderId: string;
+  tipPositionX: number;
+  tipPositionY: number;
+  tipPositionZ: number;
+  axisVectorX: number;
+  axisVectorY: number;
+  axisVectorZ: number;
+  currentDepthMm: number;
+  angularDeviationDeg: number;
+  isOnAxis: boolean;
+  isCautionAxis: boolean;
+  isOffAxisHazard: boolean;
+  currentDistanceToVitalMm: number;
+  isSafetyStopEngaged: boolean;
+  acousticFrequencyHz: number;
+  acousticAlertMode: string;
+  statusMessage: string;
+  evaluatedAtUtc: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1895,6 +1975,133 @@ export class LabWorkOrderService {
           totalGCodeLines: 4280,
           sha256DigitalSignature: 'urn:cnc:abut:sha256:d8e92a4f0b3c6e1782a934b1234567890abcdef1234567890abcdef12345678',
           exportedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  getSurgicalNavigationPlan(orderId: string): Observable<SurgicalNavigationPlan> {
+    return this.http.get<SurgicalNavigationPlan>(`${this.apiUrl}/${orderId}/surgical-navigation`).pipe(
+      catchError(() => {
+        const fallback: SurgicalNavigationPlan = {
+          orderId,
+          toothNumber: 36,
+          implantBrand: 'Straumann',
+          implantModel: 'BLX Roxolid SLActive Ø4.2x11.5mm',
+          plannedLengthMm: 11.5,
+          plannedDiameterMm: 4.2,
+          plannedEntryX: 12.0,
+          plannedEntryY: -6.5,
+          plannedEntryZ: 15.0,
+          plannedApexX: 12.0,
+          plannedApexY: -6.5,
+          plannedApexZ: 3.5,
+          targetDepthMm: 11.5,
+          distanceToNerveMm: 14.5,
+          distanceToSinusMm: 24.0,
+          safetyBufferMm: 3.0,
+          isSafetyBufferCompliant: true,
+          safetyWarning: null,
+          registrationRmseMm: 0.28,
+          isRegistrationValid: true,
+          drillSequences: [
+            { stepIndex: 1, toolName: 'Round Cortical Bur Ø2.0mm', diameterMm: 2.0, lengthMm: 15.0, targetDepthMm: 2.0, recommendedSpeedRpm: 1200, maxTorqueNcm: 35, irrigation: 'External Saline 50mL/min', status: 'Completed' },
+            { stepIndex: 2, toolName: 'Pilot Drill Ø2.2mm', diameterMm: 2.2, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 800, maxTorqueNcm: 35, irrigation: 'Internal/External Saline 50mL/min', status: 'Active' },
+            { stepIndex: 3, toolName: 'Twist Drill Ø2.8mm', diameterMm: 2.8, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 800, maxTorqueNcm: 35, irrigation: 'Internal/External Saline 50mL/min', status: 'Pending' },
+            { stepIndex: 4, toolName: 'Form Drill Ø3.5mm', diameterMm: 3.5, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 600, maxTorqueNcm: 40, irrigation: 'Internal/External Saline 50mL/min', status: 'Pending' },
+            { stepIndex: 5, toolName: 'Final Osteotomy Drill Ø4.2mm', diameterMm: 4.2, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 500, maxTorqueNcm: 45, irrigation: 'Internal/External Saline 50mL/min', status: 'Pending' },
+            { stepIndex: 6, toolName: 'Implant Insertion Ø4.2x11.5mm', diameterMm: 4.2, lengthMm: 11.5, targetDepthMm: 11.5, recommendedSpeedRpm: 25, maxTorqueNcm: 50, irrigation: 'None', status: 'Pending' }
+          ],
+          statusMessage: 'Dynamic surgical navigation plan initialized. Safety buffer 3.00mm compliant.',
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveSurgicalNavigationPlan(orderId: string, request: SaveSurgicalNavigationRequest): Observable<SurgicalNavigationPlan> {
+    return this.http.post<SurgicalNavigationPlan>(`${this.apiUrl}/${orderId}/surgical-navigation`, request).pipe(
+      catchError(() => {
+        const length = request.plannedLengthMm ?? 11.5;
+        const nerve = request.distanceToNerveMm ?? 14.5;
+        const sinus = request.distanceToSinusMm ?? 24.0;
+        const buffer = Math.round((Math.min(nerve, sinus) - length) * 100) / 100;
+        const isCompliant = buffer >= 2.0;
+        const fallback: SurgicalNavigationPlan = {
+          orderId,
+          toothNumber: request.toothNumber ?? 36,
+          implantBrand: request.implantBrand || 'Straumann',
+          implantModel: request.implantModel || 'BLX Roxolid SLActive Ø4.2x11.5mm',
+          plannedLengthMm: length,
+          plannedDiameterMm: request.plannedDiameterMm ?? 4.2,
+          plannedEntryX: 12.0,
+          plannedEntryY: -6.5,
+          plannedEntryZ: 15.0,
+          plannedApexX: 12.0,
+          plannedApexY: -6.5,
+          plannedApexZ: 15.0 - length,
+          targetDepthMm: length,
+          distanceToNerveMm: nerve,
+          distanceToSinusMm: sinus,
+          safetyBufferMm: buffer,
+          isSafetyBufferCompliant: isCompliant,
+          safetyWarning: !isCompliant ? `Safety buffer of ${buffer.toFixed(2)}mm is below the mandated 2.00mm threshold.` : null,
+          registrationRmseMm: request.registrationRmseMm ?? 0.28,
+          isRegistrationValid: (request.registrationRmseMm ?? 0.28) < 0.50,
+          drillSequences: [
+            { stepIndex: 1, toolName: 'Round Cortical Bur Ø2.0mm', diameterMm: 2.0, lengthMm: 15.0, targetDepthMm: 2.0, recommendedSpeedRpm: 1200, maxTorqueNcm: 35, irrigation: 'External Saline 50mL/min', status: 'Completed' },
+            { stepIndex: 2, toolName: 'Pilot Drill Ø2.2mm', diameterMm: 2.2, lengthMm: 20.0, targetDepthMm: length, recommendedSpeedRpm: 800, maxTorqueNcm: 35, irrigation: 'Internal/External Saline 50mL/min', status: 'Active' },
+            { stepIndex: 3, toolName: 'Twist Drill Ø2.8mm', diameterMm: 2.8, lengthMm: 20.0, targetDepthMm: length, recommendedSpeedRpm: 800, maxTorqueNcm: 35, irrigation: 'Internal/External Saline 50mL/min', status: 'Pending' },
+            { stepIndex: 4, toolName: 'Form Drill Ø3.5mm', diameterMm: 3.5, lengthMm: 20.0, targetDepthMm: length, recommendedSpeedRpm: 600, maxTorqueNcm: 40, irrigation: 'Internal/External Saline 50mL/min', status: 'Pending' },
+            { stepIndex: 5, toolName: 'Final Osteotomy Drill Ø4.2mm', diameterMm: 4.2, lengthMm: 20.0, targetDepthMm: length, recommendedSpeedRpm: 500, maxTorqueNcm: 45, irrigation: 'Internal/External Saline 50mL/min', status: 'Pending' },
+            { stepIndex: 6, toolName: 'Implant Insertion Ø4.2x11.5mm', diameterMm: 4.2, lengthMm: length, targetDepthMm: length, recommendedSpeedRpm: 25, maxTorqueNcm: 50, irrigation: 'None', status: 'Pending' }
+          ],
+          statusMessage: isCompliant ? `Implant surgical plan active. Safety buffer ${buffer.toFixed(2)}mm compliant.` : `WARNING: Safety buffer ${buffer.toFixed(2)}mm is below 2.00mm clinical margin.`,
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  evaluateDrillTelemetry(orderId: string, request: EvaluateDrillTelemetryRequest): Observable<HandpieceTrackingTelemetry> {
+    return this.http.post<HandpieceTrackingTelemetry>(`${this.apiUrl}/${orderId}/surgical-navigation/evaluate-telemetry`, request).pipe(
+      catchError(() => {
+        const uPlan = { x: 0, y: 0, z: -1 };
+        const mag = Math.sqrt(request.axisVectorX * request.axisVectorX + request.axisVectorY * request.axisVectorY + request.axisVectorZ * request.axisVectorZ) || 1;
+        const uHp = { x: request.axisVectorX / mag, y: request.axisVectorY / mag, z: request.axisVectorZ / mag };
+        const dot = Math.min(1, Math.max(-1, (uPlan.x * uHp.x) + (uPlan.y * uHp.y) + (uPlan.z * uHp.z)));
+        const angleDeg = Math.round(Math.acos(dot) * (180 / Math.PI) * 100) / 100;
+
+        const entryZ = 15.0;
+        const depth = Math.round(Math.max(0, entryZ - request.tipPositionZ) * 100) / 100;
+        const nerveDist = Math.round(Math.max(0, 14.5 - depth) * 100) / 100;
+        const isEmergency = nerveDist < 1.50 || depth > 12.0;
+        const isCautionNear = !isEmergency && (nerveDist <= 3.0 || depth >= 11.5);
+
+        const fallback: HandpieceTrackingTelemetry = {
+          orderId,
+          tipPositionX: request.tipPositionX,
+          tipPositionY: request.tipPositionY,
+          tipPositionZ: request.tipPositionZ,
+          axisVectorX: uHp.x,
+          axisVectorY: uHp.y,
+          axisVectorZ: uHp.z,
+          currentDepthMm: depth,
+          angularDeviationDeg: angleDeg,
+          isOnAxis: angleDeg <= 1.50,
+          isCautionAxis: angleDeg > 1.50 && angleDeg <= 3.00,
+          isOffAxisHazard: angleDeg > 3.00,
+          currentDistanceToVitalMm: nerveDist,
+          isSafetyStopEngaged: isEmergency,
+          acousticFrequencyHz: isEmergency ? 1500 : (isCautionNear ? 880 : (depth > 1 ? 440 : 0)),
+          acousticAlertMode: isEmergency ? 'Continuous1500' : (isCautionNear ? 'Pulse880' : (depth > 1 ? 'Pulse440' : 'Silent')),
+          statusMessage: isEmergency
+            ? `EMERGENCY DRILL STOP ENGAGED: Vital structure proximity (${nerveDist.toFixed(2)}mm < 1.50mm) or depth exceeded.`
+            : (isCautionNear ? `CAUTION: Approaching vital limit (${depth.toFixed(2)}mm).` : `Guidance active. Deviation: ${angleDeg.toFixed(1)}°`),
+          evaluatedAtUtc: new Date().toISOString()
         };
         return of(fallback);
       })

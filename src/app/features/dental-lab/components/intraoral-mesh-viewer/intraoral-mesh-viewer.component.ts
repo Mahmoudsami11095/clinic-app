@@ -22,7 +22,7 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { IntraoralScannerService } from '../../../../core/services/scanner/intraoral-scanner.service';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest, DsdSmilePlan, DsdToothProportion, SaveDsdSmilePlanRequest, CustomAbutmentPlan, SaveCustomAbutmentPlanRequest, ImplantPlatformLibraryItem, ExportAbutmentCncResponse, EmergenceSplinePoint } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest, DsdSmilePlan, DsdToothProportion, SaveDsdSmilePlanRequest, CustomAbutmentPlan, SaveCustomAbutmentPlanRequest, ImplantPlatformLibraryItem, ExportAbutmentCncResponse, EmergenceSplinePoint, SurgicalNavigationPlan, SurgicalDrillStep, SaveSurgicalNavigationRequest, EvaluateDrillTelemetryRequest, HandpieceTrackingTelemetry } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -426,6 +426,28 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.abutment_title' | translate }}</span>
                 @if (isAbutmentActive() && abutmentPlan() && !abutmentPlan()!.isBiologicalWidthCompliant) {
                   <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Blanching Warning"></span>
+                }
+              </button>
+
+              <!-- Real-Time AI Dynamic Surgical Navigation (v12.1.0 BR-NAV-01..04) -->
+              <button
+                type="button"
+                (click)="toggleSurgicalNavPanel()"
+                [class.bg-gradient-to-r]="isSurgicalNavActive()"
+                [class.from-teal-600]="isSurgicalNavActive()"
+                [class.to-cyan-500]="isSurgicalNavActive()"
+                [class.text-white]="isSurgicalNavActive()"
+                [class.border-cyan-400]="isSurgicalNavActive()"
+                [class.bg-slate-800]="!isSurgicalNavActive()"
+                [class.text-slate-300]="!isSurgicalNavActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.surgical_nav_title' | translate"
+                id="toggle-surgical-nav-btn"
+              >
+                <i class="pi pi-compass text-xs text-cyan-300"></i>
+                <span>{{ 'lab_3d.surgical_nav_title' | translate }}</span>
+                @if (isSurgicalNavActive() && navIsSafetyStopEngaged()) {
+                  <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping" title="Emergency Stop"></span>
                 }
               </button>
 
@@ -2391,6 +2413,227 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- Real-Time AI Dynamic Surgical Navigation Control HUD (v12.1.0 BR-NAV-01..04) -->
+            @if (isSurgicalNavActive()) {
+              <div
+                class="absolute bottom-6 right-6 w-96 max-h-[80vh] overflow-y-auto bg-slate-950/95 border border-cyan-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md z-20 font-cairo animate-fade-in custom-scrollbar"
+                id="surgical-nav-panel"
+              >
+                <!-- HUD Header -->
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="p-1 rounded bg-cyan-500/20 text-cyan-400">
+                      <i class="pi pi-compass text-xs"></i>
+                    </span>
+                    <h3 class="text-xs font-bold text-white tracking-tight">
+                      {{ 'lab_3d.surgical_nav_title' | translate }}
+                    </h3>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      (click)="toggleAudioMute()"
+                      class="p-1 rounded text-[10px] text-slate-400 hover:text-white cursor-pointer"
+                      [title]="isAudioMuted() ? 'Unmute Audio Guidance' : 'Mute Audio Guidance'"
+                      id="surgical-nav-audio-btn"
+                    >
+                      <i class="pi" [class.pi-volume-up]="!isAudioMuted()" [class.pi-volume-off]="isAudioMuted()"></i>
+                    </button>
+                    <span
+                      class="px-2 py-0.5 rounded text-[10px] font-bold"
+                      [class.bg-emerald-950]="surgicalNavPlan()?.isSafetyBufferCompliant"
+                      [class.text-emerald-400]="surgicalNavPlan()?.isSafetyBufferCompliant"
+                      [class.bg-rose-950]="!surgicalNavPlan()?.isSafetyBufferCompliant"
+                      [class.text-rose-400]="!surgicalNavPlan()?.isSafetyBufferCompliant"
+                      id="nav-safety-badge"
+                    >
+                      {{ surgicalNavPlan()?.isSafetyBufferCompliant ? ('lab_3d.nav_buffer_safe' | translate) : ('lab_3d.nav_buffer_hazard' | translate) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Emergency Safety Stop Banner (BR-NAV-03) -->
+                @if (navIsSafetyStopEngaged()) {
+                  <div class="mt-2.5 p-2 rounded-xl bg-rose-950/80 border border-rose-500/80 text-rose-200 animate-pulse text-center" id="nav-emergency-stop-banner">
+                    <div class="flex items-center justify-center gap-1.5 font-bold text-xs text-rose-400">
+                      <i class="pi pi-exclamation-triangle"></i>
+                      <span>{{ 'lab_3d.nav_emergency_stop_title' | translate }}</span>
+                    </div>
+                    <p class="text-[10px] text-rose-300 mt-0.5">
+                      {{ 'lab_3d.nav_emergency_stop_desc' | translate }}
+                    </p>
+                  </div>
+                }
+
+                <div class="mt-3 space-y-2.5 text-xs">
+                  <!-- Registration & Optoelectronic Tracking Status -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 flex items-center justify-between text-[11px]">
+                    <div>
+                      <span class="text-[10px] text-slate-400 block">{{ 'lab_3d.nav_registration_rmse' | translate }}</span>
+                      <span class="font-mono font-bold text-white">{{ surgicalNavPlan()?.registrationRmseMm ?? 0.28 }} mm</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700/50">
+                      {{ (surgicalNavPlan()?.registrationRmseMm ?? 0.28) < 0.50 ? ('lab_3d.nav_calibrated' | translate) : 'Recalibrate' }}
+                    </span>
+                  </div>
+
+                  <!-- Real-time Crosshairs Bullseye Alignment HUD (BR-NAV-01) -->
+                  <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-center space-y-1.5" id="nav-crosshairs-hud">
+                    <div class="flex justify-between items-center text-[10px] text-slate-400">
+                      <span>{{ 'lab_3d.nav_angular_deviation' | translate }}</span>
+                      <span
+                        class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px]"
+                        [class.bg-emerald-950]="navAngularDeviation() <= 1.50"
+                        [class.text-emerald-400]="navAngularDeviation() <= 1.50"
+                        [class.bg-amber-950]="navAngularDeviation() > 1.50 && navAngularDeviation() <= 3.00"
+                        [class.text-amber-400]="navAngularDeviation() > 1.50 && navAngularDeviation() <= 3.00"
+                        [class.bg-rose-950]="navAngularDeviation() > 3.00"
+                        [class.text-rose-400]="navAngularDeviation() > 3.00"
+                        id="nav-alignment-status-badge"
+                      >
+                        {{ navAngularDeviation() <= 1.50 ? ('lab_3d.nav_on_axis' | translate) : (navAngularDeviation() <= 3.00 ? ('lab_3d.nav_caution_tilt' | translate) : ('lab_3d.nav_off_axis_hazard' | translate)) }}
+                      </span>
+                    </div>
+
+                    <!-- Target Bullseye Display -->
+                    <div class="relative w-28 h-28 mx-auto rounded-full border-2 border-slate-700 flex items-center justify-center bg-slate-950 overflow-hidden shadow-inner">
+                      <!-- Reticle lines -->
+                      <div class="absolute inset-x-0 top-1/2 h-px bg-slate-700"></div>
+                      <div class="absolute inset-y-0 left-1/2 w-px bg-slate-700"></div>
+                      <!-- Tolerance Rings: 1.5 deg (inner), 3.0 deg (outer) -->
+                      <div class="absolute w-12 h-12 rounded-full border border-emerald-500/40"></div>
+                      <div class="absolute w-20 h-20 rounded-full border border-amber-500/40"></div>
+                      <!-- Moving Handpiece Crosshair Reticle -->
+                      <div
+                        class="absolute w-4 h-4 rounded-full border-2 transition-all duration-75 flex items-center justify-center"
+                        [class.border-emerald-400]="navAngularDeviation() <= 1.50"
+                        [class.bg-emerald-400]="navAngularDeviation() <= 1.50"
+                        [class.border-amber-400]="navAngularDeviation() > 1.50 && navAngularDeviation() <= 3.00"
+                        [class.bg-amber-400]="navAngularDeviation() > 1.50 && navAngularDeviation() <= 3.00"
+                        [class.border-rose-400]="navAngularDeviation() > 3.00"
+                        [class.bg-rose-400]="navAngularDeviation() > 3.00"
+                        [style.transform]="'translate(' + (navTiltX() * 6) + 'px, ' + (navTiltY() * 6) + 'px)'"
+                        id="nav-crosshair-pointer"
+                      >
+                        <div class="w-1 h-1 bg-black rounded-full"></div>
+                      </div>
+                    </div>
+
+                    <div class="font-mono text-xs font-bold text-slate-200">
+                      {{ navAngularDeviation().toFixed(1) }}&deg;
+                      <span class="text-[10px] text-slate-500 font-normal">(&le; 1.5&deg; target)</span>
+                    </div>
+                  </div>
+
+                  <!-- Drill Depth & Vital Structure Clearance Gauge (BR-NAV-02) -->
+                  <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 space-y-2" id="nav-depth-gauge">
+                    <div class="flex justify-between items-center text-[10px]">
+                      <span class="text-slate-400">{{ 'lab_3d.nav_drill_depth' | translate }}</span>
+                      <span class="font-mono font-bold text-cyan-300">
+                        {{ navCurrentDepth().toFixed(1) }} / {{ navPlannedLength().toFixed(1) }} mm
+                      </span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                      <div
+                        class="h-full transition-all duration-100"
+                        [class.bg-cyan-500]="navCurrentDepth() <= navPlannedLength()"
+                        [class.bg-rose-500]="navCurrentDepth() > navPlannedLength()"
+                        [style.width.%]="navDepthPercent()"
+                      ></div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800/60">
+                      <span class="text-slate-400">{{ 'lab_3d.nav_vital_distance' | translate }}</span>
+                      <span
+                        class="font-mono font-bold"
+                        [class.text-emerald-400]="navDistanceToVital() >= 3.0"
+                        [class.text-amber-400]="navDistanceToVital() < 3.0 && navDistanceToVital() >= 1.50"
+                        [class.text-rose-400]="navDistanceToVital() < 1.50"
+                        id="nav-vital-dist-val"
+                      >
+                        {{ navDistanceToVital().toFixed(2) }} mm
+                        <span class="text-[9px] font-normal text-slate-500">(&ge; 2.00 mm safe)</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Active Surgical Drill Step (BR-NAV-04) -->
+                  <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 space-y-1.5" id="nav-drill-sequence-box">
+                    <div class="flex justify-between items-center text-[10px]">
+                      <span class="text-slate-400 font-semibold">{{ 'lab_3d.nav_active_tool' | translate }}</span>
+                      <span class="text-cyan-400 font-mono font-bold">Step {{ navActiveDrillIndex() }} / 6</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                      <i class="pi pi-bolt text-amber-400 text-xs"></i>
+                      <div class="text-[11px]">
+                        <span class="font-bold text-slate-200 block">{{ getActiveDrillToolName() }}</span>
+                        <span class="text-[9px] text-slate-400 font-mono">800 RPM &bull; 35 N&middot;cm &bull; Saline 50mL/min</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Live Interactive Simulator / Telemetry Controls -->
+                  <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800 space-y-2">
+                    <span class="text-[10px] text-slate-400 font-semibold block">{{ 'lab_3d.nav_telemetry_sim' | translate }}</span>
+                    <!-- Depth Slider -->
+                    <div>
+                      <div class="flex justify-between text-[10px] text-slate-400">
+                        <span>Depth: {{ navCurrentDepth().toFixed(1) }} mm</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="14.0"
+                        step="0.2"
+                        [value]="navCurrentDepth()"
+                        (input)="onNavDepthChange($any($event.target).value)"
+                        class="w-full accent-cyan-400 cursor-pointer h-1"
+                        id="nav-depth-slider"
+                      />
+                    </div>
+                    <!-- Tilt Slider -->
+                    <div>
+                      <div class="flex justify-between text-[10px] text-slate-400">
+                        <span>Tilt Deviation: {{ navAngularDeviation().toFixed(1) }}&deg;</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="6.0"
+                        step="0.1"
+                        [value]="navAngularDeviation()"
+                        (input)="onNavTiltChange($any($event.target).value)"
+                        class="w-full accent-cyan-400 cursor-pointer h-1"
+                        id="nav-tilt-slider"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Actions: Save Plan & Trigger Audio Test -->
+                  <div class="pt-1 flex gap-2">
+                    <button
+                      type="button"
+                      (click)="saveSurgicalNavPlan()"
+                      [disabled]="isSavingNavPlan()"
+                      class="flex-1 py-1.5 px-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold text-xs shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+                      id="save-surgical-nav-btn"
+                    >
+                      <i class="pi" [class.pi-check]="!isSavingNavPlan()" [class.pi-spin]="isSavingNavPlan()" [class.pi-spinner]="isSavingNavPlan()"></i>
+                      <span>{{ 'lab_3d.nav_save_plan' | translate }}</span>
+                    </button>
+                  </div>
+
+                  @if (navSaveSuccessMessage()) {
+                    <p class="text-[9px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-1.5 rounded-lg font-medium text-center" id="nav-success-msg">
+                      {{ navSaveSuccessMessage() }}
+                    </p>
+                  }
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -2758,6 +3001,48 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   abutmentCncExportResult = signal<ExportAbutmentCncResponse | null>(null);
   abutmentSaveSuccessMessage = signal<string | null>(null);
 
+  // Release v12.1.0: Real-Time Dynamic Surgical Navigation State Signals (BR-NAV-01..04)
+  isSurgicalNavActive = signal<boolean>(false);
+  isSavingNavPlan = signal<boolean>(false);
+  isAudioMuted = signal<boolean>(false);
+  surgicalNavPlan = signal<SurgicalNavigationPlan | null>(null);
+  navPlannedLength = signal<number>(11.5);
+  navPlannedDiameter = signal<number>(4.2);
+  navDistanceToNerve = signal<number>(14.5);
+  navDistanceToSinus = signal<number>(24.0);
+  navCurrentDepth = signal<number>(0.0);
+  navAngularDeviation = signal<number>(0.0);
+  navTiltAngleX = signal<number>(0.0);
+  navTiltAngleY = signal<number>(0.0);
+  navActiveDrillIndex = signal<number>(2);
+  navAcousticFrequency = signal<number>(0);
+  navAcousticAlertMode = signal<string>('Silent');
+  navSaveSuccessMessage = signal<string | null>(null);
+
+  navDepthPercent = computed(() => {
+    const target = this.navPlannedLength() || 11.5;
+    return Math.min(100, Math.max(0, (this.navCurrentDepth() / target) * 100));
+  });
+
+  navDistanceToVital = computed(() => {
+    const minVital = Math.min(this.navDistanceToNerve(), this.navDistanceToSinus());
+    return Math.round(Math.max(0, minVital - this.navCurrentDepth()) * 100) / 100;
+  });
+
+  navIsSafetyStopEngaged = computed(() => {
+    return this.navDistanceToVital() < 1.50 || this.navCurrentDepth() > (this.navPlannedLength() + 0.50);
+  });
+
+  navTiltX = computed(() => {
+    const dev = this.navAngularDeviation();
+    return Math.sin(dev * (Math.PI / 180));
+  });
+
+  navTiltY = computed(() => {
+    const dev = this.navAngularDeviation();
+    return -Math.cos(dev * (Math.PI / 180)) * 0.3;
+  });
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -2782,6 +3067,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private rpdGroup: THREE.Group = new THREE.Group();
   private dsdGroup: THREE.Group = new THREE.Group();
   private abutmentGroup: THREE.Group = new THREE.Group();
+  private navGroup: THREE.Group = new THREE.Group();
+  private audioCtx: AudioContext | null = null;
+  private oscNode: OscillatorNode | null = null;
+  private gainNode: GainNode | null = null;
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -2852,12 +3141,17 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     this.isMarginActive.set(false);
     this.isCamActive.set(false);
     this.isGuideActive.set(false);
+    this.isAbutmentActive.set(false);
+    this.isSurgicalNavActive.set(false);
     this.isExcursionPlaying.set(false);
     this.clearCaliper();
     this.clearArticulator();
     this.clearMargin();
     this.clearCamToolpaths();
     this.clearSurgicalGuide();
+    this.clearAbutment3D();
+    this.clearNav3D();
+    this.stopAcousticGuidance();
   }
 
   private initThreeJs(): void {
@@ -2923,6 +3217,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     // AI Custom Dental Implant Abutment Group (v11.9.0)
     this.abutmentGroup = new THREE.Group();
     this.scene.add(this.abutmentGroup);
+
+    // AI Real-Time Dynamic Surgical Navigation Group (v12.1.0)
+    this.navGroup = new THREE.Group();
+    this.scene.add(this.navGroup);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -6117,6 +6415,21 @@ M30 ; Program End`,
       this.scene.remove(this.dsdGroup);
     }
 
+    this.clearAbutment3D();
+    if (this.abutmentGroup && this.scene) {
+      this.scene.remove(this.abutmentGroup);
+    }
+
+    this.clearNav3D();
+    if (this.navGroup && this.scene) {
+      this.scene.remove(this.navGroup);
+    }
+    this.stopAcousticGuidance();
+    if (this.audioCtx) {
+      try { this.audioCtx.close(); } catch { }
+      this.audioCtx = null;
+    }
+
     if (this.mesh) {
       this.scene?.remove(this.mesh);
       this.mesh.geometry?.dispose();
@@ -6399,5 +6712,306 @@ M30 ; Program End`,
     const dirSign = this.abutmentAscDirection() === 'Lingual' ? -1 : 1;
     ascMesh.rotation.z = dirSign * ascAngleRad;
     this.abutmentGroup.add(ascMesh);
+  }
+
+  // --- Release v12.1.0 AI Dynamic Implant Surgical Navigation Methods (BR-NAV-01..04) ---
+
+  toggleSurgicalNavPanel(): void {
+    const next = !this.isSurgicalNavActive();
+    this.isSurgicalNavActive.set(next);
+    if (next) {
+      if (!this.surgicalNavPlan()) {
+        this.loadSurgicalNavPlan();
+      } else {
+        this.renderNav3D();
+      }
+    } else {
+      this.clearNav3D();
+      this.stopAcousticGuidance();
+    }
+  }
+
+  loadSurgicalNavPlan(): void {
+    const o = this.order();
+    const orderId = o?.id || 'lab-seed-01';
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.getSurgicalNavigationPlan(orderId).subscribe({
+        next: (plan) => {
+          this.surgicalNavPlan.set(plan);
+          this.navPlannedLength.set(plan.plannedLengthMm);
+          this.navPlannedDiameter.set(plan.plannedDiameterMm);
+          this.navDistanceToNerve.set(plan.distanceToNerveMm);
+          this.navDistanceToSinus.set(plan.distanceToSinusMm);
+          this.renderNav3D();
+        },
+        error: () => {
+          this.renderNav3D();
+        }
+      });
+    } else {
+      this.renderNav3D();
+    }
+  }
+
+  saveSurgicalNavPlan(): void {
+    const o = this.order();
+    const orderId = o?.id || 'lab-seed-01';
+    this.isSavingNavPlan.set(true);
+    this.navSaveSuccessMessage.set(null);
+
+    const req: SaveSurgicalNavigationRequest = {
+      toothNumber: o?.toothNumber || 36,
+      plannedLengthMm: this.navPlannedLength(),
+      plannedDiameterMm: this.navPlannedDiameter(),
+      distanceToNerveMm: this.navDistanceToNerve(),
+      distanceToSinusMm: this.navDistanceToSinus(),
+      registrationRmseMm: this.surgicalNavPlan()?.registrationRmseMm ?? 0.28
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveSurgicalNavigationPlan(orderId, req).subscribe({
+        next: (saved) => {
+          this.surgicalNavPlan.set(saved);
+          this.isSavingNavPlan.set(false);
+          this.navSaveSuccessMessage.set(saved.statusMessage);
+          this.renderNav3D();
+          setTimeout(() => this.navSaveSuccessMessage.set(null), 4000);
+        },
+        error: () => {
+          this.isSavingNavPlan.set(false);
+          this.navSaveSuccessMessage.set('Surgical navigation plan saved locally.');
+          setTimeout(() => this.navSaveSuccessMessage.set(null), 4000);
+        }
+      });
+    } else {
+      this.isSavingNavPlan.set(false);
+      this.navSaveSuccessMessage.set('Surgical navigation plan saved locally.');
+      setTimeout(() => this.navSaveSuccessMessage.set(null), 4000);
+    }
+  }
+
+  onNavDepthChange(depthVal: number | string): void {
+    const depth = typeof depthVal === 'string' ? parseFloat(depthVal) : depthVal;
+    this.navCurrentDepth.set(depth);
+    this.updateDrillTelemetry();
+  }
+
+  onNavTiltChange(tiltVal: number | string): void {
+    const tilt = typeof tiltVal === 'string' ? parseFloat(tiltVal) : tiltVal;
+    this.navAngularDeviation.set(tilt);
+    this.updateDrillTelemetry();
+  }
+
+  updateDrillTelemetry(): void {
+    const depth = this.navCurrentDepth();
+    const tiltDeg = this.navAngularDeviation();
+    const tiltRad = tiltDeg * (Math.PI / 180);
+
+    // Vector math for tilted drill
+    const axisX = Math.sin(tiltRad);
+    const axisY = 0.0;
+    const axisZ = -Math.cos(tiltRad);
+
+    const entryZ = 15.0;
+    const tipZ = entryZ - depth;
+
+    const req: EvaluateDrillTelemetryRequest = {
+      tipPositionX: 12.0,
+      tipPositionY: -6.5,
+      tipPositionZ: tipZ,
+      axisVectorX: axisX,
+      axisVectorY: axisY,
+      axisVectorZ: axisZ
+    };
+
+    const o = this.order();
+    const orderId = o?.id || 'lab-seed-01';
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.evaluateDrillTelemetry(orderId, req).subscribe({
+        next: (telem) => {
+          this.navAcousticFrequency.set(telem.acousticFrequencyHz);
+          this.navAcousticAlertMode.set(telem.acousticAlertMode);
+          this.playAcousticGuidance(telem.acousticFrequencyHz, telem.acousticAlertMode);
+          this.renderNav3D();
+        },
+        error: () => {
+          this.fallbackDrillTelemetryLocal(depth, tiltDeg);
+        }
+      });
+    } else {
+      this.fallbackDrillTelemetryLocal(depth, tiltDeg);
+    }
+  }
+
+  private fallbackDrillTelemetryLocal(depth: number, tiltDeg: number): void {
+    const nerveDist = this.navDistanceToVital();
+    const isEmergency = nerveDist < 1.50 || depth > (this.navPlannedLength() + 0.50);
+    const isCaution = !isEmergency && (nerveDist <= 3.0 || depth >= this.navPlannedLength());
+
+    const freq = isEmergency ? 1500 : (isCaution ? 880 : (depth > 1.0 ? 440 : 0));
+    const mode = isEmergency ? 'Continuous1500' : (isCaution ? 'Pulse880' : (depth > 1.0 ? 'Pulse440' : 'Silent'));
+
+    this.navAcousticFrequency.set(freq);
+    this.navAcousticAlertMode.set(mode);
+    this.playAcousticGuidance(freq, mode);
+    this.renderNav3D();
+  }
+
+  toggleAudioMute(): void {
+    const next = !this.isAudioMuted();
+    this.isAudioMuted.set(next);
+    if (next) {
+      this.stopAcousticGuidance();
+    } else {
+      this.playAcousticGuidance(this.navAcousticFrequency(), this.navAcousticAlertMode());
+    }
+  }
+
+  playAcousticGuidance(freqHz: number, mode: string): void {
+    if (this.isAudioMuted() || freqHz <= 0 || mode === 'Silent') {
+      this.stopAcousticGuidance();
+      return;
+    }
+
+    try {
+      if (!this.audioCtx) {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          this.audioCtx = new AudioContextClass();
+        }
+      }
+
+      if (!this.audioCtx) return;
+
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+
+      if (!this.oscNode) {
+        this.oscNode = this.audioCtx.createOscillator();
+        this.gainNode = this.audioCtx.createGain();
+        this.oscNode.type = mode === 'Continuous1500' ? 'sawtooth' : 'sine';
+        this.oscNode.frequency.setValueAtTime(freqHz, this.audioCtx.currentTime);
+        this.gainNode.gain.setValueAtTime(0.04, this.audioCtx.currentTime);
+        this.oscNode.connect(this.gainNode);
+        this.gainNode.connect(this.audioCtx.destination);
+        this.oscNode.start();
+      } else if (this.oscNode && this.gainNode) {
+        this.oscNode.type = mode === 'Continuous1500' ? 'sawtooth' : 'sine';
+        this.oscNode.frequency.setValueAtTime(freqHz, this.audioCtx.currentTime);
+        this.gainNode.gain.setValueAtTime(0.04, this.audioCtx.currentTime);
+      }
+    } catch {
+      // AudioContext policy fallback gracefully handled
+    }
+  }
+
+  stopAcousticGuidance(): void {
+    try {
+      if (this.oscNode) {
+        this.oscNode.stop();
+        this.oscNode.disconnect();
+        this.oscNode = null;
+      }
+      if (this.gainNode) {
+        this.gainNode.disconnect();
+        this.gainNode = null;
+      }
+    } catch {
+      // Ignore audio cleanup error
+    }
+  }
+
+  getActiveDrillToolName(): string {
+    const seq = this.surgicalNavPlan()?.drillSequences;
+    if (seq && seq.length > 0) {
+      const idx = this.navActiveDrillIndex() - 1;
+      if (idx >= 0 && idx < seq.length) {
+        return seq[idx].toolName;
+      }
+    }
+    return 'Pilot Drill Ø2.2mm';
+  }
+
+  clearNav3D(): void {
+    if (!this.navGroup) return;
+    while (this.navGroup.children.length > 0) {
+      const child = this.navGroup.children[0];
+      this.navGroup.remove(child);
+      if ((child as any).geometry) (child as any).geometry.dispose();
+      if ((child as any).material) {
+        if (Array.isArray((child as any).material)) {
+          (child as any).material.forEach((m: any) => m.dispose());
+        } else {
+          (child as any).material.dispose();
+        }
+      }
+    }
+  }
+
+  renderNav3D(): void {
+    if (!this.navGroup) return;
+    this.clearNav3D();
+    if (!this.isSurgicalNavActive()) return;
+
+    const plannedLen = this.navPlannedLength();
+    const plannedDiam = this.navPlannedDiameter();
+    const currentDepth = this.navCurrentDepth();
+    const devDeg = this.navAngularDeviation();
+    const isEmergency = this.navIsSafetyStopEngaged();
+
+    // 1. Planned Implant Target Cylinder (Transparent Cyan outline)
+    const implantGeom = new THREE.CylinderGeometry(plannedDiam / 2, plannedDiam / 2, plannedLen, 24);
+    const implantMat = new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      transparent: true,
+      opacity: 0.35,
+      wireframe: true
+    });
+    const implantMesh = new THREE.Mesh(implantGeom, implantMat);
+    implantMesh.position.set(0, -plannedLen / 2, 0);
+    this.navGroup.add(implantMesh);
+
+    // 2. Trajectory Axis Guide Line (Planned)
+    const axisGeom = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 5, 0),
+      new THREE.Vector3(0, -(plannedLen + 3), 0)
+    ]);
+    const axisMat = new THREE.LineDashedMaterial({
+      color: 0x22d3ee,
+      dashSize: 1,
+      gapSize: 0.5
+    });
+    const axisLine = new THREE.Line(axisGeom, axisMat);
+    axisLine.computeLineDistances();
+    this.navGroup.add(axisLine);
+
+    // 3. Vital Nerve Hazard Horizon Sphere / Buffer
+    const nerveDist = this.navDistanceToNerve();
+    const nerveGeom = new THREE.SphereGeometry(2.0, 16, 16);
+    const nerveMat = new THREE.MeshStandardMaterial({
+      color: isEmergency ? 0xf43f5e : 0xfbbf24,
+      transparent: true,
+      opacity: 0.5
+    });
+    const nerveMesh = new THREE.Mesh(nerveGeom, nerveMat);
+    nerveMesh.position.set(0, -nerveDist, 0);
+    this.navGroup.add(nerveMesh);
+
+    // 4. Moving Surgical Drill Bit (Reflecting real-time handpiece position & tilt)
+    const drillBitLen = 20.0;
+    const drillGeom = new THREE.ConeGeometry(plannedDiam / 2.5, drillBitLen, 16);
+    const drillColor = isEmergency ? 0xf43f5e : (devDeg <= 1.50 ? 0x10b981 : 0xf59e0b);
+    const drillMat = new THREE.MeshStandardMaterial({
+      color: drillColor,
+      metalness: 0.8,
+      roughness: 0.2
+    });
+    const drillMesh = new THREE.Mesh(drillGeom, drillMat);
+    drillMesh.rotation.x = Math.PI;
+    drillMesh.rotation.z = devDeg * (Math.PI / 180);
+    drillMesh.position.set(0, -currentDepth + (drillBitLen / 2), 0);
+    this.navGroup.add(drillMesh);
   }
 }

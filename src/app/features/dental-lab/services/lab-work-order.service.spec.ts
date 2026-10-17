@@ -1257,6 +1257,143 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
       exportedAtUtc: new Date().toISOString()
     });
   });
+
+  // --- Release v12.1.0 AI Dynamic Implant Surgical Navigation & Drill Telemetry Tests ---
+
+  it('should fetch surgical navigation plan via getSurgicalNavigationPlan (BR-NAV-01)', (done) => {
+    service.getSurgicalNavigationPlan('lab-1').subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.plannedLengthMm).toBe(11.5);
+      expect(res.plannedDiameterMm).toBe(4.2);
+      expect(res.isSafetyBufferCompliant).toBeTrue();
+      expect(res.registrationRmseMm).toBe(0.28);
+      expect(res.drillSequences.length).toBe(6);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/surgical-navigation`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      toothNumber: 36,
+      implantBrand: 'Straumann',
+      implantModel: 'BLX Roxolid SLActive Ø4.2x11.5mm',
+      plannedLengthMm: 11.5,
+      plannedDiameterMm: 4.2,
+      plannedEntryX: 12.0,
+      plannedEntryY: -6.5,
+      plannedEntryZ: 15.0,
+      plannedApexX: 12.0,
+      plannedApexY: -6.5,
+      plannedApexZ: 3.5,
+      targetDepthMm: 11.5,
+      distanceToNerveMm: 14.5,
+      distanceToSinusMm: 24.0,
+      safetyBufferMm: 3.0,
+      isSafetyBufferCompliant: true,
+      safetyWarning: null,
+      registrationRmseMm: 0.28,
+      isRegistrationValid: true,
+      drillSequences: [
+        { stepIndex: 1, toolName: 'Round Bur', diameterMm: 2.0, lengthMm: 15.0, targetDepthMm: 2.0, recommendedSpeedRpm: 1200, maxTorqueNcm: 35, irrigation: 'Saline', status: 'Completed' },
+        { stepIndex: 2, toolName: 'Pilot Drill', diameterMm: 2.2, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 800, maxTorqueNcm: 35, irrigation: 'Saline', status: 'Active' },
+        { stepIndex: 3, toolName: 'Twist Drill', diameterMm: 2.8, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 800, maxTorqueNcm: 35, irrigation: 'Saline', status: 'Pending' },
+        { stepIndex: 4, toolName: 'Form Drill', diameterMm: 3.5, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 600, maxTorqueNcm: 40, irrigation: 'Saline', status: 'Pending' },
+        { stepIndex: 5, toolName: 'Final Drill', diameterMm: 4.2, lengthMm: 20.0, targetDepthMm: 11.5, recommendedSpeedRpm: 500, maxTorqueNcm: 45, irrigation: 'Saline', status: 'Pending' },
+        { stepIndex: 6, toolName: 'Implant Insertion', diameterMm: 4.2, lengthMm: 11.5, targetDepthMm: 11.5, recommendedSpeedRpm: 25, maxTorqueNcm: 50, irrigation: 'None', status: 'Pending' }
+      ],
+      statusMessage: 'Plan active.',
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should save surgical navigation plan via saveSurgicalNavigationPlan (BR-NAV-02)', (done) => {
+    const saveReq = {
+      toothNumber: 36,
+      plannedLengthMm: 11.5,
+      plannedDiameterMm: 4.2,
+      distanceToNerveMm: 14.5,
+      distanceToSinusMm: 24.0,
+      registrationRmseMm: 0.28
+    };
+
+    service.saveSurgicalNavigationPlan('lab-1', saveReq).subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.safetyBufferMm).toBe(3.0);
+      expect(res.isSafetyBufferCompliant).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/surgical-navigation`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      orderId: 'lab-1',
+      toothNumber: 36,
+      implantBrand: 'Straumann',
+      implantModel: 'BLX',
+      plannedLengthMm: 11.5,
+      plannedDiameterMm: 4.2,
+      plannedEntryX: 12.0,
+      plannedEntryY: -6.5,
+      plannedEntryZ: 15.0,
+      plannedApexX: 12.0,
+      plannedApexY: -6.5,
+      plannedApexZ: 3.5,
+      targetDepthMm: 11.5,
+      distanceToNerveMm: 14.5,
+      distanceToSinusMm: 24.0,
+      safetyBufferMm: 3.0,
+      isSafetyBufferCompliant: true,
+      safetyWarning: null,
+      registrationRmseMm: 0.28,
+      isRegistrationValid: true,
+      drillSequences: [],
+      statusMessage: 'Saved.',
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should evaluate real-time handpiece drill telemetry via evaluateDrillTelemetry (BR-NAV-03..04)', (done) => {
+    const telemReq = {
+      tipPositionX: 12.0,
+      tipPositionY: -6.5,
+      tipPositionZ: 14.0,
+      axisVectorX: 0.0,
+      axisVectorY: 0.0,
+      axisVectorZ: -1.0
+    };
+
+    service.evaluateDrillTelemetry('lab-1', telemReq).subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.isOnAxis).toBeTrue();
+      expect(res.isSafetyStopEngaged).toBeFalse();
+      expect(res.acousticAlertMode).toBe('Silent');
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/surgical-navigation/evaluate-telemetry`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      orderId: 'lab-1',
+      tipPositionX: 12.0,
+      tipPositionY: -6.5,
+      tipPositionZ: 14.0,
+      axisVectorX: 0.0,
+      axisVectorY: 0.0,
+      axisVectorZ: -1.0,
+      currentDepthMm: 1.0,
+      angularDeviationDeg: 0.0,
+      isOnAxis: true,
+      isCautionAxis: false,
+      isOffAxisHazard: false,
+      currentDistanceToVitalMm: 13.5,
+      isSafetyStopEngaged: false,
+      acousticFrequencyHz: 0,
+      acousticAlertMode: 'Silent',
+      statusMessage: 'Nominal guidance.',
+      evaluatedAtUtc: new Date().toISOString()
+    });
+  });
 });
 
 
