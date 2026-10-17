@@ -47,6 +47,32 @@
       <span class="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-1.5 rounded-full whitespace-nowrap">
         {{ filteredPatients().length }} {{ 'sidebar.patients' | translate }}
       </span>
+
+      <!-- View Mode Switcher (Grid / Table) -->
+      <div class="hidden sm:flex items-center gap-1 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 border border-slate-200/60 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="viewMode.set('grid')"
+          [class]="viewMode() === 'grid'
+            ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
+            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'"
+          class="p-1.5 rounded-lg transition-all cursor-pointer border-none"
+          title="Grid Card View"
+        >
+          <i class="pi pi-th-large text-sm"></i>
+        </button>
+        <button
+          type="button"
+          (click)="viewMode.set('table')"
+          [class]="viewMode() === 'table'
+            ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
+            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'"
+          class="p-1.5 rounded-lg transition-all cursor-pointer border-none"
+          title="Dense Table View"
+        >
+          <i class="pi pi-list text-sm"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -68,6 +94,104 @@
       <i class="pi pi-users text-5xl mb-4 opacity-30"></i>
       <p class="text-lg font-medium">{{ 'patients.no_patients' | translate }}</p>
       <p class="text-sm mt-1">{{ 'patients.no_patients_sub' | translate }}</p>
+    </div>
+  } @else if (viewMode() === 'table') {
+    <div class="overflow-x-auto rounded-2xl border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+      <table class="w-full text-start text-sm border-collapse">
+        <thead>
+          <tr class="border-b border-slate-100 dark:border-slate-700 bg-slate-50/75 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold text-xs">
+            <th class="py-3.5 px-4 text-start">{{ 'patients.title' | translate }}</th>
+            <th class="py-3.5 px-4 text-start">{{ 'patients.phone' | translate }}</th>
+            <th class="py-3.5 px-4 text-start">{{ 'patients.gender' | translate }} / {{ 'patients.age' | translate }}</th>
+            <th class="py-3.5 px-4 text-center">{{ 'patients.blood_group' | translate }}</th>
+            <th class="py-3.5 px-4 text-start">{{ 'patients.registered_on' | translate }}</th>
+            <th class="py-3.5 px-4 text-start">{{ 'patients.address' | translate }}</th>
+            <th class="py-3.5 px-4 text-end">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
+          @for (patient of filteredPatients(); track patient.id) {
+            <tr (click)="viewPatientDetails(patient)" class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors cursor-pointer group">
+              <!-- Patient Name & Avatar -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs shadow-xs flex-shrink-0"
+                       [class]="getAvatarColor(patient.firstName)">
+                    {{ patient.firstName.charAt(0) }}{{ patient.lastName.charAt(0) }}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        {{ patient.firstName }} {{ patient.lastName }}
+                      </span>
+                      @if (getPatientDebt(patient.id); as debt) {
+                        @if (debt.totalDebt > 0) {
+                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                            {{ 'billing.debt_pill' | translate }}: {{ debt.totalDebt | currency }}
+                          </span>
+                        }
+                      }
+                    </div>
+                    @if (patient.email) {
+                      <span class="text-xs text-slate-400 dark:text-slate-500 block truncate">{{ patient.email }}</span>
+                    }
+                  </div>
+                </div>
+              </td>
+              <!-- Contact -->
+              <td class="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 font-mono text-xs" dir="ltr">
+                {{ patient.contactNumber }}
+              </td>
+              <!-- Gender / Age -->
+              <td class="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 text-xs">
+                <span class="capitalize">{{ 'patients.' + patient.gender | translate }}</span>, {{ getAge(patient.dateOfBirth) }} {{ 'patients.age' | translate }}
+              </td>
+              <!-- Blood Group -->
+              <td class="py-3 px-4 text-center whitespace-nowrap">
+                @if (patient.bloodGroup && patient.bloodGroup !== '-') {
+                  <span class="px-2 py-0.5 text-xs font-bold rounded-md ring-1"
+                        [ngClass]="getBloodGroupClass(patient.bloodGroup)">
+                    {{ patient.bloodGroup }}
+                  </span>
+                } @else {
+                  <span class="text-slate-300 dark:text-slate-600">-</span>
+                }
+              </td>
+              <!-- Reg Date -->
+              <td class="py-3 px-4 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+                {{ formatDate(patient.registrationDate) }}
+              </td>
+              <!-- Address -->
+              <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400 max-w-[160px] truncate">
+                <a *ngIf="patient.latitude && patient.longitude" 
+                   [href]="'https://www.google.com/maps/search/?api=1&query=' + patient.latitude + ',' + patient.longitude"
+                   target="_blank"
+                   (click)="$event.stopPropagation()"
+                   class="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
+                  <i class="pi pi-map-marker text-[10px]"></i>
+                  <span class="truncate">{{ patient.address || 'Map' }}</span>
+                </a>
+                <span *ngIf="!patient.latitude || !patient.longitude" class="truncate">{{ patient.address || '-' }}</span>
+              </td>
+              <!-- Actions -->
+              <td class="py-3 px-4 text-end whitespace-nowrap">
+                <div class="inline-flex items-center gap-1">
+                  @if (authService.isAdmin() || authService.isDoctor()) {
+                    <button
+                      type="button"
+                      (click)="deletePatient(patient, $event)"
+                      [title]="'common.delete' | translate"
+                      class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <i class="pi pi-trash text-sm"></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -94,16 +218,20 @@
                   }
                 }
               </div>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
-                <i class="pi pi-envelope text-xs"></i>
-                <span class="truncate">{{ patient.email }}</span>
-              </p>
+              @if (patient.email) {
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
+                  <i class="pi pi-envelope text-xs text-slate-400"></i>
+                  <span class="truncate">{{ patient.email }}</span>
+                </p>
+              }
             </div>
             <div class="flex items-center gap-1.5">
-              <span class="px-2 py-0.5 text-xs font-bold rounded-md ring-1"
-                    [ngClass]="getBloodGroupClass(patient.bloodGroup)">
-                {{ patient.bloodGroup }}
-              </span>
+              @if (patient.bloodGroup && patient.bloodGroup !== '-') {
+                <span class="px-2 py-0.5 text-xs font-bold rounded-md ring-1"
+                      [ngClass]="getBloodGroupClass(patient.bloodGroup)">
+                  {{ patient.bloodGroup }}
+                </span>
+              }
               @if (authService.isAdmin() || authService.isDoctor()) {
                 <button
                   type="button"
@@ -171,5 +299,16 @@
       ></app-patient-form>
     }
   </app-modal>
+
+  <!-- Mobile Floating Action Button (FAB) -->
+  <button
+    type="button"
+    (click)="openModal()"
+    class="sm:hidden fixed bottom-6 end-6 z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-2xl shadow-indigo-600/50 flex items-center justify-center cursor-pointer active:scale-95 transition-transform border border-white/20"
+    [title]="'patients.add_patient' | translate"
+    aria-label="Add Patient"
+  >
+    <i class="pi pi-user-plus text-lg"></i>
+  </button>
 
 </div>

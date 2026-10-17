@@ -65,6 +65,17 @@ export class InventoryListComponent implements OnInit {
   csvFileName = signal<string>('');
   bulkTargetClinicId: string = '';
 
+  // Header Tools Dropdown State
+  showToolsMenu = signal<boolean>(false);
+
+  toggleToolsMenu(): void {
+    this.showToolsMenu.update(v => !v);
+  }
+
+  closeToolsMenu(): void {
+    this.showToolsMenu.set(false);
+  }
+
   // Image Preview Lightbox State
   previewImageUrl = signal<string | null>(null);
   previewImageTitle = signal<string>('');

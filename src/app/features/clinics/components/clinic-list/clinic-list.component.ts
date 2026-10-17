@@ -284,11 +284,11 @@ export class ClinicListComponent implements OnInit {
 
   getAvatarColor(name: string): string {
     const colors = [
-      'from-blue-500 to-indigo-600',
-      'from-emerald-500 to-teal-600',
-      'from-violet-500 to-purple-600',
-      'from-amber-500 to-orange-600',
-      'from-rose-500 to-red-600'
+      'from-blue-600 to-indigo-700',
+      'from-teal-600 to-emerald-700',
+      'from-violet-600 to-purple-700',
+      'from-cyan-600 to-blue-700',
+      'from-slate-700 to-indigo-900'
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
