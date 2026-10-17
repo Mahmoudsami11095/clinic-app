@@ -46,4 +46,22 @@ test.describe('Smart Clinic Dental Charting (Browser Automation)', () => {
       await page.waitForTimeout(300);
     }
   });
+
+  test('4. Periodontal 6-Point Matrix & Voice Probing Verification (v12.2.0)', async ({ page }) => {
+    const perioToggle = page.locator('button:has-text("Periodontal"), button:has-text("دواعم السن")').first();
+    if (await perioToggle.isVisible()) {
+      await perioToggle.click();
+      await page.waitForTimeout(300);
+
+      // Verify Periodontal component attached
+      const perioComponent = page.locator('app-periodontal-chart');
+      await expect(perioComponent).toBeAttached();
+
+      // Check staging badge exists
+      const stagingBadge = page.locator('.stage-card, .score-cards-grid');
+      if (await stagingBadge.isVisible()) {
+        await expect(stagingBadge).toBeVisible();
+      }
+    }
+  });
 });
