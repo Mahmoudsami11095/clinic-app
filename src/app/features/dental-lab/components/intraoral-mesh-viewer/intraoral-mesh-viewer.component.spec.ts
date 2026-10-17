@@ -1859,6 +1859,80 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     expect(component.abutmentCncExportResult()).toEqual(mockExport);
     expect(component.abutmentSaveSuccessMessage()).toContain('CNC G-Code');
   });
+
+  it('should toggle surgical navigation panel and load default plan (BR-NAV-01)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    component.toggleSurgicalNavPanel();
+    expect(component.isSurgicalNavActive()).toBeTrue();
+    expect(component.surgicalNavPlan()).toBeDefined();
+    expect(component.navPlannedLength()).toBe(11.5);
+    expect(component.navPlannedDiameter()).toBe(4.2);
+    expect(component.getActiveDrillToolName()).toBeDefined();
+  });
+
+  it('should calculate angular deviation and kinematics status in bullseye reticle (BR-NAV-01)', () => {
+    component.toggleSurgicalNavPanel();
+    component.onNavTiltChange(1.2);
+    expect(component.navAngularDeviation()).toBe(1.2);
+    expect(component.navTiltX()).toBeCloseTo(Math.sin(1.2 * Math.PI / 180), 3);
+
+    component.onNavTiltChange(4.5);
+    expect(component.navAngularDeviation()).toBe(4.5);
+  });
+
+  it('should calculate drill depth progress and remaining distance to vital structure (BR-NAV-02)', () => {
+    component.toggleSurgicalNavPanel();
+    component.navDistanceToNerve.set(14.5);
+    component.navPlannedLength.set(11.5);
+
+    component.onNavDepthChange(6.0);
+    expect(component.navCurrentDepth()).toBe(6.0);
+    expect(component.navDistanceToVital()).toBe(8.5); // 14.5 - 6.0
+    expect(component.navIsSafetyStopEngaged()).toBeFalse();
+
+    component.onNavDepthChange(11.5);
+    expect(component.navCurrentDepth()).toBe(11.5);
+    expect(component.navDistanceToVital()).toBe(3.0);
+    expect(component.navIsSafetyStopEngaged()).toBeFalse();
+  });
+
+  it('should trigger emergency safety stop when vital structure proximity is violated (BR-NAV-03)', () => {
+    component.toggleSurgicalNavPanel();
+    component.navDistanceToNerve.set(14.5);
+    component.navPlannedLength.set(11.5);
+
+    // Drilling to 13.5mm penetrates to within 1.0mm of nerve (< 1.50mm critical limit)
+    component.onNavDepthChange(13.5);
+    expect(component.navDistanceToVital()).toBe(1.0);
+    expect(component.navIsSafetyStopEngaged()).toBeTrue();
+
+    // Verify audio mute toggle
+    expect(component.isAudioMuted()).toBeFalse();
+    component.toggleAudioMute();
+    expect(component.isAudioMuted()).toBeTrue();
+    component.toggleAudioMute();
+    expect(component.isAudioMuted()).toBeFalse();
+  });
+
+  it('should save surgical navigation plan via LabWorkOrderService (BR-NAV-04)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    component.toggleSurgicalNavPanel();
+
+    const mockSavedPlan: any = {
+      orderId: 'lab-mock-01',
+      toothNumber: 36,
+      plannedLengthMm: 11.5,
+      plannedDiameterMm: 4.2,
+      isSafetyBufferCompliant: true,
+      statusMessage: 'Implant surgical plan active. Safety buffer 3.00mm compliant.'
+    };
+    spyOn(labService, 'saveSurgicalNavigationPlan').and.returnValue(of(mockSavedPlan));
+
+    component.saveSurgicalNavPlan();
+    expect(labService.saveSurgicalNavigationPlan).toHaveBeenCalled();
+    expect(component.isSavingNavPlan()).toBeFalse();
+    expect(component.navSaveSuccessMessage()).toBe('Implant surgical plan active. Safety buffer 3.00mm compliant.');
+  });
 });
 
 
