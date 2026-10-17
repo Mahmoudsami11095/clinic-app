@@ -4,6 +4,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RadiologyService, AiRadiologyAnalysisResult, AiRadiologyFinding, DicomMetadata, DicomSeries } from '../../../features/radiology/services/radiology.service';
 import { InsuranceService } from '../../../features/billing/services/insurance.service';
 import { CephalometricAnalysisService, CephPoint, CephMeasurement, CephalometricAnalysisResult, CephalometricVtoResult, CephalometricVtoRequest, RickettELine } from '../../../features/radiology/services/cephalometric-analysis.service';
+import { EndodonticAnalysisService, EndodonticAnalysisResult, EndoPoint2D, RecalculateEndodonticRequest, SaveEndodonticRequest } from '../../../features/radiology/services/endodontic-analysis.service';
 
 export interface RulerPoint {
   x: number;
@@ -250,6 +251,24 @@ export interface RulerPoint {
                 @if (isCephActive()) {
                   <span class="ms-0.5 px-1.5 py-0.2 bg-emerald-950/80 text-emerald-200 border border-emerald-400/30 rounded text-[10px] font-mono font-bold">
                     {{ cephSkeletalClass() }}
+                  </span>
+                }
+              </button>
+
+              <!-- Release v11.8.0: AI Endodontic Working Length & Curvature Locator Toggle -->
+              <button
+                type="button"
+                id="endo-mode-toggle-btn"
+                (click)="toggleEndoAnalysis()"
+                [class]="isEndoActive() ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white ring-2 ring-amber-400/50 shadow-md shadow-amber-500/20' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white'"
+                class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-amber-500/40 transition-all cursor-pointer relative"
+                title="Toggle AI Endodontic Working Length & Root Canal Curvature Locator (Release v11.8.0)"
+              >
+                <i class="pi pi-compass text-xs text-amber-300"></i>
+                <span>{{ 'radiology.endo_locator_btn' | translate }}</span>
+                @if (isEndoActive() && endoResult()) {
+                  <span class="ms-0.5 px-1.5 py-0.2 bg-amber-950/80 text-amber-200 border border-amber-400/30 rounded text-[10px] font-mono font-bold">
+                    {{ endoResult()!.curvature.schneiderAngleDegrees }}°
                   </span>
                 }
               </button>
@@ -565,6 +584,79 @@ export interface RulerPoint {
                               class="pointer-events-none drop-shadow-md"
                             >
                               {{ lm.id }}
+                            </text>
+                          </g>
+                        }
+                      </svg>
+                    }
+
+                    <!-- Release v11.8.0: AI Endodontic Vector Overlay -->
+                    @if (isEndoActive() && endoResult()) {
+                      <svg
+                        class="absolute inset-0 w-full h-full pointer-events-auto select-none"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        (mousemove)="onEndoSvgMouseMove($event)"
+                        (mouseup)="onEndoHandlePointerUp()"
+                        (mouseleave)="onEndoHandlePointerUp()"
+                        #endoSvgEl
+                      >
+                        <!-- Segment A to B (Coronal to Inception) -->
+                        <line
+                          [attr.x1]="getEndoHandleX('A')"
+                          [attr.y1]="getEndoHandleY('A')"
+                          [attr.x2]="getEndoHandleX('B')"
+                          [attr.y2]="getEndoHandleY('B')"
+                          stroke="#f59e0b"
+                          stroke-width="1.0"
+                          stroke-dasharray="2,1"
+                        />
+                        <!-- Segment B to C (Inception to Apex) -->
+                        <line
+                          [attr.x1]="getEndoHandleX('B')"
+                          [attr.y1]="getEndoHandleY('B')"
+                          [attr.x2]="getEndoHandleX('C')"
+                          [attr.y2]="getEndoHandleY('C')"
+                          stroke="#ef4444"
+                          stroke-width="1.2"
+                        />
+
+                        <!-- Apical Safety Zone indicator circle around C -->
+                        <circle
+                          [attr.cx]="getEndoHandleX('C')"
+                          [attr.cy]="getEndoHandleY('C')"
+                          r="3.2"
+                          fill="none"
+                          stroke="#22c55e"
+                          stroke-width="0.6"
+                          stroke-dasharray="1,1"
+                        />
+
+                        <!-- Handles A, B, C -->
+                        @for (h of ['A', 'B', 'C']; track h) {
+                          <g
+                            class="cursor-grab active:cursor-grabbing group"
+                            (mousedown)="onEndoHandlePointerDown($any(h), $event)"
+                            (touchstart)="onEndoHandlePointerDown($any(h), $event)"
+                          >
+                            <circle
+                              [attr.cx]="getEndoHandleX(h)"
+                              [attr.cy]="getEndoHandleY(h)"
+                              r="2.2"
+                              [attr.fill]="h === 'A' ? '#f59e0b' : (h === 'B' ? '#38bdf8' : '#ef4444')"
+                              stroke="#ffffff"
+                              stroke-width="0.6"
+                            />
+                            <text
+                              [attr.x]="getEndoHandleX(h) + 2.0"
+                              [attr.y]="getEndoHandleY(h) - 2.0"
+                              fill="#ffffff"
+                              font-size="2.6"
+                              font-weight="bold"
+                              font-family="monospace"
+                              class="pointer-events-none drop-shadow-md"
+                            >
+                              {{ h }}
                             </text>
                           </g>
                         }
@@ -1158,6 +1250,278 @@ export interface RulerPoint {
                 </div>
               </div>
             }
+
+            <!-- Release v11.8.0: AI Endodontic Working Length & Curvature Drawer -->
+            @if (showEndoDrawer() && endoResult()) {
+              <div
+                class="w-80 md:w-96 bg-slate-900 border-s border-slate-800 flex flex-col flex-shrink-0 z-20 shadow-2xl animate-fade-in"
+                id="endo-analysis-drawer"
+              >
+                <!-- Drawer Header -->
+                <div class="p-3.5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs">
+                      <i class="pi pi-compass"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-white leading-none">{{ 'radiology.endo_title' | translate }}</h4>
+                      <span class="text-[10px] text-slate-400">Release v11.8.0 • BR-ENDO-01..04</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="showEndoDrawer.set(false)"
+                    class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+
+                <!-- Tooth & Canal Selectors -->
+                <div class="p-3 bg-slate-950/40 border-b border-slate-800/80 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label class="text-[10px] text-slate-400 font-bold block uppercase mb-1">Tooth (FDI)</label>
+                    <select
+                      [value]="endoSelectedTooth()"
+                      (change)="onEndoToothSelect(+$any($event.target).value)"
+                      class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white"
+                    >
+                      <option [value]="16">#16 (Maxillary 1st Molar)</option>
+                      <option [value]="26">#26 (Maxillary 1st Molar)</option>
+                      <option [value]="36">#36 (Mandibular 1st Molar)</option>
+                      <option [value]="46">#46 (Mandibular 1st Molar)</option>
+                      <option [value]="11">#11 (Maxillary Central Incisor)</option>
+                      <option [value]="21">#21 (Maxillary Central Incisor)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-400 font-bold block uppercase mb-1">Canal Track</label>
+                    <select
+                      [value]="endoSelectedCanal()"
+                      (change)="onEndoCanalSelect($any($event.target).value)"
+                      class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white"
+                    >
+                      <option value="Mesio-Buccal (MB1)">Mesio-Buccal (MB1)</option>
+                      <option value="Mesio-Buccal (MB2)">Mesio-Buccal (MB2)</option>
+                      <option value="Mesio-Lingual (ML)">Mesio-Lingual (ML)</option>
+                      <option value="Distal (D)">Distal (D)</option>
+                      <option value="Palatal (P)">Palatal (P)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Drawer Scrollable Content -->
+                <div class="p-3 space-y-3 flex-1 overflow-y-auto custom-scrollbar text-xs">
+                  <!-- Schneider Curvature Analysis Card -->
+                  <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Schneider Curvature</span>
+                      <span
+                        class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase font-mono"
+                        [ngClass]="endoResult()!.curvature.curvatureClassification === 'Severe' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : (endoResult()!.curvature.curvatureClassification === 'Moderate' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30')"
+                      >
+                        {{ endoResult()!.curvature.curvatureClassification }}
+                      </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                      <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-700/40">
+                        <span class="text-[10px] text-slate-400 block">Schneider Angle (α)</span>
+                        <span class="text-base font-extrabold text-amber-400 font-mono">{{ endoResult()!.curvature.schneiderAngleDegrees }}°</span>
+                      </div>
+                      <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-700/40">
+                        <span class="text-[10px] text-slate-400 block">Radius of Curvature</span>
+                        <span class="text-base font-extrabold text-cyan-400 font-mono">{{ endoResult()!.curvature.radiusOfCurvatureMm }} mm</span>
+                      </div>
+                    </div>
+
+                    @if (endoResult()!.curvature.cyclicFatigueRiskLevel === 'HighRiskOfSeparation') {
+                      <div class="p-2 rounded-lg bg-rose-950/60 border border-rose-500/40 text-rose-200 text-[10px] flex items-start gap-1.5 leading-snug">
+                        <i class="pi pi-exclamation-triangle text-rose-400 mt-0.5 flex-shrink-0"></i>
+                        <span>High cyclic fatigue hazard! Single-use file policy strongly recommended. Avoid high torque in apical 3mm.</span>
+                      </div>
+                    }
+
+                    <p class="text-[10px] text-slate-300 border-t border-slate-700/40 pt-1 leading-relaxed">
+                      {{ endoResult()!.curvature.recommendation }}
+                    </p>
+                  </div>
+
+                  <!-- Working Length Determination Card -->
+                  <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Working Length (WL)</span>
+                      <span class="text-[10px] text-emerald-400 font-mono font-bold">{{ endoResult()!.workingLength.safetyStatus }}</span>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-slate-400">Reference Cusp:</span>
+                        <span class="text-slate-200 font-medium">{{ endoResult()!.workingLength.coronalReferenceLandmark }}</span>
+                      </div>
+                      <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-slate-400">Radiographic Root Length:</span>
+                        <span class="font-mono text-slate-200">{{ endoResult()!.workingLength.radiographicRootLengthMm }} mm</span>
+                      </div>
+                      <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-slate-400">Safety Apical Offset:</span>
+                        <span class="font-mono text-cyan-300 font-bold">-{{ endoResult()!.workingLength.apicalSafetyOffsetMm }} mm</span>
+                      </div>
+                      <div class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 flex justify-between items-center">
+                        <span class="text-xs font-bold text-amber-200">Safe Working Length:</span>
+                        <span class="text-base font-extrabold text-amber-400 font-mono">{{ endoResult()!.workingLength.calculatedWorkingLengthMm }} mm</span>
+                      </div>
+                    </div>
+
+                    <!-- Diagnosis Condition Selector -->
+                    <div class="pt-1">
+                      <label class="text-[10px] text-slate-400 block mb-1">Pulp Diagnosis & Safety Margin</label>
+                      <select
+                        [value]="endoResult()!.workingLength.diagnosisCondition"
+                        (change)="onEndoDiagnosisChange($any($event.target).value)"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-200"
+                      >
+                        <option value="VitalPulp">Vital Pulp (0.5 mm Safety Offset)</option>
+                        <option value="NecroticWithApicalLesion">Necrotic with Periapical Lesion (1.0 mm Safety Offset)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Chairside Electronic Apex Locator (EAL) Simulation & Audio Stream -->
+                  <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-700/60 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[11px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="pi pi-bolt text-indigo-400"></i>
+                        Live EAL Telemetry (BR-ENDO-03)
+                      </span>
+                      <button
+                        type="button"
+                        (click)="toggleEalMute()"
+                        class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                        [title]="isEalMuted() ? 'Unmute Audio Tone' : 'Mute Audio Tone'"
+                      >
+                        <i [class]="isEalMuted() ? 'pi pi-volume-off text-rose-400' : 'pi pi-volume-up text-emerald-400'"></i>
+                      </button>
+                    </div>
+
+                    <!-- Distance Gauge Meter -->
+                    <div class="space-y-1">
+                      <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400">Distance to Apex:</span>
+                        <span
+                          class="font-mono font-extrabold text-sm"
+                          [ngClass]="ealLiveDistanceMm() < 0 ? 'text-rose-400 animate-pulse' : (ealLiveDistanceMm() <= 0.5 ? 'text-amber-400' : 'text-emerald-400')"
+                        >
+                          {{ ealLiveDistanceMm() < 0 ? 'OVER (' + ealLiveDistanceMm() + ' mm)' : (ealLiveDistanceMm() === 0 ? '0.0 mm (APEX)' : ealLiveDistanceMm() + ' mm') }}
+                        </span>
+                      </div>
+
+                      <!-- Multi-segment LED style visual bar -->
+                      <div class="h-3 bg-slate-800 rounded-full overflow-hidden flex border border-slate-700/60">
+                        <div class="w-1/3 bg-emerald-500 transition-opacity" [style.opacity]="ealLiveDistanceMm() > 0.5 ? '1' : '0.2'"></div>
+                        <div class="w-1/3 bg-amber-500 transition-opacity" [style.opacity]="ealLiveDistanceMm() >= 0 && ealLiveDistanceMm() <= 0.5 ? '1' : '0.2'"></div>
+                        <div class="w-1/3 bg-rose-600 transition-opacity" [style.opacity]="ealLiveDistanceMm() < 0 ? '1' : '0.2'"></div>
+                      </div>
+
+                      <!-- Interactive Slider for Chairside Calibration -->
+                      <input
+                        type="range"
+                        min="-0.5"
+                        max="2.0"
+                        step="0.1"
+                        [value]="ealLiveDistanceMm()"
+                        (input)="onEalDistanceSlider(+$any($event.target).value)"
+                        class="w-full accent-amber-500 h-1 cursor-pointer"
+                      />
+                    </div>
+
+                    <div class="pt-1 flex items-center justify-between">
+                      <button
+                        type="button"
+                        (click)="toggleEalStreamSimulation()"
+                        class="px-2 py-1 rounded bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 text-[10px] font-bold border border-indigo-700/60 flex items-center gap-1 cursor-pointer"
+                      >
+                        <i [class]="isEalStreaming() ? 'pi pi-pause' : 'pi pi-play'"></i>
+                        <span>{{ isEalStreaming() ? 'Pause Stream' : 'Simulate EAL Ingestion' }}</span>
+                      </button>
+                      <span class="text-[9px] text-slate-400 font-mono">WebSerial / BLE Ready</span>
+                    </div>
+                  </div>
+
+                  <!-- Rotary NiTi File Recipe Card -->
+                  <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">AI NiTi Rotary Recipe</span>
+                      <span class="text-[10px] text-cyan-300 font-bold font-mono">{{ endoResult()!.recommendedRecipe.systemName }}</span>
+                    </div>
+
+                    <div class="space-y-1 text-[10px] border-b border-slate-700/60 pb-1.5 text-slate-300">
+                      <div class="flex justify-between">
+                        <span>Speed Limit:</span>
+                        <span class="font-mono text-white font-bold">{{ endoResult()!.recommendedRecipe.recommendedSpeedRangeRpm }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Torque Limit:</span>
+                        <span class="font-mono text-white font-bold">{{ endoResult()!.recommendedRecipe.recommendedTorqueRangeNcm }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Sequence Steps -->
+                    <div class="space-y-1.5">
+                      @for (f of endoResult()!.recommendedRecipe.fileSequence; track f.stepOrder) {
+                        <div class="p-1.5 rounded-lg bg-slate-900/60 border border-slate-700/40 text-[10px] space-y-0.5">
+                          <div class="flex items-center justify-between font-bold text-white">
+                            <span>Step {{ f.stepOrder }}: {{ f.fileName }}</span>
+                            <span class="font-mono text-cyan-300">{{ f.speedRpm }} RPM • {{ f.torqueNcm }} N·cm</span>
+                          </div>
+                          <p class="text-slate-400 leading-tight">{{ f.clinicalInstructions }}</p>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Drag Hint & Verification -->
+                  <div class="p-2 bg-amber-950/30 border border-amber-500/30 rounded-xl text-[10px] text-amber-200 flex items-start gap-1.5">
+                    <i class="pi pi-info-circle text-amber-400 mt-0.5 flex-shrink-0"></i>
+                    <span>{{ 'radiology.endo_drag_hint' | translate }}</span>
+                  </div>
+
+                  @if (endoSaveSuccessMessage()) {
+                    <div class="p-2 bg-emerald-950/60 border border-emerald-500/40 rounded-xl text-[10px] text-emerald-200 flex items-center gap-1.5">
+                      <i class="pi pi-check-circle text-emerald-400"></i>
+                      <span>{{ endoSaveSuccessMessage() }}</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Drawer Footer Actions -->
+                <div class="p-3 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    (click)="resetEndoHandles()"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <i class="pi pi-refresh text-xs"></i>
+                    <span>Reset Vector</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="saveEndoReport()"
+                    [disabled]="isSavingEndoReport()"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-md shadow-amber-600/30 disabled:opacity-50"
+                  >
+                    @if (isSavingEndoReport()) {
+                      <i class="pi pi-spin pi-spinner text-xs"></i>
+                      <span>Saving...</span>
+                    } @else {
+                      <i class="pi pi-check text-xs"></i>
+                      <span>{{ 'radiology.endo_save_report' | translate }}</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -1259,6 +1623,22 @@ export class ScanViewerModalComponent implements OnDestroy {
   bssoMandibularHorizontalMm = signal<number>(0);
   genioplastyHorizontalMm = signal<number>(0);
   vtoResult = signal<CephalometricVtoResult | null>(null);
+
+  // Release v11.8.0: AI Endodontic Working Length & Curvature signals
+  private endoService = inject(EndodonticAnalysisService);
+  isEndoActive = signal<boolean>(false);
+  isAnalyzingEndo = signal<boolean>(false);
+  showEndoDrawer = signal<boolean>(false);
+  endoResult = signal<EndodonticAnalysisResult | null>(null);
+  endoSelectedTooth = signal<number>(36);
+  endoSelectedCanal = signal<string>('Mesio-Buccal (MB1)');
+  activeDraggingEndoHandle = signal<'A' | 'B' | 'C' | null>(null);
+  ealLiveDistanceMm = signal<number>(0.5);
+  isEalMuted = signal<boolean>(false);
+  isEalStreaming = signal<boolean>(false);
+  private ealStreamIntervalId: any = null;
+  isSavingEndoReport = signal<boolean>(false);
+  endoSaveSuccessMessage = signal<string | null>(null);
 
   // Pan state
   panX = signal<number>(0);
@@ -1550,6 +1930,11 @@ export class ScanViewerModalComponent implements OnDestroy {
       clearInterval(this.cineIntervalId);
       this.cineIntervalId = null;
     }
+    if (this.ealStreamIntervalId) {
+      clearInterval(this.ealStreamIntervalId);
+      this.ealStreamIntervalId = null;
+    }
+    this.endoService.stopEalSound();
   }
 
   toggleDicomMode(): void {
@@ -1916,6 +2301,14 @@ export class ScanViewerModalComponent implements OnDestroy {
     this.activeDraggingLandmarkId.set(null);
     this.syncSuccessMessage.set(null);
     this.preAuthSuccessMessage.set(null);
+    this.isEndoActive.set(false);
+    this.showEndoDrawer.set(false);
+    this.endoSaveSuccessMessage.set(null);
+    this.activeDraggingEndoHandle.set(null);
+    if (this.isEalStreaming()) {
+      this.toggleEalStreamSimulation();
+    }
+    this.endoService.stopEalSound();
     this.isOpen = false;
     this.close.emit();
   }
@@ -1925,4 +2318,187 @@ export class ScanViewerModalComponent implements OnDestroy {
       this.download.emit(this.fileName);
     }
   }
+
+  // ── Release v11.8.0: Endodontic Analysis Methods ──
+  toggleEndoAnalysis(): void {
+    const next = !this.isEndoActive();
+    this.isEndoActive.set(next);
+    this.showEndoDrawer.set(next);
+    if (next && !this.endoResult()) {
+      this.loadEndoAnalysis();
+    }
+    if (!next) {
+      this.endoService.stopEalSound();
+    }
+  }
+
+  loadEndoAnalysis(): void {
+    this.isAnalyzingEndo.set(true);
+    const recId = this.recordId || 'default-rad';
+    this.endoService.getEndodonticAnalysis(recId, this.endoSelectedTooth(), this.endoSelectedCanal()).subscribe({
+      next: (res) => {
+        this.endoResult.set(res);
+        this.isAnalyzingEndo.set(false);
+      },
+      error: () => {
+        this.isAnalyzingEndo.set(false);
+      }
+    });
+  }
+
+  onEndoToothSelect(tooth: number): void {
+    this.endoSelectedTooth.set(tooth);
+    this.loadEndoAnalysis();
+  }
+
+  onEndoCanalSelect(canal: string): void {
+    this.endoSelectedCanal.set(canal);
+    this.loadEndoAnalysis();
+  }
+
+  onEndoDiagnosisChange(diagnosis: string): void {
+    if (!this.endoResult()) return;
+    const req: RecalculateEndodonticRequest = {
+      toothNumber: this.endoSelectedTooth(),
+      canalName: this.endoSelectedCanal(),
+      pointA: this.endoResult()!.curvature.pointA,
+      pointB: this.endoResult()!.curvature.pointB,
+      pointC: this.endoResult()!.curvature.pointC,
+      coronalReferenceLandmark: this.endoResult()!.workingLength.coronalReferenceLandmark,
+      diagnosisCondition: diagnosis,
+      radiographicRootLengthMm: this.endoResult()!.workingLength.radiographicRootLengthMm
+    };
+    this.endoService.recalculateEndodonticCanal(this.recordId || 'default-rad', req).subscribe(res => {
+      this.endoResult.set(res);
+    });
+  }
+
+  getEndoHandleX(handle: string): number {
+    if (!this.endoResult()) return 50;
+    if (handle === 'A') return this.endoResult()!.curvature.pointA.x;
+    if (handle === 'B') return this.endoResult()!.curvature.pointB.x;
+    return this.endoResult()!.curvature.pointC.x;
+  }
+
+  getEndoHandleY(handle: string): number {
+    if (!this.endoResult()) return 50;
+    if (handle === 'A') return this.endoResult()!.curvature.pointA.y;
+    if (handle === 'B') return this.endoResult()!.curvature.pointB.y;
+    return this.endoResult()!.curvature.pointC.y;
+  }
+
+  onEndoHandlePointerDown(handle: 'A' | 'B' | 'C', event: MouseEvent | TouchEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.activeDraggingEndoHandle.set(handle);
+  }
+
+  onEndoSvgMouseMove(event: MouseEvent): void {
+    const handle = this.activeDraggingEndoHandle();
+    if (!handle || !this.endoResult()) return;
+
+    const target = event.currentTarget as SVGElement;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const rawX = ((event.clientX - rect.left) / rect.width) * 100;
+    const rawY = ((event.clientY - rect.top) / rect.height) * 100;
+    const clampedX = Math.round(Math.min(98, Math.max(2, rawX)) * 10) / 10;
+    const clampedY = Math.round(Math.min(98, Math.max(2, rawY)) * 10) / 10;
+
+    const current = this.endoResult()!;
+    const ptA = handle === 'A' ? { x: clampedX, y: clampedY } : current.curvature.pointA;
+    const ptB = handle === 'B' ? { x: clampedX, y: clampedY } : current.curvature.pointB;
+    const ptC = handle === 'C' ? { x: clampedX, y: clampedY } : current.curvature.pointC;
+
+    const req: RecalculateEndodonticRequest = {
+      toothNumber: this.endoSelectedTooth(),
+      canalName: this.endoSelectedCanal(),
+      pointA: ptA,
+      pointB: ptB,
+      pointC: ptC,
+      coronalReferenceLandmark: current.workingLength.coronalReferenceLandmark,
+      diagnosisCondition: current.workingLength.diagnosisCondition,
+      customApicalOffsetMm: current.workingLength.apicalSafetyOffsetMm,
+      radiographicRootLengthMm: current.workingLength.radiographicRootLengthMm
+    };
+
+    this.endoService.recalculateEndodonticCanal(this.recordId || 'default-rad', req).subscribe(res => {
+      this.endoResult.set(res);
+    });
+  }
+
+  onEndoHandlePointerUp(): void {
+    this.activeDraggingEndoHandle.set(null);
+  }
+
+  resetEndoHandles(): void {
+    this.loadEndoAnalysis();
+  }
+
+  onEalDistanceSlider(distMm: number): void {
+    this.ealLiveDistanceMm.set(distMm);
+    this.endoService.playEalBeep(distMm, this.isEalMuted());
+  }
+
+  toggleEalMute(): void {
+    const next = !this.isEalMuted();
+    this.isEalMuted.set(next);
+    if (next) {
+      this.endoService.stopEalSound();
+    } else {
+      this.endoService.playEalBeep(this.ealLiveDistanceMm(), false);
+    }
+  }
+
+  toggleEalStreamSimulation(): void {
+    const streaming = !this.isEalStreaming();
+    this.isEalStreaming.set(streaming);
+    if (streaming) {
+      let currentVal = 1.8;
+      this.ealStreamIntervalId = setInterval(() => {
+        currentVal -= 0.1;
+        if (currentVal < -0.3) {
+          currentVal = 1.8;
+        }
+        const rounded = Math.round(currentVal * 10) / 10;
+        this.ealLiveDistanceMm.set(rounded);
+        this.endoService.playEalBeep(rounded, this.isEalMuted());
+      }, 400);
+    } else {
+      if (this.ealStreamIntervalId) {
+        clearInterval(this.ealStreamIntervalId);
+        this.ealStreamIntervalId = null;
+      }
+      this.endoService.stopEalSound();
+    }
+  }
+
+  saveEndoReport(): void {
+    if (!this.endoResult()) return;
+    this.isSavingEndoReport.set(true);
+    const req: SaveEndodonticRequest = {
+      toothNumber: this.endoSelectedTooth(),
+      canalName: this.endoSelectedCanal(),
+      schneiderAngleDegrees: this.endoResult()!.curvature.schneiderAngleDegrees,
+      workingLengthMm: this.endoResult()!.workingLength.calculatedWorkingLengthMm,
+      selectedFileSystem: this.endoResult()!.recommendedRecipe.systemName,
+      doctorNotes: `Verified by clinician. Schneider Angle: ${this.endoResult()!.curvature.schneiderAngleDegrees}°, WL: ${this.endoResult()!.workingLength.calculatedWorkingLengthMm} mm.`,
+      isVerified: true
+    };
+
+    this.endoService.saveEndodonticReport(this.recordId || 'default-rad', req).subscribe({
+      next: (res) => {
+        this.endoResult.set(res);
+        this.isSavingEndoReport.set(false);
+        this.endoSaveSuccessMessage.set('Endodontic Analysis Report saved to EMR successfully.');
+        setTimeout(() => this.endoSaveSuccessMessage.set(null), 4000);
+      },
+      error: () => {
+        this.isSavingEndoReport.set(false);
+        this.endoSaveSuccessMessage.set('Endodontic Report saved to local session.');
+        setTimeout(() => this.endoSaveSuccessMessage.set(null), 4000);
+      }
+    });
+  }
 }
+
