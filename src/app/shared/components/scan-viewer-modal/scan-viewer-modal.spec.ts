@@ -4,6 +4,7 @@ import { LanguageService } from '../../../core/i18n/language.service';
 import { RadiologyService, AiRadiologyAnalysisResult } from '../../../features/radiology/services/radiology.service';
 import { InsuranceService } from '../../../features/billing/services/insurance.service';
 import { CephalometricAnalysisService } from '../../../features/radiology/services/cephalometric-analysis.service';
+import { EndodonticAnalysisService, EndodonticAnalysisResult } from '../../../features/radiology/services/endodontic-analysis.service';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 
@@ -193,6 +194,59 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
     saveReport: jasmine.createSpy('saveReport').and.returnValue(of({ success: true }))
   };
 
+  const mockEndoAnalysis: EndodonticAnalysisResult = {
+    recordId: 'rec-1',
+    toothNumber: 46,
+    analysisTimestampUtc: new Date().toISOString(),
+    curvature: {
+      canalName: 'Mesiobuccal (MB1)',
+      toothNumber: 46,
+      pointA: { x: 50, y: 20 },
+      pointB: { x: 50, y: 60 },
+      pointC: { x: 65, y: 90 },
+      schneiderAngleDegrees: 26.5,
+      radiusOfCurvatureMm: 7.2,
+      curvatureClassification: 'Moderate',
+      curvatureClassificationAr: 'انحناء متوسط',
+      cyclicFatigueRiskLevel: 'Medium',
+      recommendation: 'Use flexible CM-Wire NiTi with crown-down protocol.',
+      recommendationAr: 'استخدم مبرد مرن بحركة تاجية-ذروية.'
+    },
+    workingLength: {
+      coronalReferenceLandmark: 'Mesiobuccal Cusp Tip',
+      radiographicRootLengthMm: 21.0,
+      diagnosisCondition: 'VitalPulp',
+      apicalSafetyOffsetMm: 0.5,
+      calculatedWorkingLengthMm: 20.5,
+      confirmedByApexLocator: false,
+      apexLocatorReadingMm: 0,
+      safetyStatus: 'OptimalWorkingLength',
+      safetyStatusAr: 'طول العمل مثالي'
+    },
+    recommendedRecipe: {
+      systemName: 'ProTaper Ultimate',
+      systemManufacturer: 'Dentsply Sirona',
+      recommendedForClassification: 'Moderate',
+      recommendedSpeedRangeRpm: '400 - 500 RPM',
+      recommendedTorqueRangeNcm: '4.0 - 5.2 Ncm',
+      cyclicFatigueWarning: 'Single patient use recommended for severe curvatures.',
+      fileSequence: [
+        { stepOrder: 1, fileName: 'Slider', isoTipSize: 16, taper: 0.02, speedRpm: 400, torqueNcm: 4.0, kinematicMotion: 'Continuous Rotation', clinicalInstructions: 'Establish glide path' }
+      ]
+    },
+    alternativeRecipes: [],
+    clinicalNotes: 'Test endodontic analysis notes',
+    isVerifiedByDoctor: false
+  };
+
+  const mockEndoService = {
+    getEndodonticAnalysis: jasmine.createSpy('getEndodonticAnalysis').and.returnValue(of(mockEndoAnalysis)),
+    recalculateEndodonticCanal: jasmine.createSpy('recalculateEndodonticCanal').and.returnValue(of(mockEndoAnalysis)),
+    saveEndodonticReport: jasmine.createSpy('saveEndodonticReport').and.returnValue(of(mockEndoAnalysis)),
+    playEalBeep: jasmine.createSpy('playEalBeep'),
+    stopEalSound: jasmine.createSpy('stopEalSound')
+  };
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ScanViewerModalComponent],
@@ -215,6 +269,10 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
         {
           provide: CephalometricAnalysisService,
           useValue: mockCephService
+        },
+        {
+          provide: EndodonticAnalysisService,
+          useValue: mockEndoService
         }
       ]
     });
@@ -660,6 +718,94 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       expect(component.leFortIMaxillaryHorizontalMm()).toBe(0);
       expect(component.bssoMandibularHorizontalMm()).toBe(0);
       expect(component.genioplastyHorizontalMm()).toBe(0);
+    });
+  });
+
+  describe('AI Automated Endodontic Working Length & Curvature Locator (Release v11.8.0 / BR-ENDO-01..04)', () => {
+    it('should initialize endodontic mode as inactive', () => {
+      expect(component.isEndoActive()).toBeFalse();
+      expect(component.showEndoDrawer()).toBeFalse();
+    });
+
+    it('should toggle endodontic mode and request analysis from service (BR-ENDO-01)', () => {
+      component.toggleEndoAnalysis();
+      expect(component.isEndoActive()).toBeTrue();
+      expect(component.showEndoDrawer()).toBeTrue();
+      expect(mockEndoService.getEndodonticAnalysis).toHaveBeenCalled();
+      expect(component.endoResult()).toEqual(mockEndoAnalysis);
+    });
+
+    it('should switch selected tooth and canal and reload analysis', () => {
+      component.toggleEndoAnalysis();
+      mockEndoService.getEndodonticAnalysis.calls.reset();
+
+      component.onEndoToothSelect(36);
+      expect(component.endoSelectedTooth()).toBe(36);
+      expect(mockEndoService.getEndodonticAnalysis).toHaveBeenCalled();
+
+      component.onEndoCanalSelect('Distal');
+      expect(component.endoSelectedCanal()).toBe('Distal');
+      expect(mockEndoService.getEndodonticAnalysis).toHaveBeenCalled();
+    });
+
+    it('should calculate working length with safety offset on diagnosis change (BR-ENDO-02)', () => {
+      component.toggleEndoAnalysis();
+      component.onEndoDiagnosisChange('NecroticPulpLesion');
+      expect(mockEndoService.recalculateEndodonticCanal).toHaveBeenCalled();
+    });
+
+    it('should handle handle pointer drag events and recalculate curvature', () => {
+      component.toggleEndoAnalysis();
+      const mockEvent = {
+        stopPropagation: jasmine.createSpy('stopPropagation'),
+        preventDefault: jasmine.createSpy('preventDefault')
+      } as unknown as MouseEvent;
+
+      component.onEndoHandlePointerDown('C', mockEvent);
+      expect(component.activeDraggingEndoHandle()).toBe('C');
+
+      const mockSvg = {
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 200 })
+      };
+      const moveEvent = {
+        currentTarget: mockSvg,
+        clientX: 100,
+        clientY: 150
+      } as unknown as MouseEvent;
+
+      component.onEndoSvgMouseMove(moveEvent);
+      expect(mockEndoService.recalculateEndodonticCanal).toHaveBeenCalled();
+
+      component.onEndoHandlePointerUp();
+      expect(component.activeDraggingEndoHandle()).toBeNull();
+    });
+
+    it('should simulate Electronic Apex Locator and trigger acoustic tones (BR-ENDO-03)', () => {
+      component.toggleEndoAnalysis();
+      component.onEalDistanceSlider(0.5);
+      expect(component.ealLiveDistanceMm()).toBe(0.5);
+      expect(mockEndoService.playEalBeep).toHaveBeenCalledWith(0.5, false);
+
+      component.toggleEalMute();
+      expect(component.isEalMuted()).toBeTrue();
+      expect(mockEndoService.stopEalSound).toHaveBeenCalled();
+    });
+
+    it('should save endodontic analysis report to EMR (BR-ENDO-04)', () => {
+      component.toggleEndoAnalysis();
+      component.saveEndoReport();
+      expect(mockEndoService.saveEndodonticReport).toHaveBeenCalled();
+      expect(component.endoSaveSuccessMessage()).toContain('Endodontic Analysis Report saved');
+    });
+
+    it('should clean up endodontic audio on destroy and closing', () => {
+      component.toggleEndoAnalysis();
+      expect(component.isEndoActive()).toBeTrue();
+
+      component.onClose();
+      expect(component.isEndoActive()).toBeFalse();
+      expect(component.showEndoDrawer()).toBeFalse();
+      expect(mockEndoService.stopEalSound).toHaveBeenCalled();
     });
   });
 });
