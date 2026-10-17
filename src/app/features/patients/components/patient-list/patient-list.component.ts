@@ -40,6 +40,7 @@ export class PatientListComponent implements OnInit {
   searchQuery = signal('');
   selectedGender = signal<string>('all');
   isModalOpen = signal(false);
+  viewMode = signal<'grid' | 'table'>('grid');
 
   filteredPatients = computed(() => {
     let result = this.patients();

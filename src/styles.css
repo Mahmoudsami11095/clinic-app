@@ -177,3 +177,16 @@ body.barcode-scanner-active .scanner-ui-overlay * {
   visibility: visible;
 }
 
+/* =========================================================
+   Global Scrollbar Utilities (Clean Horizontal Pill Scrollers)
+   ========================================================= */
+.no-scrollbar::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

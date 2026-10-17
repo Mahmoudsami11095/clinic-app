@@ -15,16 +15,16 @@ import { ToastrService } from 'ngx-toastr';
   template: `
     <div class="space-y-6 animate-fade-in p-2 sm:p-4">
       <!-- Top Header & Live WebSocket Sync Banner -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
         <div>
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg shadow-inner">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg shadow-inner">
               <i class="pi pi-th-large"></i>
             </div>
             <div>
-              <h2 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+              <h2 class="text-xl font-bold text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
                 <span>{{ 'chairs.title' | translate }}</span>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs">
                   <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -32,7 +32,7 @@ import { ToastrService } from 'ngx-toastr';
                   <span>{{ 'chairs.live_sync' | translate }}</span>
                 </span>
               </h2>
-              <p class="text-xs text-slate-500 mt-0.5">{{ 'chairs.subtitle' | translate }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ 'chairs.subtitle' | translate }}</p>
             </div>
           </div>
         </div>
@@ -43,7 +43,7 @@ import { ToastrService } from 'ngx-toastr';
             type="button"
             (click)="refreshBoard()"
             [disabled]="chairService.loading()"
-            class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200/70 transition-colors flex items-center gap-2 cursor-pointer border-none"
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 cursor-pointer border-none"
           >
             <i class="pi pi-refresh" [class.animate-spin]="chairService.loading()"></i>
             <span>{{ 'common.refresh' | translate }}</span>
@@ -57,12 +57,12 @@ import { ToastrService } from 'ngx-toastr';
         <div 
           (click)="selectedFilter.set('all')"
           [class.ring-2]="selectedFilter() === 'all'"
-          class="bg-white border border-slate-200/70 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-indigo-500"
+          class="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-indigo-500"
         >
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{{ 'chairs.total_chairs' | translate }}</span>
+          <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">{{ 'chairs.total_chairs' | translate }}</span>
           <div class="flex items-baseline gap-2 mt-1">
-            <span class="text-2xl font-black text-slate-800">{{ chairService.totalCount() }}</span>
-            <span class="text-xs text-slate-400 font-medium">Rooms</span>
+            <span class="text-2xl font-black text-slate-800 dark:text-white">{{ chairService.totalCount() }}</span>
+            <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Rooms</span>
           </div>
         </div>
 
@@ -70,15 +70,15 @@ import { ToastrService } from 'ngx-toastr';
         <div 
           (click)="selectedFilter.set('available')"
           [class.ring-2]="selectedFilter() === 'available'"
-          class="bg-emerald-50/50 border border-emerald-200/70 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-emerald-500"
+          class="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/40 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-emerald-500"
         >
-          <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block flex items-center gap-1.5">
+          <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block flex items-center gap-1.5">
             <i class="pi pi-check-circle text-xs"></i>
             {{ 'chairs.status_available' | translate }}
           </span>
           <div class="flex items-baseline gap-2 mt-1">
-            <span class="text-2xl font-black text-emerald-700">{{ chairService.availableCount() }}</span>
-            <span class="text-xs text-emerald-600/80 font-medium">Ready</span>
+            <span class="text-2xl font-black text-emerald-700 dark:text-emerald-300">{{ chairService.availableCount() }}</span>
+            <span class="text-xs text-emerald-600/80 dark:text-emerald-400/80 font-medium">Ready</span>
           </div>
         </div>
 
@@ -86,15 +86,15 @@ import { ToastrService } from 'ngx-toastr';
         <div 
           (click)="selectedFilter.set('occupied')"
           [class.ring-2]="selectedFilter() === 'occupied'"
-          class="bg-blue-50/50 border border-blue-200/70 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-blue-500"
+          class="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-800/40 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-blue-500"
         >
-          <span class="text-[11px] font-bold text-blue-600 uppercase tracking-wider block flex items-center gap-1.5">
+          <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block flex items-center gap-1.5">
             <i class="pi pi-user text-xs"></i>
             {{ 'chairs.status_occupied' | translate }}
           </span>
           <div class="flex items-baseline gap-2 mt-1">
-            <span class="text-2xl font-black text-blue-700">{{ chairService.occupiedCount() }}</span>
-            <span class="text-xs text-blue-600/80 font-medium">In Treatment</span>
+            <span class="text-2xl font-black text-blue-700 dark:text-blue-300">{{ chairService.occupiedCount() }}</span>
+            <span class="text-xs text-blue-600/80 dark:text-blue-400/80 font-medium">In Treatment</span>
           </div>
         </div>
 
@@ -102,15 +102,15 @@ import { ToastrService } from 'ngx-toastr';
         <div 
           (click)="selectedFilter.set('cleaning')"
           [class.ring-2]="selectedFilter() === 'cleaning'"
-          class="bg-amber-50/50 border border-amber-200/70 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-amber-500"
+          class="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-amber-500"
         >
-          <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider block flex items-center gap-1.5">
+          <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block flex items-center gap-1.5">
             <i class="pi pi-shield text-xs"></i>
             {{ 'chairs.status_cleaning' | translate }}
           </span>
           <div class="flex items-baseline gap-2 mt-1">
-            <span class="text-2xl font-black text-amber-700">{{ chairService.cleaningCount() }}</span>
-            <span class="text-xs text-amber-600/80 font-medium">Sterilizing</span>
+            <span class="text-2xl font-black text-amber-700 dark:text-amber-300">{{ chairService.cleaningCount() }}</span>
+            <span class="text-xs text-amber-600/80 dark:text-amber-400/80 font-medium">Sterilizing</span>
           </div>
         </div>
 
@@ -118,15 +118,15 @@ import { ToastrService } from 'ngx-toastr';
         <div 
           (click)="selectedFilter.set('maintenance')"
           [class.ring-2]="selectedFilter() === 'maintenance'"
-          class="bg-rose-50/40 border border-rose-200/70 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-rose-500 col-span-2 sm:col-span-1"
+          class="bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-800/40 rounded-xl p-4 shadow-xs cursor-pointer hover:shadow-sm transition-all ring-rose-500 col-span-2 sm:col-span-1"
         >
-          <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider block flex items-center gap-1.5">
+          <span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block flex items-center gap-1.5">
             <i class="pi pi-wrench text-xs"></i>
             {{ 'chairs.status_maintenance' | translate }}
           </span>
           <div class="flex items-baseline gap-2 mt-1">
-            <span class="text-2xl font-black text-rose-700">{{ chairService.maintenanceCount() }}</span>
-            <span class="text-xs text-rose-600/80 font-medium">Offline</span>
+            <span class="text-2xl font-black text-rose-700 dark:text-rose-300">{{ chairService.maintenanceCount() }}</span>
+            <span class="text-xs text-rose-600/80 dark:text-rose-400/80 font-medium">Offline</span>
           </div>
         </div>
       </div>
@@ -134,13 +134,13 @@ import { ToastrService } from 'ngx-toastr';
       <!-- Operatories Live Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         @for (chair of filteredChairs(); track chair.id) {
-          <div class="bg-white border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+          <div class="bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
                [ngClass]="getCardBorderClass(chair.status)">
             
             <!-- Card Header: Room Number, Title & Status Badge -->
             <div>
               <div class="flex items-center justify-between gap-2 mb-3">
-                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200/70">
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700">
                   Room {{ chair.roomNumber }}
                 </span>
                 
@@ -151,33 +151,33 @@ import { ToastrService } from 'ngx-toastr';
                 </span>
               </div>
 
-              <h3 class="text-base font-bold text-slate-800 leading-snug">{{ chair.chairName }}</h3>
+              <h3 class="text-base font-bold text-slate-800 dark:text-white leading-snug">{{ chair.chairName }}</h3>
               
               <!-- Content by Status -->
-              <div class="mt-4 pt-3 border-t border-slate-100 min-h-[90px]">
+              <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 min-h-[90px]">
                 <!-- If Occupied -->
                 @if (chair.status === 'occupied') {
-                  <div class="space-y-1.5 text-xs text-slate-700 animate-fade-in">
+                  <div class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 animate-fade-in">
                     <div class="flex items-center gap-2">
-                      <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                      <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
                         {{ chair.currentPatientName?.[0] || 'P' }}
                       </div>
-                      <span class="font-bold text-slate-800 truncate">{{ chair.currentPatientName }}</span>
+                      <span class="font-bold text-slate-800 dark:text-slate-100 truncate">{{ chair.currentPatientName }}</span>
                     </div>
 
-                    <p class="text-slate-500 flex items-center gap-1.5 truncate">
+                    <p class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
                       <i class="pi pi-briefcase text-[10px] text-slate-400"></i>
                       <span>{{ chair.procedureName || 'General Treatment' }}</span>
                     </p>
 
                     @if (chair.currentDoctorName) {
-                      <p class="text-slate-500 flex items-center gap-1.5 truncate">
+                      <p class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
                         <i class="pi pi-user text-[10px] text-slate-400"></i>
                         <span>{{ chair.currentDoctorName }}</span>
                       </p>
                     }
 
-                    <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-50/80 px-2 py-0.5 rounded-md mt-1">
+                    <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 px-2 py-0.5 rounded-md mt-1">
                       <i class="pi pi-clock text-[10px]"></i>
                       <span>{{ getElapsedTime(chair.occupancyStartedAt) }} in chair</span>
                     </div>
@@ -186,12 +186,12 @@ import { ToastrService } from 'ngx-toastr';
 
                 <!-- If Cleaning / Sterilizing -->
                 @if (chair.status === 'cleaning') {
-                  <div class="space-y-2 text-xs text-slate-700 text-center py-2 animate-fade-in">
-                    <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 mx-auto flex items-center justify-center animate-pulse">
+                  <div class="space-y-2 text-xs text-slate-700 dark:text-slate-300 text-center py-2 animate-fade-in">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 mx-auto flex items-center justify-center animate-pulse">
                       <i class="pi pi-shield text-sm"></i>
                     </div>
-                    <p class="font-bold text-amber-800">Sterilization in Progress</p>
-                    <span class="inline-block text-[11px] text-amber-600 font-medium">
+                    <p class="font-bold text-amber-800 dark:text-amber-300">Sterilization in Progress</p>
+                    <span class="inline-block text-[11px] text-amber-600 dark:text-amber-400 font-medium">
                       {{ getElapsedTime(chair.cleaningStartedAt) }} elapsed
                     </span>
                   </div>
@@ -199,24 +199,24 @@ import { ToastrService } from 'ngx-toastr';
 
                 <!-- If Available / Ready -->
                 @if (chair.status === 'available') {
-                  <div class="space-y-2 text-xs text-slate-700 text-center py-2 animate-fade-in">
-                    <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 mx-auto flex items-center justify-center">
+                  <div class="space-y-2 text-xs text-slate-700 dark:text-slate-300 text-center py-2 animate-fade-in">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 mx-auto flex items-center justify-center">
                       <i class="pi pi-check text-sm"></i>
                     </div>
-                    <p class="font-bold text-emerald-700">Operatory Sanitized & Ready</p>
-                    <p class="text-[11px] text-slate-400">Next patient may be seated</p>
+                    <p class="font-bold text-emerald-700 dark:text-emerald-400">Operatory Sanitized & Ready</p>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500">Next patient may be seated</p>
                   </div>
                 }
 
                 <!-- If Maintenance -->
                 @if (chair.status === 'maintenance') {
-                  <div class="space-y-2 text-xs text-slate-700 text-center py-2 animate-fade-in">
-                    <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-700 mx-auto flex items-center justify-center">
+                  <div class="space-y-2 text-xs text-slate-700 dark:text-slate-300 text-center py-2 animate-fade-in">
+                    <div class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 mx-auto flex items-center justify-center">
                       <i class="pi pi-wrench text-sm"></i>
                     </div>
-                    <p class="font-bold text-rose-700">Under Maintenance</p>
+                    <p class="font-bold text-rose-700 dark:text-rose-400">Under Maintenance</p>
                     @if (chair.notes) {
-                      <p class="text-[11px] text-slate-500 italic">"{{ chair.notes }}"</p>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 italic">"{{ chair.notes }}"</p>
                     }
                   </div>
                 }
@@ -224,7 +224,7 @@ import { ToastrService } from 'ngx-toastr';
             </div>
 
             <!-- Card Bottom Action Bar -->
-            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
               @if (chair.status === 'available') {
                 <button
                   type="button"
@@ -262,7 +262,7 @@ import { ToastrService } from 'ngx-toastr';
                 <button
                   type="button"
                   (click)="restoreService(chair)"
-                  class="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border-none"
+                  class="flex-1 bg-slate-700 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border-none"
                 >
                   <i class="pi pi-check-circle text-[10px]"></i>
                   <span>{{ 'chairs.action_return_to_service' | translate }}</span>
@@ -274,7 +274,7 @@ import { ToastrService } from 'ngx-toastr';
                 <select
                   [value]="chair.status"
                   (change)="onQuickStatusChange(chair, $event)"
-                  class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+                  class="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-2 text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
                   title="Override Status"
                 >
                   <option value="available">Ready</option>
@@ -290,16 +290,16 @@ import { ToastrService } from 'ngx-toastr';
 
       <!-- Assign Patient Modal Dialog -->
       @if (isAssignModalOpen() && selectedChair(); as chair) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in"
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
              role="dialog" aria-modal="true" aria-label="Assign Patient to Operatory">
-          <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200/80 overflow-hidden transform transition-all">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden transform transition-all">
             <!-- Modal Header -->
-            <div class="px-5 py-4 bg-slate-50/80 border-b border-slate-200/70 flex items-center justify-between">
+            <div class="px-5 py-4 bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/70 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <h3 class="text-sm font-bold text-slate-800">Seat Patient in Room {{ chair.roomNumber }}</h3>
-                <p class="text-[11px] text-slate-500">{{ chair.chairName }}</p>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-white">Seat Patient in Room {{ chair.roomNumber }}</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ chair.chairName }}</p>
               </div>
-              <button type="button" (click)="closeAssignModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none">
+              <button type="button" (click)="closeAssignModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer bg-transparent border-none">
                 <i class="pi pi-times text-xs"></i>
               </button>
             </div>
@@ -307,58 +307,58 @@ import { ToastrService } from 'ngx-toastr';
             <!-- Form Body -->
             <form (ngSubmit)="submitAssignment()" class="p-5 space-y-4 text-start">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Patient Name *</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Patient Name *</label>
                 <input
                   type="text"
                   [(ngModel)]="assignForm.patientName"
                   name="patientName"
                   required
                   placeholder="e.g. Mona Ahmed"
-                  class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  class="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Attending Clinician *</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Attending Clinician *</label>
                 <input
                   type="text"
                   [(ngModel)]="assignForm.doctorName"
                   name="doctorName"
                   required
                   placeholder="e.g. Dr. Mahmoud Sami"
-                  class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  class="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Procedure Name *</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Procedure Name *</label>
                 <input
                   type="text"
                   [(ngModel)]="assignForm.procedureName"
                   name="procedureName"
                   required
                   placeholder="e.g. Composite Restoration (Tooth #16)"
-                  class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  class="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Clinical Notes (Optional)</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Clinical Notes (Optional)</label>
                 <textarea
                   [(ngModel)]="assignForm.notes"
                   name="notes"
                   rows="2"
                   placeholder="Special instructions or precautions..."
-                  class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  class="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 ></textarea>
               </div>
 
               <!-- Footer Buttons -->
-              <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   (click)="closeAssignModal()"
-                  class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200/70 transition-colors cursor-pointer border-none"
+                  class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors cursor-pointer border-none"
                 >
                   {{ 'common.cancel' | translate }}
                 </button>
@@ -511,21 +511,21 @@ export class ChairStatusBoardComponent implements OnInit, OnDestroy {
 
   getStatusBadgeClass(status: ChairStatus): string {
     switch (status) {
-      case 'available': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-      case 'occupied': return 'bg-blue-100 text-blue-800 border border-blue-200';
-      case 'cleaning': return 'bg-amber-100 text-amber-800 border border-amber-200';
-      case 'maintenance': return 'bg-rose-100 text-rose-800 border border-rose-200';
-      default: return 'bg-slate-100 text-slate-700';
+      case 'available': return 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60';
+      case 'occupied': return 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60';
+      case 'cleaning': return 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60';
+      case 'maintenance': return 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60';
+      default: return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
     }
   }
 
   getCardBorderClass(status: ChairStatus): string {
     switch (status) {
-      case 'available': return 'border-emerald-200/80 hover:border-emerald-300';
-      case 'occupied': return 'border-blue-200/80 hover:border-blue-300';
-      case 'cleaning': return 'border-amber-200/80 hover:border-amber-300';
-      case 'maintenance': return 'border-rose-200/80 hover:border-rose-300';
-      default: return 'border-slate-200/80';
+      case 'available': return 'border-emerald-200/80 dark:border-emerald-800/60 hover:border-emerald-400 dark:hover:border-emerald-600';
+      case 'occupied': return 'border-blue-200/80 dark:border-blue-800/60 hover:border-blue-400 dark:hover:border-blue-600';
+      case 'cleaning': return 'border-amber-200/80 dark:border-amber-800/60 hover:border-amber-400 dark:hover:border-amber-600';
+      case 'maintenance': return 'border-rose-200/80 dark:border-rose-800/60 hover:border-rose-400 dark:hover:border-rose-600';
+      default: return 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
     }
   }
 
