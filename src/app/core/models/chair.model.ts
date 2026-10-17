@@ -1,3 +1,5 @@
+import { AssignChairDto, UpdateChairStatusDto } from '@clinic/api';
+
 export type ChairStatus = 'available' | 'occupied' | 'cleaning' | 'maintenance';
 
 export interface ClinicChair {
@@ -17,7 +19,7 @@ export interface ClinicChair {
   updatedAt?: string;
 }
 
-export interface AssignChairRequest {
+export interface AssignChairRequest extends Partial<AssignChairDto> {
   patientId?: string;
   patientName: string;
   doctorId?: string;
@@ -25,8 +27,10 @@ export interface AssignChairRequest {
   procedureName: string;
   notes?: string;
 }
+export type { AssignChairDto };
 
-export interface UpdateChairStatusRequest {
+export interface UpdateChairStatusRequest extends Partial<UpdateChairStatusDto> {
   status: ChairStatus;
   notes?: string;
 }
+export type { UpdateChairStatusDto };

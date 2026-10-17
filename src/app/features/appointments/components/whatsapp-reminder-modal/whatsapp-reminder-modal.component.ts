@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentWithDetails } from '../../models/appointment.model';
 import { Patient } from '../../../patients/models/patient.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export type ReminderLanguage = 'bilingual' | 'en' | 'ar';

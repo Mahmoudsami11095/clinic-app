@@ -40,7 +40,9 @@ export interface InsuranceClaim {
   settledAt?: string;
 }
 
-export interface CreateInsuranceClaimRequest {
+import { CreateInsuranceClaimDto, AdjudicateClaimDto } from '@clinic/api';
+
+export interface CreateInsuranceClaimRequest extends Partial<CreateInsuranceClaimDto> {
   clinicId: string;
   patientId: string;
   doctorId: string;
@@ -55,13 +57,15 @@ export interface CreateInsuranceClaimRequest {
   preAuthNotes?: string;
   claimFileUrls?: string[];
 }
+export type { CreateInsuranceClaimDto };
 
-export interface AdjudicateClaimRequest {
+export interface AdjudicateClaimRequest extends Partial<AdjudicateClaimDto> {
   status: 'Approved' | 'PartiallyApproved' | 'Rejected' | 'PreAuthorized';
   approvedAmount?: number;
   adjudicationNotes?: string;
   rejectionReason?: string;
 }
+export type { AdjudicateClaimDto };
 
 export interface InsuranceClaimsSummary {
   totalClaimsCount: number;

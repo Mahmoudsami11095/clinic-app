@@ -2,7 +2,7 @@ import { Component, input, model, output, ChangeDetectionStrategy } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdsEvaluationResponse, CdsAlert } from '../../models/cds.model';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { StatusBadgeComponent } from '@clinic/ui/status-badge/status-badge.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({

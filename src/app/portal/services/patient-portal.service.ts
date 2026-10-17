@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { PrescriptionDto, BillingRecordDto, MedicationItemDto } from '@clinic/api';
 
 export interface PatientUser {
   id: string;
@@ -22,6 +23,16 @@ export interface QueueStatus {
   message?: string;
 }
 
+export interface PortalPrescriptionDto extends Partial<PrescriptionDto> {
+  id?: string;
+  date?: string;
+  doctorName?: string;
+  isFinalized?: boolean;
+  status?: string;
+  medicationsCount?: number;
+  medications?: MedicationItemDto[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -29,13 +40,13 @@ export class PatientPortalService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/portal`;
 
-  // Angular 19 Signal Primitives for reactive portal state
+  // Angular Signal Primitives for reactive portal state
   currentUser = signal<PatientUser | null>(null);
   authToken = signal<string | null>(localStorage.getItem('portal_token'));
   queueStatus = signal<QueueStatus | null>(null);
   availableSlots = signal<string[]>([]);
-  prescriptions = signal<any[]>([]);
-  invoices = signal<any[]>([]);
+  prescriptions = signal<PortalPrescriptionDto[]>([]);
+  invoices = signal<BillingRecordDto[]>([]);
 
   constructor() {
     const savedUser = localStorage.getItem('portal_user');
@@ -89,9 +100,9 @@ export class PatientPortalService {
     );
   }
 
-  getPrescriptions(): Observable<any[]> {
+  getPrescriptions(): Observable<PortalPrescriptionDto[]> {
     const patId = this.currentUser()?.id || '';
-    return this.http.get<any[]>(`${this.apiUrl}/prescriptions?patientId=${patId}`).pipe(
+    return this.http.get<PortalPrescriptionDto[]>(`${this.apiUrl}/prescriptions?patientId=${patId}`).pipe(
       map((rx) => (rx && rx.length > 0) ? rx : [
         {
           id: 'rx-demo-101',
@@ -104,7 +115,7 @@ export class PatientPortalService {
             { name: 'Amoxicillin 500mg', dosage: '1 capsule TID', frequency: 'Every 8 hours', duration: '7 days' },
             { name: 'Ibuprofen 400mg', dosage: '1 tablet PRN', frequency: 'Every 6 hours', duration: '3 days' }
           ]
-        }
+        } as PortalPrescriptionDto
       ]),
       tap((rx) => this.prescriptions.set(rx))
     );
@@ -114,9 +125,9 @@ export class PatientPortalService {
     return this.http.get<any>(`${this.apiUrl}/prescriptions/${id}/print`);
   }
 
-  getInvoices(): Observable<any[]> {
+  getInvoices(): Observable<BillingRecordDto[]> {
     const patId = this.currentUser()?.id || '';
-    return this.http.get<any[]>(`${this.apiUrl}/invoices?patientId=${patId}`).pipe(
+    return this.http.get<BillingRecordDto[]>(`${this.apiUrl}/invoices?patientId=${patId}`).pipe(
       map((inv) => (inv && inv.length > 0) ? inv : [
         {
           id: 'inv-demo-202',
@@ -129,7 +140,7 @@ export class PatientPortalService {
           dateIssued: new Date().toISOString().substring(0, 10),
           paymentMethod: 'Credit Card (Visa)',
           description: 'Dental Checkup & Ultrasonic Scaling'
-        }
+        } as unknown as BillingRecordDto
       ]),
       tap((inv) => this.invoices.set(inv))
     );

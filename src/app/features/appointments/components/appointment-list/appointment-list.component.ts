@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AppointmentService } from '../../services/appointment.service';
 import { Appointment, AppointmentWithDetails } from '../../models/appointment.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PrescriptionService } from '../../../prescriptions/services/prescription.service';

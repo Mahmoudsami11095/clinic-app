@@ -9,7 +9,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommandPaletteComponent } from '../../components/command-palette/command-palette.component';
 import { OfflineBannerComponent } from '../../components/offline-banner/offline-banner.component';
 import { HelpCenterModalComponent } from '../../components/help-center/help-center-modal.component';
-import { InteractiveTourOverlayComponent } from '../../../shared/components/interactive-tour-overlay/interactive-tour-overlay.component';
+import { InteractiveTourOverlayComponent } from '@clinic/ui/interactive-tour-overlay/interactive-tour-overlay.component';
 import { TutorialService } from '../../services/tutorial/tutorial.service';
 import { NativePushService } from '../../services/mobile/native-push.service';
 

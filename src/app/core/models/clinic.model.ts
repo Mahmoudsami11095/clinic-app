@@ -1,4 +1,6 @@
-export interface Clinic {
+import { ClinicDto } from '@clinic/api';
+
+export interface Clinic extends Partial<ClinicDto> {
   id: string;
   name: string;
   address: string;
@@ -17,6 +19,7 @@ export interface Clinic {
   publicBookingEnabled?: boolean;
   qrPosterAssetUrl?: string;
 }
+export type { ClinicDto };
 
 export interface ClinicQrKit {
   clinicId: string;

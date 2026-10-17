@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { TutorialService } from '../../services/tutorial/tutorial.service';
 import { LanguageService } from '../../i18n/language.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import { ModalComponent } from '../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { CheatSheetCard } from '../../services/tutorial/tutorial.model';
 
 type HelpTab = 'page-guide' | 'cheat-sheets' | 'tours' | 'shortcuts';

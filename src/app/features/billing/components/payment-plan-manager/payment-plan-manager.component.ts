@@ -16,8 +16,8 @@ import {
   CreatePaymentPlanRequest,
   RecordInstallmentPaymentRequest
 } from '../../models/payment-plan.model';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
+import { StatusBadgeComponent } from '@clinic/ui/status-badge/status-badge.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({

@@ -2,7 +2,7 @@ import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TenantService } from '../../../../core/services/tenant/tenant.service';
-import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
+import { InputFieldComponent } from '@clinic/ui/input-field/input-field.component';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({

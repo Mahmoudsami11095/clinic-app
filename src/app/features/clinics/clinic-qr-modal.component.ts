@@ -2,7 +2,7 @@ import { Component, input, output, effect, signal, inject, ChangeDetectionStrate
 import { CommonModule } from '@angular/common';
 import { Clinic, ClinicQrKit } from '../../core/models/clinic.model';
 import { ClinicService } from '../../core/services/clinic.service';
-import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({

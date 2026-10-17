@@ -24,16 +24,10 @@ export interface PatientRecall {
   completedAt?: string;
 }
 
-export interface CreatePatientRecallRequest {
-  clinicId: string;
-  patientId: string;
-  doctorId: string;
-  sourceAppointmentId?: string;
-  recallType: string;
-  recallIntervalMonths: number;
-  customDueDate?: string;
-  clinicalNotes?: string;
-}
+import { CreatePatientRecallDto, DispatchRecallDto, SnoozeRecallDto } from '@clinic/api';
+
+export type CreatePatientRecallRequest = CreatePatientRecallDto;
+export type { CreatePatientRecallDto };
 
 export interface RecallSummary {
   totalDue: number;
@@ -44,12 +38,8 @@ export interface RecallSummary {
   conversionRatePercentage: number;
 }
 
-export interface DispatchRecallRequest {
-  channel: string;
-  customMessage?: string;
-}
+export type DispatchRecallRequest = DispatchRecallDto;
+export type { DispatchRecallDto };
 
-export interface SnoozeRecallRequest {
-  snoozeWeeks: number;
-  reason?: string;
-}
+export type SnoozeRecallRequest = SnoozeRecallDto;
+export type { SnoozeRecallDto };

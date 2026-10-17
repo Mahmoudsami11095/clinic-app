@@ -7,8 +7,8 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
 
-import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
-import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+import { InputFieldComponent } from '@clinic/ui/input-field/input-field.component';
+import { PhoneInputFieldComponent } from '@clinic/ui/phone-input-field/phone-input-field.component';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 

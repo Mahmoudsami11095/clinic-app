@@ -1,12 +1,15 @@
-export interface MedicationItem {
+import { PrescriptionDto, MedicationItemDto } from '@clinic/api';
+
+export interface MedicationItem extends Partial<MedicationItemDto> {
   name: string;
   dosage: string;      // e.g., "500 mg"
   frequency: string;   // e.g., "Twice daily"
   duration: string;    // e.g., "7 days"
   instructions?: string;
 }
+export type { MedicationItemDto };
 
-export interface Prescription {
+export interface Prescription extends Partial<PrescriptionDto> {
   id: string;
   appointmentId: string;
   patientId: string;
@@ -25,6 +28,7 @@ export interface Prescription {
   supersededById?: string;
   supersedeReason?: string;
 }
+export type { PrescriptionDto };
 
 export interface FinalizePrescriptionPayload {
   doctorName?: string;

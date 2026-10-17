@@ -1,10 +1,13 @@
-export interface PaymentLog {
+import { BillingRecordDto, PaymentLogDto } from '@clinic/api';
+
+export interface PaymentLog extends Partial<PaymentLogDto> {
   amount: number;
   date: string;
   paymentMethod: string;
 }
+export type { PaymentLogDto };
 
-export interface BillingRecord {
+export interface BillingRecord extends Partial<BillingRecordDto> {
   id: string;
   patientId: string;
   appointmentId?: string;
@@ -25,6 +28,7 @@ export interface BillingRecord {
   voidedAt?: string;   // BR-FIN-03: Timestamp of voiding
   payments?: PaymentLog[];
 }
+export type { BillingRecordDto };
 
 export interface BillingRecordWithDetails extends BillingRecord {
   patientName: string;

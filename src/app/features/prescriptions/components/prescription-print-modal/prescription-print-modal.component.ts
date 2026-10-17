@@ -119,7 +119,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                     <p class="text-xs text-teal-700 font-semibold">{{ appointment.type || 'Consultant Specialist' }}</p>
                     <div class="mt-3 text-xs text-slate-600">
                       <p><span class="font-semibold text-slate-700">Date:</span> {{ (prescription.date || appointment.date) | date:'mediumDate' }}</p>
-                      <p><span class="font-semibold text-slate-700">Rx Ref:</span> <span class="font-mono font-bold text-slate-800">#{{ formatId(prescription.id) }}</span></p>
+                      <p><span class="font-semibold text-slate-700">Rx Ref:</span> <span class="font-mono font-bold text-slate-800">#{{ formatId(prescription.id || '') }}</span></p>
                     </div>
                   </div>
                 </div>
@@ -274,7 +274,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                   }
                   <div class="flex justify-between">
                     <span class="text-slate-500">Rx Ref:</span>
-                    <span class="font-mono">#{{ formatId(prescription.id) }}</span>
+                    <span class="font-mono">#{{ formatId(prescription.id || '') }}</span>
                   </div>
                 </div>
 

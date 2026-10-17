@@ -5,7 +5,7 @@ import { AppointmentWithDetails } from '../../../appointments/models/appointment
 import { Prescription, MedicationItem } from '../../models/prescription.model';
 import { PrescriptionService } from '../../services/prescription.service';
 import { PrescriptionPrintModalComponent } from '../prescription-print-modal/prescription-print-modal.component';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ModalComponent } from '@clinic/ui/modal/modal.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ToastrService } from 'ngx-toastr';
@@ -935,7 +935,7 @@ export class PrescriptionFormComponent implements OnInit {
     if (this.readOnly) return;
 
     // Filter out completely blank medications
-    const validMeds = this.medications.filter(m => m.name.trim() !== '');
+    const validMeds = this.medications.filter(m => (m.name || '').trim() !== '') as any[];
     if (validMeds.length === 0) {
       this.toastr.warning(
         this.langService.translate('toast.prescription_min_med_error'),

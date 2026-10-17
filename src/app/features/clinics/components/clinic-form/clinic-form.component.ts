@@ -8,9 +8,9 @@ import { ToastrService } from 'ngx-toastr';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { splitPhoneNumber, combinePhoneNumber } from '../../../../core/utils/phone.utils';
 import { phoneValidator } from '../../../../core/validators/phone.validator';
-import { PhoneInputFieldComponent } from '../../../../shared/components/phone-input-field/phone-input-field.component';
+import { PhoneInputFieldComponent } from '@clinic/ui/phone-input-field/phone-input-field.component';
 import { GooglePlacesDirective } from '../../../../shared/directives/google-places.directive';
-import { LocationMapComponent } from '../../../../shared/components/location-map/location-map.component';
+import { LocationMapComponent } from '@clinic/ui/location-map/location-map.component';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 import { WhatsappConnectionComponent } from '../whatsapp-connection/whatsapp-connection.component';

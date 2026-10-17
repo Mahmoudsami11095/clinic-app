@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ReactiveFormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { InputFieldComponent } from '../../../../shared/components/input-field/input-field.component';
+import { InputFieldComponent } from '@clinic/ui/input-field/input-field.component';
 
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { signal } from '@angular/core';

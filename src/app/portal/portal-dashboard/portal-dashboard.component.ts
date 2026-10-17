@@ -202,7 +202,7 @@ import { PatientPortalService, QueueStatus } from '../services/patient-portal.se
                   <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-600/60 flex justify-end">
                     <button
                       type="button"
-                      (click)="openPrescriptionPrint(rx.id)"
+                      (click)="openPrescriptionPrint(rx.id || '')"
                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 transition cursor-pointer"
                     >
                       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -256,7 +256,7 @@ import { PatientPortalService, QueueStatus } from '../services/patient-portal.se
                 @for (inv of invoices(); track inv.id) {
                   <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition">
                     <td class="py-3 px-3 font-mono font-bold text-slate-900 dark:text-white">
-                      {{ inv.invoiceNumber || ('INV-' + inv.id.substring(0, 8)) }}
+                      {{ inv.invoiceNumber || ('INV-' + (inv.id || '').substring(0, 8)) }}
                     </td>
                     <td class="py-3 px-3 text-slate-600 dark:text-slate-300">
                       {{ inv.dateIssued }}
@@ -282,7 +282,7 @@ import { PatientPortalService, QueueStatus } from '../services/patient-portal.se
                     </td>
                     <td class="py-3 px-3 text-right">
                       <button
-                        (click)="openReceipt(inv.id)"
+                        (click)="openReceipt(inv.id || '')"
                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/80 transition cursor-pointer"
                       >
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -617,7 +617,7 @@ export class PortalDashboardComponent implements OnInit {
           this.selectedRxPrint.set({
             rxId: rx.id,
             qrCodeData: `https://clinic-app-ten-topaz.vercel.app/verify/rx/${rx.id}`,
-            verificationHash: `SIG-${rx.id.substring(0, 8)}`,
+            verificationHash: `SIG-${(rx.id || '').substring(0, 8)}`,
             date: rx.date,
             status: rx.status || 'Active',
             patient: {

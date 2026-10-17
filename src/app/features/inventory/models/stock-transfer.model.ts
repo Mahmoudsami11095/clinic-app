@@ -1,3 +1,10 @@
+import {
+  CreateStockTransferRequestDto,
+  ApproveStockTransferDto,
+  DispatchStockTransferDto,
+  ReceiveStockTransferDto
+} from '@clinic/api';
+
 export interface StockTransferRequisition {
   id: string;
   requisitionNumber: string;
@@ -25,7 +32,7 @@ export interface StockTransferRequisition {
   damageReason?: string;
 }
 
-export interface CreateStockTransferRequest {
+export interface CreateStockTransferRequest extends Partial<CreateStockTransferRequestDto> {
   sourceClinicId: string;
   destinationClinicId: string;
   materialId: string;
@@ -33,23 +40,13 @@ export interface CreateStockTransferRequest {
   priority?: string;
   notes?: string;
 }
+export type { CreateStockTransferRequestDto };
 
-export interface ApproveStockTransferRequest {
-  batchNumber?: string;
-  expiryDate?: string;
-  notes?: string;
-}
+export type ApproveStockTransferRequest = ApproveStockTransferDto;
+export type { ApproveStockTransferDto };
 
-export interface DispatchStockTransferRequest {
-  quantityDispatched: number;
-  batchNumber?: string;
-  expiryDate?: string;
-  notes?: string;
-}
+export type DispatchStockTransferRequest = DispatchStockTransferDto;
+export type { DispatchStockTransferDto };
 
-export interface ReceiveStockTransferRequest {
-  quantityReceived: number;
-  quantityDamaged: number;
-  damageReason?: string;
-  notes?: string;
-}
+export type ReceiveStockTransferRequest = ReceiveStockTransferDto;
+export type { ReceiveStockTransferDto };

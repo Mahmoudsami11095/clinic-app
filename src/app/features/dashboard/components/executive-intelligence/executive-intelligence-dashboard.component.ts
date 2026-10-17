@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ExecutiveAnalyticsService } from '../../services/executive-analytics.service';
 import { ExecutiveNetworkSummary, BranchBenchmark, DoctorProductivity, SupplyChainVelocity } from '../../models/executive-analytics.model';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { StatusBadgeComponent } from '@clinic/ui/status-badge/status-badge.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
