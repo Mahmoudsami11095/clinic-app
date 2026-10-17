@@ -90,6 +90,12 @@ export const routes: Routes = [
         data: { roles: ['admin', 'doctor', 'assistant'] }
       },
       {
+        path: 'periodontal-chart',
+        loadComponent: () => import('./features/dental-chart/components/periodontal-chart/periodontal-chart.component').then(m => m.PeriodontalChartComponent),
+        canActivate: [roleGuard, subscriptionGuard],
+        data: { roles: ['admin', 'doctor', 'assistant'] }
+      },
+      {
         path: 'patients',
         loadChildren: () => import('./features/patients/patient.routes').then(m => m.patientRoutes),
         canActivate: [roleGuard, subscriptionGuard],

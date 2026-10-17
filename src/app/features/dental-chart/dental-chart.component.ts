@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ThreeDentalChartComponent } from './components/three-dental-chart/three-dental-chart.component';
 import { SkeuomorphicDentalChartComponent } from './components/skeuomorphic-dental-chart/skeuomorphic-dental-chart.component';
+import { PeriodontalChartComponent } from './components/periodontal-chart/periodontal-chart.component';
 import { DentalNotationService, DentalNotationSystem } from '../../core/services/dental-notation.service';
 
 @Component({
@@ -12,7 +13,8 @@ import { DentalNotationService, DentalNotationSystem } from '../../core/services
     CommonModule, 
     TranslatePipe, 
     ThreeDentalChartComponent, 
-    SkeuomorphicDentalChartComponent
+    SkeuomorphicDentalChartComponent,
+    PeriodontalChartComponent
   ],
   templateUrl: './dental-chart.component.html',
   styleUrl: './dental-chart.component.css'
@@ -21,8 +23,8 @@ export class DentalChartComponent {
   public notationService = inject(DentalNotationService);
 
   // Read active view from local storage, defaulting to '3d'
-  activeView = signal<'3d' | 'grid'>(
-    (typeof localStorage !== 'undefined' && localStorage.getItem('preferred_dental_chart_view') as '3d' | 'grid') || '3d'
+  activeView = signal<'3d' | 'grid' | 'perio'>(
+    (typeof localStorage !== 'undefined' && localStorage.getItem('preferred_dental_chart_view') as '3d' | 'grid' | 'perio') || '3d'
   );
 
   // Patient age simulation for demo/switching charts dynamically
@@ -43,7 +45,7 @@ export class DentalChartComponent {
     });
   }
 
-  setView(view: '3d' | 'grid') {
+  setView(view: '3d' | 'grid' | 'perio') {
     this.activeView.set(view);
   }
 
