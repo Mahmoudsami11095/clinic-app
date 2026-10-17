@@ -1079,7 +1079,12 @@
     "ceph_reset": "Reset Landmarks",
     "ceph_save": "Save Ceph Report",
     "ceph_saving": "Saving Report...",
-    "ceph_doctor_notes": "Clinical Orthodontic Notes"
+    "ceph_doctor_notes": "Clinical Orthodontic Notes",
+    "ceph_vto_title": "Orthognathic Surgical VTO Simulation",
+    "ceph_vto_maxilla": "Maxillary Shift (Le Fort I)",
+    "ceph_vto_mandible": "Mandibular Shift (BSSO)",
+    "ceph_vto_chin": "Chin Shift (Genioplasty)",
+    "ceph_eline": "Rickett's Esthetic E-Line"
   },
   "postop": {
     "title": "Automated WhatsApp Post-Op Recovery & Triage",

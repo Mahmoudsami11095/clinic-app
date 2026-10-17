@@ -155,6 +155,41 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       clinicalSummary: 'Class I profile',
       clinicalSummaryAr: 'صنف أول'
     }),
+    recalculate: jasmine.createSpy('recalculate').and.returnValue(of({
+      recordId: 'rec-test',
+      patientId: 'pat-1',
+      patientName: 'Jane Doe',
+      analysisMethod: 'Steiner & Tweed Composite',
+      analysisDate: new Date().toISOString(),
+      skeletalClass: 'Class I',
+      skeletalClassAr: 'صنف أول',
+      growthPattern: 'Normodivergent',
+      growthPatternAr: 'طبيعي',
+      overallConfidence: 95.0,
+      landmarks: [],
+      measurements: [],
+      clinicalSummary: 'Class I profile',
+      clinicalSummaryAr: 'صنف أول'
+    })),
+    simulateVto: jasmine.createSpy('simulateVto').and.returnValue(of({
+      recordId: 'rec-test',
+      simulatedAtUtc: new Date().toISOString(),
+      predictedSna: 83.0,
+      predictedSnb: 80.5,
+      predictedAnb: 2.5,
+      predictedSkeletalClass: 'Class I',
+      predictedSkeletalClassAr: 'صنف أول هيكلي',
+      predictedELine: {
+        upperLipDistanceMm: -2.0,
+        lowerLipDistanceMm: -1.0,
+        upperLipStatus: 'Normal',
+        lowerLipStatus: 'Normal',
+        nasolabialAngle: 100.0
+      },
+      displacedLandmarks: [],
+      surgicalRecommendationSummary: 'Balanced surgical profile',
+      surgicalRecommendationSummaryAr: 'توازن جراحي متناسق'
+    })),
     saveReport: jasmine.createSpy('saveReport').and.returnValue(of({ success: true }))
   };
 
@@ -597,6 +632,34 @@ describe('REQ-RAD-02 / UAT-RAD-02: High-Resolution Scan & Radiograph Viewer', ()
       component.onClose();
       expect(component.isCephActive()).toBeFalse();
       expect(component.showCephDrawer()).toBeFalse();
+    });
+
+    it('should toggle surgical VTO mode and run VTO simulation (Release v11.6.0)', () => {
+      component.toggleCephTracing();
+      expect(component.isVtoActive()).toBeFalse();
+
+      component.toggleVtoMode();
+      expect(component.isVtoActive()).toBeTrue();
+      expect(mockCephService.simulateVto).toHaveBeenCalled();
+      expect(component.vtoResult()).toBeDefined();
+      expect(component.vtoResult()!.predictedSkeletalClass).toBe('Class I');
+      expect(component.vtoResult()!.predictedELine.upperLipDistanceMm).toBe(-2.0);
+    });
+
+    it('should adjust VTO parameters and recalculate displacement', () => {
+      component.toggleCephTracing();
+      component.toggleVtoMode();
+
+      component.updateVtoParameter('leFort', 2.0);
+      expect(component.leFortIMaxillaryHorizontalMm()).toBe(2.0);
+
+      component.updateVtoParameter('bsso', -3.0);
+      expect(component.bssoMandibularHorizontalMm()).toBe(-3.0);
+
+      component.resetVto();
+      expect(component.leFortIMaxillaryHorizontalMm()).toBe(0);
+      expect(component.bssoMandibularHorizontalMm()).toBe(0);
+      expect(component.genioplastyHorizontalMm()).toBe(0);
     });
   });
 });

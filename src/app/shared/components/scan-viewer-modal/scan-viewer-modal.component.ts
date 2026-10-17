@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RadiologyService, AiRadiologyAnalysisResult, AiRadiologyFinding, DicomMetadata, DicomSeries } from '../../../features/radiology/services/radiology.service';
 import { InsuranceService } from '../../../features/billing/services/insurance.service';
-import { CephalometricAnalysisService, CephPoint, CephMeasurement, CephalometricAnalysisResult } from '../../../features/radiology/services/cephalometric-analysis.service';
+import { CephalometricAnalysisService, CephPoint, CephMeasurement, CephalometricAnalysisResult, CephalometricVtoResult, CephalometricVtoRequest, RickettELine } from '../../../features/radiology/services/cephalometric-analysis.service';
 
 export interface RulerPoint {
   x: number;
@@ -535,6 +535,10 @@ export interface RulerPoint {
                         @if (getCephPt('Po') && getCephPt('Or')) {
                           <line [attr.x1]="getCephPt('Po')!.x" [attr.y1]="getCephPt('Po')!.y" [attr.x2]="getCephPt('Or')!.x" [attr.y2]="getCephPt('Or')!.y" stroke="#eab308" stroke-width="0.8" stroke-dasharray="1.5,1.5" />
                         }
+                        @if (getCephPt('Prn') && getCephPt('PogPrime')) {
+                          <!-- Rickett's Esthetic E-Line (Prn to Pog') -->
+                          <line [attr.x1]="getCephPt('Prn')!.x" [attr.y1]="getCephPt('Prn')!.y" [attr.x2]="getCephPt('PogPrime')!.x" [attr.y2]="getCephPt('PogPrime')!.y" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="2,1.5" />
+                        }
 
                         <!-- Interactive Landmark Nodes -->
                         @for (lm of cephLandmarks(); track lm.id) {
@@ -971,19 +975,120 @@ export interface RulerPoint {
 
                 <!-- Content -->
                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
-                  <!-- Skeletal Diagnostic Badges -->
-                  <div class="grid grid-cols-2 gap-2">
-                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                      <span class="text-[10px] text-slate-400 font-bold block uppercase">Skeletal Class</span>
-                      <span class="text-sm font-extrabold text-emerald-300 block mt-0.5">{{ cephSkeletalClass() }}</span>
-                      <span class="text-[10px] text-slate-400">{{ cephSkeletalClassAr() }}</span>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                      <span class="text-[10px] text-slate-400 font-bold block uppercase">Growth Vector</span>
-                      <span class="text-sm font-extrabold text-teal-300 block mt-0.5">{{ cephGrowthPattern() }}</span>
-                      <span class="text-[10px] text-slate-400">{{ cephGrowthPatternAr() }}</span>
-                    </div>
+                  <!-- Tab Switcher: Analysis vs VTO Simulation -->
+                  <div class="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800 text-xs">
+                    <button
+                      type="button"
+                      (click)="isVtoActive.set(false)"
+                      [class]="!isVtoActive() ? 'bg-emerald-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                      class="flex-1 py-1 rounded-lg transition-colors cursor-pointer text-center text-[11px]"
+                      id="ceph-tab-analysis"
+                    >
+                      {{ 'radiology.ceph_title' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="toggleVtoMode()"
+                      [class]="isVtoActive() ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
+                      class="flex-1 py-1 rounded-lg transition-colors cursor-pointer text-center text-[11px] flex items-center justify-center gap-1"
+                      id="ceph-tab-vto"
+                    >
+                      <i class="pi pi-sliders-h text-[10px]"></i>
+                      <span>Surgical VTO</span>
+                    </button>
                   </div>
+
+                  @if (!isVtoActive()) {
+                    <!-- Skeletal Diagnostic Badges -->
+                    <div class="grid grid-cols-2 gap-2">
+                      <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                        <span class="text-[10px] text-slate-400 font-bold block uppercase">Skeletal Class</span>
+                        <span class="text-sm font-extrabold text-emerald-300 block mt-0.5">{{ cephSkeletalClass() }}</span>
+                        <span class="text-[10px] text-slate-400">{{ cephSkeletalClassAr() }}</span>
+                      </div>
+                      <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                        <span class="text-[10px] text-slate-400 font-bold block uppercase">Growth Vector</span>
+                        <span class="text-sm font-extrabold text-teal-300 block mt-0.5">{{ cephGrowthPattern() }}</span>
+                        <span class="text-[10px] text-slate-400">{{ cephGrowthPatternAr() }}</span>
+                      </div>
+                    </div>
+                  } @else {
+                    <!-- VTO Controls & Surgical Prediction -->
+                    <div class="space-y-2.5" id="vto-panel">
+                      <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-500/40 text-xs space-y-2">
+                        <div class="flex items-center justify-between text-indigo-300 font-bold text-[11px]">
+                          <span>Orthognathic Surgical VTO (v11.6.0)</span>
+                          <span class="px-1.5 py-0.2 rounded bg-indigo-900/80 text-[10px] border border-indigo-700 font-mono">
+                            {{ vtoResult()?.predictedSkeletalClass || 'Simulating' }}
+                          </span>
+                        </div>
+
+                        <!-- Le Fort I Maxillary Shift -->
+                        <div class="space-y-1">
+                          <div class="flex justify-between text-[11px] text-slate-300">
+                            <span>Maxilla (Le Fort I)</span>
+                            <span class="font-mono font-bold text-amber-300">{{ leFortIMaxillaryHorizontalMm() > 0 ? '+' : '' }}{{ leFortIMaxillaryHorizontalMm() }} mm</span>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <button type="button" (click)="updateVtoParameter('leFort', -1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 font-bold text-xs cursor-pointer">-</button>
+                            <input type="range" min="-6" max="6" step="0.5" [value]="leFortIMaxillaryHorizontalMm()" (input)="leFortIMaxillaryHorizontalMm.set(+$any($event.target).value); runVtoSimulation()" class="flex-1 accent-indigo-500 h-1" />
+                            <button type="button" (click)="updateVtoParameter('leFort', 1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 font-bold text-xs cursor-pointer">+</button>
+                          </div>
+                        </div>
+
+                        <!-- BSSO Mandibular Shift -->
+                        <div class="space-y-1">
+                          <div class="flex justify-between text-[11px] text-slate-300">
+                            <span>Mandible (BSSO)</span>
+                            <span class="font-mono font-bold text-cyan-300">{{ bssoMandibularHorizontalMm() > 0 ? '+' : '' }}{{ bssoMandibularHorizontalMm() }} mm</span>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <button type="button" (click)="updateVtoParameter('bsso', -1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 font-bold text-xs cursor-pointer">-</button>
+                            <input type="range" min="-10" max="8" step="0.5" [value]="bssoMandibularHorizontalMm()" (input)="bssoMandibularHorizontalMm.set(+$any($event.target).value); runVtoSimulation()" class="flex-1 accent-indigo-500 h-1" />
+                            <button type="button" (click)="updateVtoParameter('bsso', 1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 font-bold text-xs cursor-pointer">+</button>
+                          </div>
+                        </div>
+
+                        <!-- Genioplasty Chin Shift -->
+                        <div class="space-y-1">
+                          <div class="flex justify-between text-[11px] text-slate-300">
+                            <span>Chin (Genioplasty)</span>
+                            <span class="font-mono font-bold text-emerald-300">{{ genioplastyHorizontalMm() > 0 ? '+' : '' }}{{ genioplastyHorizontalMm() }} mm</span>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <button type="button" (click)="updateVtoParameter('genio', -1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 font-bold text-xs cursor-pointer">-</button>
+                            <input type="range" min="-4" max="8" step="0.5" [value]="genioplastyHorizontalMm()" (input)="genioplastyHorizontalMm.set(+$any($event.target).value); runVtoSimulation()" class="flex-1 accent-indigo-500 h-1" />
+                            <button type="button" (click)="updateVtoParameter('genio', 1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 font-bold text-xs cursor-pointer">+</button>
+                          </div>
+                        </div>
+
+                        <div class="pt-1 flex justify-end">
+                          <button type="button" (click)="resetVto()" class="text-[10px] text-slate-400 hover:text-white underline cursor-pointer">Reset Shifts</button>
+                        </div>
+                      </div>
+
+                      <!-- VTO Result Card -->
+                      @if (vtoResult()) {
+                        <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 text-xs space-y-1.5">
+                          <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-slate-400">Predicted ANB:</span>
+                            <span class="font-bold text-indigo-300 font-mono">{{ vtoResult()!.predictedAnb }}° ({{ vtoResult()!.predictedSkeletalClass }})</span>
+                          </div>
+                          <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-slate-400">Rickett's E-Line Upper Lip:</span>
+                            <span class="font-bold font-mono text-pink-300">{{ vtoResult()!.predictedELine.upperLipDistanceMm }} mm</span>
+                          </div>
+                          <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-slate-400">Rickett's E-Line Lower Lip:</span>
+                            <span class="font-bold font-mono text-pink-300">{{ vtoResult()!.predictedELine.lowerLipDistanceMm }} mm</span>
+                          </div>
+                          <p class="text-[10px] text-slate-300 border-t border-slate-800/80 pt-1 leading-snug">
+                            {{ vtoResult()!.surgicalRecommendationSummary }}
+                          </p>
+                        </div>
+                      }
+                    </div>
+                  }
 
                   <!-- Drag Hint Card -->
                   <div class="p-2 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-[11px] text-emerald-200 flex items-start gap-2">
@@ -1146,6 +1251,14 @@ export class ScanViewerModalComponent implements OnDestroy {
   isSavingCephReport = signal<boolean>(false);
   cephSaveSuccessMessage = signal<string | null>(null);
   activeDraggingLandmarkId = signal<string | null>(null);
+
+  // Release v11.6.0: Surgical VTO Simulation signals
+  isVtoActive = signal<boolean>(false);
+  isSimulatingVto = signal<boolean>(false);
+  leFortIMaxillaryHorizontalMm = signal<number>(0);
+  bssoMandibularHorizontalMm = signal<number>(0);
+  genioplastyHorizontalMm = signal<number>(0);
+  vtoResult = signal<CephalometricVtoResult | null>(null);
 
   // Pan state
   panX = signal<number>(0);
@@ -1734,6 +1847,58 @@ export class ScanViewerModalComponent implements OnDestroy {
         setTimeout(() => this.cephSaveSuccessMessage.set(null), 4000);
       }
     });
+  }
+
+  // Release v11.6.0: Surgical VTO Methods
+  toggleVtoMode(): void {
+    const next = !this.isVtoActive();
+    this.isVtoActive.set(next);
+    if (next && !this.vtoResult()) {
+      this.runVtoSimulation();
+    }
+  }
+
+  updateVtoParameter(type: 'leFort' | 'bsso' | 'genio', delta: number): void {
+    if (type === 'leFort') {
+      this.leFortIMaxillaryHorizontalMm.update(v => Math.max(-8, Math.min(8, v + delta)));
+    } else if (type === 'bsso') {
+      this.bssoMandibularHorizontalMm.update(v => Math.max(-10, Math.min(10, v + delta)));
+    } else if (type === 'genio') {
+      this.genioplastyHorizontalMm.update(v => Math.max(-6, Math.min(10, v + delta)));
+    }
+    this.runVtoSimulation();
+  }
+
+  runVtoSimulation(): void {
+    this.isSimulatingVto.set(true);
+    const recId = this.recordId || 'default-rec';
+    const req: CephalometricVtoRequest = {
+      recordId: recId,
+      leFortIMaxillaryHorizontalMm: this.leFortIMaxillaryHorizontalMm(),
+      leFortIMaxillaryVerticalMm: 0,
+      bssoMandibularHorizontalMm: this.bssoMandibularHorizontalMm(),
+      bssoMandibularVerticalMm: 0,
+      genioplastyHorizontalMm: this.genioplastyHorizontalMm(),
+      genioplastyVerticalMm: 0,
+      baseLandmarks: this.cephLandmarks()
+    };
+
+    this.cephService.simulateVto(recId, req).subscribe({
+      next: (res) => {
+        this.vtoResult.set(res);
+        this.isSimulatingVto.set(false);
+      },
+      error: () => {
+        this.isSimulatingVto.set(false);
+      }
+    });
+  }
+
+  resetVto(): void {
+    this.leFortIMaxillaryHorizontalMm.set(0);
+    this.bssoMandibularHorizontalMm.set(0);
+    this.genioplastyHorizontalMm.set(0);
+    this.runVtoSimulation();
   }
 
   onClose(): void {
