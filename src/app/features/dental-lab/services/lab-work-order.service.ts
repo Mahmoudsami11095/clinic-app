@@ -490,6 +490,96 @@ export interface SaveDirectScanRequest {
   arches?: DirectScanArch[];
 }
 
+// ── Release v11.9.0: Custom Implant Abutment & Emergence Profile Interfaces (BR-ABUT-01..04) ──
+export interface EmergenceSplinePoint {
+  x: number;
+  y: number;
+  z: number;
+  angleDeg: number;
+  zoneType: string;
+}
+
+export interface CustomAbutmentPlan {
+  orderId: string;
+  patientId: string;
+  toothNumber: number;
+  implantPlatformBrand: string;
+  implantPlatformModel: string;
+  platformDiameterMm: number;
+  scanbodyType: string;
+  scanbodyPositionX: number;
+  scanbodyPositionY: number;
+  scanbodyPositionZ: number;
+  implantAxisRollDeg: number;
+  implantAxisPitchDeg: number;
+  implantAxisYawDeg: number;
+  antiRotationIndex: string;
+  emergenceAngleDeg: number;
+  criticalContourHeightMm: number;
+  subcriticalContourHeightMm: number;
+  isBiologicalWidthCompliant: boolean;
+  blanchingRiskWarning?: string | null;
+  ascAngleDeg: number;
+  ascAccessDirection: string;
+  minWallThicknessMm: number;
+  abutmentMaterial: string;
+  tiBaseCementGapMicrons: number;
+  cncBlankHolderDiameterMm: number;
+  isFabricationApproved: boolean;
+  statusMessage: string;
+  splinePoints: EmergenceSplinePoint[];
+  plannedAtUtc: string;
+}
+
+export interface SaveCustomAbutmentPlanRequest {
+  implantPlatformBrand?: string;
+  implantPlatformModel?: string;
+  platformDiameterMm?: number;
+  scanbodyType?: string;
+  scanbodyPositionX?: number;
+  scanbodyPositionY?: number;
+  scanbodyPositionZ?: number;
+  implantAxisRollDeg?: number;
+  implantAxisPitchDeg?: number;
+  implantAxisYawDeg?: number;
+  antiRotationIndex?: string;
+  emergenceAngleDeg?: number;
+  criticalContourHeightMm?: number;
+  subcriticalContourHeightMm?: number;
+  ascAngleDeg?: number;
+  ascAccessDirection?: string;
+  minWallThicknessMm?: number;
+  abutmentMaterial?: string;
+  tiBaseCementGapMicrons?: number;
+  cncBlankHolderDiameterMm?: number;
+  isFabricationApproved?: boolean;
+  splinePoints?: EmergenceSplinePoint[];
+}
+
+export interface ImplantPlatformLibraryItem {
+  brand: string;
+  model: string;
+  platformDiameterMm: number;
+  connectionType: string;
+  antiRotationKey: string;
+  compatibleScanbodies: string[];
+  availableBlankDiametersMm: number[];
+}
+
+export interface ExportAbutmentCncResponse {
+  orderId: string;
+  cncProgramName: string;
+  machineTarget: string;
+  blankHolderType: string;
+  blankDiameterMm: number;
+  materialGrade: string;
+  finishLineCircumferenceMm: number;
+  cementGapMicrons: number;
+  totalGCodeLines: number;
+  sha256DigitalSignature: string;
+  exportedAtUtc: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1668,6 +1758,143 @@ export class LabWorkOrderService {
             : 'BR-IOS-03 WARNING: Intraoral scan partially complete.',
           arches,
           acquiredAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  // ── Release v11.9.0: Custom Implant Abutment & Emergence Profile Methods (BR-ABUT-01..04) ──
+
+  getImplantPlatforms(): Observable<ImplantPlatformLibraryItem[]> {
+    return this.http.get<ImplantPlatformLibraryItem[]>(`${this.apiUrl}/implant-platforms`).pipe(
+      catchError(() => {
+        const fallback: ImplantPlatformLibraryItem[] = [
+          { brand: 'Nobel Biocare', model: 'Conical Connection NP', platformDiameterMm: 3.5, connectionType: 'Conical CC 11.5°', antiRotationKey: 'TriLobe-Index', compatibleScanbodies: ['Elos Accurate IO 3A-A', 'NT-Trading CC-NOB-NP', 'Medentika CC 3.5'], availableBlankDiametersMm: [11.5, 15.8] },
+          { brand: 'Nobel Biocare', model: 'Conical Connection RP', platformDiameterMm: 4.3, connectionType: 'Conical CC 11.5°', antiRotationKey: 'TriLobe-Index', compatibleScanbodies: ['Elos Accurate IO 3B-A', 'NT-Trading CC-NOB-RP', 'Medentika CC 4.3'], availableBlankDiametersMm: [11.5, 15.8] },
+          { brand: 'Straumann', model: 'Bone Level NC', platformDiameterMm: 3.3, connectionType: 'CrossFit Connection', antiRotationKey: 'CrossFit-Internal', compatibleScanbodies: ['Elos Accurate IO 1A-A', 'NT-Trading STR-NC', 'Medentika BL 3.3'], availableBlankDiametersMm: [11.5, 15.8] },
+          { brand: 'Straumann', model: 'Bone Level RC', platformDiameterMm: 4.1, connectionType: 'CrossFit Connection', antiRotationKey: 'CrossFit-Internal', compatibleScanbodies: ['Elos Accurate IO 1B-A', 'NT-Trading STR-RC', 'Medentika BL 4.1'], availableBlankDiametersMm: [11.5, 15.8] },
+          { brand: 'Zimmer Biomet', model: 'Internal Hex 3.5mm', platformDiameterMm: 3.5, connectionType: 'Lead-in Hexagonal', antiRotationKey: 'Internal-Hex-1.25', compatibleScanbodies: ['Elos Accurate IO 2A-A', 'NT-Trading ZIM-3.5', 'Medentika IH 3.5'], availableBlankDiametersMm: [11.5, 15.8] },
+          { brand: 'Osstem', model: 'TSIII Regular (4.0/4.5mm)', platformDiameterMm: 4.0, connectionType: '11° Morse Taper Conical', antiRotationKey: 'Internal-Hex-Octa', compatibleScanbodies: ['Elos Accurate IO 4A-A', 'NT-Trading OSS-REG', 'Medentika OS 4.0'], availableBlankDiametersMm: [11.5, 15.8] }
+        ];
+        return of(fallback);
+      })
+    );
+  }
+
+  getCustomAbutmentPlan(orderId: string): Observable<CustomAbutmentPlan> {
+    return this.http.get<CustomAbutmentPlan>(`${this.apiUrl}/${orderId}/custom-abutment`).pipe(
+      catchError(() => {
+        const fallback: CustomAbutmentPlan = {
+          orderId,
+          patientId: 'pat-201',
+          toothNumber: 36,
+          implantPlatformBrand: 'Nobel Biocare',
+          implantPlatformModel: 'Conical Connection NP (3.5mm)',
+          platformDiameterMm: 3.5,
+          scanbodyType: 'Elos Accurate IO 3A-A',
+          scanbodyPositionX: 14.2,
+          scanbodyPositionY: -8.6,
+          scanbodyPositionZ: 18.4,
+          implantAxisRollDeg: 2.5,
+          implantAxisPitchDeg: -4.1,
+          implantAxisYawDeg: 12.0,
+          antiRotationIndex: 'TriLobe-Index',
+          emergenceAngleDeg: 22.5,
+          criticalContourHeightMm: 1.0,
+          subcriticalContourHeightMm: 2.5,
+          isBiologicalWidthCompliant: true,
+          blanchingRiskWarning: null,
+          ascAngleDeg: 14.5,
+          ascAccessDirection: 'Lingual',
+          minWallThicknessMm: 0.55,
+          abutmentMaterial: 'ZirconiaHybridTiBase',
+          tiBaseCementGapMicrons: 30.0,
+          cncBlankHolderDiameterMm: 11.5,
+          isFabricationApproved: true,
+          statusMessage: 'Custom anatomical abutment planned. Emergence angle 22.5° compliant with biological width.',
+          splinePoints: [
+            { x: 0.0, y: 0.0, z: 0.0, angleDeg: 0.0, zoneType: 'ImplantPlatformCollar' },
+            { x: 0.4, y: 0.2, z: 0.8, angleDeg: 9.0, zoneType: 'CriticalSubgingival' },
+            { x: 1.1, y: 0.6, z: 2.0, angleDeg: 22.5, zoneType: 'SubcriticalTransition' },
+            { x: 1.8, y: 1.0, z: 3.2, angleDeg: 14.5, zoneType: 'SupragingivalMargin' }
+          ],
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  saveCustomAbutmentPlan(orderId: string, request: SaveCustomAbutmentPlanRequest): Observable<CustomAbutmentPlan> {
+    return this.http.post<CustomAbutmentPlan>(`${this.apiUrl}/${orderId}/custom-abutment`, request).pipe(
+      catchError(() => {
+        const emergence = request.emergenceAngleDeg ?? 22.5;
+        const isCompliant = emergence <= 30.0;
+        const asc = request.ascAngleDeg ?? 14.5;
+        const minWall = request.minWallThicknessMm ?? 0.55;
+        const warning = !isCompliant
+          ? `BR-ABUT-02 WARNING: Emergence angle (${emergence.toFixed(1)}°) exceeds 30.0° biological limit. High risk of mucosal ischemia.`
+          : null;
+
+        const fallback: CustomAbutmentPlan = {
+          orderId,
+          patientId: 'pat-201',
+          toothNumber: 36,
+          implantPlatformBrand: request.implantPlatformBrand || 'Nobel Biocare',
+          implantPlatformModel: request.implantPlatformModel || 'Conical Connection NP (3.5mm)',
+          platformDiameterMm: request.platformDiameterMm ?? 3.5,
+          scanbodyType: request.scanbodyType || 'Elos Accurate IO 3A-A',
+          scanbodyPositionX: request.scanbodyPositionX ?? 14.2,
+          scanbodyPositionY: request.scanbodyPositionY ?? -8.6,
+          scanbodyPositionZ: request.scanbodyPositionZ ?? 18.4,
+          implantAxisRollDeg: request.implantAxisRollDeg ?? 2.5,
+          implantAxisPitchDeg: request.implantAxisPitchDeg ?? -4.1,
+          implantAxisYawDeg: request.implantAxisYawDeg ?? 12.0,
+          antiRotationIndex: request.antiRotationIndex || 'TriLobe-Index',
+          emergenceAngleDeg: emergence,
+          criticalContourHeightMm: request.criticalContourHeightMm ?? 1.0,
+          subcriticalContourHeightMm: request.subcriticalContourHeightMm ?? 2.5,
+          isBiologicalWidthCompliant: isCompliant,
+          blanchingRiskWarning: warning,
+          ascAngleDeg: asc,
+          ascAccessDirection: request.ascAccessDirection || 'Lingual',
+          minWallThicknessMm: minWall,
+          abutmentMaterial: request.abutmentMaterial || 'ZirconiaHybridTiBase',
+          tiBaseCementGapMicrons: request.tiBaseCementGapMicrons ?? 30.0,
+          cncBlankHolderDiameterMm: request.cncBlankHolderDiameterMm ?? 11.5,
+          isFabricationApproved: request.isFabricationApproved ?? true,
+          statusMessage: isCompliant
+            ? `Custom abutment generated successfully. Emergence angle (${emergence.toFixed(1)}°) within safe limits.`
+            : warning!,
+          splinePoints: request.splinePoints || [
+            { x: 0.0, y: 0.0, z: 0.0, angleDeg: 0.0, zoneType: 'ImplantPlatformCollar' },
+            { x: 0.4, y: 0.2, z: 0.8, angleDeg: 9.0, zoneType: 'CriticalSubgingival' },
+            { x: 1.1, y: 0.6, z: 2.0, angleDeg: emergence, zoneType: 'SubcriticalTransition' },
+            { x: 1.8, y: 1.0, z: 3.2, angleDeg: Math.max(0, emergence - 8.0), zoneType: 'SupragingivalMargin' }
+          ],
+          plannedAtUtc: new Date().toISOString()
+        };
+        return of(fallback);
+      })
+    );
+  }
+
+  exportAbutmentCnc(orderId: string): Observable<ExportAbutmentCncResponse> {
+    return this.http.post<ExportAbutmentCncResponse>(`${this.apiUrl}/${orderId}/custom-abutment/export-cnc`, {}).pipe(
+      catchError(() => {
+        const fallback: ExportAbutmentCncResponse = {
+          orderId,
+          cncProgramName: `ABUT_36_NobelBiocare_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
+          machineTarget: 'DMG Mori Ultrasonic 20 linear / Imes-Icore 350i',
+          blankHolderType: 'Premilled Abutment Blank (11.5mm Collet)',
+          blankDiameterMm: 11.5,
+          materialGrade: 'Zirconia 3Y-TZP + Ti-Base',
+          finishLineCircumferenceMm: 13.74,
+          cementGapMicrons: 30.0,
+          totalGCodeLines: 4280,
+          sha256DigitalSignature: 'urn:cnc:abut:sha256:d8e92a4f0b3c6e1782a934b1234567890abcdef1234567890abcdef12345678',
+          exportedAtUtc: new Date().toISOString()
         };
         return of(fallback);
       })

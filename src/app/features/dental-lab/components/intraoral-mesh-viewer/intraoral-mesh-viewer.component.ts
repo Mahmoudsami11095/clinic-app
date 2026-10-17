@@ -22,7 +22,7 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { IntraoralScannerService } from '../../../../core/services/scanner/intraoral-scanner.service';
-import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest, DsdSmilePlan, DsdToothProportion, SaveDsdSmilePlanRequest } from '../../services/lab-work-order.service';
+import { LabWorkOrderService, LabWorkOrder, LabOrder3DModelResponse, ModelMeasurement, ClearanceHeatmap, ArticulatorSettings, SaveArticulatorSettingsRequest, MarginPoint, MarginLine, SaveMarginLineRequest, CamToolpathResult, CamToolpathLayer, GenerateCamGCodeRequest, ImplantSurgicalGuide, SaveImplantSurgicalGuideRequest, CrownMorphologyPlan, SaveCrownMorphologyRequest, DualModalityFusionPlan, FusionPointPair, SaveDualModalityFusionRequest, AlignerPlan, AlignerStage, SaveAlignerPlanRequest, GbrTitaniumMeshPlan, GbrFixationScrew, SaveGbrMeshPlanRequest, RpdSurveyorPlan, RpdClaspAssembly, SaveRpdPlanRequest, DsdSmilePlan, DsdToothProportion, SaveDsdSmilePlanRequest, CustomAbutmentPlan, SaveCustomAbutmentPlanRequest, ImplantPlatformLibraryItem, ExportAbutmentCncResponse, EmergenceSplinePoint } from '../../services/lab-work-order.service';
 
 export type MaterialPreset = 'zirconia' | 'emax' | 'gold' | 'enamel' | 'wireframe';
 
@@ -404,6 +404,28 @@ export interface MeshTelemetry {
                 <span>{{ 'lab_3d.scanner_title' | translate }}</span>
                 @if (scannerService.isConnected()) {
                   <span class="w-2 h-2 rounded-full animate-pulse" [class.bg-emerald-400]="!scannerService.isScanning()" [class.bg-rose-500]="scannerService.isScanning()"></span>
+                }
+              </button>
+
+              <!-- Custom Implant Abutment Generator (v11.9.0 BR-ABUT-01..04) -->
+              <button
+                type="button"
+                (click)="toggleAbutmentPanel()"
+                [class.bg-gradient-to-r]="isAbutmentActive()"
+                [class.from-amber-600]="isAbutmentActive()"
+                [class.to-orange-500]="isAbutmentActive()"
+                [class.text-white]="isAbutmentActive()"
+                [class.border-amber-400]="isAbutmentActive()"
+                [class.bg-slate-800]="!isAbutmentActive()"
+                [class.text-slate-300]="!isAbutmentActive()"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer hover:bg-slate-750"
+                [title]="'lab_3d.abutment_title' | translate"
+                id="toggle-abutment-btn"
+              >
+                <i class="pi pi-cog text-xs text-amber-300"></i>
+                <span>{{ 'lab_3d.abutment_title' | translate }}</span>
+                @if (isAbutmentActive() && abutmentPlan() && !abutmentPlan()!.isBiologicalWidthCompliant) {
+                  <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Blanching Warning"></span>
                 }
               </button>
 
@@ -2217,6 +2239,158 @@ export interface MeshTelemetry {
               </div>
             }
 
+            <!-- Custom Implant Abutment Control Panel (v11.9.0 BR-ABUT-01..04) -->
+            @if (isAbutmentActive()) {
+              <div
+                class="absolute bottom-6 right-6 w-96 bg-slate-950/95 border border-amber-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md z-20 font-cairo animate-fade-in"
+                id="abutment-panel"
+              >
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="p-1 rounded bg-amber-500/20 text-amber-400">
+                      <i class="pi pi-cog text-xs"></i>
+                    </span>
+                    <h3 class="text-xs font-bold text-white tracking-tight">
+                      {{ 'lab_3d.abutment_title' | translate }}
+                    </h3>
+                  </div>
+                  <span
+                    class="px-2 py-0.5 rounded text-[10px] font-bold"
+                    [class.bg-emerald-950]="abutmentPlan()?.isBiologicalWidthCompliant"
+                    [class.text-emerald-400]="abutmentPlan()?.isBiologicalWidthCompliant"
+                    [class.bg-rose-950]="!abutmentPlan()?.isBiologicalWidthCompliant"
+                    [class.text-rose-400]="!abutmentPlan()?.isBiologicalWidthCompliant"
+                    id="abutment-compliance-badge"
+                  >
+                    {{ abutmentPlan()?.isBiologicalWidthCompliant ? ('lab_3d.abutment_safe_status' | translate) : 'Blanching Risk (>30°)' }}
+                  </span>
+                </div>
+
+                <div class="mt-3 space-y-2.5 text-xs">
+                  <!-- Platform & Material Selector -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                    <label class="text-[10px] text-slate-400 font-semibold">{{ 'lab_3d.abutment_platform' | translate }}</label>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <select
+                        [value]="selectedAbutmentPlatform()"
+                        (change)="onPlatformBrandChange($any($event.target).value)"
+                        class="bg-slate-950 border border-slate-700 rounded-lg p-1 text-[11px] text-slate-200"
+                        id="abutment-platform-select"
+                      >
+                        <option value="Nobel Biocare">Nobel Biocare (CC)</option>
+                        <option value="Straumann">Straumann (BL)</option>
+                        <option value="Zimmer Biomet">Zimmer Biomet (IH)</option>
+                        <option value="Osstem">Osstem (TSIII)</option>
+                      </select>
+                      <select
+                        [value]="abutmentMaterial()"
+                        (change)="abutmentMaterial.set($any($event.target).value); onAbutmentParameterChange()"
+                        class="bg-slate-950 border border-slate-700 rounded-lg p-1 text-[11px] text-slate-200"
+                        id="abutment-material-select"
+                      >
+                        <option value="ZirconiaHybridTiBase">Hybrid (Zr + Ti-Base)</option>
+                        <option value="MonolithicTitaniumGrade5">Monolithic Ti Grade 5</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Emergence Angle Slider & Biological Width Guardrail -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1">
+                    <div class="flex justify-between text-slate-300 text-[10px]">
+                      <span>{{ 'lab_3d.abutment_emergence_angle' | translate }}</span>
+                      <strong class="font-mono text-amber-300" id="abutment-emergence-angle-val">{{ abutmentEmergenceAngle() }}°</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="10"
+                      max="45"
+                      step="0.5"
+                      [value]="abutmentEmergenceAngle()"
+                      (input)="onEmergenceAngleSliderChange(+$any($event.target).value)"
+                      class="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                      id="abutment-emergence-slider"
+                    />
+                    @if (abutmentEmergenceAngle() > 30.0) {
+                      <div class="p-1.5 rounded-lg bg-rose-950/60 border border-rose-500/40 text-[9px] text-rose-300 font-medium leading-tight" id="abutment-blanching-alert">
+                        <i class="pi pi-exclamation-triangle mr-1 text-rose-400"></i>
+                        {{ 'lab_3d.abutment_blanching_warning' | translate }}
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Angulated Screw Channel (ASC) Controls -->
+                  <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-1.5">
+                    <div class="flex justify-between text-slate-300 text-[10px]">
+                      <span>{{ 'lab_3d.abutment_asc_angle' | translate }}</span>
+                      <strong class="font-mono text-cyan-300" id="abutment-asc-angle-val">{{ abutmentAscAngle() }}° ({{ abutmentAscDirection() }})</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="30"
+                      step="0.5"
+                      [value]="abutmentAscAngle()"
+                      (input)="onAscAngleSliderChange(+$any($event.target).value)"
+                      class="w-full accent-cyan-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                      id="abutment-asc-slider"
+                    />
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                      <span>{{ 'lab_3d.abutment_min_wall' | translate }}: <strong class="text-slate-200">{{ abutmentMinWallThickness() }} mm</strong></span>
+                      <div class="flex items-center gap-1">
+                        <button
+                          type="button"
+                          (click)="setAscDirection('Lingual')"
+                          [class.bg-cyan-600]="abutmentAscDirection() === 'Lingual'"
+                          [class.text-white]="abutmentAscDirection() === 'Lingual'"
+                          class="px-1.5 py-0.5 rounded text-[9px] bg-slate-800 text-slate-300 cursor-pointer"
+                          id="abutment-dir-lingual-btn"
+                        >Lingual</button>
+                        <button
+                          type="button"
+                          (click)="setAscDirection('Palatal')"
+                          [class.bg-cyan-600]="abutmentAscDirection() === 'Palatal'"
+                          [class.text-white]="abutmentAscDirection() === 'Palatal'"
+                          class="px-1.5 py-0.5 rounded text-[9px] bg-slate-800 text-slate-300 cursor-pointer"
+                          id="abutment-dir-palatal-btn"
+                        >Palatal</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons: Save & Export CNC -->
+                  <div class="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      (click)="saveAbutmentPlan()"
+                      [disabled]="isSavingAbutment()"
+                      class="flex-1 py-1.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                      id="abutment-save-btn"
+                    >
+                      <i class="pi" [class.pi-check]="!isSavingAbutment()" [class.pi-spin]="isSavingAbutment()" [class.pi-spinner]="isSavingAbutment()"></i>
+                      <span>{{ isSavingAbutment() ? ('lab_3d.saving_abutment' | translate) : ('lab_3d.save_abutment' | translate) }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="exportAbutmentCnc()"
+                      [disabled]="isExportingAbutmentCnc() || abutmentAscAngle() > 30.0"
+                      class="flex-1 py-1.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                      id="abutment-export-cnc-btn"
+                    >
+                      <i class="pi" [class.pi-download]="!isExportingAbutmentCnc()" [class.pi-spin]="isExportingAbutmentCnc()" [class.pi-spinner]="isExportingAbutmentCnc()"></i>
+                      <span>{{ 'lab_3d.export_abutment_cnc' | translate }}</span>
+                    </button>
+                  </div>
+
+                  @if (abutmentSaveSuccessMessage()) {
+                    <p class="text-[9px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-1.5 rounded-lg font-medium text-center" id="abutment-success-msg">
+                      {{ abutmentSaveSuccessMessage() }}
+                    </p>
+                  }
+                </div>
+              </div>
+            }
+
             <!-- Loading Spinner Overlay -->
             @if (isLoading()) {
               <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs z-20">
@@ -2565,6 +2739,25 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   isIngestingScan = signal<boolean>(false);
   directScanSuccess = signal<string | null>(null);
 
+  // Release v11.9.0: Custom Implant Abutment Generator State Signals (BR-ABUT-01..04)
+  isAbutmentActive = signal<boolean>(false);
+  isSavingAbutment = signal<boolean>(false);
+  isExportingAbutmentCnc = signal<boolean>(false);
+  abutmentPlan = signal<CustomAbutmentPlan | null>(null);
+  selectedAbutmentPlatform = signal<string>('Nobel Biocare');
+  selectedAbutmentModel = signal<string>('Conical Connection NP');
+  abutmentEmergenceAngle = signal<number>(22.5);
+  abutmentCriticalHeight = signal<number>(1.0);
+  abutmentSubcriticalHeight = signal<number>(2.5);
+  abutmentAscAngle = signal<number>(14.5);
+  abutmentAscDirection = signal<string>('Lingual');
+  abutmentMinWallThickness = signal<number>(0.55);
+  abutmentMaterial = signal<string>('ZirconiaHybridTiBase');
+  abutmentCementGapMicrons = signal<number>(30.0);
+  abutmentBlankHolderDiam = signal<number>(11.5);
+  abutmentCncExportResult = signal<ExportAbutmentCncResponse | null>(null);
+  abutmentSaveSuccessMessage = signal<string | null>(null);
+
   telemetry = signal<MeshTelemetry>({
     polyCount: 52400,
     vertexCount: 26202,
@@ -2588,6 +2781,7 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
   private gbrGroup: THREE.Group = new THREE.Group();
   private rpdGroup: THREE.Group = new THREE.Group();
   private dsdGroup: THREE.Group = new THREE.Group();
+  private abutmentGroup: THREE.Group = new THREE.Group();
   private animationFrameId: number | null = null;
   private currentGeometry: THREE.BufferGeometry | null = null;
 
@@ -2725,6 +2919,10 @@ export class IntraoralMeshViewerComponent implements OnInit, AfterViewInit, OnDe
     // AI 2D/3D Digital Smile Design & Golden Proportion Group (v11.4.0)
     this.dsdGroup = new THREE.Group();
     this.scene.add(this.dsdGroup);
+
+    // AI Custom Dental Implant Abutment Group (v11.9.0)
+    this.abutmentGroup = new THREE.Group();
+    this.scene.add(this.abutmentGroup);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -5988,5 +6186,218 @@ M30 ; Program End`,
       this.isIngestingScan.set(false);
       this.directScanSuccess.set('Direct scan dossier ingested to lab work order.');
     }
+  }
+
+  // --- Release v11.9.0 Custom Implant Abutment Generator Methods (BR-ABUT-01..04) ---
+
+  toggleAbutmentPanel(): void {
+    const next = !this.isAbutmentActive();
+    this.isAbutmentActive.set(next);
+    if (next) {
+      if (!this.abutmentPlan()) {
+        this.loadAbutmentPlan();
+      } else {
+        this.renderAbutment3D();
+      }
+    } else {
+      this.clearAbutment3D();
+    }
+  }
+
+  loadAbutmentPlan(): void {
+    const o = this.order();
+    const orderId = o?.id || 'lab-seed-01';
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.getCustomAbutmentPlan(orderId).subscribe({
+        next: (plan) => {
+          this.abutmentPlan.set(plan);
+          this.selectedAbutmentPlatform.set(plan.implantPlatformBrand);
+          this.selectedAbutmentModel.set(plan.implantPlatformModel);
+          this.abutmentEmergenceAngle.set(plan.emergenceAngleDeg);
+          this.abutmentCriticalHeight.set(plan.criticalContourHeightMm);
+          this.abutmentSubcriticalHeight.set(plan.subcriticalContourHeightMm);
+          this.abutmentAscAngle.set(plan.ascAngleDeg);
+          this.abutmentAscDirection.set(plan.ascAccessDirection);
+          this.abutmentMinWallThickness.set(plan.minWallThicknessMm);
+          this.abutmentMaterial.set(plan.abutmentMaterial);
+          this.abutmentCementGapMicrons.set(plan.tiBaseCementGapMicrons);
+          this.abutmentBlankHolderDiam.set(plan.cncBlankHolderDiameterMm);
+          this.renderAbutment3D();
+        },
+        error: () => {
+          this.renderAbutment3D();
+        }
+      });
+    } else {
+      this.renderAbutment3D();
+    }
+  }
+
+  onPlatformBrandChange(brand: string): void {
+    this.selectedAbutmentPlatform.set(brand);
+    if (brand === 'Nobel Biocare') this.selectedAbutmentModel.set('Conical Connection NP');
+    else if (brand === 'Straumann') this.selectedAbutmentModel.set('Bone Level NC');
+    else if (brand === 'Zimmer Biomet') this.selectedAbutmentModel.set('Internal Hex 3.5mm');
+    else if (brand === 'Osstem') this.selectedAbutmentModel.set('TSIII Regular');
+    this.onAbutmentParameterChange();
+  }
+
+  onEmergenceAngleSliderChange(deg: number): void {
+    this.abutmentEmergenceAngle.set(deg);
+    this.onAbutmentParameterChange();
+  }
+
+  onAscAngleSliderChange(deg: number): void {
+    this.abutmentAscAngle.set(deg);
+    this.onAbutmentParameterChange();
+  }
+
+  setAscDirection(dir: string): void {
+    this.abutmentAscDirection.set(dir);
+    this.onAbutmentParameterChange();
+  }
+
+  onAbutmentParameterChange(): void {
+    const angle = this.abutmentEmergenceAngle();
+    const isCompliant = angle <= 30.0;
+    const current = this.abutmentPlan();
+    if (current) {
+      this.abutmentPlan.set({
+        ...current,
+        implantPlatformBrand: this.selectedAbutmentPlatform(),
+        implantPlatformModel: this.selectedAbutmentModel(),
+        emergenceAngleDeg: angle,
+        isBiologicalWidthCompliant: isCompliant,
+        blanchingRiskWarning: !isCompliant
+          ? `BR-ABUT-02 WARNING: Emergence angle (${angle.toFixed(1)}°) exceeds 30.0° biological limit. Soft-tissue ischemia risk.`
+          : null,
+        ascAngleDeg: this.abutmentAscAngle(),
+        ascAccessDirection: this.abutmentAscDirection(),
+        abutmentMaterial: this.abutmentMaterial()
+      });
+    }
+    this.renderAbutment3D();
+  }
+
+  saveAbutmentPlan(): void {
+    const o = this.order();
+    const orderId = o?.id || 'lab-seed-01';
+    this.isSavingAbutment.set(true);
+
+    const req: SaveCustomAbutmentPlanRequest = {
+      implantPlatformBrand: this.selectedAbutmentPlatform(),
+      implantPlatformModel: this.selectedAbutmentModel(),
+      platformDiameterMm: 3.5,
+      scanbodyType: 'Elos Accurate IO 3A-A',
+      emergenceAngleDeg: this.abutmentEmergenceAngle(),
+      criticalContourHeightMm: this.abutmentCriticalHeight(),
+      subcriticalContourHeightMm: this.abutmentSubcriticalHeight(),
+      ascAngleDeg: this.abutmentAscAngle(),
+      ascAccessDirection: this.abutmentAscDirection(),
+      minWallThicknessMm: this.abutmentMinWallThickness(),
+      abutmentMaterial: this.abutmentMaterial(),
+      tiBaseCementGapMicrons: this.abutmentCementGapMicrons(),
+      cncBlankHolderDiameterMm: this.abutmentBlankHolderDiam(),
+      isFabricationApproved: true
+    };
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.saveCustomAbutmentPlan(orderId, req).subscribe({
+        next: (saved) => {
+          this.isSavingAbutment.set(false);
+          this.abutmentPlan.set(saved);
+          this.abutmentSaveSuccessMessage.set(saved.statusMessage);
+          setTimeout(() => this.abutmentSaveSuccessMessage.set(null), 4000);
+          this.renderAbutment3D();
+        },
+        error: () => {
+          this.isSavingAbutment.set(false);
+          this.abutmentSaveSuccessMessage.set('Abutment plan synchronized to local session.');
+          setTimeout(() => this.abutmentSaveSuccessMessage.set(null), 4000);
+        }
+      });
+    } else {
+      this.isSavingAbutment.set(false);
+      this.abutmentSaveSuccessMessage.set('Abutment plan synchronized to local session.');
+      setTimeout(() => this.abutmentSaveSuccessMessage.set(null), 4000);
+    }
+  }
+
+  exportAbutmentCnc(): void {
+    const o = this.order();
+    const orderId = o?.id || 'lab-seed-01';
+    this.isExportingAbutmentCnc.set(true);
+
+    if (this.labWorkOrderService) {
+      this.labWorkOrderService.exportAbutmentCnc(orderId).subscribe({
+        next: (res) => {
+          this.isExportingAbutmentCnc.set(false);
+          this.abutmentCncExportResult.set(res);
+          this.abutmentSaveSuccessMessage.set(`CNC G-Code '${res.cncProgramName}.nc' generated (${res.totalGCodeLines} lines). Collet: ${res.blankHolderType}.`);
+          setTimeout(() => this.abutmentSaveSuccessMessage.set(null), 5000);
+        },
+        error: () => {
+          this.isExportingAbutmentCnc.set(false);
+        }
+      });
+    } else {
+      this.isExportingAbutmentCnc.set(false);
+    }
+  }
+
+  private clearAbutment3D(): void {
+    if (!this.abutmentGroup) return;
+    while (this.abutmentGroup.children.length > 0) {
+      const child = this.abutmentGroup.children[0];
+      this.abutmentGroup.remove(child);
+      if ((child as THREE.Mesh).geometry) (child as THREE.Mesh).geometry.dispose();
+    }
+  }
+
+  private renderAbutment3D(): void {
+    if (!this.abutmentGroup) return;
+    this.clearAbutment3D();
+
+    if (!this.isAbutmentActive()) return;
+
+    // 1. Implant Fixture Platform Cylinder (Metallic gold/titanium)
+    const platformGeom = new THREE.CylinderGeometry(2.0, 2.0, 4.0, 32);
+    const platformMat = new THREE.MeshStandardMaterial({
+      color: 0xd4af37,
+      metalness: 0.85,
+      roughness: 0.25
+    });
+    const platformMesh = new THREE.Mesh(platformGeom, platformMat);
+    platformMesh.position.set(0, -2, 0);
+    this.abutmentGroup.add(platformMesh);
+
+    // 2. Anatomical Emergence Profile Collar (Cone transition)
+    const emergenceAngle = this.abutmentEmergenceAngle();
+    const isCompliant = emergenceAngle <= 30.0;
+    const topRadius = 2.0 + Math.tan(emergenceAngle * (Math.PI / 180)) * 3.5;
+    const collarGeom = new THREE.CylinderGeometry(topRadius, 2.0, 3.5, 32);
+    const collarMat = new THREE.MeshStandardMaterial({
+      color: isCompliant ? 0xf8fafc : 0xf43f5e,
+      metalness: 0.1,
+      roughness: 0.35,
+      transparent: true,
+      opacity: 0.92
+    });
+    const collarMesh = new THREE.Mesh(collarGeom, collarMat);
+    collarMesh.position.set(0, 1.75, 0);
+    this.abutmentGroup.add(collarMesh);
+
+    // 3. Angulated Screw Channel (ASC) Hollow Cylinder
+    const ascAngleRad = this.abutmentAscAngle() * (Math.PI / 180);
+    const ascChannelGeom = new THREE.CylinderGeometry(0.8, 0.8, 8.0, 24);
+    const ascMat = new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      wireframe: true
+    });
+    const ascMesh = new THREE.Mesh(ascChannelGeom, ascMat);
+    ascMesh.position.set(0, 4.0, 0);
+    const dirSign = this.abutmentAscDirection() === 'Lingual' ? -1 : 1;
+    ascMesh.rotation.z = dirSign * ascAngleRad;
+    this.abutmentGroup.add(ascMesh);
   }
 }
