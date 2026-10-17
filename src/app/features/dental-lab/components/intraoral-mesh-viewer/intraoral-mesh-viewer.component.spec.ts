@@ -1731,6 +1731,134 @@ describe('IntraoralMeshViewerComponent (Release v9.1.0)', () => {
     expect(component.directScanSuccess()).toBe('Direct scan dossier ingested successfully.');
     expect(component.isIngestingScan()).toBeFalse();
   });
+
+  // ── Release v11.9.0: Custom Implant Abutment Generator Tests (BR-ABUT-01..04) ──
+
+  const getMockAbutmentPlan = (): any => ({
+    orderId: 'lab-mock-01',
+    patientId: 'pat-201',
+    toothNumber: 36,
+    implantPlatformBrand: 'Nobel Biocare',
+    implantPlatformModel: 'Conical Connection NP (3.5mm)',
+    platformDiameterMm: 3.5,
+    scanbodyType: 'Elos Accurate IO 3A-A',
+    scanbodyPositionX: 14.2,
+    scanbodyPositionY: -8.6,
+    scanbodyPositionZ: 18.4,
+    implantAxisRollDeg: 2.5,
+    implantAxisPitchDeg: -4.1,
+    implantAxisYawDeg: 12.0,
+    antiRotationIndex: 'TriLobe-Index',
+    emergenceAngleDeg: 22.5,
+    criticalContourHeightMm: 1.0,
+    subcriticalContourHeightMm: 2.5,
+    isBiologicalWidthCompliant: true,
+    blanchingRiskWarning: null,
+    ascAngleDeg: 14.5,
+    ascAccessDirection: 'Lingual',
+    minWallThicknessMm: 0.55,
+    abutmentMaterial: 'ZirconiaHybridTiBase',
+    tiBaseCementGapMicrons: 30.0,
+    cncBlankHolderDiameterMm: 11.5,
+    isFabricationApproved: true,
+    statusMessage: 'Custom anatomical abutment planned.',
+    splinePoints: [],
+    plannedAtUtc: new Date().toISOString()
+  });
+
+  it('should toggle custom abutment mode and load plan (BR-ABUT-01)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    expect(component.isAbutmentActive()).toBeFalse();
+
+    const mockPlan = getMockAbutmentPlan();
+    spyOn(labService, 'getCustomAbutmentPlan').and.returnValue(of(mockPlan));
+
+    component.toggleAbutmentPanel();
+    expect(component.isAbutmentActive()).toBeTrue();
+    expect(labService.getCustomAbutmentPlan).toHaveBeenCalled();
+    expect(component.abutmentPlan()).toEqual(mockPlan);
+    expect(component.abutmentEmergenceAngle()).toBe(22.5);
+  });
+
+  it('should enforce biological width guardrail when emergence angle exceeds 30 degrees (BR-ABUT-02)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'getCustomAbutmentPlan').and.returnValue(of(getMockAbutmentPlan()));
+    component.toggleAbutmentPanel();
+
+    // Emergence angle 22.5 is compliant
+    expect(component.abutmentEmergenceAngle()).toBe(22.5);
+    expect(component.abutmentPlan()?.isBiologicalWidthCompliant).toBeTrue();
+
+    // Change emergence angle to 35.0 (exceeds 30.0 limit)
+    component.onEmergenceAngleSliderChange(35.0);
+    expect(component.abutmentEmergenceAngle()).toBe(35.0);
+    expect(component.abutmentPlan()?.isBiologicalWidthCompliant).toBeFalse();
+    expect(component.abutmentPlan()?.blanchingRiskWarning).toContain('BR-ABUT-02 WARNING');
+  });
+
+  it('should adjust ASC angle and direction (BR-ABUT-03)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'getCustomAbutmentPlan').and.returnValue(of(getMockAbutmentPlan()));
+    component.toggleAbutmentPanel();
+
+    component.onAscAngleSliderChange(20.0);
+    expect(component.abutmentAscAngle()).toBe(20.0);
+
+    component.setAscDirection('Palatal');
+    expect(component.abutmentAscDirection()).toBe('Palatal');
+    expect(component.abutmentPlan()?.ascAccessDirection).toBe('Palatal');
+  });
+
+  it('should switch implant platform brand and model (BR-ABUT-01)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'getCustomAbutmentPlan').and.returnValue(of(getMockAbutmentPlan()));
+    component.toggleAbutmentPanel();
+
+    component.onPlatformBrandChange('Straumann');
+    expect(component.selectedAbutmentPlatform()).toBe('Straumann');
+    expect(component.selectedAbutmentModel()).toBe('Bone Level NC');
+
+    component.onPlatformBrandChange('Zimmer Biomet');
+    expect(component.selectedAbutmentPlatform()).toBe('Zimmer Biomet');
+    expect(component.selectedAbutmentModel()).toBe('Internal Hex 3.5mm');
+  });
+
+  it('should save custom abutment plan via LabWorkOrderService', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'getCustomAbutmentPlan').and.returnValue(of(getMockAbutmentPlan()));
+    component.toggleAbutmentPanel();
+
+    const mockSaved: any = {
+      orderId: 'lab-mock-01',
+      statusMessage: 'Custom abutment saved successfully.'
+    };
+    spyOn(labService, 'saveCustomAbutmentPlan').and.returnValue(of(mockSaved));
+
+    component.saveAbutmentPlan();
+    expect(labService.saveCustomAbutmentPlan).toHaveBeenCalled();
+    expect(component.isSavingAbutment()).toBeFalse();
+    expect(component.abutmentSaveSuccessMessage()).toBe('Custom abutment saved successfully.');
+  });
+
+  it('should export CNC milling blank and display feedback (BR-ABUT-04)', () => {
+    fixture.componentRef.setInput('order', mockOrder);
+    spyOn(labService, 'getCustomAbutmentPlan').and.returnValue(of(getMockAbutmentPlan()));
+    component.toggleAbutmentPanel();
+
+    const mockExport: any = {
+      orderId: 'lab-mock-01',
+      cncProgramName: 'ABUT_36_Nobel',
+      totalGCodeLines: 4280,
+      blankHolderType: 'Premilled Abutment Blank (11.5mm Collet)'
+    };
+    spyOn(labService, 'exportAbutmentCnc').and.returnValue(of(mockExport));
+
+    component.exportAbutmentCnc();
+    expect(labService.exportAbutmentCnc).toHaveBeenCalled();
+    expect(component.isExportingAbutmentCnc()).toBeFalse();
+    expect(component.abutmentCncExportResult()).toEqual(mockExport);
+    expect(component.abutmentSaveSuccessMessage()).toContain('CNC G-Code');
+  });
 });
 
 

@@ -1121,6 +1121,142 @@ describe('LabWorkOrderService (Release v8.4.0)', () => {
     expect(req.request.method).toBe('POST');
     req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
   });
+
+  // ── Release v11.9.0: Custom Implant Abutment Generator Tests (BR-ABUT-01..04) ──
+
+  it('should fetch implant platform catalog via getImplantPlatforms (v11.9.0)', (done) => {
+    service.getImplantPlatforms().subscribe(platforms => {
+      expect(platforms.length).toBeGreaterThan(0);
+      expect(platforms[0].brand).toBe('Nobel Biocare');
+      expect(platforms[0].compatibleScanbodies).toBeDefined();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/implant-platforms`);
+    expect(req.request.method).toBe('GET');
+    req.flush([
+      { brand: 'Nobel Biocare', model: 'Conical Connection NP', platformDiameterMm: 3.5, connectionType: 'Conical CC 11.5°', antiRotationKey: 'TriLobe-Index', compatibleScanbodies: ['Elos Accurate IO 3A-A'], availableBlankDiametersMm: [11.5, 15.8] }
+    ]);
+  });
+
+  it('should fetch custom abutment plan via getCustomAbutmentPlan (BR-ABUT-01)', (done) => {
+    service.getCustomAbutmentPlan('lab-1').subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.implantPlatformBrand).toBe('Nobel Biocare');
+      expect(plan.emergenceAngleDeg).toBe(22.5);
+      expect(plan.isBiologicalWidthCompliant).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/custom-abutment`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-201',
+      toothNumber: 36,
+      implantPlatformBrand: 'Nobel Biocare',
+      implantPlatformModel: 'Conical Connection NP',
+      platformDiameterMm: 3.5,
+      scanbodyType: 'Elos Accurate IO 3A-A',
+      scanbodyPositionX: 14.2,
+      scanbodyPositionY: -8.6,
+      scanbodyPositionZ: 18.4,
+      implantAxisRollDeg: 2.5,
+      implantAxisPitchDeg: -4.1,
+      implantAxisYawDeg: 12.0,
+      antiRotationIndex: 'TriLobe-Index',
+      emergenceAngleDeg: 22.5,
+      criticalContourHeightMm: 1.0,
+      subcriticalContourHeightMm: 2.5,
+      isBiologicalWidthCompliant: true,
+      blanchingRiskWarning: null,
+      ascAngleDeg: 14.5,
+      ascAccessDirection: 'Lingual',
+      minWallThicknessMm: 0.55,
+      abutmentMaterial: 'ZirconiaHybridTiBase',
+      tiBaseCementGapMicrons: 30.0,
+      cncBlankHolderDiameterMm: 11.5,
+      isFabricationApproved: true,
+      statusMessage: 'Custom anatomical abutment planned.',
+      splinePoints: [],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should save custom abutment plan via saveCustomAbutmentPlan (BR-ABUT-02/03)', (done) => {
+    const saveReq = {
+      implantPlatformBrand: 'Straumann',
+      emergenceAngleDeg: 24.0,
+      ascAngleDeg: 15.0
+    };
+
+    service.saveCustomAbutmentPlan('lab-1', saveReq).subscribe(plan => {
+      expect(plan.orderId).toBe('lab-1');
+      expect(plan.emergenceAngleDeg).toBe(24.0);
+      expect(plan.isBiologicalWidthCompliant).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/custom-abutment`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      orderId: 'lab-1',
+      patientId: 'pat-201',
+      toothNumber: 36,
+      implantPlatformBrand: 'Straumann',
+      implantPlatformModel: 'Bone Level NC',
+      platformDiameterMm: 3.3,
+      scanbodyType: 'NT-Trading STR-NC',
+      scanbodyPositionX: 12.0,
+      scanbodyPositionY: -7.0,
+      scanbodyPositionZ: 15.0,
+      implantAxisRollDeg: 1.0,
+      implantAxisPitchDeg: -2.0,
+      implantAxisYawDeg: 5.0,
+      antiRotationIndex: 'CrossFit-Internal',
+      emergenceAngleDeg: 24.0,
+      criticalContourHeightMm: 1.0,
+      subcriticalContourHeightMm: 2.5,
+      isBiologicalWidthCompliant: true,
+      blanchingRiskWarning: null,
+      ascAngleDeg: 15.0,
+      ascAccessDirection: 'Palatal',
+      minWallThicknessMm: 0.60,
+      abutmentMaterial: 'ZirconiaHybridTiBase',
+      tiBaseCementGapMicrons: 30.0,
+      cncBlankHolderDiameterMm: 11.5,
+      isFabricationApproved: true,
+      statusMessage: 'Custom abutment generated successfully.',
+      splinePoints: [],
+      plannedAtUtc: new Date().toISOString()
+    });
+  });
+
+  it('should export CNC milling blank parameters via exportAbutmentCnc (BR-ABUT-04)', (done) => {
+    service.exportAbutmentCnc('lab-1').subscribe(res => {
+      expect(res.orderId).toBe('lab-1');
+      expect(res.cncProgramName).toBe('ABUT_36_Nobel');
+      expect(res.blankDiameterMm).toBe(11.5);
+      expect(res.cementGapMicrons).toBe(30.0);
+      done();
+    });
+
+    const req = httpMock.expectOne(`${service['apiUrl']}/lab-1/custom-abutment/export-cnc`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      orderId: 'lab-1',
+      cncProgramName: 'ABUT_36_Nobel',
+      machineTarget: 'DMG Mori Ultrasonic 20 linear',
+      blankHolderType: 'Premilled Abutment Blank (11.5mm Collet)',
+      blankDiameterMm: 11.5,
+      materialGrade: 'Zirconia 3Y-TZP + Ti-Base',
+      finishLineCircumferenceMm: 13.74,
+      cementGapMicrons: 30.0,
+      totalGCodeLines: 4280,
+      sha256DigitalSignature: 'urn:cnc:abut:sha256:123',
+      exportedAtUtc: new Date().toISOString()
+    });
+  });
 });
 
 
